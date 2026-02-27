@@ -6,7 +6,7 @@
 
 ## What is MineWright?
 
-MineWwright is a revolutionary AI companion system that transforms Minecraft from a solo building game into a collaborative experience with intelligent AI crew members who actually understand what you're trying to build.
+MineWright is a revolutionary AI companion system that transforms Minecraft from a solo building game into a collaborative experience with intelligent AI crew members who actually understand what you're trying to build.
 
 **This isn't a bot.** It's not an agent that follows scripts. It's a crew.
 

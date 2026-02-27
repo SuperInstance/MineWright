@@ -107,7 +107,7 @@ public class TaskPlanner {
             String userPrompt = PromptBuilder.buildUserPrompt(foreman, command, worldKnowledge);
 
             String provider = MineWrightConfig.getValidatedProvider();
-            MineWrightMod.LOGGER.info("Requesting AI plan for crew member '{}' using {}: {}", foreman.getSteveName(), provider, command);
+            MineWrightMod.LOGGER.info("Requesting AI plan for crew member '{}' using {}: {}", foreman.getEntityName(), provider, command);
 
             String response = getAIResponse(provider, systemPrompt, userPrompt);
 
@@ -196,7 +196,7 @@ public class TaskPlanner {
 
             String provider = MineWrightConfig.getValidatedProvider();
             MineWrightMod.LOGGER.info("[Async] Requesting AI plan for crew member '{}' using {}: {}",
-                foreman.getSteveName(), provider, command);
+                foreman.getEntityName(), provider, command);
 
             // Build params map
             Map<String, Object> params = new java.util.HashMap<>();
@@ -204,7 +204,7 @@ public class TaskPlanner {
             params.put("model", MineWrightConfig.OPENAI_MODEL.get());
             params.put("maxTokens", MineWrightConfig.MAX_TOKENS.get());
             params.put("temperature", MineWrightConfig.TEMPERATURE.get());
-            params.put("foremanName", foreman.getSteveName());
+            params.put("foremanName", foreman.getEntityName());
 
             // Use batching for user-initiated commands to respect rate limits
             if (batchingEnabled && isUserInitiated && provider.equals("openai")) {
@@ -309,7 +309,7 @@ public class TaskPlanner {
         }
 
         Map<String, Object> context = new java.util.HashMap<>();
-        context.put("foremanName", foreman.getSteveName());
+        context.put("foremanName", foreman.getEntityName());
         context.put("taskType", "background");
 
         return batchClient.submitBackgroundPrompt(taskDescription, context);

@@ -153,14 +153,12 @@ public class ForemanEntity extends PathfinderMob {
         return this.entityName;
     }
 
-    // Deprecated: Use getEntityName() instead
+    /**
+     * @deprecated Use {@link #getEntityName()} instead.
+     */
+    @Deprecated
     public String getSteveName() {
         return this.entityName;
-    }
-
-    // Deprecated: Use setEntityName() instead
-    public void setSteveName(String name) {
-        setEntityName(name);
     }
 
     public ForemanMemory getMemory() {
@@ -222,7 +220,7 @@ public class ForemanEntity extends PathfinderMob {
     }
 
     public void sendChatMessage(String message) {
-        if (this.level().isClientSide) return;
+        if (this.level().isClientSide || this.level() == null) return;
 
         Component chatComponent = Component.literal("<" + this.entityName + "> " + message);
         this.level().players().forEach(player -> player.sendSystemMessage(chatComponent));
@@ -265,10 +263,10 @@ public class ForemanEntity extends PathfinderMob {
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
         if (this.isFlying && !this.level().isClientSide) {
             double motionY = this.getDeltaMovement().y;
-            
-            if (this.getNavigation().isInProgress()) {
+
+            if (this.getNavigation() != null && this.getNavigation().isInProgress()) {
                 super.travel(travelVector);
-                
+
                 // But add ability to move vertically freely
                 if (Math.abs(motionY) < 0.1) {
                     // Small upward force to prevent falling
@@ -489,6 +487,10 @@ public class ForemanEntity extends PathfinderMob {
      * <p>Designed for sub-20ms response time. Falls back gracefully when edge unavailable.</p>
      */
     private void checkTacticalSituation() {
+        if (this.level() == null || this.getBoundingBox() == null) {
+            return;
+        }
+
         // Get nearby entities
         List<Entity> nearbyEntities = this.level().getEntitiesOfClass(
             Entity.class,
@@ -499,7 +501,7 @@ public class ForemanEntity extends PathfinderMob {
         CloudflareClient.TacticalDecision decision = tacticalService.checkTactical(this, nearbyEntities);
 
         // Execute decision if action required
-        if (decision.requiresAction() && !decision.isFallback) {
+        if (decision != null && decision.requiresAction() && !decision.isFallback) {
             executeTacticalDecision(decision);
         }
     }
@@ -516,7 +518,7 @@ public class ForemanEntity extends PathfinderMob {
         switch (decision.action) {
             case "flee" -> {
                 // Stop current action and move away from threat
-                if (actionExecutor.isExecuting()) {
+                if (actionExecutor != null && actionExecutor.isExecuting()) {
                     actionExecutor.stopCurrentAction();
                 }
                 // Trigger dialogue about danger
@@ -536,7 +538,9 @@ public class ForemanEntity extends PathfinderMob {
             }
             case "stop" -> {
                 // Emergency stop (lava, cliff, etc.)
-                actionExecutor.stopCurrentAction();
+                if (actionExecutor != null) {
+                    actionExecutor.stopCurrentAction();
+                }
                 if (dialogueManager != null) {
                     dialogueManager.forceComment("danger", decision.reasoning);
                 }

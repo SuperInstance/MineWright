@@ -1,6 +1,6 @@
 # Minecraft Agent Reflex - Cloudflare Worker Deployment
 
-This directory contains the Cloudflare Worker deployment for the Minecraft Steve AI Reflex Agent. This worker provides fast tactical decisions and state management for autonomous Minecraft agents using Durable Objects.
+This directory contains the Cloudflare Worker deployment for the Minecraft MineWright Reflex Agent. This worker provides fast tactical decisions and state management for autonomous Minecraft agents using Durable Objects.
 
 ## Overview
 
@@ -15,7 +15,7 @@ The Reflex Agent is a cloud-based service that:
 ## Architecture
 
 ```
-Minecraft Client (Steve AI)
+Minecraft Client (MineWright)
        |
        v HTTP
 Cloudflare Worker (Reflex Agent)

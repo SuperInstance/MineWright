@@ -146,17 +146,15 @@ public class CrewManager {
         return new ArrayList<>(activeCrewMembers.keySet());
     }
 
-    // Deprecated: Use getCrewMemberNames() instead
-    public List<String> getSteveNames() {
-        return getCrewMemberNames();
-    }
-
     public int getActiveCount() {
         return activeCrewMembers.size();
     }
 
     public void tick(ServerLevel level) {
         // Clean up dead or removed crew members
+        // Get orchestrator reference once outside the loop to avoid race conditions
+        OrchestratorService orchestrator = MineWrightMod.getOrchestratorService();
+
         Iterator<Map.Entry<String, ForemanEntity>> iterator = activeCrewMembers.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, ForemanEntity> entry = iterator.next();
@@ -166,8 +164,7 @@ public class CrewManager {
                 iterator.remove();
                 crewMembersByUUID.remove(crewMember.getUUID());
 
-                // Unregister from orchestrator
-                OrchestratorService orchestrator = MineWrightMod.getOrchestratorService();
+                // Unregister from orchestrator using the reference obtained before the loop
                 if (orchestrator != null) {
                     orchestrator.unregisterAgent(entry.getKey());
                 }

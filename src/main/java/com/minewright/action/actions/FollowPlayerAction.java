@@ -92,7 +92,7 @@ public class FollowPlayerAction extends BaseAction {
                 targetPlayer = nearest;
                 playerName = nearest.getName().getString(); // Update to actual name
                 com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' following nearest player: {}",
-                    foreman.getSteveName(), playerName);
+                    foreman.getEntityName(), playerName);
             }
         }
     }

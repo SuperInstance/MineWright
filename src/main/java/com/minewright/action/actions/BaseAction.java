@@ -19,11 +19,11 @@ public abstract class BaseAction {
 
     public void start() {
         if (started) {
-            MineWrightMod.LOGGER.warn("[{}] Action already started: {}", foreman.getSteveName(), getDescription());
+            MineWrightMod.LOGGER.warn("[{}] Action already started: {}", foreman.getEntityName(), getDescription());
             return;
         }
         started = true;
-        MineWrightMod.LOGGER.debug("[{}] Starting action: {}", foreman.getSteveName(), getDescription());
+        MineWrightMod.LOGGER.debug("[{}] Starting action: {}", foreman.getEntityName(), getDescription());
         onStart();
     }
 
@@ -32,19 +32,19 @@ public abstract class BaseAction {
         try {
             onTick();
         } catch (Exception e) {
-            MineWrightMod.LOGGER.error("[{}] Error during action tick: {}", foreman.getSteveName(), getDescription(), e);
+            MineWrightMod.LOGGER.error("[{}] Error during action tick: {}", foreman.getEntityName(), getDescription(), e);
             result = ActionResult.failure("Error during action execution: " + e.getMessage());
         }
     }
 
     public void cancel() {
         if (cancelled) {
-            MineWrightMod.LOGGER.debug("[{}] Action already cancelled: {}", foreman.getSteveName(), getDescription());
+            MineWrightMod.LOGGER.debug("[{}] Action already cancelled: {}", foreman.getEntityName(), getDescription());
             return;
         }
         cancelled = true;
         result = ActionResult.failure("Action cancelled");
-        MineWrightMod.LOGGER.info("[{}] Cancelling action: {}", foreman.getSteveName(), getDescription());
+        MineWrightMod.LOGGER.info("[{}] Cancelling action: {}", foreman.getEntityName(), getDescription());
         onCancel();
     }
 

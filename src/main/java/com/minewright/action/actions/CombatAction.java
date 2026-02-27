@@ -37,7 +37,7 @@ public class CombatAction extends BaseAction {
         findTarget();
 
         if (target == null) {
-            com.minewright.MineWrightMod.LOGGER.warn("Foreman '{}' no targets nearby", foreman.getSteveName());
+            com.minewright.MineWrightMod.LOGGER.warn("Foreman '{}' no targets nearby", foreman.getEntityName());
         }
     }
 
@@ -51,7 +51,7 @@ public class CombatAction extends BaseAction {
             foreman.setSprinting(false);
             foreman.getNavigation().stop();
             com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' combat complete, invulnerability disabled",
-                foreman.getSteveName());
+                foreman.getEntityName());
             result = ActionResult.success("Combat complete");
             return;
         }
@@ -90,7 +90,7 @@ public class CombatAction extends BaseAction {
                 );
                 ticksStuck = 0;
                 com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' was stuck, teleported closer to target",
-                    foreman.getSteveName());
+                    foreman.getEntityName());
             }
         } else {
             ticksStuck = 0;
@@ -117,7 +117,7 @@ public class CombatAction extends BaseAction {
         foreman.setFlying(false);
         target = null;
         com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' combat cancelled, invulnerability disabled",
-            foreman.getSteveName());
+            foreman.getEntityName());
     }
 
     @Override
@@ -145,7 +145,7 @@ public class CombatAction extends BaseAction {
         target = nearest;
         if (target != null) {
             com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' locked onto: {} at {}m",
-                foreman.getSteveName(), target.getType().toString(), (int)nearestDistance);
+                foreman.getEntityName(), target.getType().toString(), (int)nearestDistance);
         }
     }
 

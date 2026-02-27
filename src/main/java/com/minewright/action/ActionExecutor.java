@@ -66,13 +66,13 @@ public class ActionExecutor {
 
         // Initialize plugin architecture components
         this.eventBus = new SimpleEventBus();
-        this.stateMachine = new AgentStateMachine(eventBus, foreman.getSteveName());
+        this.stateMachine = new AgentStateMachine(eventBus, foreman.getEntityName());
         this.interceptorChain = new InterceptorChain();
 
         // Setup interceptors
         interceptorChain.addInterceptor(new LoggingInterceptor());
         interceptorChain.addInterceptor(new MetricsInterceptor());
-        interceptorChain.addInterceptor(new EventPublishingInterceptor(eventBus, foreman.getSteveName()));
+        interceptorChain.addInterceptor(new EventPublishingInterceptor(eventBus, foreman.getEntityName()));
 
         // Build action context
         ServiceContainer container = new SimpleServiceContainer();
@@ -84,7 +84,7 @@ public class ActionExecutor {
             .build();
 
         MineWrightMod.LOGGER.debug("ActionExecutor initialized with plugin architecture for Foreman '{}'",
-            foreman.getSteveName());
+            foreman.getEntityName());
     }
 
     /**
@@ -93,7 +93,7 @@ public class ActionExecutor {
      */
     public TaskPlanner getTaskPlanner() {
         if (taskPlanner == null) {
-            MineWrightMod.LOGGER.info("Initializing TaskPlanner for Foreman '{}'", foreman.getSteveName());
+            MineWrightMod.LOGGER.info("Initializing TaskPlanner for Foreman '{}'", foreman.getEntityName());
             taskPlanner = new TaskPlanner();
         }
         return taskPlanner;
@@ -117,12 +117,12 @@ public class ActionExecutor {
      * @param command The natural language command from the user
      */
     public void processNaturalLanguageCommand(String command) {
-        MineWrightMod.LOGGER.info("Foreman '{}' processing command (async): {}", foreman.getSteveName(), command);
+        MineWrightMod.LOGGER.info("Foreman '{}' processing command (async): {}", foreman.getEntityName(), command);
 
         // If already planning, ignore new commands
         if (isPlanning) {
-            MineWrightMod.LOGGER.warn("Foreman '{}' is already planning, ignoring command: {}", foreman.getSteveName(), command);
-            sendToGUI(foreman.getSteveName(), "Hold your horses! I'm still figuring out the last job. Give me a moment!");
+            MineWrightMod.LOGGER.warn("Foreman '{}' is already planning, ignoring command: {}", foreman.getEntityName(), command);
+            sendToGUI(foreman.getEntityName(), "Hold your horses! I'm still figuring out the last job. Give me a moment!");
             return;
         }
 
@@ -143,21 +143,21 @@ public class ActionExecutor {
             this.isPlanning = true;
 
             // Send immediate feedback to user
-            sendToGUI(foreman.getSteveName(), "Looking over the blueprints...");
+            sendToGUI(foreman.getEntityName(), "Looking over the blueprints...");
 
             // Start async LLM call - returns immediately!
             planningFuture = getTaskPlanner().planTasksAsync(foreman, command);
 
-            MineWrightMod.LOGGER.info("Foreman '{}' started async planning for: {}", foreman.getSteveName(), command);
+            MineWrightMod.LOGGER.info("Foreman '{}' started async planning for: {}", foreman.getEntityName(), command);
 
         } catch (NoClassDefFoundError e) {
             MineWrightMod.LOGGER.error("Failed to initialize AI components", e);
-            sendToGUI(foreman.getSteveName(), "Sorry boss, my planning tools aren't working right now!");
+            sendToGUI(foreman.getEntityName(), "Sorry boss, my planning tools aren't working right now!");
             isPlanning = false;
             planningFuture = null;
         } catch (Exception e) {
             MineWrightMod.LOGGER.error("Error starting async planning", e);
-            sendToGUI(foreman.getSteveName(), "Something went wrong with the planning! Try again in a moment.");
+            sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Try again in a moment.");
             isPlanning = false;
             planningFuture = null;
         }
@@ -174,7 +174,7 @@ public class ActionExecutor {
      */
     @Deprecated
     public void processNaturalLanguageCommandSync(String command) {
-        MineWrightMod.LOGGER.info("Foreman '{}' processing command (SYNC - blocking!): {}", foreman.getSteveName(), command);
+        MineWrightMod.LOGGER.info("Foreman '{}' processing command (SYNC - blocking!): {}", foreman.getEntityName(), command);
 
         if (currentAction != null) {
             currentAction.cancel();
@@ -191,7 +191,7 @@ public class ActionExecutor {
             ResponseParser.ParsedResponse response = getTaskPlanner().planTasks(foreman, command);
 
             if (response == null) {
-                sendToGUI(foreman.getSteveName(), "I couldn't make heads or tails of that order, boss. Could you rephrase it?");
+                sendToGUI(foreman.getEntityName(), "I couldn't make heads or tails of that order, boss. Could you rephrase it?");
                 return;
             }
 
@@ -202,14 +202,14 @@ public class ActionExecutor {
             taskQueue.addAll(response.getTasks());
 
             if (MineWrightConfig.ENABLE_CHAT_RESPONSES.get()) {
-                sendToGUI(foreman.getSteveName(), "You got it! " + currentGoal);
+                sendToGUI(foreman.getEntityName(), "You got it! " + currentGoal);
             }
         } catch (NoClassDefFoundError e) {
             MineWrightMod.LOGGER.error("Failed to initialize AI components", e);
-            sendToGUI(foreman.getSteveName(), "Sorry boss, my planning tools aren't working right now!");
+            sendToGUI(foreman.getEntityName(), "Sorry boss, my planning tools aren't working right now!");
         }
 
-        MineWrightMod.LOGGER.info("Foreman '{}' queued {} tasks", foreman.getSteveName(), taskQueue.size());
+        MineWrightMod.LOGGER.info("Foreman '{}' queued {} tasks", foreman.getEntityName(), taskQueue.size());
     }
     
     /**
@@ -241,29 +241,29 @@ public class ActionExecutor {
                     taskQueue.addAll(response.getTasks());
 
                     if (MineWrightConfig.ENABLE_CHAT_RESPONSES.get()) {
-                        sendToGUI(foreman.getSteveName(), "You got it! " + currentGoal);
+                        sendToGUI(foreman.getEntityName(), "You got it! " + currentGoal);
                     }
 
                     MineWrightMod.LOGGER.info("Foreman '{}' async planning complete: {} tasks queued",
-                        foreman.getSteveName(), taskQueue.size());
+                        foreman.getEntityName(), taskQueue.size());
                 } else {
-                    sendToGUI(foreman.getSteveName(), "I couldn't make heads or tails of that order, boss. Could you rephrase it?");
-                    MineWrightMod.LOGGER.warn("Foreman '{}' async planning returned null response", foreman.getSteveName());
+                    sendToGUI(foreman.getEntityName(), "I couldn't make heads or tails of that order, boss. Could you rephrase it?");
+                    MineWrightMod.LOGGER.warn("Foreman '{}' async planning returned null response", foreman.getEntityName());
                 }
 
             } catch (java.util.concurrent.CancellationException e) {
-                MineWrightMod.LOGGER.info("Foreman '{}' planning was cancelled", foreman.getSteveName());
-                sendToGUI(foreman.getSteveName(), "Planning cancelled. Back to work!");
+                MineWrightMod.LOGGER.info("Foreman '{}' planning was cancelled", foreman.getEntityName());
+                sendToGUI(foreman.getEntityName(), "Planning cancelled. Back to work!");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning cancelled");
             } catch (java.util.concurrent.TimeoutException e) {
-                MineWrightMod.LOGGER.error("Foreman '{}' planning timed out after 60 seconds", foreman.getSteveName());
-                sendToGUI(foreman.getSteveName(), "Took too long to figure out the plan. The blueprints were too complex! Try a simpler task?");
+                MineWrightMod.LOGGER.error("Foreman '{}' planning timed out after 60 seconds", foreman.getEntityName());
+                sendToGUI(foreman.getEntityName(), "Took too long to figure out the plan. The blueprints were too complex! Try a simpler task?");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning timeout");
             } catch (Exception e) {
-                MineWrightMod.LOGGER.error("Foreman '{}' failed to get planning result", foreman.getSteveName(), e);
-                sendToGUI(foreman.getSteveName(), "Something went wrong with the planning! Let's try that again.");
+                MineWrightMod.LOGGER.error("Foreman '{}' failed to get planning result", foreman.getEntityName(), e);
+                sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Let's try that again.");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning failed");
             } finally {
@@ -277,7 +277,7 @@ public class ActionExecutor {
             if (currentAction.isComplete()) {
                 ActionResult result = currentAction.getResult();
                 MineWrightMod.LOGGER.info("Foreman '{}' - Action completed: {} (Success: {})",
-                    foreman.getSteveName(), result.getMessage(), result.isSuccess());
+                    foreman.getEntityName(), result.getMessage(), result.isSuccess());
 
                 foreman.getMemory().addAction(currentAction.getDescription());
 
@@ -287,7 +287,7 @@ public class ActionExecutor {
                     if (result.requiresReplanning()) {
                         // Also show in GUI if enabled
                         if (MineWrightConfig.ENABLE_CHAT_RESPONSES.get()) {
-                            sendToGUI(foreman.getSteveName(), "Problem on the job site: " + result.getMessage());
+                            sendToGUI(foreman.getEntityName(), "Problem on the job site: " + result.getMessage());
                         }
                     }
                 }
@@ -296,7 +296,7 @@ public class ActionExecutor {
             } else {
                 if (ticksSinceLastAction % 100 == 0) {
                     MineWrightMod.LOGGER.info("Foreman '{}' - Ticking action: {}",
-                        foreman.getSteveName(), currentAction.getDescription());
+                        foreman.getEntityName(), currentAction.getDescription());
                 }
                 currentAction.tick();
                 return;
@@ -333,7 +333,7 @@ public class ActionExecutor {
 
     private void executeTask(Task task) {
         MineWrightMod.LOGGER.info("Foreman '{}' executing task: {} (action type: {})",
-            foreman.getSteveName(), task, task.getAction());
+            foreman.getEntityName(), task, task.getAction());
 
         currentAction = createAction(task);
 
@@ -488,17 +488,17 @@ public class ActionExecutor {
      */
     public void queueTask(Task task) {
         if (task == null) {
-            MineWrightMod.LOGGER.warn("Attempted to queue null task for Foreman '{}'", foreman.getSteveName());
+            MineWrightMod.LOGGER.warn("Attempted to queue null task for Foreman '{}'", foreman.getEntityName());
             return;
         }
 
         // Use offer() for thread-safe, non-blocking insertion
         if (taskQueue.offer(task)) {
             MineWrightMod.LOGGER.info("Foreman '{}' - Task queued: {}",
-                foreman.getSteveName(), task.getAction());
+                foreman.getEntityName(), task.getAction());
         } else {
             MineWrightMod.LOGGER.warn("Foreman '{}' - Failed to queue task (queue full): {}",
-                foreman.getSteveName(), task.getAction());
+                foreman.getEntityName(), task.getAction());
         }
     }
 

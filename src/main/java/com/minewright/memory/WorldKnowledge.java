@@ -14,6 +14,10 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.*;
 
+/**
+ * Caches world knowledge (blocks, entities, biome) with TTL to avoid repeated expensive scans.
+ * Uses a static cache shared across all ForemanEntity instances since world data is relatively static.
+ */
 public class WorldKnowledge {
     private final ForemanEntity minewright;
     private final int scanRadius = 16;
@@ -21,15 +25,95 @@ public class WorldKnowledge {
     private List<Entity> nearbyEntities;
     private String biomeName;
 
+    // Cache configuration
+    private static final long CACHE_TTL_MS = 2000; // 2 seconds TTL
+    private static final Map<Integer, CachedWorldData> staticCache = new HashMap<>();
+    private static final int MAX_CACHE_SIZE = 50;
+
+    /**
+     * Cached world data with timestamp for TTL-based expiration.
+     */
+    private static class CachedWorldData {
+        final Map<Block, Integer> blocks;
+        final List<Entity> entities;
+        final String biome;
+        final long timestamp;
+
+        CachedWorldData(Map<Block, Integer> blocks, List<Entity> entities, String biome) {
+            this.blocks = blocks;
+            this.entities = entities;
+            this.biome = biome;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > CACHE_TTL_MS;
+        }
+    }
+
     public WorldKnowledge(ForemanEntity minewright) {
         this.minewright = minewright;
         scan();
     }
 
     private void scan() {
+        // Generate cache key based on position (block coordinates to reduce cache misses from small movements)
+        int cacheKey = generateCacheKey();
+
+        // Check cache first
+        CachedWorldData cached = staticCache.get(cacheKey);
+        if (cached != null && !cached.isExpired()) {
+            // Cache hit - use cached data
+            this.nearbyBlocks = cached.blocks;
+            this.nearbyEntities = cached.entities;
+            this.biomeName = cached.biome;
+            return;
+        }
+
+        // Cache miss or expired - perform full scan
         scanBiome();
         scanBlocks();
         scanEntities();
+
+        // Cache the results
+        cacheResults(cacheKey);
+    }
+
+    /**
+     * Generates a cache key based on the Foreman's chunk position.
+     * Using chunk coordinates (>> 4) instead of block coordinates reduces cache misses
+     * when the Foreman moves small distances.
+     */
+    private int generateCacheKey() {
+        BlockPos pos = minewright.blockPosition();
+        // Use chunk coordinates for the key (blocks within same chunk share cache)
+        int chunkX = pos.getX() >> 4;
+        int chunkY = pos.getY() >> 4;
+        int chunkZ = pos.getZ() >> 4;
+        // Combine into a single hash
+        return (chunkX * 31 + chunkY) * 31 + chunkZ;
+    }
+
+    /**
+     * Caches the current scan results.
+     * Evicts oldest entries if cache is too large.
+     */
+    private void cacheResults(int cacheKey) {
+        // Clean up expired entries first
+        staticCache.entrySet().removeIf(entry -> entry.getValue().isExpired());
+
+        // Evict oldest if cache is too large
+        if (staticCache.size() >= MAX_CACHE_SIZE) {
+            // Remove first entry (simple FIFO eviction)
+            Iterator<Map.Entry<Integer, CachedWorldData>> it = staticCache.entrySet().iterator();
+            if (it.hasNext()) {
+                it.next();
+                it.remove();
+            }
+        }
+
+        // Add to cache
+        staticCache.put(cacheKey, new CachedWorldData(nearbyBlocks, nearbyEntities, biomeName));
     }
 
     private void scanBiome() {

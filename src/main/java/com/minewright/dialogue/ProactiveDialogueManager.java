@@ -133,7 +133,7 @@ public class ProactiveDialogueManager {
         );
 
         LOGGER.info("ProactiveDialogueManager initialized for MineWright '{}'",
-            minewright.getSteveName());
+            minewright.getEntityName());
     }
 
     /**
@@ -381,7 +381,7 @@ public class ProactiveDialogueManager {
             // Use batching system for background comments (lower priority, rate-limit aware)
             Map<String, Object> batchContext = new HashMap<>();
             batchContext.put("triggerType", triggerType);
-            batchContext.put("minewrightName", minewright.getSteveName());
+            batchContext.put("minewrightName", minewright.getEntityName());
             batchContext.put("rapport", memory.getRapportLevel());
 
             // Submit as background prompt (aggressive batching, lower priority)
@@ -429,7 +429,7 @@ public class ProactiveDialogueManager {
         prompt.append(" comment for situation: ");
         prompt.append(context);
         prompt.append(". MineWright's name is ");
-        prompt.append(minewright.getSteveName());
+        prompt.append(minewright.getEntityName());
         prompt.append(". Keep it under 15 words. Be natural and ");
         prompt.append(memory.getPersonality().extraversion > 60 ? "outgoing" : "reserved");
         prompt.append(".");

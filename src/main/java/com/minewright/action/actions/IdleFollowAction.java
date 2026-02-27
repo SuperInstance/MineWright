@@ -32,7 +32,7 @@ public class IdleFollowAction extends BaseAction {
         findNearestPlayer();
 
         if (targetPlayer == null) {
-            MineWrightMod.LOGGER.debug("Foreman '{}' has no player to follow (idle)", foreman.getSteveName());
+            MineWrightMod.LOGGER.debug("Foreman '{}' has no player to follow (idle)", foreman.getEntityName());
         }
     }
 
@@ -81,7 +81,7 @@ public class IdleFollowAction extends BaseAction {
             foreman.getNavigation().stop(); // Clear navigation after teleport
 
             MineWrightMod.LOGGER.info("Foreman '{}' teleported to player (was {} blocks away)",
-                foreman.getSteveName(), (int)distance);
+                foreman.getEntityName(), (int)distance);
 
         } else if (distance > FOLLOW_DISTANCE) {
             // Too far, move closer (normal walking)
@@ -136,7 +136,7 @@ public class IdleFollowAction extends BaseAction {
 
         if (nearest != targetPlayer && nearest != null) {
             MineWrightMod.LOGGER.debug("Foreman '{}' now following {} (idle)",
-                foreman.getSteveName(), nearest.getName().getString());
+                foreman.getEntityName(), nearest.getName().getString());
         }
 
         targetPlayer = nearest;

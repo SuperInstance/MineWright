@@ -1,12 +1,12 @@
 [project]
 name = "minecraft-agent-reflex"
 version = "1.0.0"
-description = "Cloudflare Worker Agent for Minecraft Steve AI - Reflex Agent with Durable Objects"
+description = "Cloudflare Worker Agent for Minecraft MineWright - Reflex Agent with Durable Objects"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
-    { name = "Steve AI Team", email = "dev@steve.ai" }
+    { name = "MineWright Team", email = "dev@minewright.ai" }
 ]
 keywords = ["minecraft", "ai", "agent", "cloudflare", "workers", "durable-objects"]
 

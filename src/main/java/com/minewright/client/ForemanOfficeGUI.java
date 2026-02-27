@@ -740,7 +740,7 @@ public class ForemanOfficeGUI {
         }
 
         // Highlight if targeted
-        if (crew.getSteveName().equals(targetedCrewMember)) {
+        if (crew.getEntityName().equals(targetedCrewMember)) {
             int targetColor = isHovered ? 0x502196F3 : 0x402196F3;
             graphics.fillGradient(x + 2, y, x + width - 2, y + itemHeight, targetColor, targetColor);
         }
@@ -750,7 +750,7 @@ public class ForemanOfficeGUI {
             hoveredCrewIndex = index;
         }
 
-        String crewName = crew.getSteveName();
+        String crewName = crew.getEntityName();
 
         // Status indicator dot
         int statusColor = getStatusColor(crew);
@@ -1082,13 +1082,13 @@ public class ForemanOfficeGUI {
             for (ForemanEntity crew : crewMembers) {
                 if (mouseY >= crewY && mouseY <= crewY + 24) {
                     // Toggle targeting
-                    if (crew.getSteveName().equals(targetedCrewMember)) {
+                    if (crew.getEntityName().equals(targetedCrewMember)) {
                         targetedCrewMember = null; // Untarget
-                        addSystemMessage("Removed " + crew.getSteveName() + " from command targeting");
+                        addSystemMessage("Removed " + crew.getEntityName() + " from command targeting");
                         playUISound(SoundEvents.UI_BUTTON_CLICK.value(), 0.2f);
                     } else {
-                        targetedCrewMember = crew.getSteveName(); // Target
-                        addSystemMessage("Orders will be sent to " + crew.getSteveName());
+                        targetedCrewMember = crew.getEntityName(); // Target
+                        addSystemMessage("Orders will be sent to " + crew.getEntityName());
                         playUISound(SoundEvents.UI_BUTTON_CLICK.value(), 0.35f);
                     }
                     return;
@@ -1152,7 +1152,7 @@ public class ForemanOfficeGUI {
         if (targetCrew.isEmpty()) {
             var crew = MineWrightMod.getCrewManager().getAllCrewMembers();
             if (!crew.isEmpty()) {
-                targetCrew.add(crew.iterator().next().getSteveName());
+                targetCrew.add(crew.iterator().next().getEntityName());
             } else {
                 // No crew members available
                 addSystemMessage("Job site is empty! Use 'spawn <name>' to hire some crew members.");
@@ -1182,7 +1182,7 @@ public class ForemanOfficeGUI {
             commandLower.startsWith("everyone ") || commandLower.startsWith("everybody ")) {
             var allCrew = MineWrightMod.getCrewManager().getAllCrewMembers();
             for (ForemanEntity crew : allCrew) {
-                targets.add(crew.getSteveName());
+                targets.add(crew.getEntityName());
             }
             return targets;
         }
@@ -1190,7 +1190,7 @@ public class ForemanOfficeGUI {
         var allCrew = MineWrightMod.getCrewManager().getAllCrewMembers();
         List<String> availableNames = new ArrayList<>();
         for (ForemanEntity crew : allCrew) {
-            availableNames.add(crew.getSteveName().toLowerCase());
+            availableNames.add(crew.getEntityName().toLowerCase());
         }
 
         String[] parts = command.split(",");
@@ -1200,8 +1200,8 @@ public class ForemanOfficeGUI {
 
             if (availableNames.contains(firstWord)) {
                 for (ForemanEntity crew : allCrew) {
-                    if (crew.getSteveName().equalsIgnoreCase(firstWord)) {
-                        targets.add(crew.getSteveName());
+                    if (crew.getEntityName().equalsIgnoreCase(firstWord)) {
+                        targets.add(crew.getEntityName());
                         break;
                     }
                 }

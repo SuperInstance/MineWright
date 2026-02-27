@@ -53,7 +53,7 @@ public class BuildStructureAction extends BaseAction {
             foreman.setFlying(true);
 
             MineWrightMod.LOGGER.info("Foreman '{}' JOINING collaborative build of '{}' ({}% complete) - FLYING & INVULNERABLE ENABLED",
-                foreman.getSteveName(), structureType, collaborativeBuild.getProgressPercentage());
+                foreman.getEntityName(), structureType, collaborativeBuild.getProgressPercentage());
 
             buildMaterials = new ArrayList<>();
             buildMaterials.add(Blocks.OAK_PLANKS); // Default material
@@ -162,7 +162,7 @@ public class BuildStructureAction extends BaseAction {
         if (collaborativeBuild != null) {
             isCollaborative = true;
             MineWrightMod.LOGGER.info("Foreman '{}' JOINING existing {} collaborative build at {}",
-                foreman.getSteveName(), structureType, collaborativeBuild.startPos);
+                foreman.getEntityName(), structureType, collaborativeBuild.startPos);
         } else {
             List<BlockPlacement> collaborativeBlocks = new ArrayList<>();
             for (BlockPlacement bp : buildPlan) {
@@ -172,13 +172,13 @@ public class BuildStructureAction extends BaseAction {
             collaborativeBuild = CollaborativeBuildManager.registerBuild(structureType, collaborativeBlocks, clearPos);
             isCollaborative = true;
             MineWrightMod.LOGGER.info("Foreman '{}' CREATED new {} collaborative build at {}",
-                foreman.getSteveName(), structureType, clearPos);
+                foreman.getEntityName(), structureType, clearPos);
         }
 
         foreman.setFlying(true);
 
         MineWrightMod.LOGGER.info("Foreman '{}' starting COLLABORATIVE build of {} at {} with {} blocks using materials: {} [FLYING ENABLED]",
-            foreman.getSteveName(), structureType, clearPos, buildPlan.size(), buildMaterials);
+            foreman.getEntityName(), structureType, clearPos, buildPlan.size(), buildMaterials);
     }
 
     @Override
@@ -201,12 +201,12 @@ public class BuildStructureAction extends BaseAction {
 
             for (int i = 0; i < BLOCKS_PER_TICK; i++) {
                 BlockPlacement placement =
-                    CollaborativeBuildManager.getNextBlock(collaborativeBuild, foreman.getSteveName());
+                    CollaborativeBuildManager.getNextBlock(collaborativeBuild, foreman.getEntityName());
 
                 if (placement == null) {
                     if (ticksRunning % 20 == 0) {
                         MineWrightMod.LOGGER.info("Foreman '{}' has no more blocks! Build {}% complete",
-                            foreman.getSteveName(), collaborativeBuild.getProgressPercentage());
+                            foreman.getEntityName(), collaborativeBuild.getProgressPercentage());
                     }
                     break;
                 }
@@ -215,7 +215,7 @@ public class BuildStructureAction extends BaseAction {
                 double distance = Math.sqrt(foreman.blockPosition().distSqr(pos));
                 if (distance > 5) {
                     foreman.teleportTo(pos.getX() + 2, pos.getY(), pos.getZ() + 2);
-                    MineWrightMod.LOGGER.info("Foreman '{}' teleported to block at {}", foreman.getSteveName(), pos);
+                    MineWrightMod.LOGGER.info("Foreman '{}' teleported to block at {}", foreman.getEntityName(), pos);
                 }
 
                 foreman.getLookControl().setLookAt(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
@@ -228,7 +228,7 @@ public class BuildStructureAction extends BaseAction {
                 foreman.level().setBlock(pos, blockState, 3);
 
                 MineWrightMod.LOGGER.info("Foreman '{}' PLACED BLOCK at {} - Total: {}/{}",
-                    foreman.getSteveName(), pos, collaborativeBuild.getBlocksPlaced(),
+                    foreman.getEntityName(), pos, collaborativeBuild.getBlocksPlaced(),
                     collaborativeBuild.getTotalBlocks());
 
                 // Particles and sound

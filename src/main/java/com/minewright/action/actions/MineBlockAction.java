@@ -115,7 +115,7 @@ public class MineBlockAction extends BaseAction {
             String[] dirNames = {"North", "East", "South", "West"};
             int dirIndex = miningDirectionZ == -1 ? 0 : (miningDirectionX == 1 ? 1 : (miningDirectionZ == 1 ? 2 : 3));
             MineWrightMod.LOGGER.info("Foreman '{}' mining {} in ONE direction: {}",
-                foreman.getSteveName(), targetBlock.getName().getString(), dirNames[dirIndex]);
+                foreman.getEntityName(), targetBlock.getName().getString(), dirNames[dirIndex]);
         } else {
             miningStartPos = foreman.blockPosition();
             currentTunnelPos = miningStartPos;
@@ -128,7 +128,7 @@ public class MineBlockAction extends BaseAction {
         equipIronPickaxe();
         
         MineWrightMod.LOGGER.info("Foreman '{}' mining {} - staying at {} [SLOW & VISIBLE]",
-            foreman.getSteveName(), targetBlock.getName().getString(), miningStartPos);
+            foreman.getEntityName(), targetBlock.getName().getString(), miningStartPos);
         
         // Look for ore nearby
         findNextBlock();
@@ -183,7 +183,7 @@ public class MineBlockAction extends BaseAction {
             ticksSinceLastMine = 0; // Reset delay timer
             
             MineWrightMod.LOGGER.info("Foreman '{}' moved to ore and mined {} at {} - Total: {}/{}",
-                foreman.getSteveName(), targetBlock.getName().getString(), currentTarget,
+                foreman.getEntityName(), targetBlock.getName().getString(), currentTarget,
                 minedCount, targetQuantity);
             
             if (minedCount >= targetQuantity) {
@@ -224,7 +224,7 @@ public class MineBlockAction extends BaseAction {
             if (torchPos != null && foreman.level().getBlockState(torchPos).isAir()) {
                 foreman.level().setBlock(torchPos, Blocks.TORCH.defaultBlockState(), 3);
                 MineWrightMod.LOGGER.info("Foreman '{}' placed torch at {} (light level was {})",
-                    foreman.getSteveName(), torchPos, lightLevel);
+                    foreman.getEntityName(), torchPos, lightLevel);
                 
                 foreman.swing(InteractionHand.MAIN_HAND, true);
             }
@@ -269,7 +269,7 @@ public class MineBlockAction extends BaseAction {
             foreman.teleportTo(centerPos.getX() + 0.5, centerPos.getY(), centerPos.getZ() + 0.5);
             foreman.swing(InteractionHand.MAIN_HAND, true);
             foreman.level().destroyBlock(centerPos, true);
-            MineWrightMod.LOGGER.info("Foreman '{}' mining tunnel at {}", foreman.getSteveName(), centerPos);
+            MineWrightMod.LOGGER.info("Foreman '{}' mining tunnel at {}", foreman.getEntityName(), centerPos);
         }
         
         BlockState aboveState = foreman.level().getBlockState(abovePos);
@@ -314,7 +314,7 @@ public class MineBlockAction extends BaseAction {
             
             if (currentTarget != null) {
                 MineWrightMod.LOGGER.info("Foreman '{}' found {} ahead in tunnel at {}",
-                    foreman.getSteveName(), targetBlock.getName().getString(), currentTarget);
+                    foreman.getEntityName(), targetBlock.getName().getString(), currentTarget);
             }
         }
     }
@@ -328,7 +328,7 @@ public class MineBlockAction extends BaseAction {
             net.minecraft.world.item.Items.IRON_PICKAXE
         );
         foreman.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, pickaxe);
-        MineWrightMod.LOGGER.info("Foreman '{}' equipped iron pickaxe for mining", foreman.getSteveName());
+        MineWrightMod.LOGGER.info("Foreman '{}' equipped iron pickaxe for mining", foreman.getEntityName());
     }
 
     /**

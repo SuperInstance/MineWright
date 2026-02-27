@@ -241,7 +241,7 @@ private static final String OPENAI_API_URL = "https://api.z.ai/api/paas/v4/chat/
 
 ### 5.1 Current Configuration
 
-**File:** `C:\Users\casey\steve\run\config\steve-common.toml`
+**File:** `C:\Users\casey\steve\run\config\minewright-common.toml`
 
 ```toml
 [ai]
@@ -373,7 +373,7 @@ The `BatchingLLMClient` (`C:\Users\casey\steve\src\main\java\com\minewright\llm\
 | `OpenAIClient.java` | ✅ Configured | Endpoint: `https://api.z.ai/api/paas/v4/chat/completions` |
 | `AsyncOpenAIClient.java` | ✅ Configured | Same endpoint |
 | `MineWrightConfig.java` | ⚠️ Needs Update | References `glm-5` (may not exist) |
-| `steve-common.toml` | ⚠️ Needs Update | Uses `glm-5` |
+| `minewright-common.toml` | ⚠️ Needs Update | Uses `glm-5` |
 | Provider Selection | ⚠️ Confusing | z.ai uses "openai" provider |
 | Documentation | ❌ Missing | No z.ai-specific docs |
 

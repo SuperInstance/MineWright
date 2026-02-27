@@ -3,8 +3,7 @@ package com.minewright.llm.async;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -32,8 +31,8 @@ public class LLMCache {
     private static final int MAX_CACHE_SIZE = 500;
     private static final long TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-    private final ConcurrentHashMap<String, CacheEntry> cache;
-    private final ConcurrentLinkedDeque<String> accessOrder; // For LRU eviction
+    private final ConcurrentHashMap<Integer, CacheEntry> cache;
+    private final ConcurrentLinkedDeque<Integer> accessOrder; // For LRU eviction
     private final AtomicLong hitCount = new AtomicLong(0);
     private final AtomicLong missCount = new AtomicLong(0);
     private final AtomicLong evictionCount = new AtomicLong(0);
@@ -52,7 +51,7 @@ public class LLMCache {
      * Retrieves a cached response if available and not expired.
      */
     public Optional<LLMResponse> get(String prompt, String model, String providerId) {
-        String key = generateKey(prompt, model, providerId);
+        int key = generateKey(prompt, model, providerId);
         CacheEntry entry = cache.get(key);
 
         if (entry != null) {
@@ -61,8 +60,8 @@ public class LLMCache {
                 hitCount.incrementAndGet();
                 accessOrder.remove(key);
                 accessOrder.addLast(key);
-                LOGGER.debug("Cache HIT for provider={}, model={}, promptHash={}",
-                    providerId, model, key.substring(0, 8));
+                LOGGER.debug("Cache HIT for provider={}, model={}, key={}",
+                    providerId, model, key);
                 return Optional.of(entry.response);
             } else {
                 // Expired - remove it
@@ -72,8 +71,8 @@ public class LLMCache {
         }
 
         missCount.incrementAndGet();
-        LOGGER.debug("Cache MISS for provider={}, model={}, promptHash={}",
-            providerId, model, key.substring(0, 8));
+        LOGGER.debug("Cache MISS for provider={}, model={}, key={}",
+            providerId, model, key);
         return Optional.empty();
     }
 
@@ -81,7 +80,7 @@ public class LLMCache {
      * Stores a response in the cache.
      */
     public void put(String prompt, String model, String providerId, LLMResponse response) {
-        String key = generateKey(prompt, model, providerId);
+        int key = generateKey(prompt, model, providerId);
 
         // Evict if at capacity
         while (cache.size() >= MAX_CACHE_SIZE) {
@@ -93,15 +92,15 @@ public class LLMCache {
         cache.put(key, new CacheEntry(cachedResponse));
         accessOrder.addLast(key);
 
-        LOGGER.debug("Cached response for provider={}, model={}, promptHash={}, tokens={}",
-            providerId, model, key.substring(0, 8), response.getTokensUsed());
+        LOGGER.debug("Cached response for provider={}, model={}, key={}, tokens={}",
+            providerId, model, key, response.getTokensUsed());
     }
 
     /**
      * Evicts the oldest (least recently used) entry.
      */
     private void evictOldest() {
-        String oldest = accessOrder.pollFirst();
+        Integer oldest = accessOrder.pollFirst();
         if (oldest != null) {
             cache.remove(oldest);
             evictionCount.incrementAndGet();
@@ -109,24 +108,14 @@ public class LLMCache {
     }
 
     /**
-     * Generates a cache key from prompt, model, and provider using SHA-256.
+     * Generates a cache key from prompt, model, and provider using Objects.hash().
+     * Much faster than SHA-256 and sufficient for non-cryptographic cache keys.
+     * Uses consistent hash combining to minimize collisions.
      */
-    private String generateKey(String prompt, String model, String providerId) {
-        String composite = providerId + ":" + model + ":" + prompt;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(composite.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            // Fallback to simple hash if SHA-256 unavailable
-            return String.valueOf(composite.hashCode());
-        }
+    private int generateKey(String prompt, String model, String providerId) {
+        // Use Objects.hash which combines hashCodes consistently
+        // This is much faster than SHA-256 and sufficient for cache keys
+        return Objects.hash(providerId, model, prompt);
     }
 
     /**

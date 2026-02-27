@@ -72,6 +72,22 @@ public class AsyncOpenAIClient implements AsyncLLMClient {
             return t;
         });
 
+    /**
+     * Shuts down the retry scheduler.
+     * Should be called when the application is shutting down.
+     */
+    public static void shutdown() {
+        RETRY_SCHEDULER.shutdown();
+        try {
+            if (!RETRY_SCHEDULER.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                RETRY_SCHEDULER.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            RETRY_SCHEDULER.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
     private final HttpClient httpClient;
     private final String apiKey;
     private final String model;

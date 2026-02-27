@@ -1,5 +1,5 @@
 # Cloudflare Workers Configuration for Minecraft Agent Reflex
-# Minecraft Steve AI Agent - Cloudflare Durable Objects Backend
+# Minecraft MineWright Agent - Cloudflare Durable Objects Backend
 
 name = "minecraft-agent-reflex"
 main = "src/index.py"

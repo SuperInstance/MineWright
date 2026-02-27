@@ -340,7 +340,7 @@ LOGGER.error("{} API request failed: {}", model.split("-")[0], statusCode);
 
 ### Current Status: CORRECT
 
-**config/steve-common.toml** structure:
+**config/minewright-common.toml** structure:
 ```toml
 [ai]
 provider = "openai"  # This maps to AsyncOpenAIClient (which uses z.ai endpoint)

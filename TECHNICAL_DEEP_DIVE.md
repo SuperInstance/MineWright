@@ -1419,7 +1419,7 @@ public static void onRenderOverlay(RenderGuiOverlayEvent.Post event) {
 
     // Render header
     graphics.fillGradient(panelX, panelY, screenWidth, 35, HEADER_COLOR, HEADER_COLOR);
-    graphics.drawString(mc.font, "§lSteve AI", panelX + 6, panelY + 8, TEXT_COLOR);
+    graphics.drawString(mc.font, "§lMineWright", panelX + 6, panelY + 8, TEXT_COLOR);
 }
 ```
 
@@ -1573,7 +1573,7 @@ static {
 }
 ```
 
-**Config File** (`config/steve-common.toml`):
+**Config File** (`config/minewright-common.toml`):
 ```toml
 [ai]
     provider = "groq"

@@ -1,6 +1,6 @@
 # Cloudflare Worker Integration Guide
 
-This guide explains how to integrate the Cloudflare Worker Reflex Agent with the Minecraft Steve AI mod.
+This guide explains how to integrate the Cloudflare Worker Reflex Agent with the Minecraft MineWright mod.
 
 ## Overview
 
@@ -28,13 +28,13 @@ Foreman Orchestrator (on your server)
 
 Add an HTTP client to your mod for communicating with the Cloudflare Worker.
 
-In `src/main/java/com/steve/client/CloudflareReflexClient.java`:
+In `src/main/java/com/minewright/client/CloudflareReflexClient.java`:
 
 ```java
-package com.steve.client;
+package com.minewright.client;
 
 import com.google.gson.*;
-import com.steve.entity.SteveEntity;
+import com.minewright.entity.ForemanEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 
@@ -278,7 +278,7 @@ public class SteveEntity extends PathfinderMob {
 
 ### 3. Configuration
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [cloudflare]

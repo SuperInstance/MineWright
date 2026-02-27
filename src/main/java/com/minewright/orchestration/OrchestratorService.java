@@ -91,6 +91,11 @@ public class OrchestratorService {
     private volatile String foremanId;
 
     /**
+     * Track message handlers for each agent to enable cleanup on unregister.
+     */
+    private final Map<String, java.util.function.Consumer<AgentMessage>> messageHandlers;
+
+    /**
      * Creates a new OrchestratorService.
      */
     public OrchestratorService() {
@@ -98,6 +103,7 @@ public class OrchestratorService {
         this.activePlans = new ConcurrentHashMap<>();
         this.workerAssignments = new ConcurrentHashMap<>();
         this.workerRegistry = new ConcurrentHashMap<>();
+        this.messageHandlers = new ConcurrentHashMap<>();
 
         LOGGER.info("OrchestratorService initialized");
     }
@@ -109,8 +115,8 @@ public class OrchestratorService {
      * @param role  The agent's role in the hierarchy
      */
     public void registerAgent(ForemanEntity minewright, AgentRole role) {
-        String agentId = minewright.getSteveName();
-        String agentName = minewright.getSteveName();
+        String agentId = minewright.getEntityName();
+        String agentName = minewright.getEntityName();
 
         // Register with communication bus
         communicationBus.registerAgent(agentId, agentName);
@@ -128,9 +134,11 @@ public class OrchestratorService {
             LOGGER.info("Registered WORKER: {} (role={})", agentName, role);
         }
 
-        // Subscribe to messages from this agent
-        communicationBus.subscribe(agentId, message ->
-            handleMessageFromAgent(agentId, message));
+        // Subscribe to messages from this agent and store handler for cleanup
+        java.util.function.Consumer<AgentMessage> handler = message ->
+            handleMessageFromAgent(agentId, message);
+        communicationBus.subscribe(agentId, handler);
+        messageHandlers.put(agentId, handler);
     }
 
     /**
@@ -139,6 +147,12 @@ public class OrchestratorService {
      * @param agentId Agent ID to unregister
      */
     public void unregisterAgent(String agentId) {
+        // Clean up message handler subscription to prevent memory leak
+        java.util.function.Consumer<AgentMessage> handler = messageHandlers.remove(agentId);
+        if (handler != null) {
+            communicationBus.unsubscribe(agentId, handler);
+        }
+
         communicationBus.unregisterAgent(agentId);
 
         if (foremanId != null && foremanId.equals(agentId)) {
@@ -218,9 +232,9 @@ public class OrchestratorService {
                 TaskAssignment assignment = new TaskAssignment(
                     "solo", task, planId
                 );
-                assignment.assignTo(firstSteve.getSteveName());
+                assignment.assignTo(firstSteve.getEntityName());
                 plan.addAssignment(assignment);
-                workerAssignments.put(firstSteve.getSteveName(), assignment);
+                workerAssignments.put(firstSteve.getEntityName(), assignment);
             }
         }
 
@@ -234,8 +248,8 @@ public class OrchestratorService {
     private void distributeTasks(PlanExecution plan, Collection<ForemanEntity> availableSteves) {
         List<Task> tasks = plan.getRemainingTasks();
         List<ForemanEntity> availableWorkers = availableSteves.stream()
-            .filter(s -> !s.getSteveName().equals(foremanId))
-            .filter(s -> !workerAssignments.containsKey(s.getSteveName()))
+            .filter(s -> !s.getEntityName().equals(foremanId))
+            .filter(s -> !workerAssignments.containsKey(s.getEntityName()))
             .collect(Collectors.toList());
 
         LOGGER.info("[Orchestrator] Distributing {} tasks to {} available workers",
@@ -249,7 +263,7 @@ public class OrchestratorService {
             } else {
                 // Round-robin assignment
                 ForemanEntity worker = availableWorkers.get(workerIndex % availableWorkers.size());
-                assignTaskToAgent(plan, task, worker.getSteveName());
+                assignTaskToAgent(plan, task, worker.getEntityName());
                 workerIndex++;
             }
         }
@@ -538,6 +552,7 @@ public class OrchestratorService {
         activePlans.clear();
         workerAssignments.clear();
         workerRegistry.clear();
+        messageHandlers.clear();
         foremanId = null;
 
         LOGGER.info("OrchestratorService shut down");

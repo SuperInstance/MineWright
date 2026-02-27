@@ -13,7 +13,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Manages collaborative building where multiple Foremen work on DIFFERENT SECTIONS of the same structure
  */
 public class CollaborativeBuildManager {
-    
+
+    // Reusable comparator for sorting blocks by Y level (bottom-to-top)
+    private static final Comparator<BlockPlacement> BOTTOM_TO_TOP_COMPARATOR =
+        Comparator.comparingInt(p -> p.pos.getY());
+
     public static class CollaborativeBuild {
         public final String structureId;
         public final List<BlockPlacement> buildPlan;
@@ -77,11 +81,11 @@ public class CollaborativeBuildManager {
                     southEast.add(placement);
                 }
             }
-            Comparator<BlockPlacement> bottomToTop = Comparator.comparingInt(p -> p.pos.getY());
-            northWest.sort(bottomToTop);
-            northEast.sort(bottomToTop);
-            southWest.sort(bottomToTop);
-            southEast.sort(bottomToTop);
+            // Sort all quadrants bottom-to-top for efficient building
+            northWest.sort(BOTTOM_TO_TOP_COMPARATOR);
+            northEast.sort(BOTTOM_TO_TOP_COMPARATOR);
+            southWest.sort(BOTTOM_TO_TOP_COMPARATOR);
+            southEast.sort(BOTTOM_TO_TOP_COMPARATOR);
             
             List<BuildSection> sectionList = new ArrayList<>();
             if (!northWest.isEmpty()) sectionList.add(new BuildSection(0, northWest, "NORTH-WEST"));
@@ -196,17 +200,7 @@ public class CollaborativeBuildManager {
         }
 
         BuildSection section = build.sections.get(sectionIndex);
-        BlockPlacement block = section.getNextBlock();
-
-        if (block == null) {
-            if (sectionIndex != null) {
-                section = build.sections.get(sectionIndex);
-                block = section.getNextBlock();
-                if (block != null) {                }
-            }
-        }
-
-        return block;
+        return section.getNextBlock();
     }
     
     /**

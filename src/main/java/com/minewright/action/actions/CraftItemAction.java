@@ -20,13 +20,13 @@ public class CraftItemAction extends BaseAction {
         quantity = task.getIntParameter("quantity", 1);
         ticksRunning = 0;
 
-        MineWrightMod.LOGGER.info("[{}] Craft action started: {}x {}", foreman.getSteveName(), quantity, itemName);
+        MineWrightMod.LOGGER.info("[{}] Craft action started: {}x {}", foreman.getEntityName(), quantity, itemName);
 
         // - Check if recipe exists
         // - Check if Foreman has ingredients
         // - Navigate to crafting table if needed
 
-        MineWrightMod.LOGGER.warn("[{}] Crafting not yet implemented for item: {}", foreman.getSteveName(), itemName);
+        MineWrightMod.LOGGER.warn("[{}] Crafting not yet implemented for item: {}", foreman.getEntityName(), itemName);
         result = ActionResult.failure("Crafting not yet implemented", false);
     }
 
@@ -37,7 +37,7 @@ public class CraftItemAction extends BaseAction {
 
     @Override
     protected void onCancel() {
-        MineWrightMod.LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getSteveName(), quantity, itemName);
+        MineWrightMod.LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getEntityName(), quantity, itemName);
         foreman.getNavigation().stop();
     }
 

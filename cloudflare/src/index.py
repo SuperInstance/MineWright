@@ -1,7 +1,7 @@
 """
 Minecraft Agent Reflex - Cloudflare Worker
 Main entry point for the reflex agent that serves tactical decisions
-to Minecraft Steve AI agents via Durable Objects.
+to Minecraft MineWright agents via Durable Objects.
 
 This worker implements:
 - AgentState Durable Object for per-agent state management
