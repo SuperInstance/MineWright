@@ -1342,7 +1342,7 @@ Test realistic failure scenarios:
 
 ## Configuration
 
-### Config File (config/steve-common.toml)
+### Config File (config/minewright-common.toml)
 
 ```toml
 [actionRetry]

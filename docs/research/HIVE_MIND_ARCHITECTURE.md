@@ -1425,7 +1425,7 @@ docker run -d \
   jupyter-kernel-gateway:latest
 ```
 
-Configuration (`config/steve-common.toml`):
+Configuration (`config/minewright-common.toml`):
 ```toml
 [jupyter]
 enabled = true
@@ -1872,7 +1872,7 @@ async def handle_worker_error(error):
 ### Configuration Files
 
 - **Cloudflare Wrangler:** `C:\Users\casey\steve\cloudflare\wrangler.toml`
-- **Minecraft Config:** `C:\Users\casey\steve\config\steve-common.toml`
+- **Minecraft Config:** `C:\Users\casey\steve\config\minewright-common.toml`
 
 ---
 

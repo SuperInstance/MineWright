@@ -509,7 +509,7 @@ public class CachedVectorStore<T> implements VectorStore<T> {
 
 ## 8. Configuration Options
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [vectorStore]
@@ -637,4 +637,4 @@ Caching + Tuning
 **Document Version:** 1.0
 **Last Updated:** 2025-02-27
 **Author:** Research based on 2025 state of vector search technology
-**Project:** MineWright Minecraft Mod - Steve AI
+**Project:** MineWright Minecraft Mod - MineWright AI

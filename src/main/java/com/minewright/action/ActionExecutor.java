@@ -21,38 +21,168 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Executes actions for a MineWright crew member using the plugin-based action system.
+ * Executes actions for a MineWright crew member using a tick-based execution model.
  *
- * <p><b>Architecture:</b></p>
+ * <p><b>Purpose:</b></p>
+ * <p>The ActionExecutor is responsible for queuing tasks and executing them
+ * one action at a time, with each action progressing tick-by-tick (20 times per second).
+ * This design prevents the Minecraft server from freezing during long-running operations
+ * like LLM planning calls.</p>
+ *
+ * <p><b>Key Features:</b></p>
  * <ul>
- *   <li>Uses ActionRegistry for dynamic action creation (Factory + Registry patterns)</li>
- *   <li>Uses InterceptorChain for cross-cutting concerns (logging, metrics, events)</li>
- *   <li>Uses AgentStateMachine for explicit state management</li>
- *   <li>Falls back to legacy switch statement if registry lookup fails</li>
+ *   <li><b>Tick-Based Execution:</b> Actions implement {@code tick()} and are called
+ *       once per game tick, allowing progress without blocking</li>
+ *   <li><b>Async LLM Planning:</b> Natural language commands are processed asynchronously
+ *       using {@link CompletableFuture}, returning immediately while planning happens
+ *       on a separate thread pool</li>
+ *   <li><b>Plugin Architecture:</b> Actions are created via {@link ActionRegistry}
+ *       using factory pattern, allowing dynamic extension</li>
+ *   <li><b>State Machine:</b> Explicit tracking of agent states (IDLE, PLANNING,
+ *       EXECUTING, WAITING, ERROR) via {@link AgentStateMachine}</li>
+ *   <li><b>Interceptor Chain:</b> Cross-cutting concerns (logging, metrics, events)
+ *       handled via {@link InterceptorChain}</li>
+ *   <li><b>Event Bus:</b> Action lifecycle events published for monitoring and coordination</li>
  * </ul>
  *
- * @since 1.1.0
+ * <p><b>Async Planning Flow:</b></p>
+ * <pre>
+ * User Input → processNaturalLanguageCommand()
+ *             │
+ *             ├─► Immediate return (non-blocking)
+ *             │
+ *             └─► Async LLM call on separate thread
+ *                     │
+ *                     └─► CompletableFuture completes later
+ *                             │
+ *                             └─► tick() checks isDone()
+ *                                     │
+ *                                     └─► Tasks queued and execution begins
+ * </pre>
+ *
+ * <p><b>Tick Execution Flow:</b></p>
+ * <pre>
+ * tick() called every game tick
+ *   │
+ *   ├─► Check if async planning complete
+ *   │   └─► If yes, process results and queue tasks
+ *   │
+ *   ├─► If current action running
+ *   │   ├─► Call action.tick()
+ *   │   └─► If action.isComplete(), handle result
+ *   │
+ *   ├─► If no current action and tasks queued
+ *   │   └─► Start next task from queue
+ *   │
+ *   └─► If completely idle, follow nearest player
+ * </pre>
+ *
+ * <p><b>Thread Safety:</b></p>
+ * <ul>
+ *   <li>{@link BlockingQueue} for thread-safe task queuing from orchestration</li>
+ *   <li>{@code volatile} fields for visibility between game thread and LLM callbacks</li>
+ *   <li>All tick operations run on the Minecraft server thread (single-threaded)</li>
+ *   <li>LLM calls execute on separate thread pools managed by async infrastructure</li>
+ * </ul>
+ *
+ * <p><b>Plugin Architecture:</b></p>
+ * <p>Actions are registered via {@link com.minewright.plugin.ActionRegistry} using
+ * {@link com.minewright.plugin.ActionFactory} instances. The executor attempts to
+ * create actions via the registry first, falling back to a legacy switch statement
+ * for backward compatibility during migration.</p>
+ *
+ * @see BaseAction
+ * @see Task
+ * @see com.minewright.plugin.ActionRegistry
+ * @see com.minewright.execution.AgentStateMachine
+ * @see com.minewright.execution.InterceptorChain
+ *
+ * @since 1.0.0
  */
 public class ActionExecutor {
+    /**
+     * The foreman entity this executor is managing actions for.
+     * Used for context, world access, and state updates.
+     */
     private final ForemanEntity foreman;
-    private TaskPlanner taskPlanner;  // Lazy-initialized to avoid loading dependencies on entity creation
+
+    /**
+     * Task planner for converting natural language commands into structured tasks.
+     * Lazy-initialized to avoid loading LLM dependencies on entity creation.
+     */
+    private TaskPlanner taskPlanner;
+
+    /**
+     * Thread-safe queue of tasks pending execution.
+     * Tasks are added via LLM planning or orchestration assignment.
+     * Uses LinkedBlockingQueue for thread-safe concurrent access.
+     */
     private final BlockingQueue<Task> taskQueue;
 
+    /**
+     * The currently executing action, or null if no action is active.
+     * Only one action runs at a time per executor.
+     */
     private BaseAction currentAction;
+
+    /**
+     * High-level description of the current goal being worked toward.
+     * Set from the LLM's plan description when processing commands.
+     */
     private String currentGoal;
+
+    /**
+     * Counter for tracking ticks since the last action was started.
+     * Used to enforce delays between actions for pacing.
+     */
     private int ticksSinceLastAction;
-    private BaseAction idleFollowAction;  // Follow player when idle
 
-    // NEW: Async planning support (non-blocking LLM calls)
-    // Volatile for thread-safe access from game thread and LLM callbacks
+    /**
+     * Action to execute when completely idle (no tasks, no goal).
+     * Typically follows the nearest player to stay nearby.
+     */
+    private BaseAction idleFollowAction;
+
+    /**
+     * Async LLM planning future for non-blocking command processing.
+     * Marked volatile for visibility between game thread and LLM callback threads.
+     */
     private volatile CompletableFuture<ResponseParser.ParsedResponse> planningFuture;
-    private volatile boolean isPlanning = false;
-    private volatile String pendingCommand;  // Store command while planning
 
-    // NEW: Plugin architecture components
+    /**
+     * Flag indicating whether async planning is currently in progress.
+     * Prevents concurrent planning requests which could cause state corruption.
+     */
+    private volatile boolean isPlanning = false;
+
+    /**
+     * Command text being processed during async planning.
+     * Stored for error handling and user feedback.
+     */
+    private volatile String pendingCommand;
+
+    /**
+     * Action context providing services and dependencies to actions.
+     * Includes service container, event bus, state machine, and interceptors.
+     */
     private final ActionContext actionContext;
+
+    /**
+     * Interceptor chain for cross-cutting concerns around action execution.
+     * Handles logging, metrics collection, and event publishing.
+     */
     private final InterceptorChain interceptorChain;
+
+    /**
+     * State machine tracking the agent's current execution state.
+     * States: IDLE, PLANNING, EXECUTING, WAITING, ERROR.
+     */
     private final AgentStateMachine stateMachine;
+
+    /**
+     * Event bus for publishing action lifecycle events.
+     * Other components can subscribe to monitor action progress.
+     */
     private final EventBus eventBus;
 
     public ActionExecutor(ForemanEntity foreman) {
@@ -224,6 +354,37 @@ public class ActionExecutor {
         VoiceManager.getInstance().speakIfEnabled(message);
     }
 
+    /**
+     * Main update loop called every game tick (20 times per second).
+     *
+     * <p>This method orchestrates all execution logic in a non-blocking manner:</p>
+     * <ol>
+     *   <li>Check if async LLM planning has completed and queue tasks if so</li>
+     *   <li>If an action is currently running, call its {@code tick()} method</li>
+     *   <li>If action completed, handle result and check for replanning needs</li>
+     *   <li>If no action running but tasks are queued, start the next task</li>
+     *   <li>If completely idle, follow the nearest player</li>
+     * </ol>
+     *
+     * <p><b>Non-Blocking Design:</b></p>
+     * <ul>
+     *   <li>LLM planning results are checked via {@link CompletableFuture#isDone()}</li>
+     *   <li>Results are retrieved with a 60-second timeout to prevent hangs</li>
+     *   <li>All long-running work happens on separate threads</li>
+     *   <li>This method always returns quickly to maintain server performance</li>
+     * </ul>
+     *
+     * <p><b>Error Handling:</b></p>
+     * <ul>
+     *   <li>Planning cancellations reset state machine to IDLE</li>
+     *   <li>Timeouts (60s) reset and notify user</li>
+     *   <li>Exceptions are caught and logged, resetting state</li>
+     *   <li>Action failures notify player and may trigger replanning</li>
+     * </ul>
+     *
+     * <p><b>Thread Safety:</b> Called on the Minecraft server thread only.
+     * Interacts with volatile fields for visibility across threads.</p>
+     */
     public void tick() {
         ticksSinceLastAction++;
 

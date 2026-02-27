@@ -672,7 +672,7 @@ Remember crew: Efficiency is safety. Preparation is survival. And never, EVER st
 
 ## AGENT IMPLEMENTATION NOTES
 
-For Steve AI agents implementing raid farms:
+For MineWright AI agents implementing raid farms:
 
 **Key Commands to Use:**
 - `identify_structure` - Scan for villages

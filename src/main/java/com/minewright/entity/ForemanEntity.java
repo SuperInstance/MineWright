@@ -34,33 +34,195 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * A MineWright crew member entity that autonomously executes tasks in Minecraft.
+ *
+ * <p><b>Overview:</b></p>
+ * <p>The ForemanEntity represents an AI-controlled crew member that can plan and execute
+ * complex tasks based on natural language commands from the player. These entities
+ * use Large Language Models (LLMs) to understand commands, break them down into
+ * actionable steps, and coordinate with other crew members through the orchestration system.</p>
+ *
+ * <p><b>Key Capabilities:</b></p>
+ * <ul>
+ *   <li>Execute natural language commands via LLM-powered planning</li>
+ *   <li>Perform actions: mining, building, pathfinding, combat, crafting, gathering</li>
+ *   <li>Coordinate with multiple crew members through orchestration</li>
+ *   <li>Provide proactive dialogue about task progress and discoveries</li>
+ *   <li>Use fast tactical decision-making via Cloudflare Edge (Hive Mind)</li>
+ *   <li>Fly and become invulnerable for building tasks</li>
+ * </ul>
+ *
+ * <p><b>Architecture:</b></p>
+ * <pre>
+ * ForemanEntity
+ * ├── ActionExecutor - Queue and execute tasks tick-by-tick
+ * ├── TaskPlanner - Async LLM calls for planning
+ * ├── ForemanMemory - Task history and conversation context
+ * ├── CompanionMemory - Player preferences and learning
+ * ├── ProactiveDialogueManager - Contextual commentary
+ * ├── OrchestratorService - Multi-agent coordination
+ * └── TacticalDecisionService - Fast reflex decisions via edge
+ * </pre>
+ *
+ * <p><b>Thread Safety:</b></p>
+ * <ul>
+ *   <li>Entity operations are single-threaded on the Minecraft server thread</li>
+ *   <li>{@code ConcurrentLinkedQueue} for thread-safe message passing</li>
+ *   <li>{@code AtomicBoolean} for orchestrator registration flag</li>
+ *   <li>{@code volatile} for task progress visibility across threads</li>
+ *   <li>LLM calls are async and execute on separate thread pools</li>
+ * </ul>
+ *
+ * <p><b>State Management:</b></p>
+ * <p>The entity maintains state through:</p>
+ * <ul>
+ *   <li>{@link AgentRole} - SOLO, FOREMAN, or WORKER in orchestration</li>
+ *   <li>{@link ActionExecutor} state machine - IDLE, PLANNING, EXECUTING, etc.</li>
+ *   <li>Current task tracking with progress reporting</li>
+ *   <li>Memory systems that persist across server restarts</li>
+ * </ul>
+ *
+ * <p><b>Lifecycle:</b></p>
+ * <ol>
+ *   <li>Spawned via command or GUI</li>
+ *   <li>Registers with orchestrator on first tick</li>
+ *   <li>Receives commands from player (GUI or chat)</li>
+ *   <li>Plans tasks asynchronously (non-blocking)</li>
+ *   <li>Executes actions tick-by-tick</li>
+ *   <li>Reports progress and completion</li>
+ *   <li>Persists state to NBT on world save</li>
+ * </ol>
+ *
+ * @see ActionExecutor
+ * @see TaskPlanner
+ * @see OrchestratorService
+ * @see com.minewright.action.actions.BaseAction
+ *
+ * @since 1.0.0
+ */
 public class ForemanEntity extends PathfinderMob {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForemanEntity.class);
     private static final EntityDataAccessor<String> ENTITY_NAME =
         SynchedEntityData.defineId(ForemanEntity.class, EntityDataSerializers.STRING);
 
+    /**
+     * The display name of this crew member.
+     * Synchronized to clients via entity data.
+     */
     private String entityName;
+
+    /**
+     * Long-term memory storing task history, conversation context,
+     * and knowledge learned from experience.
+     */
     private ForemanMemory memory;
+
+    /**
+     * Companion memory storing player preferences, learning from interactions,
+     * and personalization data.
+     */
     private CompanionMemory companionMemory;
+
+    /**
+     * Action executor responsible for queuing and executing tasks.
+     * Implements tick-based execution to prevent server freezing.
+     */
     private ActionExecutor actionExecutor;
+
+    /**
+     * Dialogue manager for proactive commentary about task progress,
+     * discoveries, and contextual observations.
+     */
     private ProactiveDialogueManager dialogueManager;
+
+    /**
+     * Tick counter used for periodic operations (e.g., progress reporting).
+     */
     private int tickCounter = 0;
+
+    /**
+     * Whether this entity is currently in flying mode.
+     * When flying, gravity is disabled and movement is unrestricted.
+     */
     private boolean isFlying = false;
+
+    /**
+     * Whether this entity is immune to all damage.
+     * Used during building to prevent suffocation, fall damage, etc.
+     */
     private boolean isInvulnerable = false;
 
-    // Orchestration support
+    // ========== Orchestration Support ==========
+
+    /**
+     * This agent's role in the orchestration hierarchy.
+     * SOLO - Working alone without coordination
+     * FOREMAN - Coordinating other agents
+     * WORKER - Taking tasks from foreman
+     */
     private AgentRole role = AgentRole.SOLO;
+
+    /**
+     * Reference to the orchestration service for multi-agent coordination.
+     * Used for task distribution, progress tracking, and inter-agent communication.
+     */
     private OrchestratorService orchestrator;
+
+    /**
+     * Thread-safe queue for incoming messages from other agents.
+     * Messages are polled and processed during each tick.
+     */
     private final ConcurrentLinkedQueue<AgentMessage> messageQueue = new ConcurrentLinkedQueue<>();
+
+    /**
+     * Flag indicating whether this agent has registered with the orchestrator.
+     * Uses AtomicBoolean for thread-safe initialization on first tick.
+     */
     private final AtomicBoolean registeredWithOrchestrator = new AtomicBoolean(false);
+
+    /**
+     * ID of the currently assigned task from the foreman.
+     * Used for progress reporting and completion notification.
+     */
     private String currentTaskId = null;
+
+    /**
+     * Current progress percentage (0-100) for the active task.
+     * Marked volatile for visibility across threads during progress updates.
+     */
     private volatile int currentTaskProgress = 0;
 
-    // Hive Mind (Cloudflare Edge) support
+    // ========== Hive Mind (Cloudflare Edge) Support ==========
+
+    /**
+     * Tactical decision service for fast reflex decisions using Cloudflare Edge.
+     * Provides sub-20ms response for combat and hazard detection.
+     */
     private final TacticalDecisionService tacticalService;
+
+    /**
+     * Last game time when tactical situation was checked.
+     * Used to limit check frequency to performance costs.
+     */
     private long lastTacticalCheck = 0;
+
+    /**
+     * Last game time when state was synced with edge service.
+     * Used to limit sync frequency for bandwidth efficiency.
+     */
     private long lastStateSync = 0;
 
+    /**
+     * Constructs a new ForemanEntity.
+     *
+     * <p>Initializes all subsystems including memory, action executor,
+     * dialogue manager, and tactical service. The entity starts in
+     * invulnerable mode and registers with the orchestrator on first tick.</p>
+     *
+     * @param entityType The entity type from registration
+     * @param level The world/level this entity is spawned in
+     */
     public ForemanEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
         this.entityName = "Foreman";
@@ -101,45 +263,119 @@ public class ForemanEntity extends PathfinderMob {
         this.entityData.define(ENTITY_NAME, "Foreman");
     }
 
+    /**
+     * Main update loop called every game tick (20 times per second).
+     *
+     * <p>This method orchestrates all periodic operations:</p>
+     * <ul>
+     *   <li>Register with orchestrator on first tick</li>
+     *   <li>Check tactical situation via Hive Mind (if enabled)</li>
+     *   <li>Sync state with edge service (if enabled)</li>
+     *   <li>Process incoming inter-agent messages</li>
+     *   <li>Execute queued actions via ActionExecutor</li>
+     *   <li>Trigger proactive dialogue</li>
+     *   <li>Report task progress to foreman</li>
+     * </ul>
+     *
+     * <p><b>Important:</b> This method must return quickly to avoid server lag.
+     * Long-running operations (LLM calls) are handled asynchronously.</p>
+     *
+     * <p><b>Thread Safety:</b> Called on the Minecraft server thread only.
+     * All state updates are thread-safe due to single-threaded execution.</p>
+     *
+     * <p><b>Error Handling:</b> Each subsystem is wrapped in try-catch to ensure
+     * errors never crash the game. Failed subsystems log warnings but the entity
+     * continues operating (graceful degradation).</p>
+     */
     @Override
     public void tick() {
-        super.tick();
+        try {
+            super.tick();
+        } catch (Exception e) {
+            // Never let entity tick errors crash the game
+            LOGGER.error("[{}] Critical error in parent entity tick, continuing anyway",
+                entityName, e);
+        }
 
         if (!this.level().isClientSide) {
             long gameTime = this.level().getGameTime();
 
+            // Wrap each subsystem in try-catch for graceful degradation
+
             // Register with orchestrator on first tick
             if (!registeredWithOrchestrator.get() && orchestrator != null) {
-                registerWithOrchestrator();
+                try {
+                    registerWithOrchestrator();
+                } catch (Exception e) {
+                    LOGGER.error("[{}] Failed to register with orchestrator", entityName, e);
+                    registeredWithOrchestrator.set(true); // Don't keep trying
+                }
             }
 
             // Hive Mind: Periodic tactical check (combat reflexes, hazards)
             if (tacticalService.isEnabled() &&
                 gameTime - lastTacticalCheck >= tacticalService.getCheckInterval()) {
                 lastTacticalCheck = gameTime;
-                checkTacticalSituation();
+                try {
+                    checkTacticalSituation();
+                } catch (Exception e) {
+                    LOGGER.warn("[{}] Tactical check failed (continuing normally)", entityName, e);
+                    // Continue without tactical decisions - graceful degradation
+                }
             }
 
             // Hive Mind: Periodic state sync with edge
             if (tacticalService.isEnabled() &&
                 gameTime - lastStateSync >= tacticalService.getSyncInterval()) {
                 lastStateSync = gameTime;
-                tacticalService.syncState(this);
+                try {
+                    tacticalService.syncState(this);
+                } catch (Exception e) {
+                    LOGGER.warn("[{}] State sync failed (will retry later)", entityName, e);
+                    // Continue without sync - not critical
+                }
             }
 
             // Process incoming messages
-            processMessages();
+            try {
+                processMessages();
+            } catch (Exception e) {
+                LOGGER.error("[{}] Error processing messages (continuing anyway)", entityName, e);
+                // Clear potentially corrupted message queue
+                messageQueue.clear();
+            }
 
-            // Execute actions
-            actionExecutor.tick();
+            // Execute actions - most critical, wrap carefully
+            try {
+                actionExecutor.tick();
+            } catch (Exception e) {
+                LOGGER.error("[{}] Critical error in action executor", entityName, e);
+                // Notify player of the error
+                try {
+                    sendChatMessage("I'm having some trouble. Give me a moment to recover.");
+                } catch (Exception ignored) {
+                    // If chat fails too, just log and continue
+                }
+                // The entity will continue ticking - errors are isolated per tick
+            }
 
             // Check for proactive dialogue triggers
             if (dialogueManager != null) {
-                dialogueManager.tick();
+                try {
+                    dialogueManager.tick();
+                } catch (Exception e) {
+                    LOGGER.warn("[{}] Dialogue manager error (continuing without dialogue)", entityName, e);
+                    // Dialogue is not critical - continue without it
+                }
             }
 
             // Report progress if working on a task
-            reportTaskProgress();
+            try {
+                reportTaskProgress();
+            } catch (Exception e) {
+                LOGGER.warn("[{}] Failed to report progress", entityName, e);
+                // Progress reporting is not critical
+            }
         }
     }
 

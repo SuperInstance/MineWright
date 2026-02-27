@@ -1,8 +1,8 @@
 # Failure Response Integration Guide
 
-## Integrating with Steve AI's Action System
+## Integrating with MineWright AI's Action System
 
-The FailureResponseGenerator integrates seamlessly with Steve AI's existing action execution system.
+The FailureResponseGenerator integrates seamlessly with MineWright AI's existing action execution system.
 
 ### Integration Points
 
@@ -110,7 +110,7 @@ public class SteveMemory {
 
 ### Configuration
 
-Add to your `config/steve-common.toml`:
+Add to your `config/minewright-common.toml`:
 
 ```toml
 [personality]
@@ -183,7 +183,7 @@ neuroticism = 50
 Add commands to set worker personality:
 
 ```java
-// /steve personality <name> <trait> <value>
+// /minewright personality <name> <trait> <value>
 public class SetPersonalityCommand {
     public static void execute(ServerPlayer player, String workerName,
                                String trait, int value) {
@@ -198,7 +198,7 @@ public class SetPersonalityCommand {
     }
 }
 
-// /steve personality preset <name> <preset>
+// /minewright personality preset <name> <preset>
 public class SetPersonalityPresetCommand {
     public static void execute(ServerPlayer player, String workerName,
                                String presetName) {
@@ -217,8 +217,8 @@ public class SetPersonalityPresetCommand {
 
 1. **Spawn a worker with a personality**
 ```java
-/steve spawn Builder
-/steve personality preset Builder perfectionist
+/minewright spawn Builder
+/minewright personality preset Builder perfectionist
 ```
 
 2. **Worker encounters a failure**

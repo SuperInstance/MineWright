@@ -2,7 +2,7 @@
 
 **Research Date:** 2026-02-27
 **Focus Area:** Error recovery, resilience patterns, and graceful degradation for AI agent systems
-**Target System:** MineWright (Steve AI - Minecraft Mod)
+**Target System:** MineWright (MineWright AI - Minecraft Mod)
 
 ---
 
@@ -1216,7 +1216,7 @@ User Notification + Escalation
 
 ## Appendix A: Configuration Examples
 
-### config/steve-common.toml
+### config/minewright-common.toml
 
 ```toml
 [llm]

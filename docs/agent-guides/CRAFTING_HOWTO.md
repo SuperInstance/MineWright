@@ -1,6 +1,6 @@
 # CRAFTING_HOWTO.md
 
-**Project:** Steve AI - Minecraft Autonomous Agents
+**Project:** MineWright AI - Minecraft Autonomous Agents
 **Component:** Agent Crafting Guide
 **Version:** 1.0
 **Date:** 2026-02-27
@@ -1033,7 +1033,7 @@ Now get out there and make something.
 
 **Document Version:** 1.0
 **Last Updated:** 2026-02-27
-**Author:** Steve AI Development Team
+**Author:** MineWright AI Development Team
 **Voice:** Mace MineWright, Foreman
 
 ---

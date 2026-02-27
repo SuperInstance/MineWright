@@ -857,5 +857,5 @@ In MineWright, trickster workers remind us that **playfulness and productivity c
 **Document Version:** 1.0
 **Last Updated:** 2025-02-27
 **Author:** Claude Code Agent
-**Project:** MineWright - Steve AI
+**Project:** MineWright - MineWright AI
 **Purpose:** Trickster personality implementation guide for AI workers

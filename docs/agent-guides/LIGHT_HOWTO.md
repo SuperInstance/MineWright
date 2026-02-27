@@ -70,7 +70,7 @@ Light in Minecraft operates on a scale of 0-15:
 >
 > **Rookie:** Foreman, why do we light up to level 12 when we only need 1 to stop spawns?
 >
-> **Foreman:** Good question, greenhorn. Remember what I said about SAFETY MARGINS? Light level 1 stops spawns, but one broken torch means a creeper in your bunk. Level 12 gives us redundancy - Steve units can trip over torches and we're still safe. Plus, you ever tried to build in near-darkness? Your Steve AI assistants need visibility too. We light for WORK, not just survival.
+> **Foreman:** Good question, greenhorn. Remember what I said about SAFETY MARGINS? Light level 1 stops spawns, but one broken torch means a creeper in your bunk. Level 12 gives us redundancy - Steve units can trip over torches and we're still safe. Plus, you ever tried to build in near-darkness? Your MineWright AI assistants need visibility too. We light for WORK, not just survival.
 
 ---
 
@@ -101,9 +101,9 @@ Light in Minecraft operates on a scale of 0-15:
 
 When working with AI assistants:
 ```
-/steve command Light up this area
-/steve command Place torches at 8-block intervals
-/steve command Spawn-proof the perimeter
+/minewright command Light up this area
+/minewright command Place torches at 8-block intervals
+/minewright command Spawn-proof the perimeter
 ```
 
 ### Placement Strategy
@@ -173,8 +173,8 @@ When working with AI assistants:
 
 **Steve Unit Verification:**
 ```
-/steve command Scan for dark spots
-/steve command Report light levels below 8
+/minewright command Scan for dark spots
+/minewright command Report light levels below 8
 ```
 
 ---
@@ -465,9 +465,9 @@ Prevents ALL spawns on surface
 
 **Efficiency Commands:**
 ```
-/steve command Light from (0,0) to (50,50)
-/steve command Use 12-block grid pattern
-/steve command Place torches at marked positions
+/minewright command Light from (0,0) to (50,50)
+/minewright command Use 12-block grid pattern
+/minewright command Place torches at marked positions
 ```
 
 > **CREW TALK #5**

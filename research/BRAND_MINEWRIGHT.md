@@ -236,7 +236,7 @@ Mace refuses to acknowledge sub-agents by their ID numbers. Instead, he assigns 
 | Memory system | CompanionMemory | "The Files" |
 | Voice system | VoiceManager | "Site Radio" |
 | GUI overlay | SteveGUI | "The Foreman's Office" |
-| Commands | /steve | /mace or /foreman |
+| Commands | /minewright | /mace or /foreman |
 
 ### Sub-Agent Naming
 
@@ -326,13 +326,13 @@ useBrandVoice = true
 
 | Old Command | New Command | Notes |
 |-------------|-------------|-------|
-| /steve spawn | /foreman hire | Hire a crew member |
-| /steve remove | /foreman dismiss | Dismiss crew member |
-| /steve list | /crew roster | Show crew roster |
-| /steve status | /site status | Site status report |
-| /steve stop | /foreman hold | Hold all operations |
-| /steve tell | /foreman order | Issue work order |
-| /steve relationship | /files personnel | View personnel file |
+| /minewright spawn | /foreman hire | Hire a crew member |
+| /minewright remove | /foreman dismiss | Dismiss crew member |
+| /minewright list | /crew roster | Show crew roster |
+| /minewright status | /site status | Site status report |
+| /minewright stop | /foreman hold | Hold all operations |
+| /minewright tell | /foreman order | Issue work order |
+| /minewright relationship | /files personnel | View personnel file |
 
 ---
 

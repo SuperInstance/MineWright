@@ -2056,7 +2056,7 @@ The existing codebase has an excellent foundation:
 - ❌ Limited cross-session personality consistency
 - ❌ No memory decay/importance scoring
 
-With these enhancements, the Steve AI companion will build meaningful, long-term relationships with players, creating a truly memorable gaming experience.
+With these enhancements, the MineWright AI companion will build meaningful, long-term relationships with players, creating a truly memorable gaming experience.
 
 ---
 

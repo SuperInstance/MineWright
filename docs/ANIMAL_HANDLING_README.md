@@ -227,7 +227,7 @@ Use these in-game commands:
 
 ## Configuration
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [animal]

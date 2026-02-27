@@ -937,7 +937,7 @@ public class CatchphraseAudioSystem {
 ### Configuration System
 
 ```java
-// config/steve-common.toml additions
+// config/minewright-common.toml additions
 [catchphrases]
 enabled = true
 showInChat = true

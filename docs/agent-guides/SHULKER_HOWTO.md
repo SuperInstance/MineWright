@@ -53,7 +53,7 @@ Shulkers are hostile mobs found exclusively in the End dimension. They appear as
 
 ## AI NAVIGATION DATA
 
-The Steve AI agent uses these coordinates for shulker operations:
+The MineWright AI agent uses these coordinates for shulker operations:
 
 ```
 Shulker Detection Parameters:
@@ -78,7 +78,7 @@ Shulker Detection Parameters:
 
 3. **Spawn Detection** - AI can target:
    ```java
-   // Steve AI searches for shulker spawns
+   // MineWright AI searches for shulker spawns
    searchPattern.getEndCityCoordinates()
    .filter(city -> city.hasShulkers())
    .collect(Collectors.toList());

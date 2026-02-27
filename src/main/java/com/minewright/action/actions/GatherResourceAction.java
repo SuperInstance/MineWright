@@ -14,27 +14,43 @@ public class GatherResourceAction extends BaseAction {
 
     @Override
     protected void onStart() {
+        if (foreman == null || foreman.getNavigation() == null) {
+            result = ActionResult.failure("Foreman or navigation not available");
+            return;
+        }
+
         resourceType = task.getStringParameter("resource");
+        if (resourceType == null || resourceType.isEmpty()) {
+            result = ActionResult.failure("Resource type parameter is required");
+            return;
+        }
+
         quantity = task.getIntParameter("quantity", 1);
+        if (quantity <= 0) {
+            result = ActionResult.failure("Quantity must be positive");
+            return;
+        }
 
         // This is essentially a smart wrapper around mining that:
         // - Mines them
-
         result = ActionResult.failure("Resource gathering not yet fully implemented", false);
     }
 
     @Override
     protected void onTick() {
+        // No-op - marked as not implemented
     }
 
     @Override
     protected void onCancel() {
-        foreman.getNavigation().stop();
+        if (foreman != null && foreman.getNavigation() != null) {
+            foreman.getNavigation().stop();
+        }
     }
 
     @Override
     public String getDescription() {
-        return "Gather " + quantity + " " + resourceType;
+        return "Gather " + quantity + " " + (resourceType != null ? resourceType : "unknown");
     }
 }
 

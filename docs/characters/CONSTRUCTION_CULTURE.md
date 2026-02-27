@@ -571,5 +571,5 @@ Oh, and [Name] - nice work on [specific task]. That's the quality I'm talking ab
 ---
 
 *Document Version: 1.0*
-*Created for: Steve AI - MineWright Character Development*
+*Created for: MineWright AI - MineWright Character Development*
 *Purpose: Authentic construction worker dialogue and culture reference*

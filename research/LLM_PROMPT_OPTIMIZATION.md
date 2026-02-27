@@ -3,13 +3,13 @@
 **Research Document Version:** 1.0
 **Last Updated:** 2025-02-27
 **Authors:** Claude Research Team
-**Target Project:** Steve AI (MineWright Minecraft Mod)
+**Target Project:** MineWright AI (MineWright Minecraft Mod)
 
 ---
 
 ## Executive Summary
 
-This research document provides comprehensive strategies for optimizing LLM prompts in the Steve AI Minecraft mod. The system currently faces challenges with token limits, latency, cost, and variable response quality when integrating with GPT-4, Groq, and Gemini for action planning.
+This research document provides comprehensive strategies for optimizing LLM prompts in the MineWright AI Minecraft mod. The system currently faces challenges with token limits, latency, cost, and variable response quality when integrating with GPT-4, Groq, and Gemini for action planning.
 
 **Key Findings:**
 - Prompt compression can reduce token usage by 50-75% while maintaining or improving accuracy
@@ -39,7 +39,7 @@ This research document provides comprehensive strategies for optimizing LLM prom
 
 ### Existing Architecture
 
-The Steve AI mod currently implements:
+The MineWright AI mod currently implements:
 
 **File:** `C:\Users\casey\steve\src\main\java\com\steve\ai\llm\PromptBuilder.java`
 
@@ -639,7 +639,7 @@ public class LocalLLMClient implements AsyncLLMClient {
 ### Minimal Prompt (Token-Optimized)
 
 ```
-#ROLE: Steve AI Agent
+#ROLE: MineWright AI Agent
 #OUT: JSON only
 #FMT: {"r":"","p":"","t":[{a:params,...}]}
 #ACT: attack(build,mine,follow,path)
@@ -846,7 +846,7 @@ public String buildTaskSpecificPrompt(String command) {
 
 ## Conclusion
 
-The Steve AI mod can achieve significant improvements through prompt optimization:
+The MineWright AI mod can achieve significant improvements through prompt optimization:
 
 **Immediate Benefits (Phase 1):**
 - 70% token reduction

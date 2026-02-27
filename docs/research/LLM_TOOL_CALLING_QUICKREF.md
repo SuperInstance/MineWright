@@ -1,6 +1,6 @@
 # LLM Tool Calling - Quick Reference
 
-**Purpose:** Fast reference for implementing tool calling improvements in Steve AI
+**Purpose:** Fast reference for implementing tool calling improvements in MineWright AI
 **Full Document:** See `LLM_TOOL_CALLING.md` for detailed research
 
 ---

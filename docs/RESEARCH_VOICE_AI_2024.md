@@ -1,7 +1,7 @@
 # Voice AI Integration for Games - 2024 Research Report
 
 **Date:** 2026-02-27
-**Project:** Steve AI - Minecraft Autonomous Agents
+**Project:** MineWright AI - Minecraft Autonomous Agents
 **Author:** Claude Research Agent
 
 ---
@@ -1031,11 +1031,11 @@ void AMyNPCCharacter::OnSpeechSynthesized(const FString& AudioURL)
 }
 ```
 
-### Minecraft Forge (Steve AI Context)
+### Minecraft Forge (MineWright AI Context)
 
-#### Integration for Steve AI
+#### Integration for MineWright AI
 
-Given the current Steve AI architecture (Minecraft Forge 1.20.1, Java 17):
+Given the current MineWright AI architecture (Minecraft Forge 1.20.1, Java 17):
 
 ```java
 package com.steve.ai.voice;
@@ -1268,7 +1268,7 @@ class VoiceStateMachine:
 | **Cost-sensitive scale** | Google Cloud TTS/STT |
 | **Enterprise/compliance** | Azure Speech Services |
 
-### For Steve AI (Minecraft Mod)
+### For MineWright AI (Minecraft Mod)
 
 #### Recommended Stack
 
@@ -1307,7 +1307,7 @@ VoicePipeline pipeline = new VoicePipeline();
 3. Implement voice command parsing
 4. Add to existing TaskPlanner
 
-**Code Location:** `src/main/java/com/steve/ai/voice/`
+**Code Location:** `src/main/java/com/minewright/ai/voice/`
 
 #### Phase 2: Character Voice (Week 3-4)
 1. Clone Steve's voice with ElevenLabs
@@ -1315,7 +1315,7 @@ VoicePipeline pipeline = new VoicePipeline();
 3. Add emotion tags for different actions
 4. Implement viseme support for animation
 
-**Code Location:** `src/main/java/com/steve/ai/voice/character/`
+**Code Location:** `src/main/java/com/minewright/ai/voice/character/`
 
 #### Phase 3: Real-time Conversation (Week 5-6)
 1. Implement streaming TTS
@@ -1323,7 +1323,7 @@ VoicePipeline pipeline = new VoicePipeline();
 3. Optimize latency budget
 4. Add caching for common responses
 
-**Code Location:** `src/main/java/com/steve/ai/voice/realtime/`
+**Code Location:** `src/main/java/com/minewright/ai/voice/realtime/`
 
 #### Phase 4: Multiplayer Voice (Week 7-8)
 1. Add WebRTC for voice chat
@@ -1331,7 +1331,7 @@ VoicePipeline pipeline = new VoicePipeline();
 3. Add voice activity detection
 4. Integrate with existing networking
 
-**Code Location:** `src/main/java/com/steve/ai/voice/multiplayer/`
+**Code Location:** `src/main/java/com/minewright/ai/voice/multiplayer/`
 
 ### Cost Estimation
 
@@ -1403,7 +1403,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Voice command system for Steve AI
+ * Voice command system for MineWright AI
  * Integrates STT, LLM, and TTS for voice interaction
  */
 public class VoiceCommandSystem {
@@ -1538,7 +1538,7 @@ public class VoiceCommandSystem {
 ### Configuration Integration
 
 ```toml
-# config/steve-common.toml
+# config/minewright-common.toml
 
 [voice]
 enabled = true
@@ -1607,4 +1607,4 @@ stun_servers = ["stun:stun.l.google.com:19302"]
 
 **End of Report**
 
-*This research was conducted to support voice AI integration for the Steve AI Minecraft mod project. For questions or updates, please refer to the project documentation.*
+*This research was conducted to support voice AI integration for the MineWright AI Minecraft mod project. For questions or updates, please refer to the project documentation.*

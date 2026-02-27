@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-27
 **Focus:** Inter-agent communication protocols for multi-agent systems
-**Target:** Improvements for AgentCommunicationBus in Steve AI Project
+**Target:** Improvements for AgentCommunicationBus in MineWright AI Project
 
 ---
 
@@ -1155,4 +1155,4 @@ public class AgentMessage {
 **Document Version:** 1.0
 **Last Updated:** 2026-02-27
 **Author:** Claude Research Agent
-**Project:** Steve AI - Multi-Agent Communication Enhancement
+**Project:** MineWright AI - Multi-Agent Communication Enhancement

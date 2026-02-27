@@ -1549,7 +1549,7 @@ public class TreeFarmAction extends BaseAction {
 
 ## Configuration
 
-### config/steve-common.toml
+### config/minewright-common.toml
 
 ```toml
 [woodcutting]

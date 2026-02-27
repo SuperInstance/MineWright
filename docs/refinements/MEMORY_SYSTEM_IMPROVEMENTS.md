@@ -1,7 +1,7 @@
 # Memory System Improvements - Enhanced Analysis
 
 **Analysis Date:** 2026-02-27
-**Project:** Steve AI (Minecraft Mod)
+**Project:** MineWright AI (Minecraft Mod)
 **Package:** `com.minewright.memory`
 **Analysis Focus:** Memory Leaks, Thread Safety, Context Windowing, Caching, Persistence
 

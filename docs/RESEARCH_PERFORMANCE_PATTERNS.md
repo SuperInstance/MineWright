@@ -1,6 +1,6 @@
 # Research: Rust Performance Patterns for Java AI Systems
 
-**Project:** MineWright (Steve AI - Minecraft Autonomous Agents)
+**Project:** MineWright (MineWright AI - Minecraft Autonomous Agents)
 **Date:** 2026-02-27
 **Focus:** Translating high-performance Rust patterns to Java for AI agent optimization
 

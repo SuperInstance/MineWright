@@ -1,6 +1,6 @@
 # Research Report: Memory Architectures for AI Agents in Game NPCs
 
-**Project:** MineWright (Steve AI - "Cursor for Minecraft")
+**Project:** MineWright (MineWright AI - "Cursor for Minecraft")
 **Date:** 2026-02-27
 **Focus:** Advanced memory systems for autonomous AI agents in Minecraft
 
@@ -999,6 +999,6 @@ This roadmap will enable MineWright companions to maintain rich, evolving relati
 ---
 
 **Report Generated:** 2026-02-27
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)
 **Version:** 1.0
 **Status:** Research Complete

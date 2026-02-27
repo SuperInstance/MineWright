@@ -1567,7 +1567,7 @@ Output: {"action": "verify_glow_squid_farm", "parameters": {"farmX": 100, "farmY
 
 ### 3. Configuration
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [glow_squid_farm]

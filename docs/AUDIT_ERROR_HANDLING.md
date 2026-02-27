@@ -2,7 +2,7 @@
 
 **Audit Date:** 2026-02-27
 **Auditor:** Claude Code
-**Project:** MineWright (Steve AI - Minecraft Mod)
+**Project:** MineWright (MineWright AI - Minecraft Mod)
 **Java Version:** 17
 **Scope:** Core error handling patterns, null safety, exception handling, resource management, and concurrency
 

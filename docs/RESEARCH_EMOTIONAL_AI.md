@@ -1,6 +1,6 @@
 # Research: Emotional AI and Sentiment Analysis for Game Companions
 
-**Project:** Steve AI (MineWright) Emotional Intelligence Enhancement
+**Project:** MineWright AI (MineWright) Emotional Intelligence Enhancement
 **Date:** 2026-02-27
 **Research Focus:** Sentiment Analysis, Emotional Responses, Mood Tracking, Empathy Patterns, Emotional Memory, Affective Computing Integration
 
@@ -1362,7 +1362,7 @@ public class EmotionalTTSController {
 
 ### 2. Integration Points
 
-**Existing Steve AI Systems to Enhance:**
+**Existing MineWright AI Systems to Enhance:**
 
 | Existing Component | Emotional Enhancement | Integration Method |
 |--------------------|----------------------|-------------------|
@@ -1552,7 +1552,7 @@ public class EmotionalStateMachine {
 **New emotional AI packages:**
 
 ```
-src/main/java/com/steve/
+src/main/java/com/minewright/
 ├── emotion/
 │   ├── detection/
 │   │   ├── SentimentAnalyzer.java

@@ -1,6 +1,6 @@
 # Research Report: AI Debugging and Explainability for Game Agents
 
-**Project:** MineWright (Steve AI - Minecraft Agents)
+**Project:** MineWright (MineWright AI - Minecraft Agents)
 **Date:** 2025-02-27
 **Author:** Claude (Orchestrator Agent)
 **Version:** 1.0
@@ -616,10 +616,10 @@ renderFloatingText(agent, statusText);
 Add a debug command for manual intervention:
 
 ```
-/steve unstuck <name> - Force agent to replan
-/steve retry <name> - Retry current action
-/steve skip <name> - Skip current task
-/steve explain <name> - Get detailed state explanation
+/minewright unstuck <name> - Force agent to replan
+/minewright retry <name> - Retry current action
+/minewright skip <name> - Skip current task
+/minewright explain <name> - Get detailed state explanation
 ```
 
 ---
@@ -1128,12 +1128,12 @@ Try:
 Add player commands for debugging:
 
 ```
-/steve debug <name> - Toggle debug overlay for agent
-/steve trace <name> - Enable trace logging
-/steve explain <name> - Get detailed state explanation
-/steve unstuck <name> - Force recovery from stuck state
-/steve inspect - Show block info agent is targeting
-/steve export <name> - Export debug trace to file
+/minewright debug <name> - Toggle debug overlay for agent
+/minewright trace <name> - Enable trace logging
+/minewright explain <name> - Get detailed state explanation
+/minewright unstuck <name> - Force recovery from stuck state
+/minewright inspect - Show block info agent is targeting
+/minewright export <name> - Export debug trace to file
 ```
 
 ---
@@ -1222,7 +1222,7 @@ This research identified key techniques and tools for debugging and explaining A
 ### Game AI Resources
 - [Behavior Tree Debugging Guide](https://m.blog.csdn.net/LiteProceed/article/details/155931429) - Game AI debugging patterns
 - [MineStudio - Minecraft AI Toolkit](https://blog.csdn.net/gitblog_00007/article/details/147293137) - Minecraft AI development
-- [Steve AI Agent](https://github.com/YuvDwi/Steve) - Similar Minecraft agent project
+- [MineWright AI Agent](https://github.com/YuvDwi/Steve) - Similar Minecraft agent project
 
 ### Articles and Blog Posts
 - [AI Agent状态管理与State Replay深度指南](https://www.toutiao.com/a7589460483040608809/) - State management and replay

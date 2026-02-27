@@ -1263,7 +1263,7 @@ public enum AgentState {
 #### 4. Configuration
 
 ```toml
-# config/steve-common.toml
+# config/minewright-common.toml
 
 [jupyter]
 enabled = true
@@ -1597,7 +1597,7 @@ public class SimulatedBuildAction extends BaseAction {
 ## Appendix B: Configuration Example
 
 ```toml
-# config/steve-common.toml
+# config/minewright-common.toml
 
 # Jupyter Kernel Gateway Configuration
 [jupyter]

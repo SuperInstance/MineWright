@@ -2020,7 +2020,7 @@ LLM Task Plan:
 
 ### Config Options
 
-**File:** `config/steve-common.toml`
+**File:** `config/minewright-common.toml`
 
 ```toml
 [shulker_farm]

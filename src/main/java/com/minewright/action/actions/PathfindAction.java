@@ -16,6 +16,11 @@ public class PathfindAction extends BaseAction {
 
     @Override
     protected void onStart() {
+        if (foreman == null || foreman.getNavigation() == null) {
+            result = ActionResult.failure("Foreman or navigation not available");
+            return;
+        }
+
         int x = task.getIntParameter("x", 0);
         int y = task.getIntParameter("y", 0);
         int z = task.getIntParameter("z", 0);
@@ -28,6 +33,11 @@ public class PathfindAction extends BaseAction {
 
     @Override
     protected void onTick() {
+        if (foreman == null || foreman.getNavigation() == null || targetPos == null) {
+            result = ActionResult.failure("Invalid state during pathfinding");
+            return;
+        }
+
         ticksRunning++;
 
         if (foreman.blockPosition().closerThan(targetPos, 2.0)) {
@@ -36,7 +46,7 @@ public class PathfindAction extends BaseAction {
         }
 
         if (ticksRunning > MAX_TICKS) {
-            result = ActionResult.failure("Pathfinding timeout");
+            result = ActionResult.failure("Pathfinding timeout after " + MAX_TICKS + " ticks");
             return;
         }
 
@@ -47,12 +57,14 @@ public class PathfindAction extends BaseAction {
 
     @Override
     protected void onCancel() {
-        foreman.getNavigation().stop();
+        if (foreman != null && foreman.getNavigation() != null) {
+            foreman.getNavigation().stop();
+        }
     }
 
     @Override
     public String getDescription() {
-        return "Pathfind to " + targetPos;
+        return "Pathfind to " + (targetPos != null ? targetPos : "unknown");
     }
 }
 

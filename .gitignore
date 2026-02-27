@@ -43,8 +43,8 @@ logs/
 nul
 
 # Old config file name
-config/steve-common.toml
-run/config/steve-common.toml
+config/minewright-common.toml
+run/config/minewright-common.toml
 
 # JDK
 jdk-17.0.2.jdk/

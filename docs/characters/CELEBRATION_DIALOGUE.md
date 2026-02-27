@@ -1,6 +1,6 @@
 # Celebration Dialogue System for MineWright Workers
 
-**Project:** Steve AI - MineWright Worker Celebration System
+**Project:** MineWright AI - MineWright Worker Celebration System
 **Date:** 2026-02-27
 **Research Focus:** Achievement celebration patterns, personality-based reactions, team dynamics, celebration fatigue prevention
 

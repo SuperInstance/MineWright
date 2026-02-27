@@ -806,6 +806,7 @@ public class CompanionMemory {
         personalityTag.putString("FavoriteBlock", personality.favoriteBlock);
         personalityTag.putString("WorkStyle", personality.workStyle);
         personalityTag.putString("Mood", personality.mood);
+        personalityTag.putString("ArchetypeName", personality.archetypeName);
 
         // Save catchphrases
         ListTag catchphrasesList = new ListTag();
@@ -813,6 +814,21 @@ public class CompanionMemory {
             catchphrasesList.add(StringTag.valueOf(catchphrase));
         }
         personalityTag.put("Catchphrases", catchphrasesList);
+
+        // Save verbal tics
+        ListTag verbalTicsList = new ListTag();
+        for (String tic : personality.verbalTics) {
+            verbalTicsList.add(StringTag.valueOf(tic));
+        }
+        personalityTag.put("VerbalTics", verbalTicsList);
+
+        // Save tic usage counts
+        CompoundTag ticUsageTag = new CompoundTag();
+        for (Map.Entry<String, Integer> entry : personality.ticUsageCount.entrySet()) {
+            ticUsageTag.putInt(entry.getKey(), entry.getValue());
+        }
+        personalityTag.put("TicUsageCount", ticUsageTag);
+
         tag.put("Personality", personalityTag);
 
         // Save milestone tracker
@@ -970,6 +986,9 @@ public class CompanionMemory {
             personality.favoriteBlock = personalityTag.getString("FavoriteBlock");
             personality.workStyle = personalityTag.getString("WorkStyle");
             personality.mood = personalityTag.getString("Mood");
+            personality.archetypeName = personalityTag.contains("ArchetypeName")
+                ? personalityTag.getString("ArchetypeName")
+                : "THE_FOREMAN";
 
             // Load catchphrases
             ListTag catchphrasesList = personalityTag.getList("Catchphrases", 8);
@@ -977,6 +996,24 @@ public class CompanionMemory {
                 personality.catchphrases.clear();
                 for (int i = 0; i < catchphrasesList.size(); i++) {
                     personality.catchphrases.add(catchphrasesList.getString(i));
+                }
+            }
+
+            // Load verbal tics
+            ListTag verbalTicsList = personalityTag.getList("VerbalTics", 8);
+            if (!verbalTicsList.isEmpty()) {
+                personality.verbalTics.clear();
+                for (int i = 0; i < verbalTicsList.size(); i++) {
+                    personality.verbalTics.add(verbalTicsList.getString(i));
+                }
+            }
+
+            // Load tic usage counts
+            CompoundTag ticUsageTag = personalityTag.getCompound("TicUsageCount");
+            if (!ticUsageTag.isEmpty()) {
+                personality.ticUsageCount.clear();
+                for (String key : ticUsageTag.getAllKeys()) {
+                    personality.ticUsageCount.put(key, ticUsageTag.getInt(key));
                 }
             }
         }
@@ -1243,6 +1280,7 @@ public class CompanionMemory {
 
     /**
      * Personality profile for the foreman.
+     * Now includes enhanced speech patterns and verbal tics support.
      */
     public static class PersonalityProfile {
         // Big Five traits (0-100)
@@ -1265,10 +1303,24 @@ public class CompanionMemory {
             "Another day, another block."
         ));
 
+        // Enhanced speech patterns
+        public List<String> verbalTics = new ArrayList<>(List.of(
+            "Well,",
+            "You see,",
+            "Here's the thing"
+        ));
+
+        // Speech pattern usage tracking
+        public Map<String, Integer> ticUsageCount = new ConcurrentHashMap<>();
+        public List<String> recentTics = Collections.synchronizedList(new ArrayList<>());
+
         // Preferences (for consistent behavior)
         public String favoriteBlock = "cobblestone";
         public String workStyle = "methodical";
         public String mood = "cheerful";
+
+        // Archetype name if using a predefined archetype
+        public String archetypeName = "THE_FOREMAN";
 
         /**
          * Generates a personality summary for prompting.
@@ -1283,9 +1335,122 @@ public class CompanionMemory {
             sb.append("- Humor Level: ").append(humor).append("%\n");
             sb.append("- Formality: ").append(formality > 50 ? "formal" : "casual and friendly").append("\n");
             sb.append("- Current mood: ").append(mood).append("\n");
-            sb.append("- Catchphrases: ").append(catchphrases).append("\n");
+            sb.append("- Archetype: ").append(archetypeName).append("\n");
+
+            if (!catchphrases.isEmpty()) {
+                sb.append("- Catchphrases: ");
+                int count = Math.min(3, catchphrases.size());
+                sb.append(String.join(", ", catchphrases.subList(0, count)));
+                if (catchphrases.size() > 3) {
+                    sb.append(" (and ").append(catchphrases.size() - 3).append(" more)");
+                }
+                sb.append("\n");
+            }
+
+            if (!verbalTics.isEmpty()) {
+                sb.append("- Verbal Tics (use occasionally): ");
+                sb.append(String.join(", ", verbalTics)).append("\n");
+            }
+
             sb.append("- Favorite block: ").append(favoriteBlock).append("\n");
             return sb.toString();
+        }
+
+        /**
+         * Applies a foreman archetype configuration to this profile.
+         */
+        public void applyArchetype(com.minewright.personality.ForemanArchetypeConfig.ForemanArchetype archetype) {
+            com.minewright.personality.PersonalityTraits traits = archetype.getTraits();
+            this.openness = traits.getOpenness();
+            this.conscientiousness = traits.getConscientiousness();
+            this.extraversion = traits.getExtraversion();
+            this.agreeableness = traits.getAgreeableness();
+            this.neuroticism = traits.getNeuroticism();
+            this.formality = archetype.getFormality();
+            this.humor = archetype.getHumor();
+            this.encouragement = archetype.getEncouragement();
+            this.catchphrases = new ArrayList<>(archetype.getCatchphrases());
+            this.verbalTics = new ArrayList<>(archetype.getVerbalTics());
+            this.archetypeName = archetype.getName();
+        }
+
+        /**
+         * Gets a random verbal tic, tracking usage for variety.
+         */
+        public String getRandomVerbalTic() {
+            if (verbalTics.isEmpty()) {
+                return "";
+            }
+
+            // Track recent tics to avoid repetition
+            String selectedTic;
+            int attempts = 0;
+            do {
+                selectedTic = verbalTics.get(new Random().nextInt(verbalTics.size()));
+                attempts++;
+            } while (recentTics.contains(selectedTic) && attempts < 5);
+
+            // Update tracking
+            ticUsageCount.merge(selectedTic, 1, Integer::sum);
+            recentTics.add(selectedTic);
+            if (recentTics.size() > 5) {
+                recentTics.remove(0);
+            }
+
+            return selectedTic;
+        }
+
+        /**
+         * Checks if a verbal tic should be used based on personality and recent usage.
+         */
+        public boolean shouldUseVerbalTic() {
+            if (verbalTics.isEmpty()) {
+                return false;
+            }
+
+            // Base chance based on neuroticism (nervous characters tic more)
+            double baseChance = 0.15 + (neuroticism / 500.0); // 15% to 35%
+
+            // Adjust based on recent tic usage (don't overuse)
+            if (!recentTics.isEmpty()) {
+                double recentPenalty = recentTics.size() * 0.05;
+                baseChance -= recentPenalty;
+            }
+
+            return new Random().nextDouble() < Math.max(0.05, baseChance);
+        }
+
+        /**
+         * Gets the speech pattern description for this personality.
+         */
+        public String getSpeechPatternDescription() {
+            List<String> patterns = new ArrayList<>();
+
+            if (extraversion > 70) {
+                patterns.add("enthusiastic and expressive");
+            } else if (extraversion < 40) {
+                patterns.add("quiet and thoughtful");
+            }
+
+            if (formality > 60) {
+                patterns.add("formal and polite");
+            } else if (formality < 40) {
+                patterns.add("casual and relaxed");
+            }
+
+            if (humor > 60) {
+                patterns.add("frequently humorous");
+            }
+
+            if (conscientiousness > 70) {
+                patterns.add("methodical and precise");
+            }
+
+            if (patterns.isEmpty()) {
+                return "balanced and friendly";
+            }
+
+            return String.join(", ", patterns);
         }
     }
 }

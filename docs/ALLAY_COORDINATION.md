@@ -1465,7 +1465,7 @@ Allay Behavior Notes:
 
 ## Configuration
 
-### config/steve-common.toml
+### config/minewright-common.toml
 
 ```toml
 [allay]
@@ -1557,22 +1557,22 @@ status_interval = 200
 
 ```java
 // List all tamed allays
-/steve allay list
+/minewright allay list
 
 // Show allay details
-/steve allay info <uuid>
+/minewright allay info <uuid>
 
 // Reassign allay to note block
-/steve allay assign <uuid> <x> <y> <z>
+/minewright allay assign <uuid> <x> <y> <z>
 
 // Create squad
-/steve squad create <name> <size>
+/minewright squad create <name> <size>
 
 // Show squad status
-/steve squad status <name>
+/minewright squad status <name>
 
 // Debug allay behavior
-/steve allay debug <uuid>
+/minewright allay debug <uuid>
 ```
 
 ---

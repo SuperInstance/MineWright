@@ -2,10 +2,12 @@ package com.minewright;
 
 import com.mojang.logging.LogUtils;
 import com.minewright.command.ForemanCommands;
+import com.minewright.config.ConfigManager;
 import com.minewright.config.MineWrightConfig;
 import com.minewright.entity.ForemanEntity;
 import com.minewright.entity.CrewManager;
 import com.minewright.orchestration.OrchestratorService;
+import com.minewright.voice.VoiceConfig;
 import com.minewright.voice.VoiceException;
 import com.minewright.voice.VoiceManager;
 import net.minecraft.world.entity.EntityType;
@@ -42,6 +44,8 @@ public class MineWrightMod {
 
     private static CrewManager crewManager;
     private static OrchestratorService orchestratorService;
+    private static VoiceManager voiceManager;
+    private static VoiceConfig voiceConfig;
 
     public MineWrightMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -60,20 +64,31 @@ public class MineWrightMod {
             MinecraftForge.EVENT_BUS.register(com.minewright.client.ForemanOfficeGUI.class);
         }
 
+        // Initialize core systems
         crewManager = new CrewManager();
         orchestratorService = new OrchestratorService();
+        voiceManager = VoiceManager.getInstance();
+        voiceConfig = new VoiceConfig();
+
+        // Register config change listeners
+        ConfigManager configManager = ConfigManager.getInstance();
+        configManager.registerListener(voiceConfig);
 
         LOGGER.info("MineWright initialized with OrchestratorService");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        // Validate configuration on startup
-        MineWrightConfig.validateAndLog();
+        // Initialize ConfigManager (handles validation and migration)
+        ConfigManager.getInstance().initialize();
 
         // Initialize voice system
         try {
-            VoiceManager.getInstance().initialize();
-            LOGGER.info("Voice system initialized");
+            voiceManager.initialize();
+            if (voiceConfig.isValid()) {
+                LOGGER.info("Voice system initialized: {}", voiceConfig.getSummary());
+            } else {
+                LOGGER.warn("Voice configuration has validation errors");
+            }
         } catch (VoiceException e) {
             LOGGER.warn("Failed to initialize voice system: {}", e.getMessage());
         }
@@ -85,15 +100,31 @@ public class MineWrightMod {
      * <p>This is called when the config file is reloaded via /reload command
      * or when the config file changes on disk.</p>
      *
+     * <p>The reload process:</p>
+     * <ol>
+     *   <li>Notify listeners of impending reload</li>
+     *   <li>Validate configuration</li>
+     *   <li>Migrate if version changed</li>
+     *   <li>Notify listeners of changes</li>
+     * </ol>
+     *
      * @param event The config reload event
      */
     private void onConfigReload(final ModConfigEvent event) {
         if (event.getConfig().getModId().equals(MODID)) {
-            LOGGER.info("MineWright configuration reloaded");
-            MineWrightConfig.validateAndLog();
+            LOGGER.info("MineWright configuration reload event received");
 
-            // Reload voice configuration
-            VoiceManager.getInstance().reloadConfiguration();
+            // Use ConfigManager to handle reload and notify listeners
+            boolean success = ConfigManager.getInstance().reloadConfig();
+
+            if (success) {
+                LOGGER.info("Configuration reloaded successfully");
+
+                // Reload voice system configuration
+                voiceManager.reloadConfiguration();
+            } else {
+                LOGGER.warn("Configuration reload had errors - check logs for details");
+            }
         }
     }
 

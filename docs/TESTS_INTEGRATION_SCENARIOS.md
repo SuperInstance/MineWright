@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document defines comprehensive integration test scenarios for the MineWright mod (formerly "Steve AI" - autonomous AI agents that play Minecraft with you). These scenarios cover end-to-end workflows, multi-agent coordination, failure handling, world persistence, and GUI interactions.
+This document defines comprehensive integration test scenarios for the MineWright mod (formerly "MineWright AI" - autonomous AI agents that play Minecraft with you). These scenarios cover end-to-end workflows, multi-agent coordination, failure handling, world persistence, and GUI interactions.
 
 **Testing Philosophy:**
 - **Integration tests** verify that multiple components work together correctly
@@ -35,7 +35,7 @@ This document defines comprehensive integration test scenarios for the MineWrigh
 **Scenario:** User submits a simple command that requires a single action
 
 **Test Steps:**
-1. Spawn a Foreman entity: `/steve spawn Foreman`
+1. Spawn a Foreman entity: `/minewright spawn Foreman`
 2. Open GUI by pressing **K**
 3. Type command: "Mine 10 stone"
 4. Press **Enter** to submit
@@ -160,7 +160,7 @@ void testInvalidCommand() {
 **Scenario:** Single Foreman entity works independently
 
 **Test Steps:**
-1. Spawn single Foreman: `/steve solo Foreman`
+1. Spawn single Foreman: `/minewright solo Foreman`
 2. Assign task: "Mine 20 iron ore"
 3. Verify agent registers as FOREMAN role
 4. Verify agent completes task independently
@@ -195,8 +195,8 @@ void testSingleAgentSoloMode() {
 **Scenario:** Foreman delegates tasks to worker
 
 **Test Steps:**
-1. Spawn Foreman: `/steve spawn Foreman`
-2. Spawn Worker: `/steve spawn Worker1`
+1. Spawn Foreman: `/minewright spawn Foreman`
+2. Spawn Worker: `/minewright spawn Worker1`
 3. Open GUI and type: "Build a 10x10 stone platform"
 4. Submit command
 5. Verify Foreman processes command and delegates
@@ -243,7 +243,7 @@ void testForemanWorkerCoordination() {
 **Scenario:** Foreman distributes tasks across multiple workers
 
 **Test Steps:**
-1. Spawn Foreman: `/steve spawn Foreman`
+1. Spawn Foreman: `/minewright spawn Foreman`
 2. Spawn 3 workers: Worker1, Worker2, Worker3
 3. Open GUI and type: "Build three 5x5 cobblestone towers"
 4. Submit command
@@ -905,11 +905,11 @@ void testMessageHistoryScroll() {
 4. Verify spawn command is executed
 5. Verify system message: "Spawning crew member: Builder"
 6. Verify new entity appears in world
-7. Verify `/steve spawn Builder` is sent
+7. Verify `/minewright spawn Builder` is sent
 
 **Expected Behaviors:**
 - GUI detects spawn command prefix
-- Sends `/steve spawn` command to server
+- Sends `/minewright spawn` command to server
 - System message confirms spawn
 - CrewManager creates new entity
 - Entity appears at player location
@@ -921,7 +921,7 @@ void testSpawnViaGUI() {
     ForemanOfficeGUI gui = new ForemanOfficeGUI();
     gui.sendCommand("spawn Builder");
 
-    verify(player.connection).sendCommand("steve spawn Builder");
+    verify(player.connection).sendCommand("minewright spawn Builder");
 
     List<ChatMessage> messages = gui.getMessages();
     ChatMessage systemMsg = messages.get(messages.size() - 1);

@@ -1129,7 +1129,7 @@ private String getActionDescriptions() {
 
 ## Appendix A: Configuration
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [iron_farming]

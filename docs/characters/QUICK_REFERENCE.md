@@ -276,5 +276,5 @@ Include context about:
 ---
 
 *Document Version: 1.0*
-*Created for: Steve AI - MineWright Character Development*
+*Created for: MineWright AI - MineWright Character Development*
 *Purpose: Quick reference for developers implementing construction worker personalities*

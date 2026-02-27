@@ -2,7 +2,7 @@
 
 **Document Version:** 1.0
 **Date:** 2026-02-27
-**Project:** Steve AI - MineWright Companion System
+**Project:** MineWright AI - MineWright Companion System
 **Purpose:** Comprehensive research on relationship progression, milestone recognition, and dialogue evolution for companion AI characters
 
 ---

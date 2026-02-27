@@ -1516,7 +1516,7 @@ private String getScoutingDialogue(String mobType, int distance, String directio
 
 ## Configuration
 
-### config/steve-common.toml
+### config/minewright-common.toml
 
 ```toml
 [CombatDialogue]

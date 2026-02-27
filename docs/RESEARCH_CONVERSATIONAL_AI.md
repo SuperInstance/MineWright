@@ -1,6 +1,6 @@
 # Conversational AI and Dialogue Systems Research Report
 
-**Project:** Steve AI - Minecraft Autonomous Agents
+**Project:** MineWright AI - Minecraft Autonomous Agents
 **Component:** Foreman Companion Dialogue System
 **Research Date:** February 27, 2026
 **Version:** 1.0
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This report synthesizes the latest research (2025-2026) in conversational AI, personality systems, context management, proactive dialogue, emotional intelligence, and humor generation. The findings provide actionable improvements for the Steve AI Foreman personality and dialogue system.
+This report synthesizes the latest research (2025-2026) in conversational AI, personality systems, context management, proactive dialogue, emotional intelligence, and humor generation. The findings provide actionable improvements for the MineWright AI Foreman personality and dialogue system.
 
 **Key Findings:**
 - **2026 marks a paradigm shift** from reactive "dialog boxes" to proactive, task-oriented AI agents
@@ -36,7 +36,7 @@ This report synthesizes the latest research (2025-2026) in conversational AI, pe
 
 ### Current State
 
-The Steve AI project already implements:
+The MineWright AI project already implements:
 - **Big Five (OCEAN) personality traits** via `PersonalityTraits.java`
 - **Personality profiles** in `CompanionMemory.PersonalityProfile`
 - **Trait-based blending** for personality combinations
@@ -147,7 +147,7 @@ public class PersonalityEvolution {
 
 ### Current State
 
-The Steve AI project implements:
+The MineWright AI project implements:
 - **Three-tier memory system** via `CompanionMemory`:
   - Working memory (20 entries)
   - Episodic memories (200 entries)
@@ -378,7 +378,7 @@ public class TopicDetector {
 
 ### Current State
 
-The Steve AI project implements:
+The MineWright AI project implements:
 - **`ProactiveDialogueManager`** with trigger-based commentary
 - **Idle, contextual, and activity-based triggers**
 - **Cooldown and anti-spam systems**
@@ -665,7 +665,7 @@ public class AnnoyanceDetector {
 
 ### Current State
 
-The Steve AI project implements:
+The MineWright AI project implements:
 - **Emotional memory tracking** via `EmotionalMemory` class
 - **Mood states** via `CompanionMemory.Mood` enum
 - **Emotional weight** for episodic memories (-10 to +10 scale)
@@ -954,7 +954,7 @@ public class EmotionalMemoryEnhancer {
 
 ### Current State
 
-The Steve AI project has extensive humor research documented in `research/HUMOR_AND_WIT.md`, including:
+The MineWright AI project has extensive humor research documented in `research/HUMOR_AND_WIT.md`, including:
 - **Humor style frameworks** (affiliative, self-enhancing, dry wit)
 - **Comedic timing rules**
 - **Minecraft-specific puns and jokes**
@@ -1253,7 +1253,7 @@ public class HumorRecoverySystem {
 
 ### Configuration Additions
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [personality]
@@ -1370,7 +1370,7 @@ consecutive_ignores_for_suppression = 4
 - **[KoWit-24: Wordplay in News Headlines](https://arxiv.org/html/2503.01510v1)** - arXiv, March 2025
 - **[JokeEval at ICML Expo](https://icml.cc/virtual/2025/46792)** - ICML 2025
 
-### Existing Steve AI Research
+### Existing MineWright AI Research
 
 - **C:\Users\casey\steve\research\CONVERSATION_AI_PATTERNS.md** - Conversational patterns for engaging companions
 - **C:\Users\casey\steve\research\HUMOR_AND_WIT.md** - Comprehensive humor system research
@@ -1381,5 +1381,5 @@ consecutive_ignores_for_suppression = 4
 
 **Document Version:** 1.0
 **Last Updated:** February 27, 2026
-**Author:** Research compilation for Steve AI Development Team
+**Author:** Research compilation for MineWright AI Development Team
 **Status:** Ready for Implementation

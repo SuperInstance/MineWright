@@ -2141,7 +2141,7 @@ public class EnhancedWorldKnowledge extends WorldKnowledge {
 
 ## 10. Configuration Options
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [resource_gathering]

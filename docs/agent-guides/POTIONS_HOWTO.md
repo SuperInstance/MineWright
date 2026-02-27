@@ -761,7 +761,7 @@ Now get brewing. The crew's counting on you.
 
 **Document Version:** 1.0
 **Last Updated:** 2026-02-27
-**Author:** Steve AI Development Team
+**Author:** MineWright AI Development Team
 **Voice:** Mace MineWright, Foreman
 **Contributors:** Circuit (Alchemy Specialist), Professor (Tactician)
 

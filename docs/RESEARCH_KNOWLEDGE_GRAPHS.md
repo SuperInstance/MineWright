@@ -1,6 +1,6 @@
 # Knowledge Graphs for AI Agents - Research Report
 
-**Project:** Steve AI (Minecraft Autonomous Agents)
+**Project:** MineWright AI (Minecraft Autonomous Agents)
 **Date:** 2026-02-27
 **Research Focus:** Graph-based knowledge representation for AI agents in Minecraft
 
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This report researches knowledge graph technologies for implementing persistent, queryable world knowledge in the Steve AI project. Knowledge graphs enable AI agents to store facts as entity-relationship triples, supporting complex queries, multi-hop reasoning, and dynamic learning.
+This report researches knowledge graph technologies for implementing persistent, queryable world knowledge in the MineWright AI project. Knowledge graphs enable AI agents to store facts as entity-relationship triples, supporting complex queries, multi-hop reasoning, and dynamic learning.
 
 **Key Findings:**
 - **GraphRAG** (2025-2026) combines knowledge graphs with vector search for enhanced LLM reasoning
@@ -608,7 +608,7 @@ ResultSet results = qe.execSelect();
 
 **Option A: Embedded Neo4j (Recommended)**
 ```
-Steve AI
+MineWright AI
 ├── KnowledgeGraph (Neo4j embedded)
 │   ├── Agent Memory (subgraph per agent)
 │   ├── World Knowledge (shared facts)
@@ -632,7 +632,7 @@ Steve AI
 
 **Option B: JGraphT + Custom Persistence**
 ```
-Steve AI
+MineWright AI
 ├── InMemoryGraph (JGraphT)
 │   ├── Fast algorithm access
 │   └── Session-based knowledge
@@ -657,7 +657,7 @@ Steve AI
 
 **Option C: Hybrid (JGraphT + Neo4j)**
 ```
-Steve AI
+MineWright AI
 ├── Working Memory (JGraphT)
 │   ├── Current session facts
 │   └── Fast algorithmic queries
@@ -906,7 +906,7 @@ graph.query(query, Map.of("triples", tripleList));
 
 ### 8.1 Recommended Stack
 
-**For Steve AI Project:**
+**For MineWright AI Project:**
 
 **Phase 1: MVP (Minimal Viable Product)**
 - **JGraphT** for in-memory knowledge

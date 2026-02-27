@@ -1,6 +1,6 @@
 # AI Debugging Implementation - Quick Reference Guide
 
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)
 **Date:** 2025-02-27
 **Companion to:** RESEARCH_AI_DEBUGGING.md
 

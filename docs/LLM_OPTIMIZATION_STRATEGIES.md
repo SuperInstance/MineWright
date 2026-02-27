@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive analysis of the LLM integration in the MineWright project (formerly Steve AI) and identifies actionable optimization opportunities across five key areas:
+This document provides a comprehensive analysis of the LLM integration in the MineWright project (formerly MineWright AI) and identifies actionable optimization opportunities across five key areas:
 
 1. **Prompt Engineering Improvements** - Token efficiency and response quality
 2. **Response Caching Strategies** - Hit rate optimization and cache warming

@@ -1,18 +1,18 @@
 # Game AI Patterns Research: Behavior Trees, Utility AI, GOAP, HTN & Dialogue Systems
 
 **Date:** February 27, 2026
-**Research Focus:** Game AI Decision-Making Patterns for Steve AI
+**Research Focus:** Game AI Decision-Making Patterns for MineWright AI
 **Application:** Foreman/Worker System Improvements
 
 ---
 
 ## Executive Summary
 
-This research document synthesizes 2024-2025 advances in game AI patterns with specific applications for Steve AI's Foreman/Worker coordination system. The analysis covers Behavior Trees, Utility AI, Goal-Oriented Action Planning (GOAP), Hierarchical Task Networks (HTN), and NPC Dialogue Systems.
+This research document synthesizes 2024-2025 advances in game AI patterns with specific applications for MineWright AI's Foreman/Worker coordination system. The analysis covers Behavior Trees, Utility AI, Goal-Oriented Action Planning (GOAP), Hierarchical Task Networks (HTN), and NPC Dialogue Systems.
 
-### Key Findings for Steve AI
+### Key Findings for MineWright AI
 
-| Pattern | Maturity | Integration Effort | Priority for Steve AI |
+| Pattern | Maturity | Integration Effort | Priority for MineWright AI |
 |---------|----------|-------------------|----------------------|
 | **Utility AI** | Production-Ready | Medium | **HIGH** - For worker task assignment |
 | **Behavior Trees** | Production-Ready | High | **HIGH** - For reactive decision making |
@@ -95,7 +95,7 @@ public class WorkerCompletionCondition extends ConditionNode {
 }
 ```
 
-**Benefits for Steve AI:**
+**Benefits for MineWright AI:**
 - Reduced CPU usage (no continuous polling for worker status)
 - Immediate response to task completion events
 - Better scalability for multi-worker scenarios
@@ -132,7 +132,7 @@ ROOT (Selector)
     └── Action: Assign Worker to Building
 ```
 
-### 1.6 BT Implementation for Steve AI
+### 1.6 BT Implementation for MineWright AI
 
 ```java
 package com.steve.ai.bt;
@@ -563,7 +563,7 @@ GOAP is an AI planning technique where agents plan sequences of actions to achie
 
 ### 3.2 GOAP vs HTN Decision Matrix
 
-| Factor | GOAP | HTN | Recommendation for Steve AI |
+| Factor | GOAP | HTN | Recommendation for MineWright AI |
 |--------|------|-----|------------------------------|
 | **Control** | Emergent, unpredictable | Designer-controlled | **HTN** - Need predictable builds |
 | **Planning Direction** | Backward chaining | Forward decomposition | **HTN** - Natural task breakdown |
@@ -828,13 +828,13 @@ public class WorkerGoapExample {
 
 HTN planning decomposes high-level tasks into subtasks through hierarchical methods. It uses **forward decomposition** rather than GOAP's backward chaining.
 
-**Key Advantage for Steve AI:** Designer control over task decomposition ensures predictable, reproducible building plans.
+**Key Advantage for MineWright AI:** Designer control over task decomposition ensures predictable, reproducible building plans.
 
 ### 4.2 HTN Core Concepts
 
 ```
 Compound Task: High-level goal that requires decomposition
-Primitive Task: Directly executable action (maps to Steve AI actions)
+Primitive Task: Directly executable action (maps to MineWright AI actions)
 Method: Alternative way to decompose a compound task with preconditions
 ```
 
@@ -864,7 +864,7 @@ build_house (Compound Task)
     └── Subtasks: [includes glass panes, doors, etc.]
 ```
 
-### 4.4 HTN Planner Integration for Steve AI
+### 4.4 HTN Planner Integration for MineWright AI
 
 ```java
 package com.steve.ai.htn;
@@ -875,7 +875,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * HTN Planner for Steve AI with LLM fallback.
+ * HTN Planner for MineWright AI with LLM fallback.
  */
 public class SteveHTNPlanner {
     private final HTNDomain domain;
@@ -1017,7 +1017,7 @@ package com.steve.ai.htn;
 import java.util.*;
 
 /**
- * HTN Domain for Steve AI building tasks.
+ * HTN Domain for MineWright AI building tasks.
  */
 public class HTNDomain {
     private final Map<String, List<HTNMethod>> methods;
@@ -1127,7 +1127,7 @@ Modern NPC dialogue systems have evolved from simple decision trees to sophistic
 - **Intent classification**: NLP-based understanding of player input
 - **Context-aware responses**: Using conversation history and world state
 
-### 5.2 Dialogue State Machine for Steve AI
+### 5.2 Dialogue State Machine for MineWright AI
 
 ```java
 package com.steve.ai.dialogue;
@@ -1137,7 +1137,7 @@ import com.steve.execution.EventBus;
 import java.util.*;
 
 /**
- * Dialogue state machine for Steve AI player communication.
+ * Dialogue state machine for MineWright AI player communication.
  */
 public class DialogueStateMachine {
     private final SteveEntity steve;
@@ -1234,7 +1234,7 @@ enum PlayerIntent {
 }
 
 /**
- * Dialogue states for Steve AI.
+ * Dialogue states for MineWright AI.
  */
 enum DialogueState {
     IDLE(false) {
@@ -1484,7 +1484,7 @@ public class DialogueMemory {
 
 ### 6.1 Current System Architecture
 
-Based on the existing codebase, Steve AI has:
+Based on the existing codebase, MineWright AI has:
 
 ```
 ForemanEntity (Player-facing agent)
@@ -2247,4 +2247,4 @@ Three-Layer Architecture:
 **Document Version:** 1.0
 **Last Updated:** February 27, 2026
 **Author:** Claude Research Agent
-**Project:** Steve AI (MineWright)
+**Project:** MineWright AI (MineWright)

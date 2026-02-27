@@ -1,7 +1,7 @@
 # Game AI Architectures Research Document
 
 **Research Date:** 2025-02-27
-**Project:** Steve AI (MineWright Mod)
+**Project:** MineWright AI (MineWright Mod)
 **Purpose:** Comprehensive analysis of modern game AI agent architectures for informing system design
 
 ---
@@ -16,7 +16,7 @@
 6. [LLM-Powered Game Agents](#llm-powered-game-agents)
 7. [Architecture Comparison](#architecture-comparison)
 8. [Hybrid Approaches](#hybrid-approaches)
-9. [Recommendations for Steve AI](#recommendations-for-steve-ai)
+9. [Recommendations for MineWright AI](#recommendations-for-steve-ai)
 10. [References](#references)
 
 ---
@@ -33,7 +33,7 @@ This document provides a comprehensive analysis of five major game AI architectu
 | **Utility AI** | Scoring | Emotional AI, realistic NPCs | Medium | Good |
 | **LLM Agents** | Neural | Natural language, complex reasoning | Very High | Variable |
 
-**Key Finding:** Modern game development increasingly favors **hybrid approaches** that combine the strengths of multiple architectures. The Steve AI project currently uses a custom LLM-driven planner with action execution, which could benefit from incorporating Utility AI concepts for emotional responses and Behavior Tree patterns for action composition.
+**Key Finding:** Modern game development increasingly favors **hybrid approaches** that combine the strengths of multiple architectures. The MineWright AI project currently uses a custom LLM-driven planner with action execution, which could benefit from incorporating Utility AI concepts for emotional responses and Behavior Tree patterns for action composition.
 
 ---
 
@@ -1423,7 +1423,7 @@ Many modern games combine multiple architectures:
 3. **LLM + Behavior Trees**
    - LLM generates plan or interprets commands
    - Behavior tree executes individual actions
-   - Example: Current Steve AI implementation
+   - Example: Current MineWright AI implementation
 
 4. **HTN + Utility AI**
    - HTN decomposes high-level tasks
@@ -1538,11 +1538,11 @@ public class MultiLevelAI {
 
 ---
 
-## Recommendations for Steve AI
+## Recommendations for MineWright AI
 
 ### Current Architecture Analysis
 
-The Steve AI (MineWright mod) currently uses:
+The MineWright AI (MineWright mod) currently uses:
 
 1. **LLM-Based Planning** (OpenAI/Groq/Gemini)
 2. **Plugin-Based Action System** (ActionRegistry, ActionFactory)
@@ -1909,7 +1909,7 @@ Modern game AI development offers a rich landscape of architectures, each with d
 - **Realistic, emotional AI** → Utility AI
 - **Natural language interfaces** → LLM Agents
 
-For **Steve AI**, the current LLM-based approach is well-suited for the core functionality. The recommended improvements focus on:
+For **MineWright AI**, the current LLM-based approach is well-suited for the core functionality. The recommended improvements focus on:
 
 1. **Skill Library** - Learning and reusing successful patterns
 2. **Utility Prioritization** - Context-aware task ordering
@@ -1918,10 +1918,10 @@ For **Steve AI**, the current LLM-based approach is well-suited for the core fun
 
 These enhancements maintain the strengths of the LLM-based approach while addressing its weaknesses (latency, cost, reliability) through caching, prioritization, and structured execution patterns.
 
-The future of game AI lies in **hybrid architectures** that combine the reasoning capabilities of LLMs with the reliability and performance of traditional AI systems. Steve AI is well-positioned to evolve in this direction.
+The future of game AI lies in **hybrid architectures** that combine the reasoning capabilities of LLMs with the reliability and performance of traditional AI systems. MineWright AI is well-positioned to evolve in this direction.
 
 ---
 
 **Document Version:** 1.0
 **Last Updated:** 2025-02-27
-**Maintained By:** Steve AI Development Team
+**Maintained By:** MineWright AI Development Team

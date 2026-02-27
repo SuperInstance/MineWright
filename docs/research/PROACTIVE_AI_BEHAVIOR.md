@@ -2,7 +2,7 @@
 ## Autonomous Actions and Initiative-Taking Patterns for Assistants
 
 **Research Date:** 2026-02-27
-**Project:** Steve AI - Minecraft Autonomous Agents
+**Project:** MineWright AI - Minecraft Autonomous Agents
 **Component:** ProactiveDialogueManager Enhancement
 **Version:** 1.0
 
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document synthesizes cutting-edge research on proactive AI behavior, anticipatory systems, and autonomous agent initiative-taking from 2024-2025. It provides actionable improvements for the Steve AI ProactiveDialogueManager, focusing on when AI should speak without prompting, how to detect opportunities for help, and balancing proactive vs. reactive behaviors.
+This document synthesizes cutting-edge research on proactive AI behavior, anticipatory systems, and autonomous agent initiative-taking from 2024-2025. It provides actionable improvements for the MineWright AI ProactiveDialogueManager, focusing on when AI should speak without prompting, how to detect opportunities for help, and balancing proactive vs. reactive behaviors.
 
 **Key Findings:**
 1. **Timing is Critical:** Well-timed proactive suggestions achieve 52% engagement rates vs. 62% dismissal for poorly-timed interruptions
@@ -51,7 +51,7 @@ This document synthesizes cutting-edge research on proactive AI behavior, antici
 
 **Key Principle:** Align AI commentary with natural cognitive breakpoints. When users complete a task, their attention is available for new input. During active work, interruptions are disruptive.
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 // Current: Fixed interval checking
 private final int baseCheckInterval = 100;  // Every 5 seconds
@@ -88,7 +88,7 @@ private boolean shouldCheckTriggers() {
 - On-device processing for privacy
 - Strong user preference over reactive models
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Predictive trigger system based on behavioral signals
@@ -151,7 +151,7 @@ public class PredictiveTriggerDetector {
   4. Social norms
   5. Emotional response needs
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Multi-dimensional motivation evaluator for proactive dialogue
@@ -228,7 +228,7 @@ public class MotivationEvaluator {
 5. **Convenience** - Reducing friction
 6. **Emotional Value** - Providing support, encouragement
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Opportunity detection for Minecraft-specific scenarios
@@ -366,7 +366,7 @@ public class OpportunityDetector {
 - **Cognitive Load** - Mental bandwidth availability
 - **Sensory Disruption** - Environmental interference
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Context-aware action selection
@@ -427,10 +427,10 @@ public class ProactiveActionSelector {
 - Identify hidden opportunities
 - Adapt to rapidly evolving domains
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
- * Exploration and discovery system for Steve AI
+ * Exploration and discovery system for MineWright AI
  */
 public class ExplorationManager {
 
@@ -519,7 +519,7 @@ public class ExplorationManager {
 | **Close supervision** | Frequent monitoring and adjustments | Ask permission often, provide transparency |
 | **Collaborative** | Selective intervention at key points | **Optimal balance** - autonomous but confirm major actions |
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Detect and adapt to player's collaboration style
@@ -579,7 +579,7 @@ public class CollaborationStyleDetector {
 - **Knowledge boundaries** - LLMs struggle with real-time context and domain-specific conversations
 - **Solution:** User profiling modules with memory mechanisms to better match preferences
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Adaptive frequency manager based on player engagement
@@ -701,7 +701,7 @@ public class AdaptiveDialogueFrequency {
 - On/off controls
 - Decreased distraction and cognitive load over time
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Context-aware suppression - know when to stay silent
@@ -821,7 +821,7 @@ Based on research, triggers should be organized by priority and context:
 - Reminds based on schedules
 - Alerts based on integrated data
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Context-aware trigger system
@@ -909,7 +909,7 @@ public class ContextAwareTriggerSystem {
 
 ### Multi-Dimensional Preference Tracking
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Multi-dimensional user preference tracking
@@ -1061,7 +1061,7 @@ public class UserPreferenceTracker {
 
 **Key Principle:** Don't guess - ask when uncertain about preferences.
 
-**Application to Steve AI:**
+**Application to MineWright AI:**
 ```java
 /**
  * Proactive inquiry system for learning preferences
@@ -1809,7 +1809,7 @@ public class ProactiveDialogueManager {
 
 ## Conclusion
 
-This research document provides a comprehensive foundation for enhancing the Steve AI ProactiveDialogueManager with cutting-edge proactive AI behaviors. The key improvements focus on:
+This research document provides a comprehensive foundation for enhancing the MineWright AI ProactiveDialogueManager with cutting-edge proactive AI behaviors. The key improvements focus on:
 
 1. **Timing Precision:** Workflow-aware interventions instead of fixed intervals
 2. **Predictive Capability:** Anticipating user needs before explicit requests
@@ -1817,11 +1817,11 @@ This research document provides a comprehensive foundation for enhancing the Ste
 4. **Context Sensitivity:** Understanding when to speak and when to remain silent
 5. **Competence Preservation:** Balancing helpfulness with user autonomy
 
-By implementing these research-backed improvements, Steve AI will become a more natural, helpful, and contextually appropriate companion that enhances the Minecraft experience without being intrusive or annoying.
+By implementing these research-backed improvements, MineWright AI will become a more natural, helpful, and contextually appropriate companion that enhances the Minecraft experience without being intrusive or annoying.
 
 ---
 
 **Document Version:** 1.0
-**Author:** Steve AI Development Team
+**Author:** MineWright AI Development Team
 **Status:** Ready for Implementation
 **Last Updated:** 2026-02-27

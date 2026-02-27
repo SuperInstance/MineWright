@@ -15,9 +15,11 @@ import java.util.stream.Collectors;
 /**
  * Central orchestration service for coordinating multiple MineWright agents.
  *
- * <p>Implements a hierarchical coordination model where one "Foreman" MineWright
- * receives high-level commands from the human player and distributes tasks
- * to worker agents.</p>
+ * <p><b>Overview:</b></p>
+ * <p>The OrchestratorService implements a hierarchical coordination model where
+ * one "Foreman" agent receives high-level commands from the human player and
+ * distributes tasks to worker agents. This enables parallel execution of complex
+ * plans by leveraging multiple AI-controlled crew members simultaneously.</p>
  *
  * <p><b>Architecture:</b></p>
  * <pre>
@@ -47,7 +49,54 @@ import java.util.stream.Collectors;
  *   <li>Monitor task progress and handle failures</li>
  *   <li>Rebalance work when workers finish or fail</li>
  *   <li>Report aggregate progress to human player</li>
+ *   <li>Elect new foreman if foreman disappears</li>
  * </ul>
+ *
+ * <p><b>Task Distribution Strategy:</b></p>
+ * <ul>
+ *   <li><b>Round-Robin:</b> Tasks are distributed evenly across available workers</li>
+ *   <li><b>Fallback to Foreman:</b> If no workers available, foreman handles tasks</li>
+ *   <li><b>Dynamic Rebalancing:</b> When workers finish early, they get new tasks</li>
+ *   <li><b>Retry on Failure:</b> Failed tasks are retried with different workers</li>
+ * </ul>
+ *
+ * <p><b>Communication:</b></p>
+ * <p>All inter-agent communication flows through the {@link AgentCommunicationBus}:</p>
+ * <ul>
+ *   <li><b>TASK_ASSIGNMENT:</b> Foreman assigns task to worker</li>
+ *   <li><b>TASK_PROGRESS:</b> Worker reports progress percentage</li>
+ *   <li><b>TASK_COMPLETE:</b> Worker notifies completion</li>
+ *   <li><b>TASK_FAILED:</b> Worker reports failure with reason</li>
+ *   <li><b>PLAN_ANNOUNCEMENT:</b> Foreman announces new plan to all</li>
+ *   <li><b>BROADCAST:</b> General announcements to all agents</li>
+ * </ul>
+ *
+ * <p><b>Thread Safety:</b></p>
+ * <ul>
+ *   <li>Uses {@link ConcurrentHashMap} for all shared state</li>
+ *   <li>{@code volatile} foremanId for visibility across threads</li>
+ *   <li>Message handlers are cleaned up on unregister to prevent leaks</li>
+ *   <li>All operations are designed for concurrent access</li>
+ * </ul>
+ *
+ * <p><b>Fallback Behavior:</b></p>
+ * <p>If no foreman is available, the system falls back to "solo mode" where
+ * tasks are assigned directly to the first available worker. This ensures
+ * that commands can still be executed even in single-agent scenarios.</p>
+ *
+ * <p><b>Error Handling:</b></p>
+ * <ul>
+ *   <li>Tasks that fail are retried up to {@code MAX_TASK_RETRIES} times</li>
+ *   <li>After max retries, task is marked as failed</li>
+ *   <li>Plan can succeed even if some tasks fail</li>
+ *   <li>Worker removal triggers task reassignment</li>
+ *   <li>Foreman removal triggers election of new foreman</li>
+ * </ul>
+ *
+ * @see AgentCommunicationBus
+ * @see AgentMessage
+ * @see AgentRole
+ * @see PlanExecution
  *
  * @since 1.2.0
  */
@@ -111,15 +160,48 @@ public class OrchestratorService {
     /**
      * Registers a MineWright agent with the orchestration system.
      *
+     * <p>Agents can be registered as either FOREMAN or WORKER roles. Only one
+     * foreman is allowed at a time; if a new foreman registers, it replaces
+     * the previous one. Workers can register in unlimited numbers.</p>
+     *
+     * <p>Registration includes:</p>
+     * <ul>
+     *   <li>Adding agent to the communication bus</li>
+     *   <li>Storing agent info in the appropriate registry</li>
+     *   <li>Subscribing to messages from this agent</li>
+     *   <li>Storing message handler for cleanup on unregister</li>
+     * </ul>
+     *
      * @param minewright The MineWright entity to register
-     * @param role  The agent's role in the hierarchy
+     * @param role The agent's role in the hierarchy (FOREMAN or WORKER)
+     * @throws NullPointerException if minewright or role is null
      */
     public void registerAgent(ForemanEntity minewright, AgentRole role) {
+        if (minewright == null) {
+            LOGGER.error("Cannot register null agent");
+            return;
+        }
+
+        if (role == null) {
+            LOGGER.error("Cannot register agent with null role");
+            return;
+        }
+
         String agentId = minewright.getEntityName();
         String agentName = minewright.getEntityName();
 
+        if (agentId == null || agentId.isEmpty()) {
+            LOGGER.error("Cannot register agent with null or empty ID");
+            return;
+        }
+
         // Register with communication bus
-        communicationBus.registerAgent(agentId, agentName);
+        try {
+            communicationBus.registerAgent(agentId, agentName);
+        } catch (Exception e) {
+            LOGGER.error("Failed to register agent {} with communication bus", agentId, e);
+            return;
+        }
 
         if (role == AgentRole.FOREMAN) {
             // Only one foreman allowed
@@ -142,18 +224,40 @@ public class OrchestratorService {
     }
 
     /**
-     * Unregisters a Steve agent from the orchestration system.
+     * Unregisters a MineWright agent from the orchestration system.
+     *
+     * <p>Cleanup operations include:</p>
+     * <ul>
+     *   <li>Removing message handler subscription to prevent memory leaks</li>
+     *   <li>Unregistering from communication bus</li>
+     *   <li>Reassigning any tasks this worker was working on</li>
+     *   <li>Electing new foreman if the unregistered agent was foreman</li>
+     * </ul>
      *
      * @param agentId Agent ID to unregister
+     * @throws NullPointerException if agentId is null
      */
     public void unregisterAgent(String agentId) {
+        if (agentId == null || agentId.isEmpty()) {
+            LOGGER.error("Cannot unregister agent with null or empty ID");
+            return;
+        }
+
         // Clean up message handler subscription to prevent memory leak
         java.util.function.Consumer<AgentMessage> handler = messageHandlers.remove(agentId);
         if (handler != null) {
-            communicationBus.unsubscribe(agentId, handler);
+            try {
+                communicationBus.unsubscribe(agentId, handler);
+            } catch (Exception e) {
+                LOGGER.warn("Error unsubscribing handler for agent {}", agentId, e);
+            }
         }
 
-        communicationBus.unregisterAgent(agentId);
+        try {
+            communicationBus.unregisterAgent(agentId);
+        } catch (Exception e) {
+            LOGGER.warn("Error unregistering agent {} from communication bus", agentId, e);
+        }
 
         if (foremanId != null && foremanId.equals(agentId)) {
             foremanId = null;
@@ -173,12 +277,23 @@ public class OrchestratorService {
     /**
      * Processes a high-level command from the human player.
      *
-     * <p>The foreman receives this command, plans the work, and distributes
-     * tasks to workers.</p>
+     * <p>This method creates a new plan execution and distributes tasks to workers.
+     * If no foreman is available, falls back to solo mode where all tasks are
+     * assigned to the first available worker.</p>
      *
-     * @param parsedResponse The LLM's parsed response containing tasks
-     * @param availableSteves All available Steve agents
-     * @return Plan ID for tracking progress
+     * <p>The process:</p>
+     * <ol>
+     *   <li>Create a new PlanExecution with unique ID</li>
+     *   <li>Register the plan in active plans map</li>
+     *   <li>Distribute tasks to available workers via round-robin</li>
+     *   <li>Announce the plan to all workers</li>
+     *   <li>Return plan ID for progress tracking</li>
+     * </ol>
+     *
+     * @param parsedResponse The LLM's parsed response containing tasks and plan description
+     * @param availableSteves All available MineWright agents for task assignment
+     * @return Plan ID for tracking progress (8-character hex string)
+     * @throws NullPointerException if parsedResponse is null
      */
     public String processHumanCommand(ResponseParser.ParsedResponse parsedResponse,
                                       Collection<ForemanEntity> availableSteves) {
@@ -315,31 +430,40 @@ public class OrchestratorService {
      * Handles incoming messages from agents.
      */
     private void handleMessageFromAgent(String agentId, AgentMessage message) {
+        if (agentId == null || message == null) {
+            LOGGER.error("[Orchestrator] Received null agentId or message");
+            return;
+        }
+
         LOGGER.debug("[Orchestrator] Message from {}: {}", agentId, message.getType());
 
-        switch (message.getType()) {
-            case TASK_PROGRESS:
-                handleTaskProgress(agentId, message);
-                break;
+        try {
+            switch (message.getType()) {
+                case TASK_PROGRESS:
+                    handleTaskProgress(agentId, message);
+                    break;
 
-            case TASK_COMPLETE:
-                handleTaskComplete(agentId, message);
-                break;
+                case TASK_COMPLETE:
+                    handleTaskComplete(agentId, message);
+                    break;
 
-            case TASK_FAILED:
-                handleTaskFailed(agentId, message);
-                break;
+                case TASK_FAILED:
+                    handleTaskFailed(agentId, message);
+                    break;
 
-            case HELP_REQUEST:
-                handleHelpRequest(agentId, message);
-                break;
+                case HELP_REQUEST:
+                    handleHelpRequest(agentId, message);
+                    break;
 
-            case STATUS_REPORT:
-                handleStatusReport(agentId, message);
-                break;
+                case STATUS_REPORT:
+                    handleStatusReport(agentId, message);
+                    break;
 
-            default:
-                LOGGER.debug("[Orchestrator] Unhandled message type: {}", message.getType());
+                default:
+                    LOGGER.debug("[Orchestrator] Unhandled message type: {}", message.getType());
+            }
+        } catch (Exception e) {
+            LOGGER.error("[Orchestrator] Error handling message from {}: {}", agentId, message.getType(), e);
         }
     }
 

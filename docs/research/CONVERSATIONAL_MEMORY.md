@@ -1,7 +1,7 @@
 # Conversational Memory and Context Management Research
 
 **Research Date:** 2026-02-27
-**For:** Steve AI CompanionMemory Improvements
+**For:** MineWright AI CompanionMemory Improvements
 **Focus:** Sliding window vs summarization, vector-based retrieval, priority scoring, memory decay, relationship tracking
 
 ---

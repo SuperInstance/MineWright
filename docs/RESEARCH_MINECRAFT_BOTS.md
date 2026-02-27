@@ -1,6 +1,6 @@
 # Research Report: Minecraft Bot Frameworks for MineWright Improvements
 
-**Project:** MineWright (Steve AI) - "Cursor for Minecraft"
+**Project:** MineWright (MineWright AI) - "Cursor for Minecraft"
 **Date:** 2026-02-27
 **Purpose:** Research existing Minecraft bot frameworks to identify patterns and algorithms for improving autonomous agent capabilities
 
@@ -979,5 +979,5 @@ public class PriorityEventBus extends SimpleEventBus {
 
 **Report Generated:** 2026-02-27
 **Author:** Claude Code Research Agent
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)
 **Status:** Ready for Implementation Planning

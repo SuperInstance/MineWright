@@ -2,17 +2,17 @@
 
 **Date:** February 2026
 **Research Focus:** Advanced AI Technologies for Game Development
-**Target Project:** Steve AI (MineWright - "Cursor for Minecraft")
+**Target Project:** MineWright AI (MineWright - "Cursor for Minecraft")
 
 ---
 
 ## Executive Summary
 
-The 2024-2025 period has witnessed revolutionary advances in game AI technology. Major players including NVIDIA, OpenAI, Google, Anthropic, Unity, and Epic Games have released sophisticated AI tools that transform how games are developed and played. This report analyzes these technologies and identifies applicable patterns for the Steve AI project.
+The 2024-2025 period has witnessed revolutionary advances in game AI technology. Major players including NVIDIA, OpenAI, Google, Anthropic, Unity, and Epic Games have released sophisticated AI tools that transform how games are developed and played. This report analyzes these technologies and identifies applicable patterns for the MineWright AI project.
 
 ### Key Findings
 
-| Technology | Maturity | Game Integration | Relevance to Steve AI |
+| Technology | Maturity | Game Integration | Relevance to MineWright AI |
 |------------|----------|------------------|----------------------|
 | **NVIDIA ACE** | Production | High | Very High |
 | **Inworld AI** | Production | High | Very High |
@@ -118,11 +118,11 @@ NVIDIA ACE is a comprehensive generative AI suite for creating intelligent, inte
 - GitHub open-source code repositories
 - Partners: Convai, Inworld AI, NetEase, Tencent, Ubisoft, miHoYo
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Hybrid Cloud/Local Architecture
 ```
-Current Steve AI: Pure cloud-based LLM calls
+Current MineWright AI: Pure cloud-based LLM calls
 ACE Pattern: Local RTX inference with cloud fallback for complex tasks
 
 Benefit: Reduced latency for common commands, offline capability
@@ -131,7 +131,7 @@ Implementation Priority: HIGH
 
 #### 2. RAG-based Memory System
 ```
-Current Steve AI: SteveMemory with conversation history
+Current MineWright AI: SteveMemory with conversation history
 ACE Pattern: Vector database with retrieval-augmented generation
 
 Benefit: More contextual responses, better world state awareness
@@ -140,7 +140,7 @@ Implementation Priority: HIGH
 
 #### 3. Audio2Face for Character Expression
 ```
-Current Steve AI: Basic Minecraft entity animations
+Current MineWright AI: Basic Minecraft entity animations
 ACE Pattern: Real-time facial animation from speech
 
 Benefit: More expressive Steve entities (if custom models are added)
@@ -149,7 +149,7 @@ Implementation Priority: LOW (requires custom assets)
 
 #### 4. Nemotron/Qwen3 for Local Inference
 ```
-Current Steve AI: OpenAI/Groq cloud APIs
+Current MineWright AI: OpenAI/Groq cloud APIs
 ACE Pattern: Local SLM deployment (2GB VRAM models)
 
 Benefit: Privacy, reduced latency, no API costs
@@ -273,11 +273,11 @@ Pricing varies based on integration time, timeout fees, feature diversity, and c
 - Enhanced OCI infrastructure for better scalability
 - Continued development of AI Copilot for dynamic story generation
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Character Brain Architecture
 ```
-Current Steve AI: Basic action planning
+Current MineWright AI: Basic action planning
 Inworld Pattern: Multi-layer character cognition
 
 Benefit: More consistent, personality-driven behavior
@@ -286,7 +286,7 @@ Implementation Priority: MEDIUM
 
 #### 2. Narrative Graph System
 ```
-Current Steve AI: Sequential task execution
+Current MineWright AI: Sequential task execution
 Inworld Pattern: Interactive narrative mapping
 
 Benefit: Better context awareness, multi-step planning
@@ -295,7 +295,7 @@ Implementation Priority: HIGH
 
 #### 3. Context Grid
 ```
-Current Steve AI: SteveMemory with flat history
+Current MineWright AI: SteveMemory with flat history
 Inworld Pattern: Structured situational awareness
 
 Benefit: Better environmental understanding, smarter decisions
@@ -304,7 +304,7 @@ Implementation Priority: HIGH
 
 #### 4. Inworld Studio for Character Configuration
 ```
-Current Steve AI: Hard-coded agent behaviors
+Current MineWright AI: Hard-coded agent behaviors
 Inworld Pattern: Visual character creator
 
 Benefit: Easier agent customization without code changes
@@ -320,7 +320,7 @@ Implementation Priority: MEDIUM
 
 2. **Character Brain as Service**
    - Offload personality/emotion modeling to Inworld
-   - Keep action execution local in Steve AI
+   - Keep action execution local in MineWright AI
    - Hybrid architecture similar to NVIDIA ACE approach
 
 3. **Narrative Graph Integration**
@@ -368,11 +368,11 @@ Convai is a conversational AI platform specifically designed for games and virtu
 | **Emotional Response** | NPCs react with appropriate emotions |
 | **Multi-language** | Support for various languages |
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Persistent Memory System
 ```
-Current Steve AI: Per-session conversation history
+Current MineWright AI: Per-session conversation history
 Convai Pattern: Months-long memory retention
 
 Benefit: Steve agents remember past projects and player preferences
@@ -381,7 +381,7 @@ Implementation Priority: HIGH
 
 #### 2. Background Activity
 ```
-Current Steve AI: Actions only when explicitly commanded
+Current MineWright AI: Actions only when explicitly commanded
 Convai Pattern: NPCs continue tasks when player leaves
 
 Benefit: Autonomous farming, building, resource gathering
@@ -390,7 +390,7 @@ Implementation Priority: HIGH
 
 #### 3. Natural Voice Commands
 ```
-Current Steve AI: Text-based GUI input (K key)
+Current MineWright AI: Text-based GUI input (K key)
 Convai Pattern: Voice interaction
 
 Benefit: More natural command input, hands-free gameplay
@@ -463,11 +463,11 @@ Unity Muse is Unity's AI-powered assistant for game development, designed to acc
 - **1.8 million** monthly active creators
 - Leading the "no-code game development" revolution
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Natural Language Project Generation
 ```
-Current Steve AI: Manual coding of new actions
+Current MineWright AI: Manual coding of new actions
 Unity Muse Pattern: "Create an action that builds a 5x5 cobblestone platform"
 
 Benefit: Faster action prototyping, reduced development time
@@ -476,7 +476,7 @@ Implementation Priority: HIGH
 
 #### 2. Context-Aware Code Assistance
 ```
-Current Steve AI: Generic IDE assistance
+Current MineWright AI: Generic IDE assistance
 Unity Muse Pattern: Project-state-aware suggestions
 
 Benefit: Better code completion specific to Minecraft Forge APIs
@@ -485,7 +485,7 @@ Implementation Priority: MEDIUM
 
 #### 3. Runtime AI (Sentis)
 ```
-Current Steve AI: Cloud-based LLM inference
+Current MineWright AI: Cloud-based LLM inference
 Unity Sentis Pattern: On-device model inference
 
 Benefit: Offline capability, reduced latency, privacy
@@ -574,11 +574,11 @@ Epic Games has heavily invested in AI integration for Unreal Engine, particularl
 3. Join AI+UE5 communities (Epic forums, Discord, GitHub)
 4. Future competitiveness: **AI-assisted creativity + engine mastery**
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Behavior Trees for AI Decision Making
 ```
-Current Steve AI: Sequential action queue
+Current MineWright AI: Sequential action queue
 Unreal Pattern: Hierarchical behavior trees
 
 Benefit: More sophisticated AI behaviors, reactive planning
@@ -587,7 +587,7 @@ Implementation Priority: MEDIUM
 
 #### 2. Visual Scripting for Actions
 ```
-Current Steve AI: Java-coded actions
+Current MineWright AI: Java-coded actions
 Unreal Pattern: Blueprint-style visual scripting
 
 Benefit: Easier action creation for non-programmers
@@ -596,7 +596,7 @@ Implementation Priority: LOW (significant UI work)
 
 #### 3. Environment Query System
 ```
-Current Steve AI: Basic block position queries
+Current MineWright AI: Basic block position queries
 Unreal Pattern: Complex environmental awareness queries
 
 Benefit: Smarter pathfinding, better block placement decisions
@@ -605,7 +605,7 @@ Implementation Priority: HIGH
 
 #### 4. Persona-Based Character Configuration
 ```
-Current Steve AI: Single agent type
+Current MineWright AI: Single agent type
 Unreal Pattern: Distinct personalities and behaviors
 
 Benefit: Multiple specialized agents (builder, miner, farmer)
@@ -677,11 +677,11 @@ GPT-4o (released May 2024) is OpenAI's first truly multimodal LLM, offering 2x t
 - Azure AI Studio for simplified development
 - Enterprise-grade reliability and scaling
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Enhanced Prompt Engineering
 ```
-Current Steve AI: Basic prompts for task planning
+Current MineWright AI: Basic prompts for task planning
 GPT-4o Pattern: Multimodal prompts with context
 
 Benefit: Better understanding of complex commands, visual context
@@ -690,7 +690,7 @@ Implementation Priority: HIGH
 
 #### 2. Vision Integration
 ```
-Current Steve AI: Text-only input
+Current MineWright AI: Text-only input
 GPT-4o Pattern: Image + text understanding
 
 Benefit: Steve could "see" screenshots or builds for context
@@ -699,7 +699,7 @@ Implementation Priority: MEDIUM
 
 #### 3. Faster, Cheaper Inference
 ```
-Current Steve AI: GPT-4 Turbo
+Current MineWright AI: GPT-4 Turbo
 GPT-4o Pattern: 2x speed, 50% cost
 
 Benefit: Reduced command latency, lower API costs
@@ -708,7 +708,7 @@ Implementation Priority: HIGH (already supported)
 
 #### 4. Structured Output
 ```
-Current Steve AI: Custom JSON parsing
+Current MineWright AI: Custom JSON parsing
 GPT-4o Pattern: Native structured output (JSON mode)
 
 Benefit: More reliable response parsing, fewer errors
@@ -808,11 +808,11 @@ Claude is Anthropic's AI assistant, known for its strong reasoning capabilities 
 - Google Workspace integration
 - Web search capabilities
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Hybrid Reasoning for Complex Planning
 ```
-Current Steve AI: Single-pass planning
+Current MineWright AI: Single-pass planning
 Claude Pattern: Configurable thinking depth
 
 Benefit: Better multi-step reasoning, error checking
@@ -821,7 +821,7 @@ Implementation Priority: MEDIUM
 
 #### 2. Long Context for Project Memory
 ```
-Current Steve AI: Limited conversation history
+Current MineWright AI: Limited conversation history
 Claude Pattern: 100K token context (~75K words)
 
 Benefit: Remember entire project history, long-term context
@@ -830,7 +830,7 @@ Implementation Priority: HIGH
 
 #### 3. Agentic Tool Use
 ```
-Current Steve AI: Custom response parsing
+Current MineWright AI: Custom response parsing
 Claude Pattern: Native function calling
 
 Benefit: More reliable action execution, less parsing code
@@ -839,7 +839,7 @@ Implementation Priority: HIGH
 
 #### 4. Vision for Build Analysis
 ```
-Current Steve AI: No visual understanding
+Current MineWright AI: No visual understanding
 Claude Pattern: Can analyze screenshots/images
 
 Benefit: Steve could understand existing builds or blueprints
@@ -913,11 +913,11 @@ Google Gemini is a multimodal AI model with significant capabilities for game de
 | **Capabilities** | Scene understanding, content generation |
 | **User Base** | 650+ million monthly Gemini app users (late 2025) |
 
-### Applicable Patterns for Steve AI
+### Applicable Patterns for MineWright AI
 
 #### 1. Multimodal Gameplay Understanding
 ```
-Current Steve AI: Text-only commands
+Current MineWright AI: Text-only commands
 Gemini Pattern: Visual + text + audio understanding
 
 Benefit: Steve could "watch" gameplay and provide suggestions
@@ -926,7 +926,7 @@ Implementation Priority: MEDIUM
 
 #### 2. Screen Context Awareness
 ```
-Current Steve AI: No knowledge of visual game state
+Current MineWright AI: No knowledge of visual game state
 Gemini Pattern: Analyzes game screen for context
 
 Benefit: Better understanding of player situation, smarter commands
@@ -935,7 +935,7 @@ Implementation Priority: MEDIUM
 
 #### 3. Voice Command Interface
 ```
-Current Steve AI: Text-based GUI (K key)
+Current MineWright AI: Text-based GUI (K key)
 Gemini Pattern: Natural voice conversation
 
 Benefit: More intuitive command input, hands-free gameplay
@@ -944,7 +944,7 @@ Implementation Priority: HIGH
 
 #### 4. Massive Context Window
 ```
-Current Steve AI: Limited token budget
+Current MineWright AI: Limited token budget
 Gemini Pattern: 1M token context (~750K words)
 
 Benefit: Remember entire game session history
@@ -992,7 +992,7 @@ Implementation Priority: HIGH
 
 *Unreal Engine tools are free with engine; third-party tools vary.
 
-### Best Fit Analysis for Steve AI
+### Best Fit Analysis for MineWright AI
 
 #### For Dialogue & Natural Language Understanding
 1. **GPT-4o** - Best overall, fastest, cheapest
@@ -1016,7 +1016,7 @@ Implementation Priority: HIGH
 
 ---
 
-## Recommended Integration Strategy for Steve AI
+## Recommended Integration Strategy for MineWright AI
 
 ### Phase 1: Immediate Improvements (High Priority)
 
@@ -1272,7 +1272,7 @@ public class BackgroundTaskScheduler {
 
 ## Conclusion
 
-The 2024-2025 period has seen remarkable advances in game AI technology. For Steve AI, the most immediately applicable technologies are:
+The 2024-2025 period has seen remarkable advances in game AI technology. For MineWright AI, the most immediately applicable technologies are:
 
 ### Top Recommendations
 
@@ -1284,7 +1284,7 @@ The 2024-2025 period has seen remarkable advances in game AI technology. For Ste
 
 ### Long-term Vision
 
-By incorporating patterns from these leading AI platforms, Steve AI can evolve from a simple command executor into a truly intelligent autonomous agent capable of:
+By incorporating patterns from these leading AI platforms, MineWright AI can evolve from a simple command executor into a truly intelligent autonomous agent capable of:
 
 - Understanding complex visual context
 - Remembering long-term project history
@@ -1293,7 +1293,7 @@ By incorporating patterns from these leading AI platforms, Steve AI can evolve f
 - Collaborating with multiple specialized agents
 - Continuing work autonomously in the background
 
-The future of game AI is here, and Steve AI is well-positioned to leverage these advances.
+The future of game AI is here, and MineWright AI is well-positioned to leverage these advances.
 
 ---
 
@@ -1345,4 +1345,4 @@ The future of game AI is here, and Steve AI is well-positioned to leverage these
 
 **Report Generated:** February 27, 2026
 **Version:** 1.0
-**Prepared For:** Steve AI Development Team
+**Prepared For:** MineWright AI Development Team

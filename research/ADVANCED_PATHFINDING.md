@@ -1474,7 +1474,7 @@ public class ElytraPathfinder {
 
 ### Recommended Stack
 
-**For Steve AI (MineWright Mod):**
+**For MineWright AI (MineWright Mod):**
 
 ```java
 // Hybrid approach combining multiple techniques
@@ -1915,7 +1915,7 @@ public class PathfindingProfiler {
 
 ## Conclusion
 
-For the MineWright mod's Steve AI entities, a **hybrid approach** is recommended:
+For the MineWright mod's MineWright AI entities, a **hybrid approach** is recommended:
 
 1. **Short distances (< 16 blocks):** Standard A* with movement costs
 2. **Medium distances (16-256 blocks):** A* with Jump Point Search optimization

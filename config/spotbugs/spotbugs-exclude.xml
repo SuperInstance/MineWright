@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude common false positives for Minecraft Forge modding -->
+
+    <!-- SE_BAD_FIELD: Non-transient non-serializable instance field in serializable class -->
+    <Match>
+        <Bug code="SE"/>
+        <Priority value="3"/>
+    </Match>
+
+    <!-- EI_EXPOSE_REP: Returning mutable object -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- EI_EXPOSE_REP2: Storing mutable object -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- OBL_UNSATISFIED_OBLIGATION: Stream not closed -->
+    <Match>
+        <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
+    </Match>
+
+    <!-- RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE -->
+    <Match>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
+    <!-- NP_NULL_ON_SOME_PATH: Possible null pointer dereference -->
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH"/>
+        <Priority value="3"/>
+    </Match>
+
+    <!-- DLS_DEAD_LOCAL_STORE: Dead store to local variable -->
+    <Match>
+        <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+        <Priority value="3"/>
+    </Match>
+
+    <!-- UWF_UNWRITTEN_FIELD: Unwritten field -->
+    <Match>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+    </Match>
+
+    <!-- SS_SHOULD_BE_STATIC: Field can be made static -->
+    <Match>
+        <Bug pattern="SS_SHOULD_BE_STATIC"/>
+        <Priority value="3"/>
+    </Match>
+
+    <!-- MS_EXPOSE_REP: Static mutable field -->
+    <Match>
+        <Bug pattern="MS_EXPOSE_REP"/>
+        <Priority value="3"/>
+    </Match>
+</FindBugsFilter>

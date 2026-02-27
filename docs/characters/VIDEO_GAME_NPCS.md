@@ -1,6 +1,6 @@
 # Video Game NPC Character Writing Guide for MineWright Workers
 
-**Project:** Steve AI - MineWright Worker Personalities
+**Project:** MineWright AI - MineWright Worker Personalities
 **Date:** 2026-02-27
 **Purpose:** Comprehensive research on how games create memorable NPC characters with limited dialogue, applied to worker personality design
 

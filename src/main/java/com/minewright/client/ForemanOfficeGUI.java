@@ -1136,7 +1136,7 @@ public class ForemanOfficeGUI {
             String name = command.substring(6).trim();
             if (name.isEmpty()) name = "Foreman";
             if (mc.player != null) {
-                mc.player.connection.sendCommand("steve spawn " + name);
+                mc.player.connection.sendCommand("minewright spawn " + name);
                 addSystemMessage("New crew member " + name + " reporting for duty!");
             }
             return;

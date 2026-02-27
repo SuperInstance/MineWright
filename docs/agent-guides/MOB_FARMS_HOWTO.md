@@ -604,5 +604,5 @@ Build it right, build it once. A good mob farm pays dividends for the life of th
 ---
 
 *MineWright Training Manual - Volume 7: Mob Farms*
-*Generated for the Steve AI Project - Autonomous Minecraft Construction Crews*
+*Generated for the MineWright AI Project - Autonomous Minecraft Construction Crews*
 *Last Updated: 2026-01-10*

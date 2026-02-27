@@ -1,6 +1,6 @@
 # Research: AI Companion Personality Design for Games
 
-**Project:** Steve AI (MineWright Foreman Personality Enhancement)
+**Project:** MineWright AI (MineWright Foreman Personality Enhancement)
 **Date:** 2025-02-27
 **Research Focus:** Archetype Systems, Relationship Evolution, Dialogue Generation, Proactive Behavior, Memorable Characters
 
@@ -575,7 +575,7 @@ public class CharacterArc {
 
 **Companion Design Principles:**
 
-| Principle | Description | Steve AI Implementation |
+| Principle | Description | MineWright AI Implementation |
 |-----------|-------------|-------------------------|
 | **Uniqueness** | Irreplaceable character | Each Steve has distinct name + personality seed |
 | **Utility** | Must be genuinely helpful | Excels at tasks player doesn't enjoy (mining, building) |

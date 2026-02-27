@@ -118,14 +118,14 @@ new Thread(() -> {
 }).start();
 ```
 
-Every time the `/steve tell` command is executed, a new thread is created without any:
+Every time the `/minewright tell` command is executed, a new thread is created without any:
 - Thread pool limits
 - Rate limiting
 - Resource monitoring
 - Cleanup mechanism
 
 **Attack Vector:**
-1. Attacker executes `/steve tell <name> <command>` repeatedly in a loop
+1. Attacker executes `/minewright tell <name> <command>` repeatedly in a loop
 2. Each command spawns a new thread
 3. Server runs out of memory or thread resources
 4. Server crashes or becomes unresponsive (Denial of Service)
@@ -685,7 +685,7 @@ synchronized (taskQueue) {
 
 **Vulnerability Details:**
 
-The `/steve tell` command doesn't verify that the player has permission to control the specified crew member. Any player can control any crew member.
+The `/minewright tell` command doesn't verify that the player has permission to control the specified crew member. Any player can control any crew member.
 
 **Remediation:**
 

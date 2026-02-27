@@ -1,6 +1,7 @@
 package com.minewright.config;
 
 import com.minewright.MineWrightMod;
+import com.minewright.exception.ConfigException;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.Arrays;
@@ -9,52 +10,339 @@ import java.util.List;
 /**
  * Configuration for MineWright mod.
  *
- * <p>Config file location: <code>config/minewright-common.toml</code></p>
+ * <h2>Config File Location</h2>
+ * <p><code>config/minewright-common.toml</code></p>
  *
- * <p><b>Platform Notes:</b></p>
+ * <p><b>Platform-specific paths:</b></p>
  * <ul>
  *   <li><b>Windows:</b> <code>.minecraft/config/minewright-common.toml</code></li>
  *   <li><b>Linux/Mac:</b> <code>~/.minecraft/config/minewright-common.toml</code></li>
  * </ul>
  *
- * <p><b>Config Reload:</b> Edit the config file and use <code>/reload</code> to reload without restart.</p>
+ * <h2>Config Reload</h2>
+ * <p>Edit the config file and use <code>/reload</code> to reload without restart.</p>
+ *
+ * <h2>Configuration Sections</h2>
+ * <ul>
+ *   <li><b>{@code [ai]}</b> - AI provider selection</li>
+ *   <li><b>{@code [openai]}</b> - API credentials and model settings</li>
+ *   <li><b>{@code [behavior]}</b> - Crew behavior settings</li>
+ *   <li><b>{@code [voice]}</b> - Voice input/output configuration</li>
+ *   <li><b>{@code [hivemind]}</b> - Cloudflare Edge integration</li>
+ * </ul>
+ *
+ * <h2>Usage Example</h2>
+ * <pre>{@code
+ * // Get config value
+ * String provider = MineWrightConfig.getValidatedProvider();
+ * int maxTokens = MineWrightConfig.MAX_TOKENS.get();
+ *
+ * // Validate configuration
+ * boolean isValid = MineWrightConfig.validateAndLog();
+ *
+ * // Register for reload notifications
+ * ConfigManager.getInstance().registerListener(myListener);
+ * }</pre>
+ *
+ * <h2>Configuration Documentation</h2>
+ * <p>See {@link ConfigDocumentation} for detailed information about each config option,
+ * including default values, valid ranges, and descriptions.</p>
+ *
+ * @see ConfigDocumentation
+ * @see ConfigManager
+ * @see ConfigChangeListener
+ * @since 1.0.0
  */
 public class MineWrightConfig {
     // Valid AI providers
     private static final List<String> VALID_PROVIDERS = Arrays.asList("groq", "openai", "gemini");
     private static final List<String> VALID_VOICE_MODES = Arrays.asList("disabled", "logging", "real");
 
+    // ========================================================================
+    // Configuration Specification
+    // ========================================================================
+
+    /** The Forge configuration spec */
     public static final ForgeConfigSpec SPEC;
+
+    // ------------------------------------------------------------------------
+    // AI Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * AI provider to use for LLM requests.
+     * <p><b>Valid values:</b> {@code groq}, {@code openai}, {@code gemini}</p>
+     * <p><b>Default:</b> {@code groq}</p>
+     * <p><b>Config key:</b> {@code ai.provider}</p>
+     *
+     * @see ConfigDocumentation#AI
+     */
     public static final ForgeConfigSpec.ConfigValue<String> AI_PROVIDER;
+
+    // ------------------------------------------------------------------------
+    // OpenAI/Gemini API Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * API key for the chosen provider.
+     * <p><b>Required:</b> Yes</p>
+     * <p><b>Default:</b> {@code ""} (empty, must be configured)</p>
+     * <p><b>Config key:</b> {@code openai.apiKey}</p>
+     *
+     * @see ConfigDocumentation#OPENAI
+     */
     public static final ForgeConfigSpec.ConfigValue<String> OPENAI_API_KEY;
+
+    /**
+     * LLM model to use.
+     * <p><b>Default:</b> {@code glm-5}</p>
+     * <p><b>Config key:</b> {@code openai.model}</p>
+     *
+     * @see ConfigDocumentation#OPENAI
+     */
     public static final ForgeConfigSpec.ConfigValue<String> OPENAI_MODEL;
+
+    /**
+     * Maximum tokens per API request.
+     * <p><b>Range:</b> 100 to 65536</p>
+     * <p><b>Default:</b> 8000</p>
+     * <p><b>Config key:</b> {@code openai.maxTokens}</p>
+     *
+     * @see ConfigDocumentation#OPENAI
+     */
     public static final ForgeConfigSpec.IntValue MAX_TOKENS;
+
+    /**
+     * Temperature for AI responses (creativity control).
+     * <p><b>Range:</b> 0.0 to 2.0</p>
+     * <p><b>Default:</b> 0.7</p>
+     * <p><b>Config key:</b> {@code openai.temperature}</p>
+     *
+     * @see ConfigDocumentation#OPENAI
+     */
     public static final ForgeConfigSpec.DoubleValue TEMPERATURE;
+
+    // ------------------------------------------------------------------------
+    // Behavior Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Ticks between action checks.
+     * <p><b>Range:</b> 1 to 100 (20 ticks = 1 second)</p>
+     * <p><b>Default:</b> 20</p>
+     * <p><b>Config key:</b> {@code behavior.actionTickDelay}</p>
+     *
+     * @see ConfigDocumentation#BEHAVIOR
+     */
     public static final ForgeConfigSpec.IntValue ACTION_TICK_DELAY;
+
+    /**
+     * Allow crew members to respond in chat.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code behavior.enableChatResponses}</p>
+     *
+     * @see ConfigDocumentation#BEHAVIOR
+     */
     public static final ForgeConfigSpec.BooleanValue ENABLE_CHAT_RESPONSES;
+
+    /**
+     * Maximum number of crew members that can be active simultaneously.
+     * <p><b>Range:</b> 1 to 50</p>
+     * <p><b>Default:</b> 10</p>
+     * <p><b>Config key:</b> {@code behavior.maxActiveCrewMembers}</p>
+     *
+     * @see ConfigDocumentation#BEHAVIOR
+     */
     public static final ForgeConfigSpec.IntValue MAX_ACTIVE_CREW_MEMBERS;
 
-    // Voice configuration
+    // ------------------------------------------------------------------------
+    // Voice Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable voice input/output features.
+     * <p><b>Default:</b> {@code false}</p>
+     * <p><b>Config key:</b> {@code voice.enabled}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.BooleanValue VOICE_ENABLED;
+
+    /**
+     * Voice system mode.
+     * <p><b>Valid values:</b> {@code disabled}, {@code logging}, {@code real}</p>
+     * <p><b>Default:</b> {@code logging}</p>
+     * <p><b>Config key:</b> {@code voice.mode}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.ConfigValue<String> VOICE_MODE;
+
+    /**
+     * Speech-to-text language code.
+     * <p><b>Default:</b> {@code en-US}</p>
+     * <p><b>Config key:</b> {@code voice.sttLanguage}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.ConfigValue<String> VOICE_STT_LANGUAGE;
+
+    /**
+     * Text-to-speech voice name.
+     * <p><b>Default:</b> {@code default}</p>
+     * <p><b>Config key:</b> {@code voice.ttsVoice}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.ConfigValue<String> VOICE_TTS_VOICE;
+
+    /**
+     * TTS volume level.
+     * <p><b>Range:</b> 0.0 to 1.0</p>
+     * <p><b>Default:</b> 0.8</p>
+     * <p><b>Config key:</b> {@code voice.ttsVolume}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.DoubleValue VOICE_TTS_VOLUME;
+
+    /**
+     * TTS speech rate.
+     * <p><b>Range:</b> 0.5 to 2.0 (1.0 = normal)</p>
+     * <p><b>Default:</b> 1.0</p>
+     * <p><b>Config key:</b> {@code voice.ttsRate}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.DoubleValue VOICE_TTS_RATE;
+
+    /**
+     * TTS pitch adjustment.
+     * <p><b>Range:</b> 0.5 to 2.0 (1.0 = normal)</p>
+     * <p><b>Default:</b> 1.0</p>
+     * <p><b>Config key:</b> {@code voice.ttsPitch}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.DoubleValue VOICE_TTS_PITCH;
+
+    /**
+     * STT sensitivity for speech detection.
+     * <p><b>Range:</b> 0.0 to 1.0</p>
+     * <p><b>Default:</b> 0.5</p>
+     * <p><b>Config key:</b> {@code voice.sttSensitivity}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.DoubleValue VOICE_STT_SENSITIVITY;
+
+    /**
+     * Require push-to-talk key for voice input.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code voice.pushToTalk}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.BooleanValue VOICE_PUSH_TO_TALK;
+
+    /**
+     * Auto-stop listening after N seconds of silence.
+     * <p><b>Range:</b> 0 to 60 (0 = no timeout)</p>
+     * <p><b>Default:</b> 10</p>
+     * <p><b>Config key:</b> {@code voice.listeningTimeout}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.IntValue VOICE_LISTENING_TIMEOUT;
+
+    /**
+     * Enable verbose logging for voice system operations.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code voice.debugLogging}</p>
+     *
+     * @see ConfigDocumentation#VOICE
+     */
     public static final ForgeConfigSpec.BooleanValue VOICE_DEBUG_LOGGING;
 
+    // ------------------------------------------------------------------------
     // Hive Mind (Cloudflare Edge) Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable Hive Mind - distributed AI for tactical reflexes.
+     * <p><b>Default:</b> {@code false}</p>
+     * <p><b>Config key:</b> {@code hivemind.enabled}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.BooleanValue HIVEMIND_ENABLED;
+
+    /**
+     * Cloudflare Worker URL for Hive Mind edge computing.
+     * <p><b>Default:</b> {@code https://minecraft-agent-reflex.workers.dev}</p>
+     * <p><b>Config key:</b> {@code hivemind.workerUrl}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.ConfigValue<String> HIVEMIND_WORKER_URL;
+
+    /**
+     * Connection timeout in milliseconds.
+     * <p><b>Range:</b> 500 to 10000</p>
+     * <p><b>Default:</b> 2000</p>
+     * <p><b>Config key:</b> {@code hivemind.connectTimeoutMs}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.IntValue HIVEMIND_CONNECT_TIMEOUT;
+
+    /**
+     * Tactical decision timeout in milliseconds.
+     * <p><b>Range:</b> 10 to 500</p>
+     * <p><b>Default:</b> 50</p>
+     * <p><b>Config key:</b> {@code hivemind.tacticalTimeoutMs}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.IntValue HIVEMIND_TACTICAL_TIMEOUT;
+
+    /**
+     * State sync timeout in milliseconds.
+     * <p><b>Range:</b> 100 to 5000</p>
+     * <p><b>Default:</b> 1000</p>
+     * <p><b>Config key:</b> {@code hivemind.syncTimeoutMs}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.IntValue HIVEMIND_SYNC_TIMEOUT;
+
+    /**
+     * How often to check for tactical situations (in ticks).
+     * <p><b>Range:</b> 5 to 100 (20 ticks = 1 second)</p>
+     * <p><b>Default:</b> 20</p>
+     * <p><b>Config key:</b> {@code hivemind.tacticalCheckInterval}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.IntValue HIVEMIND_TACTICAL_CHECK_INTERVAL;
+
+    /**
+     * How often to sync state with edge (in ticks).
+     * <p><b>Range:</b> 20 to 200</p>
+     * <p><b>Default:</b> 100</p>
+     * <p><b>Config key:</b> {@code hivemind.syncInterval}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.IntValue HIVEMIND_SYNC_INTERVAL;
+
+    /**
+     * When edge is unavailable, fall back to local decision-making.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code hivemind.fallbackToLocal}</p>
+     *
+     * @see ConfigDocumentation#HIVEMIND
+     */
     public static final ForgeConfigSpec.BooleanValue HIVEMIND_FALLBACK_TO_LOCAL;
 
     static {
@@ -265,6 +553,13 @@ public class MineWrightConfig {
             ACTION_TICK_DELAY.get(), ACTION_TICK_DELAY.get() / 20.0);
         MineWrightMod.LOGGER.info("Chat responses: {}", ENABLE_CHAT_RESPONSES.get() ? "enabled" : "disabled");
 
+        // Log Hive Mind status
+        if (HIVEMIND_ENABLED.get()) {
+            MineWrightMod.LOGGER.info("Hive Mind: enabled (URL: {})", HIVEMIND_WORKER_URL.get());
+        } else {
+            MineWrightMod.LOGGER.info("Hive Mind: disabled");
+        }
+
         if (isValid) {
             MineWrightMod.LOGGER.info("MineWright configuration validated successfully.");
         } else {
@@ -272,6 +567,49 @@ public class MineWrightConfig {
         }
 
         return isValid;
+    }
+
+    /**
+     * Validates the configuration and throws an exception for critical errors.
+     *
+     * <p>Unlike {@link #validateAndLog()}, this method throws a {@link ConfigException}
+     * for critical configuration errors.</p>
+     *
+     * @throws ConfigException if critical configuration errors are found
+     * @since 1.5.0
+     */
+    public static void validateOrThrow() throws ConfigException {
+        MineWrightMod.LOGGER.debug("Performing strict configuration validation...");
+
+        // Validate API key (critical)
+        String apiKey = OPENAI_API_KEY.get();
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            throw ConfigException.missingKey("apiKey", "openai", true);
+        }
+
+        // Validate AI provider
+        String provider = AI_PROVIDER.get();
+        if (provider == null || provider.trim().isEmpty()) {
+            MineWrightMod.LOGGER.warn("AI provider is empty, will use 'groq' as fallback");
+        } else if (!VALID_PROVIDERS.contains(provider.toLowerCase())) {
+            throw ConfigException.invalidValue("provider", provider,
+                String.join(", ", VALID_PROVIDERS), "ai");
+        }
+
+        // Validate Hive Mind URL if enabled
+        if (HIVEMIND_ENABLED.get()) {
+            String workerUrl = HIVEMIND_WORKER_URL.get();
+            if (workerUrl != null && !workerUrl.trim().isEmpty()) {
+                try {
+                    new java.net.URL(workerUrl);
+                } catch (java.net.MalformedURLException e) {
+                    throw ConfigException.validationFailed("hivemind.workerUrl",
+                        "Invalid URL: " + e.getMessage());
+                }
+            }
+        }
+
+        MineWrightMod.LOGGER.debug("Configuration validation passed");
     }
 
     /**
@@ -324,6 +662,27 @@ public class MineWrightConfig {
         }
         String lowerMode = mode.toLowerCase();
         return VALID_VOICE_MODES.contains(lowerMode) ? lowerMode : "disabled";
+    }
+
+    /**
+     * Gets a configuration summary for logging/debugging.
+     *
+     * @return Summary string of current configuration
+     * @since 1.5.0
+     */
+    public static String getConfigSummary() {
+        return String.format(
+            "MineWrightConfig[provider=%s, model=%s, maxTokens=%d, temperature=%.2f, " +
+            "actionTickDelay=%d, maxCrew=%d, voice=%s, hivemind=%s]",
+            getValidatedProvider(),
+            OPENAI_MODEL.get(),
+            MAX_TOKENS.get(),
+            TEMPERATURE.get(),
+            ACTION_TICK_DELAY.get(),
+            MAX_ACTIVE_CREW_MEMBERS.get(),
+            VOICE_ENABLED.get() ? "enabled(" + VOICE_MODE.get() + ")" : "disabled",
+            HIVEMIND_ENABLED.get() ? "enabled" : "disabled"
+        );
     }
 }
 

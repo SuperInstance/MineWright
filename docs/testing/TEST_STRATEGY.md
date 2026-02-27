@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive testing strategy for the MineWright Minecraft mod (formerly Steve AI), an AI-driven autonomous agent system for Minecraft 1.20.1. The codebase implements complex async operations, state machines, plugin architecture, and LLM integration requiring robust testing.
+This document provides a comprehensive testing strategy for the MineWright Minecraft mod (formerly MineWright AI), an AI-driven autonomous agent system for Minecraft 1.20.1. The codebase implements complex async operations, state machines, plugin architecture, and LLM integration requiring robust testing.
 
 **Current State:** Minimal test coverage with only placeholder test files.
 
@@ -1287,4 +1287,4 @@ test {
 **Document Version:** 2.0
 **Last Updated:** 2026-02-27
 **Author:** Testing Strategy Analysis
-**Project:** MineWright (Steve AI) - Minecraft 1.20.1 Mod
+**Project:** MineWright (MineWright AI) - Minecraft 1.20.1 Mod

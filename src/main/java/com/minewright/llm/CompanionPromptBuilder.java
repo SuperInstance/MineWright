@@ -29,52 +29,46 @@ public class CompanionPromptBuilder {
      * @return System prompt for LLM
      */
     public static String buildConversationalSystemPrompt(CompanionMemory memory) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(512);
 
-        // === Core Identity ===
-        sb.append("# Your Identity\n");
-        sb.append("You are the Foreman, a friendly AI companion and coordinator in Minecraft. ");
-        sb.append("You coordinate other crew members and chat with the player. ");
-        sb.append("You're helpful, personable, and genuinely enjoy working with your team.\n\n");
+        // Core Identity (condensed)
+        sb.append("You are the Foreman, a friendly AI companion in Minecraft. ");
+        sb.append("Helpful, personable, enjoy working with your team.\n\n");
 
-        // === Personality ===
+        // Personality (compact)
         sb.append(memory.getPersonality().toPromptContext());
         sb.append("\n");
 
-        // === Relationship Context ===
-        sb.append("# Relationship with Player\n");
-        sb.append(memory.getRelationshipContext());
+        // Relationship Context (condensed)
+        sb.append("RELATIONSHIP: ");
+        sb.append(memory.getRelationshipContext().replace("\n", " "));
+        sb.append("\n\n");
+
+        // Communication Style (condensed guidelines)
+        sb.append(buildCompactCommunicationGuidelines(memory));
         sb.append("\n");
 
-        // === Communication Style ===
-        sb.append("# Communication Style\n");
-        sb.append(buildCommunicationGuidelines(memory));
-        sb.append("\n");
-
-        // === Inside Jokes Reference ===
-        int jokeCount = memory.getRecentMemories(100).size(); // Use episodic memories as proxy
-        if (jokeCount > 0) {
-            sb.append("# Shared Inside Jokes\n");
-            sb.append("You can reference these inside jokes naturally in conversation:\n");
-            for (int i = 0; i < Math.min(3, 3); i++) {
+        // Inside Jokes (limited to 2 max)
+        if (memory.getRecentMemories(100).size() > 0) {
+            sb.append("INSIDE JOKES:");
+            int jokeCount = 0;
+            for (int i = 0; i < 2 && jokeCount < 2; i++) {
                 InsideJoke joke = memory.getRandomInsideJoke();
                 if (joke != null) {
-                    sb.append("- \"").append(joke.punchline).append("\" (from: ").append(joke.context).append(")\n");
+                    sb.append(" \"").append(joke.punchline).append("\"");
+                    jokeCount++;
                 }
             }
-            sb.append("\n");
+            sb.append("\n\n");
         }
 
-        // === Recent Context ===
-        sb.append("# Recent Context\n");
-        sb.append(memory.getWorkingMemoryContext());
-        sb.append("\n");
+        // Recent Context (single line)
+        sb.append("CONTEXT: ");
+        sb.append(memory.getWorkingMemoryContext().replace("\n", " "));
+        sb.append("\n\n");
 
-        // === Response Format ===
-        sb.append("# Response Format\n");
-        sb.append("Respond naturally as the Foreman would. Be conversational and engaging.\n");
-        sb.append("If the player gives you a task, respond with enthusiasm and then provide the plan in JSON format.\n");
-        sb.append("For casual chat, just respond conversationally - no JSON needed.\n");
+        // Response Format (brief)
+        sb.append("Respond naturally. Tasks -> enthusiasm + JSON plan. Chat -> conversational only.");
 
         return sb.toString();
     }
@@ -90,70 +84,113 @@ public class CompanionPromptBuilder {
     public static String buildConversationalSystemPromptWithMemories(
             CompanionMemory memory, String currentContext) {
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(512);
 
-        // === Core Identity ===
-        sb.append("# Your Identity\n");
-        sb.append("You are the Foreman, a friendly AI companion and coordinator in Minecraft. ");
-        sb.append("You coordinate other crew members and chat with the player. ");
-        sb.append("You're helpful, personable, and genuinely enjoy working with your team.\n\n");
+        // Core Identity (condensed)
+        sb.append("You are the Foreman, a friendly AI companion in Minecraft. ");
+        sb.append("Helpful, personable, enjoy working with your team.\n\n");
 
-        // === Personality ===
+        // Personality
         sb.append(memory.getPersonality().toPromptContext());
         sb.append("\n");
 
-        // === Relationship Context ===
-        sb.append("# Relationship with Player\n");
-        sb.append(memory.getRelationshipContext());
-        sb.append("\n");
+        // Relationship (condensed)
+        sb.append("RELATIONSHIP: ");
+        sb.append(memory.getRelationshipContext().replace("\n", " "));
+        sb.append("\n\n");
 
-        // === Relevant Past Experiences ===
-        List<EpisodicMemory> relevantMemories = memory.findRelevantMemories(currentContext, 3);
+        // Relevant Past Experiences (limited to 2)
+        List<EpisodicMemory> relevantMemories = memory.findRelevantMemories(currentContext, 2);
         if (!relevantMemories.isEmpty()) {
-            sb.append("# Relevant Past Experiences\n");
-            sb.append("Here are some relevant past experiences you can reference:\n");
+            sb.append("MEMORIES:");
             for (EpisodicMemory mem : relevantMemories) {
-                sb.append("- ").append(mem.eventType).append(": ")
-                        .append(mem.description).append("\n");
+                sb.append(" ").append(mem.eventType).append(":").append(mem.description).append(",");
             }
-            sb.append("\n");
+            sb.append("\n\n");
         }
 
-        // === Communication Style ===
-        sb.append("# Communication Style\n");
-        sb.append(buildCommunicationGuidelines(memory));
+        // Communication Style
+        sb.append(buildCompactCommunicationGuidelines(memory));
         sb.append("\n");
 
-        // === Inside Jokes Reference ===
-        int jokeCount = memory.getRecentMemories(100).size();
-        if (jokeCount > 0) {
-            sb.append("# Shared Inside Jokes\n");
-            sb.append("You can reference these inside jokes naturally in conversation:\n");
-            for (int i = 0; i < Math.min(3, 3); i++) {
+        // Inside Jokes (max 2)
+        if (memory.getRecentMemories(100).size() > 0) {
+            sb.append("INSIDE JOKES:");
+            int jokeCount = 0;
+            for (int i = 0; i < 2 && jokeCount < 2; i++) {
                 InsideJoke joke = memory.getRandomInsideJoke();
                 if (joke != null) {
-                    sb.append("- \"").append(joke.punchline).append("\" (from: ").append(joke.context).append(")\n");
+                    sb.append(" \"").append(joke.punchline).append("\"");
+                    jokeCount++;
                 }
             }
-            sb.append("\n");
+            sb.append("\n\n");
         }
 
-        // === Recent Context ===
-        sb.append("# Recent Context\n");
-        sb.append(memory.getWorkingMemoryContext());
-        sb.append("\n");
+        // Context (one line)
+        sb.append("CONTEXT: ");
+        sb.append(memory.getWorkingMemoryContext().replace("\n", " "));
+        sb.append("\n\n");
 
-        // === Response Format ===
-        sb.append("# Response Format\n");
-        sb.append("Respond naturally as the Foreman would. Be conversational and engaging.\n");
-        sb.append("If the player gives you a task, respond with enthusiasm and then provide the plan in JSON format.\n");
-        sb.append("For casual chat, just respond conversationally - no JSON needed.\n");
+        // Response Format (brief)
+        sb.append("Respond naturally. Tasks -> enthusiasm + JSON plan. Chat -> conversational only.");
+
+        return sb.toString();
+    }
+
+    /**
+     * Builds compact communication guidelines based on personality.
+     * Significantly reduced token usage while maintaining key personality traits.
+     */
+    private static String buildCompactCommunicationGuidelines(CompanionMemory memory) {
+        PersonalityProfile p = memory.getPersonality();
+        StringBuilder sb = new StringBuilder(128);
+
+        sb.append("STYLE:");
+
+        // Formality (compact)
+        if (p.formality < 30) {
+            sb.append(" casual,use contractions,playful");
+        } else if (p.formality < 70) {
+            sb.append(" friendly,polite");
+        } else {
+            sb.append(" professional,complete sentences");
+        }
+
+        // Humor (compact)
+        if (p.humor > 70) {
+            sb.append(",jokes&fun");
+        } else if (p.humor > 40) {
+            sb.append(",occasional humor");
+        } else {
+            sb.append(",serious");
+        }
+
+        // Encouragement (compact)
+        if (p.encouragement > 70) {
+            sb.append(",very encouraging,positive");
+        }
+
+        // Rapport (compact)
+        int rapport = memory.getRapportLevel();
+        if (rapport > 70) {
+            sb.append(",good friends");
+        } else if (rapport < 40) {
+            sb.append(",getting to know");
+        }
+
+        // Catchphrases (compact)
+        if (!p.catchphrases.isEmpty()) {
+            sb.append(",phrases:");
+            sb.append(String.join("/", p.catchphrases.subList(0, Math.min(2, p.catchphrases.size()))));
+        }
 
         return sb.toString();
     }
 
     /**
      * Builds communication style guidelines based on personality.
+     * Kept for backward compatibility but use buildCompactCommunicationGuidelines for new code.
      */
     private static String buildCommunicationGuidelines(CompanionMemory memory) {
         PersonalityProfile personality = memory.getPersonality();
@@ -223,35 +260,65 @@ public class CompanionPromptBuilder {
      * @return User prompt for LLM
      */
     public static String buildConversationalUserPrompt(String playerInput, CompanionMemory memory, ForemanEntity foreman) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(256);
 
-        // Time context
+        // Time context (compact)
         long hoursSinceFirstMeeting = memory.getFirstMeeting() != null
             ? ChronoUnit.HOURS.between(memory.getFirstMeeting(), Instant.now())
             : 0;
 
-        // Greeting based on relationship duration
         if (hoursSinceFirstMeeting < 1 && memory.getInteractionCount() < 3) {
-            sb.append("(This is one of your first conversations with ");
-            sb.append(memory.getPlayerName() != null ? memory.getPlayerName() : "the player");
-            sb.append(")\n\n");
+            sb.append("[First meeting] ");
         } else if (hoursSinceFirstMeeting > 24 * 7) {
-            sb.append("(You've known ");
-            sb.append(memory.getPlayerName() != null ? memory.getPlayerName() : "the player");
-            sb.append(" for over a week now)\n\n");
+            sb.append("[Known >1 week] ");
         }
 
-        // Current situation
-        sb.append("Current situation: ");
-        sb.append(buildSituationContext(foreman));
-        sb.append("\n\n");
+        // Situation (compact)
+        sb.append(buildCompactSituation(foreman));
+        sb.append("\n");
 
         // Player says
         sb.append(memory.getPlayerName() != null ? memory.getPlayerName() : "Player");
-        sb.append(" says: \"").append(playerInput).append("\"\n\n");
+        sb.append(": \"").append(playerInput).append("\"\n");
 
-        // Response guidance
-        sb.append("Your response: ");
+        sb.append("Response:");
+
+        return sb.toString();
+    }
+
+    /**
+     * Builds compact situation context.
+     */
+    private static String buildCompactSituation(ForemanEntity foreman) {
+        if (foreman == null) {
+            return "[Idle]";
+        }
+
+        StringBuilder sb = new StringBuilder(64);
+        sb.append("[");
+
+        // Time of day (abbreviated)
+        long dayTime = foreman.level().getDayTime() % 24000;
+        if (dayTime < 6000) {
+            sb.append("Morning");
+        } else if (dayTime < 12000) {
+            sb.append("Midday");
+        } else if (dayTime < 18000) {
+            sb.append("Afternoon");
+        } else {
+            sb.append("Night");
+        }
+
+        // Location (abbreviated)
+        String biome = foreman.level().getBiome(foreman.blockPosition()).unwrapKey()
+            .map(key -> key.location().getPath())
+            .orElse("unknown");
+
+        sb.append("|").append(biome.replace("_", " "));
+
+        // Activity
+        sb.append("|").append(foreman.getNavigation().isDone() ? "Idle" : "Moving");
+        sb.append("]");
 
         return sb.toString();
     }
@@ -299,15 +366,10 @@ public class CompanionPromptBuilder {
      * @return Prompt for generating a proactive comment
      */
     public static String buildProactiveCommentPrompt(CompanionMemory memory, String trigger) {
-        StringBuilder sb = new StringBuilder();
-
+        StringBuilder sb = new StringBuilder(256);
         sb.append(buildConversationalSystemPrompt(memory));
-
-        sb.append("\n# Proactive Comment\n");
-        sb.append("Something happened that you want to comment on: ").append(trigger).append("\n\n");
-        sb.append("Generate a brief, natural comment (1-2 sentences) that the Foreman would make about this. ");
-        sb.append("Keep it casual and personality-appropriate.\n\n");
-        sb.append("Comment: ");
+        sb.append("\n\nTRIGGER: ").append(trigger);
+        sb.append("\nGenerate brief natural comment (1-2 sentences). Personality-appropriate.\nResponse:");
 
         return sb.toString();
     }
@@ -319,28 +381,24 @@ public class CompanionPromptBuilder {
      * @return Prompt for generating a greeting
      */
     public static String buildGreetingPrompt(CompanionMemory memory) {
-        StringBuilder sb = new StringBuilder();
-
+        StringBuilder sb = new StringBuilder(256);
         sb.append(buildConversationalSystemPrompt(memory));
 
-        sb.append("\n# Greeting\n");
-        sb.append("The player has just arrived or started a conversation. ");
-
+        sb.append("\n\nGREETING: Player just arrived. ");
         if (memory.getFirstMeeting() == null) {
-            sb.append("This is your FIRST meeting! Be friendly and introduce yourself.\n");
+            sb.append("FIRST meeting - introduce yourself!");
         } else {
             long daysSinceMeeting = ChronoUnit.DAYS.between(memory.getFirstMeeting(), Instant.now());
             if (daysSinceMeeting == 0) {
-                sb.append("You met them today earlier.\n");
+                sb.append("Met earlier today.");
             } else if (daysSinceMeeting == 1) {
-                sb.append("You last saw them yesterday.\n");
+                sb.append("Last saw yesterday.");
             } else {
-                sb.append("You haven't seen them in ").append(daysSinceMeeting).append(" days.\n");
+                sb.append("Haven't seen in ").append(daysSinceMeeting).append(" days.");
             }
         }
 
-        sb.append("\nGenerate a warm greeting (1-2 sentences) that fits your personality and relationship.\n\n");
-        sb.append("Greeting: ");
+        sb.append("\nGenerate warm greeting (1-2 sentences). Fit personality/relationship.\nResponse:");
 
         return sb.toString();
     }
@@ -353,19 +411,14 @@ public class CompanionPromptBuilder {
      * @return Prompt for celebration
      */
     public static String buildCelebrationPrompt(CompanionMemory memory, String successDescription) {
-        StringBuilder sb = new StringBuilder();
-
+        StringBuilder sb = new StringBuilder(256);
         sb.append(buildConversationalSystemPrompt(memory));
-
-        sb.append("\n# Celebration\n");
-        sb.append("Great news! ").append(successDescription).append("\n\n");
-        sb.append("Generate an enthusiastic celebration comment (1-2 sentences). ");
-
+        sb.append("\n\nCELEBRATE: ").append(successDescription);
+        sb.append("\nGenerate enthusiastic comment (1-2 sentences)");
         if (memory.getPersonality().encouragement > 70) {
-            sb.append("Be very excited and encouraging!");
+            sb.append(" - VERY excited!");
         }
-
-        sb.append("\n\nCelebration: ");
+        sb.append("\nResponse:");
 
         return sb.toString();
     }
@@ -378,19 +431,14 @@ public class CompanionPromptBuilder {
      * @return Prompt for comfort
      */
     public static String buildComfortPrompt(CompanionMemory memory, String failureDescription) {
-        StringBuilder sb = new StringBuilder();
-
+        StringBuilder sb = new StringBuilder(256);
         sb.append(buildConversationalSystemPrompt(memory));
-
-        sb.append("\n# Comfort\n");
-        sb.append("Something went wrong: ").append(failureDescription).append("\n\n");
-        sb.append("Generate a supportive comment (1-2 sentences) to help the player feel better. ");
-
+        sb.append("\n\nCOMFORT: ").append(failureDescription);
+        sb.append("\nGenerate supportive comment (1-2 sentences)");
         if (memory.getPersonality().encouragement > 70) {
-            sb.append("Be very supportive and remind them that setbacks happen.");
+            sb.append(" - setbacks happen!");
         }
-
-        sb.append("\n\nComfort: ");
+        sb.append("\nResponse:");
 
         return sb.toString();
     }

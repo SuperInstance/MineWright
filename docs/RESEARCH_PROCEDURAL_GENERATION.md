@@ -1,7 +1,7 @@
 # Procedural Generation AI for Games - Research Report
 
 **Research Date:** February 2026
-**Project:** Steve AI - Minecraft Autonomous Agents
+**Project:** MineWright AI - Minecraft Autonomous Agents
 **Focus:** Structure generation, terrain, content, style transfer, and LLM integration for building applications
 
 ---
@@ -25,7 +25,7 @@
 
 ## Executive Summary
 
-Procedural generation has evolved dramatically from traditional noise-based algorithms to sophisticated AI-driven approaches. The field is currently experiencing a paradigm shift with the integration of Large Language Models (LLMs), diffusion models, and neural networks. For Steve AI's building capabilities, the most relevant techniques include:
+Procedural generation has evolved dramatically from traditional noise-based algorithms to sophisticated AI-driven approaches. The field is currently experiencing a paradigm shift with the integration of Large Language Models (LLMs), diffusion models, and neural networks. For MineWright AI's building capabilities, the most relevant techniques include:
 
 - **Wave Function Collapse** for constraint-based structure generation
 - **LLM-assisted generation** for natural language to building translation
@@ -495,7 +495,7 @@ def wave_function-collapse(grid, patterns):
 | **Road Networks** | Path connectivity, intersection generation |
 | **Furniture Placement** | Room-furniture constraints, spacing rules |
 
-**Advantages for Steve AI:**
+**Advantages for MineWright AI:**
 - Guarantees valid connections (no floating blocks)
 - Supports learning from existing builds
 - Can incorporate player preferences as constraints
@@ -749,7 +749,7 @@ Techniques for inferring shape grammars from existing models
 5. Repeat until no valid connections
 6. Optionally limit size or depth
 
-**Advantages for Steve AI:**
+**Advantages for MineWright AI:**
 - Native Minecraft compatibility
 - Visual structure design in game
 - Easy template creation
@@ -796,10 +796,10 @@ Schematic/NBT File →
 In-Game Placement
 ```
 
-### Template Loading in Steve AI
+### Template Loading in MineWright AI
 
 **Current Implementation:**
-Steve AI has structure generation and template loading components:
+MineWright AI has structure generation and template loading components:
 - `structure` package handles procedural generation
 - NBT template loading from files
 - StructureGenerators for houses, castles, towers, barns
@@ -849,7 +849,7 @@ Modern AI Minecraft building systems use a multi-stage approach:
 
 ### Key Technologies
 
-**For Steve AI Integration:**
+**For MineWright AI Integration:**
 
 | Technology | Application | Integration Complexity |
 |------------|-------------|------------------------|
@@ -866,7 +866,7 @@ Modern AI Minecraft building systems use a multi-stage approach:
 Large structures divided into sections for parallel agent construction:
 
 ```java
-// Current Steve AI implementation
+// Current MineWright AI implementation
 CollaborativeBuildManager handles:
 - Spatial partitioning for parallel building
 - Agents claim sections atomically
@@ -903,7 +903,7 @@ Verify Consistency
 
 ### Practical Applications
 
-**Use Cases for Steve AI:**
+**Use Cases for MineWright AI:**
 
 1. **Player Commands:**
    ```
@@ -1158,7 +1158,7 @@ The field of procedural generation for games is rapidly evolving, with 2025-2026
 4. **Wave Function Collapse:** Constraint-based structure generation
 5. **Style Transfer:** Applying visual themes to generated content
 
-For Steve AI, the most immediately applicable techniques are:
+For MineWright AI, the most immediately applicable techniques are:
 
 - **Wave Function Collapse** for constraint-based building
 - **Enhanced template system** with parameterization
@@ -1168,7 +1168,7 @@ For Steve AI, the most immediately applicable techniques are:
 
 The recommended implementation approach is phased, starting with enhanced template and WFC systems, followed by LLM integration, and finally advanced neural procgen and style transfer capabilities.
 
-This research provides a foundation for significantly enhancing Steve AI's building capabilities, enabling more sophisticated, flexible, and user-friendly construction through natural language commands and advanced procedural generation techniques.
+This research provides a foundation for significantly enhancing MineWright AI's building capabilities, enabling more sophisticated, flexible, and user-friendly construction through natural language commands and advanced procedural generation techniques.
 
 ---
 
@@ -1208,5 +1208,5 @@ This research provides a foundation for significantly enhancing Steve AI's build
 ---
 
 **Report Compiled:** February 27, 2026
-**For:** Steve AI Project - Autonomous Minecraft Agents
+**For:** MineWright AI Project - Autonomous Minecraft Agents
 **Version:** 1.0

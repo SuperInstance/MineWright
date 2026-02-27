@@ -22,7 +22,17 @@ public class PlaceBlockAction extends BaseAction {
 
     @Override
     protected void onStart() {
+        if (foreman == null || foreman.level() == null || foreman.getNavigation() == null) {
+            result = ActionResult.failure("Foreman, level, or navigation not available");
+            return;
+        }
+
         String blockName = task.getStringParameter("block");
+        if (blockName == null || blockName.isEmpty()) {
+            result = ActionResult.failure("Block name parameter is required");
+            return;
+        }
+
         int x = task.getIntParameter("x", 0);
         int y = task.getIntParameter("y", 0);
         int z = task.getIntParameter("z", 0);
@@ -36,15 +46,19 @@ public class PlaceBlockAction extends BaseAction {
             result = ActionResult.failure("Invalid block type: " + blockName);
             return;
         }
-
     }
 
     @Override
     protected void onTick() {
+        if (foreman == null || foreman.level() == null || targetPos == null || blockToPlace == null) {
+            result = ActionResult.failure("Invalid state during block placement");
+            return;
+        }
+
         ticksRunning++;
 
         if (ticksRunning > MAX_TICKS) {
-            result = ActionResult.failure("Place block timeout");
+            result = ActionResult.failure("Place block timeout after " + MAX_TICKS + " ticks");
             return;
         }
 
@@ -55,7 +69,7 @@ public class PlaceBlockAction extends BaseAction {
 
         BlockState currentState = foreman.level().getBlockState(targetPos);
         if (!currentState.isAir() && !currentState.liquid()) {
-            result = ActionResult.failure("Position is not empty");
+            result = ActionResult.failure("Position is not empty (occupied by " + currentState.getBlock() + ")");
             return;
         }
 
@@ -65,12 +79,15 @@ public class PlaceBlockAction extends BaseAction {
 
     @Override
     protected void onCancel() {
-        foreman.getNavigation().stop();
+        if (foreman != null && foreman.getNavigation() != null) {
+            foreman.getNavigation().stop();
+        }
     }
 
     @Override
     public String getDescription() {
-        return "Place " + blockToPlace.getName().getString() + " at " + targetPos;
+        String blockName = (blockToPlace != null) ? blockToPlace.getName().getString() : "unknown";
+        return "Place " + blockName + " at " + (targetPos != null ? targetPos : "unknown");
     }
 
     private Block parseBlock(String blockName) {

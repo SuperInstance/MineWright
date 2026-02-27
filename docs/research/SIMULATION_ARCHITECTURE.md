@@ -1335,7 +1335,7 @@ public class SimulationInterceptor implements ActionInterceptor {
 
 ### 8.1 Config Options
 
-**File:** `config/steve-common.toml`
+**File:** `config/minewright-common.toml`
 
 ```toml
 [simulation]
@@ -1397,11 +1397,11 @@ parallel_kernels = true
 
 **In-Game Commands:**
 ```
-/steve simulation enable
-/steve simulation disable
-/steve simulation status
-/steve simulation cache clear
-/steve simulation kernel restart
+/minewright simulation enable
+/minewright simulation disable
+/minewright simulation status
+/minewright simulation cache clear
+/minewright simulation kernel restart
 ```
 
 **GUI Controls:**

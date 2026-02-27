@@ -1283,7 +1283,7 @@ dependencies {
 ```
 
 ```toml
-# config/steve-common.toml - MCP configuration
+# config/minewright-common.toml - MCP configuration
 
 [mcp]
 # Enable MCP integration
@@ -1543,7 +1543,7 @@ String prompt = "Available pathfinding tools: " +
 - [ ] Create `McpClientFactory` for client creation
 - [ ] Implement `McpAction` base class
 - [ ] Create unit tests for MCP client lifecycle
-- [ ] Add MCP configuration to `steve-common.toml`
+- [ ] Add MCP configuration to `minewright-common.toml`
 
 **Deliverables:**
 - `McpClientFactory.java` - Client creation and initialization

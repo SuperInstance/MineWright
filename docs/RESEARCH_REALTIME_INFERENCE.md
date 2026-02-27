@@ -1,14 +1,14 @@
 # Real-Time AI Inference Optimization Research
 
 **Research Date:** 2026-02-27
-**Project:** Steve AI - LLM-Powered Minecraft Autonomous Agents
+**Project:** MineWright AI - LLM-Powered Minecraft Autonomous Agents
 **Focus:** Low-latency inference techniques for real-time game integration
 
 ---
 
 ## Executive Summary
 
-This research document explores cutting-edge optimization techniques for real-time Large Language Model (LLM) inference, with specific applicability to game AI systems like Steve AI. The research covers model quantization, speculative decoding, KV cache optimization, batching strategies, streaming responses, and major inference frameworks (vLLM, TensorRT-LLM, ONNX Runtime).
+This research document explores cutting-edge optimization techniques for real-time Large Language Model (LLM) inference, with specific applicability to game AI systems like MineWright AI. The research covers model quantization, speculative decoding, KV cache optimization, batching strategies, streaming responses, and major inference frameworks (vLLM, TensorRT-LLM, ONNX Runtime).
 
 **Key Findings:**
 - **INT8 quantization** provides 2-2.5x speedup with <2.5% accuracy loss
@@ -27,7 +27,7 @@ This research document explores cutting-edge optimization techniques for real-ti
 4. [Batching Strategies](#4-batching-strategies)
 5. [Streaming Responses](#5-streaming-responses)
 6. [Framework Analysis](#6-framework-analysis)
-7. [Applicability to Steve AI](#7-applicability-to-steve-ai)
+7. [Applicability to MineWright AI](#7-applicability-to-steve-ai)
 8. [Recommendations](#8-recommendations)
 
 ---
@@ -603,7 +603,7 @@ llm = LLM(
 
 ---
 
-## 7. Applicability to Steve AI
+## 7. Applicability to MineWright AI
 
 ### Current Architecture Analysis
 
@@ -894,7 +894,7 @@ Implementing all recommendations:
 
 ## Conclusion
 
-Real-time AI inference optimization is critical for game AI systems like Steve AI. The research shows that:
+Real-time AI inference optimization is critical for game AI systems like MineWright AI. The research shows that:
 
 1. **Quantization (INT8)** provides the best balance of speed, memory savings, and quality
 2. **Speculative decoding** dramatically improves generation speed for planning tasks
@@ -903,7 +903,7 @@ Real-time AI inference optimization is critical for game AI systems like Steve A
 5. **SSE streaming** significantly improves perceived responsiveness
 6. **vLLM** offers the best balance of performance and ease of use for production deployments
 
-By implementing these optimizations, Steve AI can achieve 10-20x faster response times, support 4x more concurrent agents, and reduce infrastructure costs by 5x, enabling more complex and responsive autonomous agent behaviors within Minecraft.
+By implementing these optimizations, MineWright AI can achieve 10-20x faster response times, support 4x more concurrent agents, and reduce infrastructure costs by 5x, enabling more complex and responsive autonomous agent behaviors within Minecraft.
 
 ---
 

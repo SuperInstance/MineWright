@@ -2,7 +2,7 @@
 
 **Research Date:** February 27, 2025
 **Document Version:** 1.0
-**Target Application:** Steve AI - Autonomous Minecraft Agents
+**Target Application:** MineWright AI - Autonomous Minecraft Agents
 **Focus:** Sub-100ms tactical decision-making for real-time gameplay
 
 ---
@@ -28,7 +28,7 @@ Cloudflare Workers AI is a serverless AI inference platform running on Cloudflar
 4. [AI Binding Configuration](#4-ai-binding-configuration)
 5. [Use Cases for Minecraft Tactical AI](#5-use-cases-for-minecraft-tactical-ai)
 6. [Code Examples](#6-code-examples)
-7. [Integration Strategy for Steve AI](#7-integration-strategy-for-steve-ai)
+7. [Integration Strategy for MineWright AI](#7-integration-strategy-for-steve-ai)
 8. [References and Sources](#8-references-and-sources)
 
 ---
@@ -846,12 +846,12 @@ on_fetch = worker.on_fetch
 
 ---
 
-## 7. Integration Strategy for Steve AI
+## 7. Integration Strategy for MineWright AI
 
 ### 7.1 Architecture Overview
 
 ```
-Steve AI (Minecraft Forge)
+MineWright AI (Minecraft Forge)
     |
     v
 TaskPlanner (Async LLM Client)
@@ -888,7 +888,7 @@ TaskPlanner (Async LLM Client)
 ### 7.3 Caching Strategy
 
 ```java
-// src/main/java/com/steve/llm/WorkersAI tactical Client.java
+// src/main/java/com/minewright/llm/WorkersAI tactical Client.java
 
 package com.steve.llm;
 
@@ -1060,7 +1060,7 @@ Must be used for higher-frequency tactical decisions (every 2-5 seconds).
 ### 7.6 Fallback Strategy
 
 ```java
-// src/main/java/com/steve/action/TacticalActionExecutor.java
+// src/main/java/com/minewright/action/TacticalActionExecutor.java
 
 public class TacticalActionExecutor extends BaseAction {
 
@@ -1279,4 +1279,4 @@ function validateSituation(situation: any): boolean {
 
 **Document End**
 
-For questions or updates to this research document, please refer to the official Cloudflare Workers AI documentation or create an issue in the Steve AI repository.
+For questions or updates to this research document, please refer to the official Cloudflare Workers AI documentation or create an issue in the MineWright AI repository.

@@ -1,8 +1,8 @@
 # Research: Advances in Game AI Pathfinding and Navigation
 
-**Project:** MineWright / Steve AI
+**Project:** MineWright / MineWright AI
 **Date:** 2025-02-27
-**Purpose:** Comprehensive research on modern pathfinding advances to improve Steve AI navigation
+**Purpose:** Comprehensive research on modern pathfinding advances to improve MineWright AI navigation
 
 ---
 
@@ -1759,7 +1759,7 @@ public class MinecraftHeuristics {
 }
 ```
 
-**Baritone Integration for Steve AI:**
+**Baritone Integration for MineWright AI:**
 
 ```java
 public class StevePathfindingIntegration {
@@ -2068,7 +2068,7 @@ public class BiomeNavigation {
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              Steve AI Navigation System                      │
+│              MineWright AI Navigation System                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌─────────────────────────────────────────────────────┐   │
@@ -2131,7 +2131,7 @@ public class BiomeNavigation {
 package com.steve.navigation.hierarchical;
 
 /**
- * Hierarchical pathfinding for Steve AI.
+ * Hierarchical pathfinding for MineWright AI.
  * Phase 1: Basic HPA* implementation
  */
 public class HierarchicalPathfinder {
@@ -2469,7 +2469,7 @@ public void testMultiSteveCoordination() {
 
 ## Conclusion
 
-This research document provides a comprehensive survey of modern pathfinding techniques applicable to MineWright/Steve AI. The key recommendations are:
+This research document provides a comprehensive survey of modern pathfinding techniques applicable to MineWright/MineWright AI. The key recommendations are:
 
 **Immediate Implementation (Phase 1):**
 1. Hierarchical Pathfinding A* (HPA*) for long-distance travel
@@ -2491,7 +2491,7 @@ This research document provides a comprehensive survey of modern pathfinding tec
 2. Online adaptation
 3. Neural network heuristics
 
-The hybrid architecture combining hierarchical planning, efficient search algorithms, and Minecraft-specific optimizations provides the best balance of performance and functionality for Steve AI's navigation needs.
+The hybrid architecture combining hierarchical planning, efficient search algorithms, and Minecraft-specific optimizations provides the best balance of performance and functionality for MineWright AI's navigation needs.
 
 ---
 

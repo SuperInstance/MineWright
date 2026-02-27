@@ -1,6 +1,6 @@
 # MineWright Character Documentation
 
-This directory contains comprehensive documentation for developing authentic, engaging personalities for Steve AI agents in the MineWright project (construction-worker themed autonomous Minecraft agents).
+This directory contains comprehensive documentation for developing authentic, engaging personalities for MineWright AI agents in the MineWright project (construction-worker themed autonomous Minecraft agents).
 
 ---
 
@@ -221,6 +221,6 @@ When adding new character documentation:
 ---
 
 *Documentation Version: 1.0*
-*Project: Steve AI - MineWright Characters*
+*Project: MineWright AI - MineWright Characters*
 *Purpose: Authentic construction worker personality development*
 *Last Updated: 2026-02-27*

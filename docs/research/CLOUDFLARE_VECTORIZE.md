@@ -1,14 +1,14 @@
 # Cloudflare Vectorize for Agent Long-Term Memory Storage
 
 **Research Date:** 2026-02-27
-**For:** Steve AI - Long-term vector-based memory storage
+**For:** MineWright AI - Long-term vector-based memory storage
 **Focus:** Distributed vector database at the edge, Minecraft world memory, multi-agent shared memory
 
 ---
 
 ## Executive Summary
 
-Cloudflare Vectorize is a globally distributed vector database designed for AI applications. It integrates seamlessly with Workers AI embeddings, providing low-latency semantic search at the edge. For Steve AI, Vectorize offers:
+Cloudflare Vectorize is a globally distributed vector database designed for AI applications. It integrates seamlessly with Workers AI embeddings, providing low-latency semantic search at the edge. For MineWright AI, Vectorize offers:
 
 1. **Global edge distribution** - Memory accessible worldwide with ~31ms median query latency
 2. **Generous free tier** - 30M vector dimension queries/month for development
@@ -64,7 +64,7 @@ Vectorize indexes are created with specific dimensionality matching the embeddin
 | OpenAI text-embedding-3-small | 1536 | Use external API |
 | Cohere embed-english-v3.0 | 1024 | Use external API |
 
-**Recommended for Steve AI:**
+**Recommended for MineWright AI:**
 - **Primary:** `@cf/baai/bge-base-en-v1.5` (768 dimensions) - Best balance of quality/speed
 - **Alternative:** `@cf/baai/bge-small-en-v1.5` (384 dimensions) - For cost optimization
 
@@ -123,7 +123,7 @@ wrangler vectorize create world-memory \
 | **euclidean** | `sqrt(sum((A-B)^2))` | Spatial coordinates, physical distances | [0, ∞] |
 | **dot-product** | `-A · B` | Normalized vectors, recommendation systems | (-∞, ∞] |
 
-**For Steve AI:**
+**For MineWright AI:**
 - **Command/Conversational Memory:** cosine (semantic similarity)
 - **Location/Coordinate Memory:** euclidean (physical distance)
 - **Resource/Item Memory:** dot-product (if vectors normalized)
@@ -176,7 +176,7 @@ Queries (10K/day): 10K × 30 × 768 / 1M × $0.0X ≈ $1-2/month
 | Pinecone | ~$41 |
 | Weaviate | ~$25-153 |
 
-**Cost Example for Steve AI:**
+**Cost Example for MineWright AI:**
 ```
 Scenario: Multiplayer server with 50 active players
 - 10K resource discoveries per month
@@ -847,7 +847,7 @@ await env.WORLD_MEMORY.query(vector, {
 | **Local (ONNX)** | No API costs, offline capable | Initial model loading, GPU needed | High traffic, offline first |
 | **Hybrid** | Cost + speed optimization | Cache management complexity | Variable traffic |
 
-**Recommendation for Steve AI:**
+**Recommendation for MineWright AI:**
 
 1. **Development:** Edge (Workers AI) - Fastest iteration
 2. **Low Traffic Servers (<10 queries/min):** Edge - Simpler infrastructure
@@ -1465,7 +1465,7 @@ const publicMemories = await queryAgentMemory(env, "diamond locations", "steve-0
 **Deliverables:**
 - `VectorizeMemoryClient.java` for HTTP requests
 - Resource discovery auto-tracking in `MineAction`
-- Base location commands (`/steve remember base`)
+- Base location commands (`/minewright remember base`)
 - Mob encounter logging in `CombatAction`
 
 ### Phase 3: Advanced Features (Week 5-6)

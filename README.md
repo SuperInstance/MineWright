@@ -171,7 +171,7 @@ Crew members comment on:
 ### Your First Crew
 
 ```
-/steve spawn Mace
+/minewright spawn Mace
 ```
 
 Press **K** to open the command panel, then type:
@@ -210,11 +210,11 @@ workerUrl = "https://your-worker.workers.dev"
 
 | Command | Description |
 |---------|-------------|
-| `/steve spawn <name>` | Spawn crew member |
-| `/steve list` | List active crew |
-| `/steve tell <name> <cmd>` | Give command |
-| `/steve relationship <name>` | View relationship |
-| `/steve promote <name>` | Promote to Foreman |
+| `/minewright spawn <name>` | Spawn crew member |
+| `/minewright list` | List active crew |
+| `/minewright tell <name> <cmd>` | Give command |
+| `/minewright relationship <name>` | View relationship |
+| `/minewright promote <name>` | Promote to Foreman |
 | Press **K** | Open command GUI |
 
 ---

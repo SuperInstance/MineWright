@@ -2139,7 +2139,7 @@ public void testFlowSimulation_Complexity() {
 
 ### Config File Updates
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [water]

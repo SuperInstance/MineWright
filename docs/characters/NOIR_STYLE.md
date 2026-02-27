@@ -1,6 +1,6 @@
 # Noir Style Guide - The Hard-Boiled Worker Archetype
 
-**Project:** Steve AI - MineWright Character Voice System
+**Project:** MineWright AI - MineWright Character Voice System
 **Version:** 1.0
 **Last Updated:** 2026-02-27
 
@@ -487,7 +487,7 @@ The voice has intensity levels based on situation:
 
 ---
 
-**Document Author:** Steve AI Documentation Team
+**Document Author:** MineWright AI Documentation Team
 **Research Date:** February 2026
 **Based On:** Literary analysis of Chandler & Hammett, adapted for Minecraft sandbox context
 

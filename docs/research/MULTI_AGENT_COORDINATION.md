@@ -3499,7 +3499,7 @@ public class RoleBasedCrew {
 
 10. **LangGraph** - LangChain. https://github.com/langchain-ai/langgraph
 
-11. **Steve AI** - Autonomous agents for Minecraft. https://github.com/YuvDwi/Steve
+11. **MineWright AI** - Autonomous agents for Minecraft. https://github.com/YuvDwi/Steve
 
 ### Industry Resources
 

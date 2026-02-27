@@ -1242,4 +1242,4 @@ This document provides comprehensive research and design for copper farm automat
 **Document Version:** 1.0
 **Last Updated:** 2025-02-27
 **Target Version:** Minecraft Forge 1.20.1
-**Mod:** MineWright (Steve AI - "Cursor for Minecraft")
+**Mod:** MineWright (MineWright AI - "Cursor for Minecraft")

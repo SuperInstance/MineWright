@@ -128,7 +128,7 @@ https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}/google
 https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}/compat
 ```
 
-**Example for Minecraft Steve AI:**
+**Example for Minecraft MineWright AI:**
 ```
 Account ID: abc123def456
 Gateway Name: minecraft-steve-ai
@@ -1063,7 +1063,7 @@ Use cheaper models as fallbacks for less critical tasks:
 
 ## 9. Integration Guide
 
-### Quick Start for Minecraft Steve AI
+### Quick Start for Minecraft MineWright AI
 
 **Step 1: Create AI Gateway**
 
@@ -1095,7 +1095,7 @@ public class OpenAIClient {
 **Step 3: Update Configuration**
 
 ```toml
-# In config/steve-common.toml
+# In config/minewright-common.toml
 [llm]
 provider = "openai"
 useGateway = true
@@ -1213,7 +1213,7 @@ const dashboard = await fetch("https://api.cloudflare.com/client/v4/accounts/{ac
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    name: "Minecraft Steve AI",
+    name: "Minecraft MineWright AI",
     widgets: [
       {
         type: "timeseries",

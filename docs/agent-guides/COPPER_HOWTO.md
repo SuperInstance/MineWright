@@ -535,10 +535,10 @@ Result: Parallel coverage of peak copper range
 
 **Player Leadership Commands:**
 ```
-/steve spawn "Miner1" → "Mine copper at Y=48, 5x5 grid"
-/steve spawn "Miner2" → "Mine copper at Y=52, 5x5 grid"
-/steve spawn "Smelter" → "Auto-smelt all raw copper"
-/steve spawn "Builder" → "Build copper roof using weathered blocks"
+/minewright spawn "Miner1" → "Mine copper at Y=48, 5x5 grid"
+/minewright spawn "Miner2" → "Mine copper at Y=52, 5x5 grid"
+/minewright spawn "Smelter" → "Auto-smelt all raw copper"
+/minewright spawn "Builder" → "Build copper roof using weathered blocks"
 ```
 
 **Agent Autonomous Commands:**

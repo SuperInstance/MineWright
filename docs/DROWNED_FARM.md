@@ -1062,7 +1062,7 @@ private String buildActionDescriptions() {
 
 **Commands to Test:**
 ```
-/steve spawn Builder
+/minewright spawn Builder
 K: "Build an aerial drowned farm"
 ```
 
@@ -1151,7 +1151,7 @@ K: "Collect items from drowned farm"
 ### Example 1: Basic Trident Farm
 
 ```
-Player: /steve spawn Farmer
+Player: /minewright spawn Farmer
 Player: K: "Build an aerial drowned farm in the ocean for tridents"
 
 Foreman: "Searching for ocean biome... Found at (1234, 50, -567)"
@@ -1226,7 +1226,7 @@ Foreman: "Depositing items in storage chest"
 
 **Solutions:**
 ```
-/steve spawn Builder
+/minewright spawn Builder
 K: "Check light levels on the drowned farm platform"
 K: "Light up all caves within 128 blocks"
 ```

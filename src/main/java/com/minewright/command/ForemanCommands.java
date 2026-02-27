@@ -26,7 +26,7 @@ public class ForemanCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForemanCommands.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("steve")
+        dispatcher.register(Commands.literal("minewright")
             .then(Commands.literal("spawn")
                 .then(Commands.argument("name", StringArgumentType.string())
                     .executes(ForemanCommands::spawnSteve)))
@@ -71,7 +71,7 @@ public class ForemanCommands {
         String name = StringArgumentType.getString(context, "name");
         CommandSourceStack source = context.getSource();
 
-        LOGGER.info("Command /steve spawn {} executed by {}", name, source.getTextName());
+        LOGGER.info("Command /minewright spawn {} executed by {}", name, source.getTextName());
 
         ServerLevel serverLevel = source.getLevel();
         if (serverLevel == null) {
@@ -107,7 +107,7 @@ public class ForemanCommands {
         String name = StringArgumentType.getString(context, "name");
         CommandSourceStack source = context.getSource();
 
-        LOGGER.info("Command /steve remove {} executed by {}", name, source.getTextName());
+        LOGGER.info("Command /minewright remove {} executed by {}", name, source.getTextName());
 
         CrewManager manager = MineWrightMod.getCrewManager();
         if (manager.removeCrewMember(name)) {
@@ -116,7 +116,7 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Failed to remove crew member '{}' - not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /steve list"));
+            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
             return 0;
         }
     }
@@ -127,7 +127,7 @@ public class ForemanCommands {
 
         var names = manager.getCrewMemberNames();
         if (names.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("The job site is empty - no crew members on duty. Use /steve spawn <name> to hire someone!"), false);
+            source.sendSuccess(() -> Component.literal("The job site is empty - no crew members on duty. Use /minewright spawn <name> to hire someone!"), false);
         } else {
             source.sendSuccess(() -> Component.literal("Crew on duty (" + names.size() + "): " + String.join(", ", names)), false);
         }
@@ -138,7 +138,7 @@ public class ForemanCommands {
         String name = StringArgumentType.getString(context, "name");
         CommandSourceStack source = context.getSource();
 
-        LOGGER.info("Command /steve stop {} executed by {}", name, source.getTextName());
+        LOGGER.info("Command /minewright stop {} executed by {}", name, source.getTextName());
 
         CrewManager manager = MineWrightMod.getCrewManager();
         ForemanEntity crewMember = manager.getCrewMember(name);
@@ -151,7 +151,7 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Stop command failed for '{}' - crew member not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /steve list"));
+            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
             return 0;
         }
     }
@@ -161,7 +161,7 @@ public class ForemanCommands {
         String command = StringArgumentType.getString(context, "command");
         CommandSourceStack source = context.getSource();
 
-        LOGGER.info("Command /steve tell {} '{}' executed by {}", name, command, source.getTextName());
+        LOGGER.info("Command /minewright tell {} '{}' executed by {}", name, command, source.getTextName());
 
         CrewManager manager = MineWrightMod.getCrewManager();
         ForemanEntity crewMember = manager.getCrewMember(name);
@@ -181,7 +181,7 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Failed to send command to crew member '{}' - not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /steve list"));
+            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
             return 0;
         }
     }
@@ -234,7 +234,7 @@ public class ForemanCommands {
 
         if (!voice.isEnabled()) {
             LOGGER.warn("Voice test failed - voice system is disabled");
-            source.sendFailure(Component.literal("Foreman radio is OFF! Use '/steve voice on' first to enable it."));
+            source.sendFailure(Component.literal("Foreman radio is OFF! Use '/minewright voice on' first to enable it."));
             return 0;
         }
 
@@ -262,7 +262,7 @@ public class ForemanCommands {
 
         var names = manager.getCrewMemberNames();
         if (names.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("No crew members on duty. Use /steve spawn <name> to hire someone!"), false);
+            source.sendSuccess(() -> Component.literal("No crew members on duty. Use /minewright spawn <name> to hire someone!"), false);
             return 1;
         }
 
@@ -283,14 +283,14 @@ public class ForemanCommands {
         String name = StringArgumentType.getString(context, "name");
         CommandSourceStack source = context.getSource();
 
-        LOGGER.info("Command /steve promote {} executed by {}", name, source.getTextName());
+        LOGGER.info("Command /minewright promote {} executed by {}", name, source.getTextName());
 
         CrewManager manager = MineWrightMod.getCrewManager();
         ForemanEntity crewMember = manager.getCrewMember(name);
 
         if (crewMember == null) {
             LOGGER.warn("Promote command failed for '{}' - crew member not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /steve list"));
+            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
             return 0;
         }
 
@@ -312,14 +312,14 @@ public class ForemanCommands {
         String name = StringArgumentType.getString(context, "name");
         CommandSourceStack source = context.getSource();
 
-        LOGGER.info("Command /steve demote {} executed by {}", name, source.getTextName());
+        LOGGER.info("Command /minewright demote {} executed by {}", name, source.getTextName());
 
         CrewManager manager = MineWrightMod.getCrewManager();
         ForemanEntity crewMember = manager.getCrewMember(name);
 
         if (crewMember == null) {
             LOGGER.warn("Demote command failed for '{}' - crew member not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /steve list"));
+            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
             return 0;
         }
 
@@ -443,7 +443,7 @@ public class ForemanCommands {
             }
         }
 
-        source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /steve list"));
+        source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
         return 0;
     }
 

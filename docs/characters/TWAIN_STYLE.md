@@ -1215,7 +1215,7 @@ This guide is based on research into Mark Twain's techniques and includes:
 
 **For Implementation:**
 - See also: `docs/characters/` for personality research
-- See also: `src/main/java/com/steve/entity/` for worker implementation
+- See also: `src/main/java/com/minewright/entity/` for worker implementation
 - See also: `CLAUDE.md` for architecture context
 
 ---

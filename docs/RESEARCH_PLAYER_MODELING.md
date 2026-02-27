@@ -1,14 +1,14 @@
 # Player Modeling AI for Game Agents - Research Report
 
 **Date:** 2026-02-27
-**Project:** Steve AI - Minecraft Agent System
+**Project:** MineWright AI - Minecraft Agent System
 **Focus:** Player modeling techniques for adaptive AI agents in sandbox games
 
 ---
 
 ## Executive Summary
 
-This report researches player modeling AI techniques for game agents, with specific focus on applications to the Steve AI project (Minecraft autonomous agents). Player modeling enables AI systems to understand, predict, and adapt to individual player behaviors, preferences, and play styles. The research covers five core areas:
+This report researches player modeling AI techniques for game agents, with specific focus on applications to the MineWright AI project (Minecraft autonomous agents). Player modeling enables AI systems to understand, predict, and adapt to individual player behaviors, preferences, and play styles. The research covers five core areas:
 
 1. **Behavior Prediction** - Anticipating player actions using machine learning
 2. **Preference Learning** - Understanding player goals and motivations
@@ -478,9 +478,9 @@ graph LR
 
 ## 8. MineWright Applications
 
-### 8.1 Steve AI Player Modeling
+### 8.1 MineWright AI Player Modeling
 
-**Current Steve AI Architecture:**
+**Current MineWright AI Architecture:**
 - LLM-powered task planning
 - Action executor with plugin system
 - Multi-agent coordination
@@ -656,7 +656,7 @@ public enum SessionPhase {
 
 ### 8.5 Research Questions
 
-**For Steve AI:**
+**For MineWright AI:**
 
 1. **How can LLM-based agents effectively incorporate player models?**
    - Prompt engineering for model injection
@@ -783,14 +783,14 @@ public enum SessionPhase {
 
 ## Conclusion
 
-Player modeling AI offers significant opportunities for enhancing the Steve AI project. The current architecture with LLM-based planning, plugin actions, and multi-agent coordination provides an excellent foundation for incorporating player modeling capabilities.
+Player modeling AI offers significant opportunities for enhancing the MineWright AI project. The current architecture with LLM-based planning, plugin actions, and multi-agent coordination provides an excellent foundation for incorporating player modeling capabilities.
 
 **Key Takeaways:**
 
 1. **Maturity**: Player modeling techniques are well-established in game AI research
 2. **Real-World Use**: Successful deployments exist across multiple game genres
 3. **Minecraft Focus**: Active research community uses Minecraft as a testbed
-4. **Integration Feasible**: Steve AI architecture supports player modeling integration
+4. **Integration Feasible**: MineWright AI architecture supports player modeling integration
 5. **Multi-Agent Rich Area**: Collaborative player modeling is particularly relevant
 
 **Recommended Next Steps:**
@@ -813,4 +813,4 @@ Player modeling AI offers significant opportunities for enhancing the Steve AI p
 
 *Report prepared by Orchestrator Agent*
 *Research conducted: 2026-02-27*
-*Project: Steve AI - Autonomous Minecraft Agents*
+*Project: MineWright AI - Autonomous Minecraft Agents*

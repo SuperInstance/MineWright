@@ -13,10 +13,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Caches world knowledge (blocks, entities, biome) with TTL to avoid repeated expensive scans.
  * Uses a static cache shared across all ForemanEntity instances since world data is relatively static.
+ *
+ * Enhanced with priority filtering to reduce prompt token usage by only including relevant information.
+ * Thread-safe implementation using ConcurrentHashMap.
  */
 public class WorldKnowledge {
     private final ForemanEntity minewright;
@@ -25,9 +29,23 @@ public class WorldKnowledge {
     private List<Entity> nearbyEntities;
     private String biomeName;
 
-    // Cache configuration
+    // Priority lists for filtering relevant info
+    private static final List<String> VALUABLE_BLOCKS = List.of(
+        "diamond_ore", "deepslate_diamond_ore", "iron_ore", "deepslate_iron_ore",
+        "gold_ore", "deepslate_gold_ore", "copper_ore", "deepslate_copper_ore",
+        "coal_ore", "deepslate_coal_ore", "emerald_ore", "deepslate_emerald_ore",
+        "redstone_ore", "deepslate_redstone_ore", "lapis_ore", "deepslate_lapis_ore",
+        "chest", "ender_chest", "barrel", "shulker_box"
+    );
+
+    private static final List<String> HOSTILE_MOBS = List.of(
+        "zombie", "skeleton", "creeper", "spider", "enderman",
+        "witch", "slime", "phantom", "drowned", "pillager"
+    );
+
+    // Cache configuration - thread-safe with ConcurrentHashMap
     private static final long CACHE_TTL_MS = 2000; // 2 seconds TTL
-    private static final Map<Integer, CachedWorldData> staticCache = new HashMap<>();
+    private static final Map<Integer, CachedWorldData> staticCache = new ConcurrentHashMap<>();
     private static final int MAX_CACHE_SIZE = 50;
 
     /**
@@ -97,12 +115,20 @@ public class WorldKnowledge {
     /**
      * Caches the current scan results.
      * Evicts oldest entries if cache is too large.
+     * Thread-safe implementation.
      */
     private void cacheResults(int cacheKey) {
-        // Clean up expired entries first
-        staticCache.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        // Create immutable copies for thread safety
+        Map<Block, Integer> blocksCopy = Collections.unmodifiableMap(new HashMap<>(nearbyBlocks));
+        List<Entity> entitiesCopy = List.copyOf(nearbyEntities);
 
-        // Evict oldest if cache is too large
+        // Clean up expired entries first (thread-safe iteration)
+        staticCache.entrySet().removeIf(entry -> {
+            boolean expired = entry.getValue().isExpired();
+            return expired;
+        });
+
+        // Evict oldest if cache is too large (thread-safe check)
         if (staticCache.size() >= MAX_CACHE_SIZE) {
             // Remove first entry (simple FIFO eviction)
             Iterator<Map.Entry<Integer, CachedWorldData>> it = staticCache.entrySet().iterator();
@@ -112,27 +138,41 @@ public class WorldKnowledge {
             }
         }
 
-        // Add to cache
-        staticCache.put(cacheKey, new CachedWorldData(nearbyBlocks, nearbyEntities, biomeName));
+        // Add to cache with immutable data
+        staticCache.put(cacheKey, new CachedWorldData(blocksCopy, entitiesCopy, biomeName));
     }
 
     private void scanBiome() {
+        if (minewright == null || minewright.level() == null) {
+            biomeName = "unknown";
+            return;
+        }
+
         Level level = minewright.level();
         BlockPos pos = minewright.blockPosition();
-        
-        Biome biome = level.getBiome(pos).value();
-        var biomeRegistry = level.registryAccess().registryOrThrow(Registries.BIOME);
-        var biomeKey = biomeRegistry.getKey(biome);
-        
-        if (biomeKey != null) {
-            biomeName = biomeKey.getPath();
-        } else {
+
+        try {
+            Biome biome = level.getBiome(pos).value();
+            var biomeRegistry = level.registryAccess().registryOrThrow(Registries.BIOME);
+            var biomeKey = biomeRegistry.getKey(biome);
+
+            if (biomeKey != null) {
+                biomeName = biomeKey.getPath();
+            } else {
+                biomeName = "unknown";
+            }
+        } catch (Exception e) {
             biomeName = "unknown";
         }
     }
 
     private void scanBlocks() {
         nearbyBlocks = new HashMap<>();
+
+        if (minewright == null || minewright.level() == null) {
+            return;
+        }
+
         Level level = minewright.level();
         BlockPos minewrightPos = minewright.blockPosition();
 
@@ -142,7 +182,7 @@ public class WorldKnowledge {
                     BlockPos checkPos = minewrightPos.offset(x, y, z);
                     BlockState state = level.getBlockState(checkPos);
                     Block block = state.getBlock();
-                    
+
                     if (block != Blocks.AIR && block != Blocks.CAVE_AIR && block != Blocks.VOID_AIR) {
                         nearbyBlocks.put(block, nearbyBlocks.getOrDefault(block, 0) + 1);
                     }
@@ -152,9 +192,19 @@ public class WorldKnowledge {
     }
 
     private void scanEntities() {
+        nearbyEntities = new ArrayList<>();
+
+        if (minewright == null || minewright.level() == null || minewright.getBoundingBox() == null) {
+            return;
+        }
+
         Level level = minewright.level();
         AABB searchBox = minewright.getBoundingBox().inflate(scanRadius);
-        nearbyEntities = level.getEntities(minewright, searchBox);
+        List<Entity> entities = level.getEntities(minewright, searchBox);
+
+        if (entities != null) {
+            nearbyEntities = entities;
+        }
     }
 
     public String getBiomeName() {

@@ -1455,7 +1455,7 @@ Nether Portal → Nether materials
 **END OF STORAGE HOW-TO GUIDE**
 
 *Document Version: 1.0*
-*Created for Steve AI Agent System*
+*Created for MineWright AI Agent System*
 *Last Updated: 2026-02-27*
 
 ---

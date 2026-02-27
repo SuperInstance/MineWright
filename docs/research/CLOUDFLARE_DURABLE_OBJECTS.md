@@ -17,7 +17,7 @@ Cloudflare Durable Objects provide a unique combination of **compute + storage**
 - **Strong consistency** with transactional storage guarantees
 - **Free tier** available for AI agent development
 
-**Key Insight for Steve AI:** Durable Objects can serve as the "brain" for each Steve agent, maintaining state (position, inventory, tasks) at the edge while coordinating with a central Foreman system.
+**Key Insight for MineWright AI:** Durable Objects can serve as the "brain" for each Steve agent, maintaining state (position, inventory, tasks) at the edge while coordinating with a central Foreman system.
 
 ---
 
@@ -1387,7 +1387,7 @@ export class Agent extends DurableObject {
 
 ---
 
-## 11. Use Cases for Steve AI
+## 11. Use Cases for MineWright AI
 
 ### Recommended Architecture
 

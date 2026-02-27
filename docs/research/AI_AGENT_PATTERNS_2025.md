@@ -1,7 +1,7 @@
 # AI Agent Patterns and Architectures for Game NPCs - 2025 Research
 
 **Research Date:** 2025-02-27
-**Project:** Steve AI - "Cursor for Minecraft"
+**Project:** MineWright AI - "Cursor for Minecraft"
 **Focus:** Latest patterns for LLM-powered game NPC agents
 
 ---
@@ -29,7 +29,7 @@ This research document compiles the latest AI agent patterns and architectures f
 6. [Personality & Emotional AI](#6-personality--emotional-ai)
 7. [Memory & Context Systems](#7-memory--context-systems)
 8. [Proactive Behavior Patterns](#8-proactive-behavior-patterns)
-9. [Recommendations for Steve AI](#9-recommendations-for-steve-ai)
+9. [Recommendations for MineWright AI](#9-recommendations-for-steve-ai)
 
 ---
 
@@ -60,7 +60,7 @@ Combining behavior trees with neural networks and LLMs:
 
 **Example Implementation:**
 ```java
-// Hybrid approach for Steve AI
+// Hybrid approach for MineWright AI
 behaviorTree.addSelector(
     new LLMDecisionNode(taskPlanner),    // LLM for complex planning
     new StaticBehaviorNode(),            // Traditional behavior tree
@@ -700,7 +700,7 @@ public class AmbientBehavior {
 
 ---
 
-## 9. Recommendations for Steve AI
+## 9. Recommendations for MineWright AI
 
 ### Immediate Improvements (High Priority)
 
@@ -963,7 +963,7 @@ The field of AI agents for game NPCs is undergoing rapid transformation in 2024-
 5. **Proactive Behavior:** Agents that generate and pursue their own goals
 6. **Multi-Agent Coordination:** Advanced algorithms for collaborative AI
 
-For **Steve AI**, the most impactful immediate improvements would be:
+For **MineWright AI**, the most impactful immediate improvements would be:
 
 1. **Adding personality profiles** (Big Five)
 2. **Implementing vector-based memory** with retrieval

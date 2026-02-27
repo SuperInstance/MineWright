@@ -1599,7 +1599,7 @@ public class ForemanEntity extends Entity {
 
 ## Configuration Options
 
-### Config File (config/steve-common.toml)
+### Config File (config/minewright-common.toml)
 
 ```toml
 [tool_degradation]

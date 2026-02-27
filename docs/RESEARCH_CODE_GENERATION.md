@@ -1,14 +1,14 @@
 # AI Code Generation Patterns for Game Development
 
 **Research Date:** 2025-02-27
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)
 **Focus:** Application of AI code generation techniques to Minecraft modding
 
 ---
 
 ## Executive Summary
 
-This report investigates AI code generation patterns and their applicability to the MineWright project (Steve AI - "Cursor for Minecraft"). The research covers five key areas: code LLMs, template systems, runtime code generation, verification methods, and MineWright-specific applications.
+This report investigates AI code generation patterns and their applicability to the MineWright project (MineWright AI - "Cursor for Minecraft"). The research covers five key areas: code LLMs, template systems, runtime code generation, verification methods, and MineWright-specific applications.
 
 **Key Findings:**
 - **Existing Infrastructure:** MineWright already implements GraalVM-based JavaScript sandbox execution (`CodeExecutionEngine.java`)
@@ -1386,7 +1386,7 @@ public class CodeExecutionWatchdog {
 
 ## 10. Conclusion
 
-MineWright (Steve AI) is well-positioned to leverage AI code generation techniques:
+MineWright (MineWright AI) is well-positioned to leverage AI code generation techniques:
 
 **Strengths:**
 - Existing GraalVM sandbox execution infrastructure
@@ -1521,4 +1521,4 @@ code_examples/
 **Document Version:** 1.0
 **Last Updated:** 2025-02-27
 **Author:** AI Research Assistant (Claude)
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)

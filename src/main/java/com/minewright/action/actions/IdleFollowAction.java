@@ -28,6 +28,11 @@ public class IdleFollowAction extends BaseAction {
 
     @Override
     protected void onStart() {
+        if (foreman == null || foreman.level() == null || foreman.getNavigation() == null) {
+            MineWrightMod.LOGGER.warn("Foreman, level, or navigation not available for idle follow");
+            return;
+        }
+
         ticksSincePlayerSearch = 0;
         findNearestPlayer();
 
@@ -38,14 +43,18 @@ public class IdleFollowAction extends BaseAction {
 
     @Override
     protected void onTick() {
+        if (foreman == null || foreman.level() == null || foreman.getNavigation() == null) {
+            return;
+        }
+
         ticksSincePlayerSearch++;
-        
+
         // Periodically search for a better/closer player
         if (ticksSincePlayerSearch >= PLAYER_SEARCH_INTERVAL) {
             findNearestPlayer();
             ticksSincePlayerSearch = 0;
         }
-        
+
         if (targetPlayer == null || !targetPlayer.isAlive() || targetPlayer.isRemoved()) {
             findNearestPlayer();
             if (targetPlayer == null) {
@@ -100,7 +109,9 @@ public class IdleFollowAction extends BaseAction {
 
     @Override
     protected void onCancel() {
-        foreman.getNavigation().stop();
+        if (foreman != null && foreman.getNavigation() != null) {
+            foreman.getNavigation().stop();
+        }
     }
 
     @Override
@@ -112,9 +123,12 @@ public class IdleFollowAction extends BaseAction {
      * Find the nearest player to follow
      */
     private void findNearestPlayer() {
-        List<? extends Player> players = foreman.level().players();
+        if (foreman == null || foreman.level() == null) {
+            return;
+        }
 
-        if (players.isEmpty()) {
+        List<? extends Player> players = foreman.level().players();
+        if (players == null || players.isEmpty()) {
             targetPlayer = null;
             return;
         }

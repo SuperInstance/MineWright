@@ -1507,7 +1507,7 @@ public class ManageFuelFarmAction extends BaseAction {
 
 ## Configuration
 
-### config/steve-common.toml
+### config/minewright-common.toml
 
 ```toml
 [farming.bamboo]

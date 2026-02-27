@@ -1825,7 +1825,7 @@ public class ForemanMemory {
 
 ### Configuration
 
-Add to `config/steve-common.toml`:
+Add to `config/minewright-common.toml`:
 
 ```toml
 [siege]

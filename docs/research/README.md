@@ -1,6 +1,6 @@
 # Research Documents
 
-Comprehensive research findings for improving Steve AI (MineWright).
+Comprehensive research findings for improving MineWright AI (MineWright).
 
 ## Recent Research
 

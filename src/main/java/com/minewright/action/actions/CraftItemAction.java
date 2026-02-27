@@ -16,8 +16,23 @@ public class CraftItemAction extends BaseAction {
 
     @Override
     protected void onStart() {
+        if (foreman == null || foreman.getNavigation() == null) {
+            result = ActionResult.failure("Foreman or navigation not available");
+            return;
+        }
+
         itemName = task.getStringParameter("item");
+        if (itemName == null || itemName.isEmpty()) {
+            result = ActionResult.failure("Item name parameter is required");
+            return;
+        }
+
         quantity = task.getIntParameter("quantity", 1);
+        if (quantity <= 0) {
+            result = ActionResult.failure("Quantity must be positive");
+            return;
+        }
+
         ticksRunning = 0;
 
         MineWrightMod.LOGGER.info("[{}] Craft action started: {}x {}", foreman.getEntityName(), quantity, itemName);
@@ -32,18 +47,22 @@ public class CraftItemAction extends BaseAction {
 
     @Override
     protected void onTick() {
-        ticksRunning++;
+        // No-op - marked as not implemented
     }
 
     @Override
     protected void onCancel() {
-        MineWrightMod.LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getEntityName(), quantity, itemName);
-        foreman.getNavigation().stop();
+        if (foreman != null) {
+            MineWrightMod.LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getEntityName(), quantity, itemName);
+            if (foreman.getNavigation() != null) {
+                foreman.getNavigation().stop();
+            }
+        }
     }
 
     @Override
     public String getDescription() {
-        return "Craft " + quantity + " " + itemName;
+        return "Craft " + quantity + " " + (itemName != null ? itemName : "unknown");
     }
 }
 

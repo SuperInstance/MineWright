@@ -1,14 +1,14 @@
 # LLM Tool/Function Calling Research & Best Practices
 
 **Research Date:** 2026-02-27
-**Target:** Improve ResponseParser and Action Execution in Steve AI
+**Target:** Improve ResponseParser and Action Execution in MineWright AI
 **Focus:** Schema design, error handling, multi-step execution, and feedback loops
 
 ---
 
 ## Executive Summary
 
-This document compiles research on LLM function/tool calling patterns from major providers (OpenAI, Claude, Gemini) and provides actionable recommendations for improving Steve AI's ResponseParser and action execution system. Key findings emphasize structured output validation, progressive error handling, and multi-step orchestration patterns.
+This document compiles research on LLM function/tool calling patterns from major providers (OpenAI, Claude, Gemini) and provides actionable recommendations for improving MineWright AI's ResponseParser and action execution system. Key findings emphasize structured output validation, progressive error handling, and multi-step orchestration patterns.
 
 **Key Takeaway:** Modern tool calling has evolved from simple JSON extraction to sophisticated multi-agent orchestration with strict schema validation, parallel execution, and adaptive error recovery.
 
@@ -693,7 +693,7 @@ public class AdaptiveExecutionLoop {
 
 ---
 
-## 7. Recommendations for Steve AI
+## 7. Recommendations for MineWright AI
 
 ### 7.1 Immediate Improvements (Priority 1)
 
@@ -1275,7 +1275,7 @@ class PerformanceTest {
 
 ## 12. Conclusion
 
-The research shows that modern LLM tool calling has evolved significantly beyond simple JSON parsing. Key improvements for Steve AI include:
+The research shows that modern LLM tool calling has evolved significantly beyond simple JSON parsing. Key improvements for MineWright AI include:
 
 1. **Schema-Driven Validation**: Move from ad-hoc parsing to formal JSON Schema definitions
 2. **Progressive Error Handling**: Implement tiered recovery from automatic repair to LLM correction
@@ -1283,7 +1283,7 @@ The research shows that modern LLM tool calling has evolved significantly beyond
 4. **Multi-Step Orchestration**: Implement feedback loops and adaptive execution
 5. **Parallel Execution**: Execute independent tasks concurrently
 
-These improvements will make Steve AI more reliable, efficient, and maintainable while reducing the burden on prompt engineering.
+These improvements will make MineWright AI more reliable, efficient, and maintainable while reducing the burden on prompt engineering.
 
 ---
 

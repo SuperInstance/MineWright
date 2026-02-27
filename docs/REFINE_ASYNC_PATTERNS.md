@@ -1,4 +1,4 @@
-# Async Pattern Improvements for Steve AI
+# Async Pattern Improvements for MineWright AI
 
 **Date:** 2025-02-27
 **Scope:** Comprehensive review and improvement recommendations for async patterns across the LLM client infrastructure

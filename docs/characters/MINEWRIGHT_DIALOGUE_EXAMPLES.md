@@ -1,5 +1,5 @@
 # MineWright Character Dialogue Examples
-## Construction Worker Personality Dialogues for Steve AI
+## Construction Worker Personality Dialogues for MineWright AI
 
 ---
 
@@ -980,5 +980,5 @@ To the building - may it stand forever.
 ---
 
 *Document Version: 1.0*
-*Created for: Steve AI - MineWright Character Development*
+*Created for: MineWright AI - MineWright Character Development*
 *Purpose: Ready-to-use dialogue examples for construction worker personalities*

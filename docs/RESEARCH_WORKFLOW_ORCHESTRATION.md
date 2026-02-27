@@ -1,7 +1,7 @@
 # Workflow Orchestration Research for AI Agents
 
 **Research Date:** 2026-02-27
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)
 **Focus:** Advanced workflow orchestration patterns for autonomous AI agents
 
 ---
@@ -1468,7 +1468,7 @@ public class RaidCoordinationWorkflow {
 
 **Implementation:**
 ```java
-// config/steve-common.toml
+// config/minewright-common.toml
 [retry]
 llm_max_attempts = 3
 llm_initial_delay_ms = 500
@@ -1625,7 +1625,7 @@ These improvements will make MineWright agents more reliable, observable, and ca
 - [Netflix Maestro Workflow Orchestrator](https://blog.csdn.net/gitblog_00947/article/details/153343381)
 
 ### Minecraft AI
-- [Steve AI - Autonomous Agents](https://github.com/topics/minecraft-ai)
+- [MineWright AI - Autonomous Agents](https://github.com/topics/minecraft-ai)
 - [Mindcraft - Multi-Agent Collaboration](https://github.com/topics/minecraft-automation)
 - [Human-AI Teaming Testbed](https://arxiv.org/abs/2503.19607)
 

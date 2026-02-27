@@ -1304,7 +1304,7 @@ public class XPFarmingPlugin implements ActionPlugin {
 
 ## Configuration
 
-### config/steve-common.toml
+### config/minewright-common.toml
 
 ```toml
 [xp_farming]

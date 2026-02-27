@@ -3,7 +3,7 @@
 
 **Document Version:** 1.0
 **Date:** 2026-02-27
-**Project:** Steve AI - MineWright Characters
+**Project:** MineWright AI - MineWright Characters
 **Purpose:** Comprehensive guide to curiosity-driven dialogue for AI game companions
 
 ---

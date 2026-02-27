@@ -216,7 +216,7 @@ Add animal actions to system prompt and animal context to user prompt.
 
 ## Configuration
 
-### Config Options (steve-common.toml)
+### Config Options (minewright-common.toml)
 ```toml
 [animal]
 scanRadius = 32

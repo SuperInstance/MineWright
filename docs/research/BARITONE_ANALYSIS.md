@@ -1,14 +1,14 @@
-# Baritone Minecraft Bot - Technical Analysis & Improvements for Steve AI
+# Baritone Minecraft Bot - Technical Analysis & Improvements for MineWright AI
 
 **Research Date:** 2026-02-27
 **Subject:** Baritone pathfinding and automation architecture analysis
-**Purpose:** Identify advanced techniques and optimizations applicable to Steve AI
+**Purpose:** Identify advanced techniques and optimizations applicable to MineWright AI
 
 ---
 
 ## Executive Summary
 
-Baritone is an open-source Minecraft pathfinding bot that is "30x faster than its predecessor MineBot." It uses an optimized A* algorithm with sophisticated caching, goal systems, and build processes. This analysis identifies key architectural patterns and specific improvements that could enhance Steve AI's capabilities in pathfinding, mining, and building automation.
+Baritone is an open-source Minecraft pathfinding bot that is "30x faster than its predecessor MineBot." It uses an optimized A* algorithm with sophisticated caching, goal systems, and build processes. This analysis identifies key architectural patterns and specific improvements that could enhance MineWright AI's capabilities in pathfinding, mining, and building automation.
 
 ---
 
@@ -56,7 +56,7 @@ Baritone is an open-source Minecraft pathfinding bot that is "30x faster than it
 - Caches frequently accessed coordinates
 - Reduces object allocation during pathfinding
 
-**Improvements for Steve AI:**
+**Improvements for MineWright AI:**
 ```
 Current: Standard BlockPos usage everywhere
 Proposed: Create PathPos class with cached hash codes
@@ -97,11 +97,11 @@ public interface ICachedWorld {
 | `pruneRegionsFromRAM` | Auto-clears distant cache | **Enable** to prevent 2GB+ RAM usage |
 | `avoidance` | Mob/entity avoidance | **Disable** in mob-dense areas (causes 200ms+ lag) |
 
-### 2.3 Improvements for Steve AI
+### 2.3 Improvements for MineWright AI
 
 **Current State Analysis:**
 ```java
-// Steve AI currently accesses world directly through Minecraft API
+// MineWright AI currently accesses world directly through Minecraft API
 // No caching layer exists
 ```
 
@@ -109,7 +109,7 @@ public interface ICachedWorld {
 
 ```java
 /**
- * Cached world view for Steve AI
+ * Cached world view for MineWright AI
  * Stores simplified block data for pathfinding
  */
 public interface ISteveWorldCache {
@@ -199,11 +199,11 @@ public class GoalBlock implements Goal {
 }
 ```
 
-### 3.4 Improvements for Steve AI
+### 3.4 Improvements for MineWright AI
 
 **Current State Analysis:**
 ```java
-// Steve AI uses BlockPos targets directly
+// MineWright AI uses BlockPos targets directly
 // No goal abstraction layer
 // Limited goal types
 ```
@@ -212,7 +212,7 @@ public class GoalBlock implements Goal {
 
 ```java
 /**
- * Base goal interface for Steve AI
+ * Base goal interface for MineWright AI
  */
 public interface ISteveGoal {
     /**
@@ -335,11 +335,11 @@ public interface ISchematic {
 - Orientation handling (furnaces, chests, etc.)
 - Pillaring support
 
-### 4.4 Improvements for Steve AI
+### 4.4 Improvements for MineWright AI
 
 **Current State Analysis:**
 ```java
-// Steve AI has:
+// MineWright AI has:
 // - ActionExecutor with queue
 // - Individual action classes (BaseAction)
 // - Tick-based execution
@@ -538,11 +538,11 @@ ArrayList<BlockPos> getLocationsOf(String block, int maximum,
 3. Sort by distance
 4. Return limited results
 
-### 5.3 Improvements for Steve AI
+### 5.3 Improvements for MineWright AI
 
 **Current State Analysis:**
 ```java
-// Steve AI current mining implementation:
+// MineWright AI current mining implementation:
 // - Basic MineAction
 // - Direct world queries
 // - No ore detection optimization
@@ -719,7 +719,7 @@ public class OreCluster {
 
 ## 8. Configuration Recommendations
 
-**Proposed Settings for Steve AI (config/steve-common.toml):**
+**Proposed Settings for MineWright AI (config/minewright-common.toml):**
 
 ```toml
 [pathfinding]
@@ -786,7 +786,7 @@ scanOnExpose = true
 
 ## Conclusion
 
-Baritone's architecture demonstrates several mature patterns that would significantly enhance Steve AI's capabilities:
+Baritone's architecture demonstrates several mature patterns that would significantly enhance MineWright AI's capabilities:
 
 1. **World caching** is essential for performant long-distance tasks
 2. **A* pathfinding** provides optimal routes with proper heuristics
@@ -794,4 +794,4 @@ Baritone's architecture demonstrates several mature patterns that would signific
 4. **Layered building** optimizes construction efficiency
 5. **Smart mining** with ore detection reduces unnecessary travel
 
-The proposed improvements maintain Steve AI's LLM-first approach while adding sophisticated pathfinding and automation capabilities learned from Baritone's proven implementation.
+The proposed improvements maintain MineWright AI's LLM-first approach while adding sophisticated pathfinding and automation capabilities learned from Baritone's proven implementation.

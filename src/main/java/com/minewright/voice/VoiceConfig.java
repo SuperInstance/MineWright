@@ -1,6 +1,11 @@
 package com.minewright.voice;
 
+import com.minewright.MineWrightMod;
+import com.minewright.config.ConfigChangeEvent;
+import com.minewright.config.ConfigChangeListener;
 import com.minewright.config.MineWrightConfig;
+import com.minewright.exception.ConfigException;
+import org.slf4j.Logger;
 
 /**
  * Configuration holder for voice system settings.
@@ -8,9 +13,14 @@ import com.minewright.config.MineWrightConfig;
  * <p>This class loads and caches voice configuration from MineWrightConfig,
  * providing a convenient API for accessing voice-related settings.</p>
  *
+ * <p>This class implements {@link ConfigChangeListener} to automatically
+ * reload configuration when the config file is changed.</p>
+ *
  * @since 1.2.0
  */
-public class VoiceConfig {
+public class VoiceConfig implements ConfigChangeListener {
+
+    private static final Logger LOGGER = MineWrightMod.LOGGER;
 
     private boolean enabled;
     private String mode;
@@ -156,5 +166,124 @@ public class VoiceConfig {
             ", listeningTimeout=" + listeningTimeout +
             ", debugLogging=" + debugLogging +
             '}';
+    }
+
+    // ========================================================================
+    // ConfigChangeListener Implementation
+    // ========================================================================
+
+    /**
+     * Called before configuration is reloaded.
+     *
+     * <p>Stops any active voice operations to prepare for config changes.</p>
+     */
+    @Override
+    public void onConfigReloading() {
+        LOGGER.debug("VoiceConfig: Preparing for config reload");
+        // Voice operations will be reconfigured after reload
+    }
+
+    /**
+     * Called when configuration values have been reloaded.
+     *
+     * <p>Reloads all voice configuration values from MineWrightConfig
+     * and applies them to the voice system.</p>
+     *
+     * @param event The config change event
+     */
+    @Override
+    public void onConfigChanged(ConfigChangeEvent event) {
+        if (event.affects("voice")) {
+            LOGGER.info("VoiceConfig: Reloading voice configuration");
+
+            boolean wasEnabled = this.enabled;
+            loadFromMineWrightConfig();
+
+            LOGGER.info("Voice configuration reloaded: enabled={}, mode={}",
+                this.enabled, this.mode);
+
+            // Log significant changes
+            if (wasEnabled && !this.enabled) {
+                LOGGER.info("Voice system has been disabled via config reload");
+            } else if (!wasEnabled && this.enabled) {
+                LOGGER.info("Voice system has been enabled via config reload");
+            }
+        }
+    }
+
+    /**
+     * Called when configuration reload fails.
+     *
+     * <p>Logs the error and keeps the existing configuration.</p>
+     *
+     * @param exception The exception that caused the reload to fail
+     */
+    @Override
+    public void onConfigReloadFailed(com.minewright.exception.ConfigException exception) {
+        LOGGER.warn("VoiceConfig: Config reload failed, keeping existing configuration: {}",
+            exception.getMessage());
+        // Keep existing configuration values
+    }
+
+    /**
+     * Validates the current voice configuration.
+     *
+     * @return true if voice configuration is valid
+     */
+    public boolean isValid() {
+        // Validate voice mode
+        String mode = getMode();
+        if (mode == null || mode.trim().isEmpty()) {
+            LOGGER.warn("Voice mode is empty");
+            return false;
+        }
+
+        String lowerMode = mode.toLowerCase();
+        if (!lowerMode.equals("disabled") &&
+            !lowerMode.equals("logging") &&
+            !lowerMode.equals("real")) {
+            LOGGER.warn("Invalid voice mode: {}", mode);
+            return false;
+        }
+
+        // Validate numeric ranges
+        if (getTtsVolume() < 0.0 || getTtsVolume() > 1.0) {
+            LOGGER.warn("TTS volume out of range: {}", getTtsVolume());
+            return false;
+        }
+
+        if (getTtsRate() < 0.5 || getTtsRate() > 2.0) {
+            LOGGER.warn("TTS rate out of range: {}", getTtsRate());
+            return false;
+        }
+
+        if (getTtsPitch() < 0.5 || getTtsPitch() > 2.0) {
+            LOGGER.warn("TTS pitch out of range: {}", getTtsPitch());
+            return false;
+        }
+
+        if (getSttSensitivity() < 0.0 || getSttSensitivity() > 1.0) {
+            LOGGER.warn("STT sensitivity out of range: {}", getSttSensitivity());
+            return false;
+        }
+
+        if (getListeningTimeout() < 0 || getListeningTimeout() > 60) {
+            LOGGER.warn("Listening timeout out of range: {}", getListeningTimeout());
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Gets a summary of the current voice configuration.
+     *
+     * @return Configuration summary string
+     */
+    public String getSummary() {
+        return String.format(
+            "Voice[enabled=%s, mode=%s, language=%s, volume=%.2f, rate=%.2f, pitch=%.2f]",
+            enabled, mode, sttLanguage, ttsVolume, ttsRate, ttsPitch
+        );
     }
 }

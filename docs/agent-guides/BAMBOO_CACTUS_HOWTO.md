@@ -679,10 +679,10 @@ Output: 9,600 XP/hour (level 30 every 20 minutes)
 
 **Coordination Commands:**
 ```
-/steve assign <agent> <zone> - Manually assign zone
-/steve status - View all agent zones
-/steve rebalance - Redistribute workload
-/steve harvest <bamboo|cactus> - Manual harvest trigger
+/minewright assign <agent> <zone> - Manually assign zone
+/minewright status - View all agent zones
+/minewright rebalance - Redistribute workload
+/minewright harvest <bamboo|cactus> - Manual harvest trigger
 ```
 
 ---
@@ -941,11 +941,11 @@ Solutions:
 
 ### Command Reference
 ```
-/steve spawn <name> - Spawn bamboo/cactus specialist agent
-/steve assign <agent> <bamboo|cactus> - Assign farm type
-/steve status - View farm production rates
-/steve harvest - Manual harvest trigger
-/steve replant - Replant harvested area
+/minewright spawn <name> - Spawn bamboo/cactus specialist agent
+/minewright assign <agent> <bamboo|cactus> - Assign farm type
+/minewright status - View farm production rates
+/minewright harvest - Manual harvest trigger
+/minewright replant - Replant harvested area
 ```
 
 ### Material Checklist (Tier 1 Farm)

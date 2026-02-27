@@ -1,7 +1,7 @@
 # AI Agent Frameworks Research - Architecture Patterns for MineWright
 
 **Research Date:** 2026-02-27
-**Target Project:** MineWright (Steve AI - Minecraft Agent Framework)
+**Target Project:** MineWright (MineWright AI - Minecraft Agent Framework)
 **Goal:** Identify architecture patterns from popular AI agent frameworks for adoption
 
 ---
@@ -946,4 +946,4 @@ The five AI agent frameworks studied (LangChain, AutoGPT, CrewAI, Semantic Kerne
 **Document Version:** 1.0
 **Last Updated:** 2026-02-27
 **Author:** Claude Code (Orchestrator Agent)
-**Project:** MineWright (Steve AI)
+**Project:** MineWright (MineWright AI)

@@ -1,6 +1,6 @@
 # MineWright Performance Benchmarks
 
-This document defines the comprehensive performance benchmark suite for MineWright (Steve AI), measuring LLM latency, action execution, memory usage, entity scaling, and network synchronization.
+This document defines the comprehensive performance benchmark suite for MineWright (MineWright AI), measuring LLM latency, action execution, memory usage, entity scaling, and network synchronization.
 
 ## Benchmark Overview
 

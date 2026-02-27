@@ -195,7 +195,7 @@ Uses `CopyOnWriteArrayList` for subscribers which is good for read-heavy workloa
 
 ### 5.1 "Steve" vs "Foreman" Terminology (Priority: High)
 
-The codebase contains a legacy naming issue where the project was originally called "Steve AI" but has been renamed to "MineWright" with "Foreman" entities.
+The codebase contains a legacy naming issue where the project was originally called "MineWright AI" but has been renamed to "MineWright" with "Foreman" entities.
 
 **Files with deprecated "Steve" naming:**
 

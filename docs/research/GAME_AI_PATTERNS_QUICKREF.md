@@ -1,7 +1,7 @@
 # Game AI Patterns - Quick Reference
 
 **Date:** February 27, 2026
-**Project:** Steve AI Foreman/Worker System
+**Project:** MineWright AI Foreman/Worker System
 
 ---
 

@@ -25,13 +25,21 @@ public class CombatAction extends BaseAction {
 
     @Override
     protected void onStart() {
+        if (foreman == null || foreman.getNavigation() == null || foreman.level() == null) {
+            result = ActionResult.failure("Foreman, navigation, or level not available");
+            return;
+        }
+
         targetType = task.getStringParameter("target");
+        if (targetType == null || targetType.isEmpty()) {
+            targetType = "mob"; // Default to hostile mobs
+        }
+
         ticksRunning = 0;
         ticksStuck = 0;
 
         // Make sure we're not flying (in case we were building)
         foreman.setFlying(false);
-
         foreman.setInvulnerableBuilding(true);
 
         findTarget();
@@ -43,6 +51,11 @@ public class CombatAction extends BaseAction {
 
     @Override
     protected void onTick() {
+        if (foreman == null || foreman.getNavigation() == null) {
+            result = ActionResult.failure("Invalid state during combat");
+            return;
+        }
+
         ticksRunning++;
 
         if (ticksRunning > MAX_TICKS) {
@@ -81,16 +94,18 @@ public class CombatAction extends BaseAction {
                 double dx = target.getX() - foreman.getX();
                 double dz = target.getZ() - foreman.getZ();
                 double dist = Math.sqrt(dx*dx + dz*dz);
-                double moveAmount = Math.min(4.0, dist - ATTACK_RANGE);
+                if (dist > 0) {
+                    double moveAmount = Math.min(4.0, dist - ATTACK_RANGE);
 
-                foreman.teleportTo(
-                    foreman.getX() + (dx/dist) * moveAmount,
-                    foreman.getY(),
-                    foreman.getZ() + (dz/dist) * moveAmount
-                );
-                ticksStuck = 0;
-                com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' was stuck, teleported closer to target",
-                    foreman.getEntityName());
+                    foreman.teleportTo(
+                        foreman.getX() + (dx/dist) * moveAmount,
+                        foreman.getY(),
+                        foreman.getZ() + (dz/dist) * moveAmount
+                    );
+                    ticksStuck = 0;
+                    com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' was stuck, teleported closer to target",
+                        foreman.getEntityName());
+                }
             }
         } else {
             ticksStuck = 0;
@@ -111,23 +126,35 @@ public class CombatAction extends BaseAction {
 
     @Override
     protected void onCancel() {
-        foreman.setInvulnerableBuilding(false);
-        foreman.getNavigation().stop();
-        foreman.setSprinting(false);
-        foreman.setFlying(false);
+        if (foreman != null) {
+            foreman.setInvulnerableBuilding(false);
+            if (foreman.getNavigation() != null) {
+                foreman.getNavigation().stop();
+            }
+            foreman.setSprinting(false);
+            foreman.setFlying(false);
+        }
         target = null;
         com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' combat cancelled, invulnerability disabled",
-            foreman.getEntityName());
+            foreman != null ? foreman.getEntityName() : "unknown");
     }
 
     @Override
     public String getDescription() {
-        return "Attack " + targetType;
+        return "Attack " + (targetType != null ? targetType : "hostile mobs");
     }
 
     private void findTarget() {
+        if (foreman == null || foreman.level() == null) {
+            return;
+        }
+
         AABB searchBox = foreman.getBoundingBox().inflate(32.0);
         List<Entity> entities = foreman.level().getEntities(foreman, searchBox);
+
+        if (entities == null || entities.isEmpty()) {
+            return;
+        }
 
         LivingEntity nearest = null;
         double nearestDistance = Double.MAX_VALUE;
