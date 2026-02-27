@@ -1,0 +1,359 @@
+// ============================================================================
+// BUILD CONFIGURATION FOR LOCAL AI SUPPORT
+// ============================================================================
+// Add this section to your build.gradle to enable local LLM and embedding support
+// ============================================================================
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+version = '1.0.0'
+group = 'com.minewright'
+base.archivesName = 'minewright'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+// Fix UTF-8 encoding
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                minewright {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                minewright {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    mavenCentral()
+
+    // Hugging Face model repository (for downloading models)
+    maven { url 'https://huggingface.io/maven' }
+
+    // DJL repository
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.4.16'
+
+    // ========================================================================
+    // EXISTING DEPENDENCIES
+    // ========================================================================
+
+    // GraalVM (relocated to avoid conflicts)
+    implementation('org.graalvm.polyglot:polyglot:23.1.0') {
+        exclude group: 'org.graalvm.truffle'
+        exclude group: 'org.graalvm.sdk'
+    }
+    implementation('org.graalvm.polyglot:js:23.1.0') {
+        exclude group: 'org.graalvm.truffle'
+        exclude group: 'org.graalvm.sdk'
+    }
+
+    // Resilience4j
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.1.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.1.0'
+    implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.1.0'
+    implementation 'io.github.resilience4j:resilience4j-bulkhead:2.1.0'
+
+    // Caffeine cache
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+    // Apache Commons
+    implementation 'commons-codec:commons-codec:1.16.0'
+
+    // ========================================================================
+    // NEW: LOCAL AI SUPPORT
+    // ========================================================================
+
+    // ONNX Runtime for embedding models
+    implementation 'com.microsoft.onnxruntime:onnxruntime:1.17.0'
+
+    // Optional: GPU-accelerated ONNX Runtime (for CUDA)
+    // Uncomment if deploying to systems with NVIDIA GPUs
+    // runtimeOnly 'com.microsoft.onnxruntime:onnxruntime_gpu:1.17.0'
+
+    // Optional: llama.cpp Java bindings for local LLM
+    // This is optional and can be excluded by users who don't want local LLM
+    implementation 'com.github.devoxygen:java-llama.cpp:1.0.0'
+
+    // Configuration library for model settings
+    implementation 'com.typesafe:config:1.4.3'
+
+    // JSON parsing for model metadata
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+
+    // ========================================================================
+    // TESTING
+    // ========================================================================
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+
+    // Test ONNX models (small embedding model for testing)
+    testImplementation files('models/test/all-MiniLM-L6-v2.onnx')
+}
+
+test {
+    useJUnitPlatform()
+
+    // Set test properties
+    systemProperty 'minewright.test.model.path', 'models/test/all-MiniLM-L6-v2.onnx'
+}
+
+// ============================================================================
+// MODEL DOWNLOAD TASK
+// ============================================================================
+
+/**
+ * Task to download AI models from Hugging Face.
+ *
+ * Usage:
+ *   ./gradlew downloadModels
+ *
+ * Models will be downloaded to: models/
+ */
+task downloadModels(type: DownloadModelsTask) {
+    description = 'Download AI models for local inference'
+    group = 'minewright'
+
+    // Embedding model (lightweight, ~80MB)
+    models = [
+        'https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/model.onnx'
+    ]
+
+    // Optional: Uncomment to download LLM model (large, ~4GB)
+    // llmModels = [
+    //     'https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf'
+    // ]
+
+    outputDir = file('models')
+}
+
+// Make models available to runtime
+sourceSets.main.resources.srcDirs += file('models')
+
+// ============================================================================
+// SHADOW JAR CONFIGURATION
+// ============================================================================
+
+shadowJar {
+    archiveClassifier = 'all'
+    configurations = [project.configurations.runtimeClasspath]
+    zip64 = true
+
+    // Relocate dependencies to avoid conflicts
+    relocate 'org.graalvm', 'com.minewright.shaded.org.graalvm'
+    relocate 'com.oracle.truffle', 'com.minewright.shaded.com.oracle.truffle'
+    relocate 'ai.onnxruntime', 'com.minewright.shaded.ai.onnxruntime'
+    relocate 'com.typesafe', 'com.minewright.shaded.com.typesafe'
+
+    // Exclude Minecraft/Forge and other problematic paths
+    exclude 'net/minecraft/**'
+    exclude 'com/mojang/**'
+    exclude 'cpw/mods/**'
+    exclude 'joptsimple/**'
+    exclude 'META-INF/versions/**'
+    exclude 'META-INF/native-image/**'
+    exclude 'META-INF/resources/**'
+    exclude 'module-info.class'
+
+    // Exclude large native libraries from shadow JAR
+    // Users will need to install them separately or use the CPU-only version
+    exclude '**/*.dylib'
+    exclude '**/*.so'
+    exclude '**/*.dll'
+
+    manifest {
+        attributes([
+            'Specification-Title': 'MineWright',
+            'Specification-Vendor': 'MineWright',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'MineWright'
+        ])
+    }
+
+    mergeServiceFiles {
+        exclude 'META-INF/services/com.oracle.truffle.**'
+        exclude 'META-INF/services/org.graalvm.**'
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title': 'MineWright',
+            'Specification-Vendor': 'MineWright',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'MineWright'
+        ])
+    }
+}
+
+reobf {
+    jar { }
+    shadowJar { }
+}
+
+tasks.reobfShadowJar.dependsOn shadowJar
+tasks.build.dependsOn reobfShadowJar
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact shadowJar
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+
+// ============================================================================
+// CUSTOM TASKS
+// ============================================================================
+
+/**
+ * Task to download models from URLs.
+ */
+class DownloadModelsTask extends DefaultTask {
+    @Input
+    List<String> models = []
+
+    @Input
+    List<String> llmModels = []
+
+    @OutputDirectory
+    File outputDir
+
+    @TaskAction
+    def download() {
+        outputDir.mkdirs()
+
+        def ant = new AntBuilder()
+
+        // Download embedding models
+        models.each { url ->
+            def filename = url.substring(url.lastIndexOf('/') + 1)
+            def targetFile = new File(outputDir, filename)
+
+            if (!targetFile.exists()) {
+                logger.lifecycle("Downloading: $filename")
+                ant.get(src: url, dest: targetFile)
+            } else {
+                logger.lifecycle("Model already exists: $filename")
+            }
+        }
+
+        // Download LLM models (optional, large files)
+        llmModels.each { url ->
+            def filename = url.substring(url.lastIndexOf('/') + 1)
+            def targetFile = new File(outputDir, filename)
+
+            if (!targetFile.exists()) {
+                logger.lifecycle("Downloading LLM model: $filename")
+                logger.lifecycle("WARNING: This is a large file (~4GB)")
+                ant.get(src: url, dest: targetFile)
+            } else {
+                logger.lifecycle("LLM model already exists: $filename")
+            }
+        }
+
+        logger.lifecycle("Model download complete!")
+    }
+}
+
+/**
+ * Task to run embedding model benchmarks.
+ */
+task benchmarkEmbeddings(type: JavaExec) {
+    description = 'Benchmark embedding model performance'
+    group = 'minewright'
+
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.minewright.llm.embeddings.EmbeddingBenchmark'
+
+    // Pass model path as argument
+    args = [file('models/all-MiniLM-L6-v2.onnx').absolutePath]
+}
+
+/**
+ * Task to test local LLM (requires model download).
+ */
+task testLocalLLM(type: JavaExec) {
+    description = 'Test local LLM inference'
+    group = 'minewright'
+
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.minewright.llm.local.LocalLLMTester'
+
+    // Pass model path and test prompt
+    args = [
+        file('models/mistral-7b-instruct-v0.2.Q4_K_M.gguf').absolutePath,
+        "Generate a plan to build a simple house in Minecraft."
+    ]
+
+    // Increase memory for LLM
+    jvmArgs = ['-Xmx8G']
+}
+
+// ============================================================================
+// HELPER TASKS
+// ============================================================================
+
+task setupLocalAI {
+    description = 'Setup local AI support (download models, verify dependencies)'
+    group = 'minewright'
+
+    dependsOn 'downloadModels'
+    doLast {
+        logger.lifecycle("Local AI setup complete!")
+        logger.lifecycle("Models downloaded to: ${file('models').absolutePath}")
+        logger.lifecycle("")
+        logger.lifecycle("Next steps:")
+        logger.lifecycle("1. Run: ./gradlew benchmarkEmbeddings")
+        logger.lifecycle("2. Update config/minewright-common.toml with: provider = 'local-gpu'")
+        logger.lifecycle("3. Run the game and test!")
+    }
+}

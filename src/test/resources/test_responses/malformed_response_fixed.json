@@ -1,0 +1,17 @@
+{
+  "plan": "Test that malformed JSON is fixed",
+  "tasks": [
+    {
+      "action": "mine",
+      "parameters": {
+        "block": "stone"
+      }
+    }
+    {
+      "action": "build",
+      "parameters": {
+        "structure": "house"
+      }
+    }
+  ]
+}

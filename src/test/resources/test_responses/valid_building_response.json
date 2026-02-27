@@ -1,0 +1,28 @@
+{
+  "reasoning": "User wants to build a house. I need to break this down into gathering materials and then constructing the structure.",
+  "plan": "Build a small 5x5x4 wooden house using oak planks",
+  "tasks": [
+    {
+      "action": "gather",
+      "parameters": {
+        "resource": "oak_log",
+        "quantity": 15
+      }
+    },
+    {
+      "action": "craft",
+      "parameters": {
+        "item": "oak_planks",
+        "quantity": 60
+      }
+    },
+    {
+      "action": "build",
+      "parameters": {
+        "structure": "house",
+        "blocks": ["oak_planks"],
+        "dimensions": [5, 4, 5]
+      }
+    }
+  ]
+}

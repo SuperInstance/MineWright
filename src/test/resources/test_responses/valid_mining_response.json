@@ -1,0 +1,13 @@
+{
+  "reasoning": "The user wants to mine stone blocks. I'll create a mining task with a reasonable quantity for building purposes.",
+  "plan": "Mine 10 stone blocks from nearby for construction",
+  "tasks": [
+    {
+      "action": "mine",
+      "parameters": {
+        "block": "stone",
+        "quantity": 10
+      }
+    }
+  ]
+}

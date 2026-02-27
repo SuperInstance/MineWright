@@ -1,0 +1,31 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="minewright"
+version="1.0.0"
+displayName="MineWright"
+description='''
+We don't give you agents. We give you a Foreman.
+Meet Mace MineWright - your professional site foreman who manages the crew,
+coordinates construction, and delivers results. One voice. One point of contact.
+'''
+authors="MineWright Team"
+displayURL="https://github.com/SuperInstance/MineWright"
+issueTrackerURL="https://github.com/SuperInstance/MineWright/issues"
+
+[[dependencies.minewright]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.minewright]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
+

@@ -1,0 +1,84 @@
+# Cloudflare Workers Configuration for Minecraft Agent Reflex
+# Minecraft Steve AI Agent - Cloudflare Durable Objects Backend
+
+name = "minecraft-agent-reflex"
+main = "src/index.py"
+compatibility_date = "2024-01-01"
+# Use Python worker
+type = "python"
+
+# Account configuration
+# account_id = "your-account-id"  # Set via CLOUDFLARE_ACCOUNT_ID env var
+
+# Environment variables (secrets should be set via wrangler secret)
+[vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "info"
+# Minecraft server coordinates for reference
+SPAWN_X = "0"
+SPAWN_Y = "64"
+SPAWN_Z = "0"
+# Agent behavior tuning
+REFLEX_THRESHOLD = "0.7"
+SYNC_INTERVAL_SECONDS = "5"
+MISSION_CACHE_TTL = "300"
+
+# Durable Objects configuration
+[[durable_objects.bindings]]
+name = "AGENT_STATE"
+class_name = "AgentState"
+
+# AI Binding for Workers AI
+[ai]
+binding = "AI"
+
+# Vectorize binding for semantic search
+[[vectorize.bindings]]
+name = "VECTORIZE"
+index_name = "minecraft-knowledge"
+
+# KV Namespaces for caching
+[[kv_namespaces]]
+binding = "MISSION_CACHE"
+id = "mission_cache_id"  # Replace with actual KV namespace ID
+preview_id = "mission_cache_preview_id"
+
+[[kv_namespaces]]
+binding = "KNOWLEDGE_CACHE"
+id = "knowledge_cache_id"
+preview_id = "knowledge_cache_preview_id"
+
+# Durable Objects Migrations
+# Run: wrangler d1 migrations create --name=<name> --text=<sql>
+# Then: wrangler d1 migrations apply <database> --remote
+[[migrations]]
+tag = "v1"
+new_classes = ["AgentState"]
+
+# Development environment
+[env.development]
+name = "minecraft-agent-reflex-dev"
+vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug" }
+
+# Staging environment
+[env.staging]
+name = "minecraft-agent-reflex-staging"
+vars = { ENVIRONMENT = "staging", LOG_LEVEL = "info" }
+
+# Production environment
+[env.production]
+name = "minecraft-agent-reflex-prod"
+vars = { ENVIRONMENT = "production", LOG_LEVEL = "warn" }
+
+# Routes for production deployment (uncomment and configure)
+# [[routes]]
+# pattern = "api.yourdomain.com/agents/*"
+# zone_name = "yourdomain.com"
+
+# Triggers for scheduled tasks (heartbeat to Foreman)
+[triggers]
+crons = ["*/5 * * * *"]  # Every 5 minutes
+
+# Limits and quotas
+[limits]
+cpu_ms = 50  # CPU time limit per request (milliseconds)
