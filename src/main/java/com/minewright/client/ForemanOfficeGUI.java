@@ -76,9 +76,12 @@ public class ForemanOfficeGUI {
     private static final List<QuickButton> QUICK_BUTTONS = List.of(
         new QuickButton("Spawn", "spawn Crew", "Create a new crew member", 0xFF4CAF50),
         new QuickButton("Follow", "follow me", "Make crew follow you", 0xFF2196F3),
-        new QuickButton("Wait", "wait here", "Make crew wait at current location", 0xFFFF9800),
+        new QuickButton("Mic", "__VOICE_INPUT__", "Click to speak a command", 0xFFE91E63),
         new QuickButton("Help", "help", "Show available commands", 0xFF9C27B0)
     );
+
+    // Voice input state
+    private static boolean isVoiceInputActive = false;
 
     private static class ChatMessage {
         String sender; // "You", "Foreman", "Crew", "System", etc.
@@ -1058,7 +1061,12 @@ public class ForemanOfficeGUI {
                 int btnX = panelX + PANEL_PADDING + i * (buttonWidth + 3);
                 if (mouseX >= btnX && mouseX <= btnX + buttonWidth) {
                     QuickButton btn = QUICK_BUTTONS.get(i);
-                    sendCommand(btn.command);
+                    if (btn.command.equals("__VOICE_INPUT__")) {
+                        // Special handling for voice input button
+                        startVoiceInput();
+                    } else {
+                        sendCommand(btn.command);
+                    }
                     playUISound(SoundEvents.UI_BUTTON_CLICK.value(), 0.4f);
                     return;
                 }
@@ -1231,5 +1239,52 @@ public class ForemanOfficeGUI {
 
         // Reset crew hover state each tick (will be recalculated during render)
         hoveredCrewIndex = -1;
+    }
+
+    /**
+     * Starts voice input for command recognition.
+     */
+    private static void startVoiceInput() {
+        if (isVoiceInputActive) {
+            addSystemMessage("Already listening...");
+            return;
+        }
+
+        com.minewright.voice.VoiceManager voice = com.minewright.voice.VoiceManager.getInstance();
+
+        if (!voice.isEnabled()) {
+            addSystemMessage("Voice input is disabled. Enable it in config.");
+            return;
+        }
+
+        isVoiceInputActive = true;
+        addSystemMessage("Listening... Speak your command");
+
+        try {
+            voice.listenForCommand().thenAccept(transcribedText -> {
+                isVoiceInputActive = false;
+                if (transcribedText != null && !transcribedText.isEmpty()) {
+                    // Run on main thread
+                    net.minecraft.client.Minecraft.getInstance().execute(() -> {
+                        addSystemMessage("Heard: \"" + transcribedText + "\"");
+                        // Auto-send the command
+                        sendCommand(transcribedText);
+                    });
+                } else {
+                    net.minecraft.client.Minecraft.getInstance().execute(() -> {
+                        addSystemMessage("No speech detected");
+                    });
+                }
+            }).exceptionally(e -> {
+                isVoiceInputActive = false;
+                net.minecraft.client.Minecraft.getInstance().execute(() -> {
+                    addSystemMessage("Voice error: " + e.getMessage());
+                });
+                return null;
+            });
+        } catch (Exception e) {
+            isVoiceInputActive = false;
+            addSystemMessage("Failed to start voice input: " + e.getMessage());
+        }
     }
 }

@@ -36,7 +36,11 @@ public class ClientEventHandler {
         }
 
         if (KeyBindings.TOGGLE_GUI != null && KeyBindings.TOGGLE_GUI.consumeClick()) {
-            ForemanOfficeGUI.toggle();
+            // Only open the GUI with K key - don't close it (ESC closes instead)
+            // This prevents K from closing the GUI while typing
+            if (!ForemanOfficeGUI.isOpen()) {
+                ForemanOfficeGUI.toggle();
+            }
         }
 
         // Handle push-to-talk voice input
