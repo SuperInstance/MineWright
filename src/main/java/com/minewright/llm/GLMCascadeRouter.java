@@ -54,6 +54,9 @@ public class GLMCascadeRouter {
     private static final long FAILURE_RESET_MS = 60000; // Reset failure count after 1 minute
     private final ConcurrentHashMap<String, Long> lastFailureTime = new ConcurrentHashMap<>();
 
+    // Local LLM client for free, fast inference
+    private final LocalLLMClient localLLM;
+
     private final HttpClient client;
     private final String apiKey;
 
@@ -79,6 +82,14 @@ public class GLMCascadeRouter {
         this.client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
             .build();
+        this.localLLM = new LocalLLMClient();
+
+        if (localLLM.isAvailable()) {
+            LOGGER.info("[Cascade] Local LLM (Llama 3.2) available - will use for simple tasks");
+        } else {
+            LOGGER.info("[Cascade] Local LLM not available - using cloud models only");
+            LOGGER.info("[Cascade] Start Ollama with: ollama run llama3.2");
+        }
     }
 
     /**
@@ -143,6 +154,21 @@ public class GLMCascadeRouter {
      * Routes to the appropriate model with fallback chain.
      */
     private String routeToModel(String systemPrompt, String message, String recommendedModel) {
+        // For simple/flashx tasks, try local LLM first (FREE!)
+        if ((recommendedModel.equals("flashx") || recommendedModel.equals("flash")) &&
+            localLLM.isAvailable()) {
+            try {
+                LOGGER.info("[Cascade] Trying local LLM (Llama 3.2) first - FREE!");
+                String response = localLLM.sendRequest(systemPrompt, message);
+                if (response != null && !response.isEmpty()) {
+                    LOGGER.info("[Cascade] Local LLM succeeded - no API cost!");
+                    return response;
+                }
+            } catch (Exception e) {
+                LOGGER.warn("[Cascade] Local LLM failed, falling back to cloud: {}", e.getMessage());
+            }
+        }
+
         // Build fallback chain based on recommendation
         String[] fallbackChain = switch (recommendedModel) {
             case "glm5" -> new String[]{MODEL_GLM5, MODEL_FLASH, MODEL_FLASHX};
@@ -158,13 +184,22 @@ public class GLMCascadeRouter {
             }
 
             try {
-                LOGGER.info("[Cascade] Trying model: {}", model);
+                LOGGER.info("[Cascade] Trying cloud model: {}", model);
                 String response = sendRequest(model, systemPrompt, message, 4096);
                 recordSuccess(model);
                 return response;
             } catch (Exception e) {
                 LOGGER.error("[Cascade] Model {} failed: {}", model, e.getMessage());
                 recordFailure(model);
+            }
+        }
+
+        // All cloud models failed - try local as last resort
+        if (localLLM.isAvailable()) {
+            LOGGER.info("[Cascade] All cloud models failed, trying local LLM as fallback");
+            String response = localLLM.sendRequest(systemPrompt, message);
+            if (response != null && !response.isEmpty()) {
+                return response;
             }
         }
 

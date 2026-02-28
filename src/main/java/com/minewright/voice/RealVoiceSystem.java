@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>This implementation uses:</p>
  * <ul>
  *   <li><b>STT:</b> OpenAI Whisper API for accurate speech recognition</li>
- *   <li><b>TTS:</b> Simple logging (TTS is optional per user preference)</li>
+ *   <li><b>TTS:</b> ElevenLabs for high-quality voice output (optional)</li>
  * </ul>
  *
  * <p><b>Usage:</b></p>
@@ -23,18 +23,24 @@ import java.util.concurrent.CompletableFuture;
  * mode = "real"
  * </pre>
  *
+ * <p>For ElevenLabs TTS, set environment variable:</p>
+ * <pre>
+ * ELEVENLABS_API_KEY=your-key
+ * ELEVENLABS_VOICE_ID=voice-id
+ * </pre>
+ *
  * @since 1.2.0
  */
 public class RealVoiceSystem implements VoiceSystem {
     private static final Logger LOGGER = TestLogger.getLogger(RealVoiceSystem.class);
 
     private final WhisperSTT stt;
-    private final SimpleTTS tts;
+    private final ElevenLabsTTS tts;
     private boolean enabled = true;
 
     public RealVoiceSystem() {
         this.stt = new WhisperSTT();
-        this.tts = new SimpleTTS();
+        this.tts = new ElevenLabsTTS();
     }
 
     @Override
@@ -42,7 +48,7 @@ public class RealVoiceSystem implements VoiceSystem {
         LOGGER.info("[RealVoice] Initializing real voice system...");
         stt.initialize();
         tts.initialize();
-        LOGGER.info("[RealVoice] Voice system initialized (STT: Whisper, TTS: Simple)");
+        LOGGER.info("[RealVoice] Voice system initialized (STT: Whisper, TTS: ElevenLabs)");
     }
 
     @Override
@@ -143,123 +149,5 @@ public class RealVoiceSystem implements VoiceSystem {
     @Override
     public TextToSpeech getTextToSpeech() {
         return tts;
-    }
-
-    /**
-     * Simple TTS implementation that logs speech.
-     * User indicated TTS is less important, so this just logs.
-     * Can be enhanced later with actual TTS API if needed.
-     */
-    private static class SimpleTTS implements TextToSpeech {
-        private boolean speaking = false;
-        private double volume = 1.0;
-        private double rate = 1.0;
-        private double pitch = 1.0;
-        private Voice currentVoice = Voice.of("default", "Default Voice", "en-US", "neutral");
-
-        @Override
-        public void initialize() throws VoiceException {
-            LOGGER.debug("[SimpleTTS] Initialized (log-only mode)");
-        }
-
-        @Override
-        public void speak(String text) throws VoiceException {
-            LOGGER.info("[TTS] \"{}\"", text);
-            speaking = true;
-            // Simulate speech duration
-            CompletableFuture.runAsync(() -> {
-                try {
-                    Thread.sleep(Math.min(text.length() * 50L, 5000));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                speaking = false;
-            });
-        }
-
-        @Override
-        public void speakQueued(String text) throws VoiceException {
-            speak(text);
-        }
-
-        @Override
-        public CompletableFuture<Void> speakAsync(String text) throws VoiceException {
-            speak(text);
-            return CompletableFuture.completedFuture(null);
-        }
-
-        @Override
-        public void stop() {
-            speaking = false;
-        }
-
-        @Override
-        public boolean isSpeaking() {
-            return speaking;
-        }
-
-        @Override
-        public boolean hasQueuedSpeech() {
-            return false;
-        }
-
-        @Override
-        public void clearQueue() {
-        }
-
-        @Override
-        public List<Voice> getAvailableVoices() {
-            return List.of(currentVoice);
-        }
-
-        @Override
-        public Voice getCurrentVoice() {
-            return currentVoice;
-        }
-
-        @Override
-        public void setVoice(Voice voice) throws VoiceException {
-            this.currentVoice = voice;
-        }
-
-        @Override
-        public void setVoice(String voiceName) throws VoiceException {
-            this.currentVoice = Voice.of(voiceName, voiceName, "en-US", "neutral");
-        }
-
-        @Override
-        public double getRate() {
-            return rate;
-        }
-
-        @Override
-        public void setRate(double rate) {
-            this.rate = rate;
-        }
-
-        @Override
-        public double getPitch() {
-            return pitch;
-        }
-
-        @Override
-        public void setPitch(double pitch) {
-            this.pitch = pitch;
-        }
-
-        @Override
-        public double getVolume() {
-            return volume;
-        }
-
-        @Override
-        public void setVolume(double volume) {
-            this.volume = volume;
-        }
-
-        @Override
-        public void shutdown() {
-            speaking = false;
-        }
     }
 }
