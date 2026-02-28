@@ -8,6 +8,16 @@ Now we stand at a new inflection point. Large Language Models (LLMs) don't repre
 
 The central thesis of this chapter: **LLMs don't execute game AI; LLMs generate, refine, and adapt the game AI that executes.**
 
+### Additional Reading: Comparison with Modern LLM Agent Frameworks
+
+For a detailed comparison of Steve AI with contemporary LLM agent frameworks (ReAct, AutoGPT, LangChain, BabyAGI), see the companion document: **[CHAPTER_8_LLM_FRAMEWORK_COMPARISON.md](CHAPTER_8_LLM_FRAMEWORK_COMPARISON.md)**. This document provides:
+
+- ReAct (Reasoning + Acting) pattern analysis and comparison with cascade routing
+- AutoGPT-style autonomous agents and HTN-based planning trade-offs
+- LangChain/LangGraph tool use abstractions vs. ActionRegistry pattern
+- BabyAGI task queue management and execution separation
+- Steve AI's unique "One Abstraction Away" architecture and game AI advantages
+
 ---
 
 ## 8.1 What LLMs Actually Add to Game AI
