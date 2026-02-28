@@ -18,22 +18,59 @@
 **Provider:** z.ai Coding Plan (OpenAI-compatible API)
 **Primary Model:** `glm-5` (most capable)
 
-### Model Assignment Strategy
+### Model Assignment Strategy (Updated 2026-02-28)
 
-| Agent Role | Model | Use Case |
-|------------|-------|----------|
-| **Foreman** | `glm-5` | Always - complex planning, coordination, natural language understanding |
-| **Worker (Simple Tasks)** | `glm-4.7-air` | Mining, gathering, simple pathfinding, basic construction |
-| **Worker (Complex Tasks)** | `glm-5` | Multi-step crafting, intricate builds, combat tactics, problem-solving |
+| Model | Role | Best For | Cost |
+|-------|------|----------|------|
+| **SmolVLM (Local)** | Vision preprocessing | Screenshots, visual context extraction | FREE |
+| **GLM-4.6v (Cloud)** | Complex vision | Confusing screenshots, detailed image analysis | Low |
+| **GLM-5 (Cloud)** | Orchestration | Agent coordination, planning, strategy | Medium |
+| **GLM-4.7-air/flash (Cloud)** | Reasoning | Back-and-forth dialogue, clarification | Very Low |
+| **glm-4.7-air** | Simple worker tasks | Mining, gathering, basic actions | Very Low |
+
+### Vision Pipeline Strategy
+
+```
+Screenshot captured
+       ↓
+┌──────────────────┐
+│ SmolVLM (Local)  │ → Extract visual context, add to prompt
+│ localhost:8000   │ → Not that smart but has vision
+└──────────────────┘
+       ↓
+Is it confusing?
+       ↓
+    Yes → GLM-4.6v → Detailed analysis (cloud vision model)
+       ↓
+    No  → Continue to planning
+       ↓
+┌──────────────────┐
+│ GLM-5 Planning   │ → Orchestrate agents, create plan
+│ (Great at        │ → Strategic coordination
+│  orchestrating)  │
+└──────────────────┘
+       ↓
+Need clarification?
+       ↓
+    Yes → GLM-flash → Ask user, back-and-forth reasoning
+       ↓
+    No  → Execute plan
+```
 
 **Model Selection Logic:**
 ```
-IF role == "FOREMAN":
-    model = "glm-5"
-ELSE IF task.complexity == "HIGH":
-    model = "glm-5"
+IF has_screenshot:
+    IF local_smolvlm_available:
+        context = SmolVLM.analyze(screenshot)  # FREE
+        IF context.confusing:
+            context = GLM_4_6v.analyze(screenshot)  # Cloud fallback
+
+IF role == "FOREMAN" OR task.complexity == "HIGH":
+    model = "glm-5"  # Best at orchestration
+ELSE IF needs_back_and_forth:
+    model = "glm-flash"  # Good for dialogue
 ELSE:
-    model = "glm-4.7-air"
+    model = "glm-4.7-air"  # Fast and cheap
 ```
 
 ### API Batching Strategy
@@ -74,6 +111,51 @@ workerComplexModel = "glm-5"
 | `src/main/java/com/minewright/llm/OpenAIClient.java` | z.ai API client (OpenAI-compatible) |
 | `src/main/java/com/minewright/llm/batch/BatchingLLMClient.java` | Request batching |
 | `src/main/java/com/minewright/config/MineWrightConfig.java` | Model configuration |
+
+---
+
+## R&D Roadmap Integration
+
+**Master Roadmap:** `docs/research/RD_ROADMAP.md`
+
+### Agent Instructions for Roadmap Updates
+
+When researching new topics, spawned agents **MUST** follow these instructions:
+
+1. **Add Emergent Research Branches**: If you discover a new research direction that could improve the system, add it to the "Emergent Research Branches" section in `RD_ROADMAP.md` with:
+   - Where it was discovered
+   - Research questions to explore
+   - Potential impact assessment
+
+2. **Update Success Metrics**: If you find better benchmarks or targets, update the metrics tables.
+
+3. **Add New Patterns**: If you discover new automation patterns, add them to Phase 2.2 Pattern Library.
+
+4. **Document Architectural Decisions**: If you make significant decisions during research, add them to the relevant phase with rationale.
+
+5. **Cross-Reference**: Always link to detailed research documents in `docs/research/`.
+
+### Current Sprint Priorities
+
+**Week 1 (Current):**
+- [ ] Implement Mace as default agent
+- [ ] Add K key TTS integration
+- [ ] Create basic behavior tree infrastructure
+
+**Week 2:**
+- [ ] Implement Script DSL
+- [ ] Create first automation patterns
+- [ ] Add needs system foundation
+
+### Roadmap Philosophy
+
+The roadmap is a **living document**. Spawned agents are encouraged to:
+- Discover new research branches
+- Challenge existing assumptions
+- Propose better approaches
+- Update metrics based on findings
+
+**Key Innovation:** The "One Abstraction Away" system is our killer feature - agents are "brains" that create/refine automation scripts that run autonomously. This reduces token usage by 10-20x while enabling richer agent behaviors.
 
 ---
 
@@ -169,6 +251,272 @@ The z.ai coding plan works perfectly for this system because:
 - Planning, execution, memory—all code concepts wrapped in crew vernacular
 - LLM understands both the technical reality AND the character voice
 - The human gets the best of both worlds: AI power with approachable personality
+
+---
+
+## 🎯 THE KILLER FEATURE: "One Abstraction Away" System
+
+### The Problem with Current AI Game Agents
+
+Most AI game agents have the LLM make EVERY decision:
+- "Move forward 2 blocks" → LLM call
+- "Swing pickaxe" → LLM call
+- "Turn left" → LLM call
+
+This is slow, expensive, and makes characters feel robotic. They stand idle waiting for instructions.
+
+### Our Solution: Two-Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     BRAIN LAYER (Strategic)                     │
+│                         LLM Agents                              │
+│                                                                 │
+│   • Planning, strategy, logistics                              │
+│   • Conversations with player and other agents                 │
+│   • Creating and refining automation scripts                   │
+│   • High-level goal setting                                    │
+│   • Discussing "how to make bots better"                       │
+│                                                                 │
+│   Token Usage: LOW (batched, infrequent calls)                 │
+│   Update Frequency: Every 30-60 seconds or on events           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Generates & Refines
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   SCRIPT LAYER (Operational)                    │
+│                    Behavior Automations                         │
+│                                                                 │
+│   • Behavior trees, FSMs, macro scripts                        │
+│   • Pathfinding, mining, building patterns                     │
+│   • Combat AI, resource gathering, exploration                 │
+│   • Reactive behaviors (danger response, opportunities)        │
+│   • Idle behaviors (wandering, chatting, self-improvement)     │
+│                                                                 │
+│   Token Usage: ZERO (runs locally)                             │
+│   Update Frequency: Every tick (20 TPS)                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Executes via
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   PHYSICAL LAYER (Actions)                      │
+│                     Minecraft API                               │
+│                                                                 │
+│   • Block interactions, movement, inventory                    │
+│   • Entity tracking, world sensing                             │
+│   • Direct game API calls                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Why This Is Revolutionary
+
+**Like an RTS, not a chatbot:**
+- In StarCraft, you don't control every marine's shot
+- You give high-level commands: "Attack here", "Defend base"
+- Units have autonomous behaviors that carry out your intent
+- **Our agents work the same way!**
+
+**The Brain creates the "body" scripts:**
+```
+Mace: "Dusty, I need you mining stone. Create a script for the quarry."
+Dusty: [Generates mining behavior tree]
+       → Find stone → Path to stone → Mine → Return to chest
+       → If inventory full → Return to base
+       → If danger → Flee and alert
+Mace: "Good. Sparks, refine Dusty's script to be more efficient."
+Sparks: [Reviews script] "Add a branch for exploring new veins when depleted"
+```
+
+**Characters feel like fellow players:**
+- They're not idle waiting for commands
+- They have ongoing activities and routines
+- They chat with you about strategy while working
+- They proactively find things to do
+- They notice problems and opportunities
+
+### Script Types
+
+| Script Type | Purpose | Example |
+|-------------|---------|---------|
+| **Behavior Tree** | Complex multi-step behaviors | Mining cycle, building workflow |
+| **FSM** | State-based behaviors | Combat (idle → engage → retreat) |
+| **Macro Script** | Repeated task sequences | Strip mining pattern, tree farm loop |
+| **Reactive Rule** | Event-triggered behaviors | "If zombie nearby → alert and defend" |
+| **Idle Behavior** | Things to do when no tasks | Wander, organize inventory, explore |
+
+### Brain Layer Responsibilities
+
+The LLM agents (Foreman + Workers) focus on:
+
+1. **Strategic Planning**
+   - Understanding player intent
+   - Breaking down goals into subtasks
+   - Allocating resources and workers
+   - Coordinating multiple agents
+
+2. **Script Generation & Refinement**
+   - Creating new automation scripts
+   - Improving existing scripts based on performance
+   - Debugging failing scripts
+   - A/B testing script variants
+
+3. **Conversation**
+   - Chatting with player about plans
+   - Discussing strategy and improvements
+   - Banter and personality expression
+   - Reporting progress and problems
+
+4. **Meta-Learning**
+   - Learning which scripts work best
+   - Adapting to player preferences
+   - Developing crew "institutional knowledge"
+   - Teaching new workers the ropes
+
+### Script Layer Responsibilities
+
+The automation scripts handle:
+
+1. **Continuous Execution**
+   - Running every tick without LLM calls
+   - Handling all the "little moves"
+   - Reacting to world changes instantly
+
+2. **Resource Management**
+   - Monitoring inventory, health, hunger
+   - Automatic resource gathering when needed
+   - Returning to base when full/hungry
+
+3. **Reactive Behaviors**
+   - Responding to threats immediately
+   - Seizing opportunities (seeing ore while walking)
+   - Adapting to environment changes
+
+4. **Idle Behaviors**
+   - Wandering and exploring when no tasks
+   - Social idle (chatting with nearby workers)
+   - Self-improvement (organizing, repairing tools)
+
+### Token Efficiency Comparison
+
+| Approach | Tokens per minute | Cost | Latency |
+|----------|-------------------|------|---------|
+| **LLM for everything** | 10,000+ | $$$$$ | 500ms+ per action |
+| **One Abstraction Away** | 500-1000 | $ | 20ms per tick |
+
+**Our approach is 10-20x more efficient!**
+
+### Implementation Architecture
+
+```java
+// Core classes to implement
+com.minewright.automation/
+├── BehaviorTreeManager.java      // Manages behavior trees
+├── ScriptManager.java            // Generates and stores scripts
+├── ScriptDSL.java               // Domain-specific language for scripts
+├── AutomationRunner.java        // Executes scripts every tick
+├── ScriptRefiner.java           // LLM-driven script improvement
+├── BehaviorTree/
+│   ├── Node.java                // Base node type
+│   ├── Sequence.java            // Run in order
+│   ├── Selector.java            // Try until success
+│   ├── Parallel.java            // Run simultaneously
+│   ├── Condition.java           // Check world state
+│   └── Action.java              // Execute Minecraft action
+└── Scripts/
+    ├── MiningScript.java        // Example mining automation
+    ├── BuildingScript.java      // Example building automation
+    └── CombatScript.java        // Example combat automation
+```
+
+### Research Priorities
+
+When researching and developing this system, focus on:
+
+1. **Behavior Trees** - Most flexible for game AI
+2. **Script DSL Design** - How to express automations
+3. **LLM → Script Generation** - Prompt engineering for code gen
+4. **Script Refinement Loop** - Feedback mechanisms
+5. **Token Batching** - Group script updates together
+6. **Autonomous Idle** - What workers do when "bored"
+7. **Conversation Integration** - Talk while working
+
+### Key Design Decisions
+
+**Q: How often does the Brain layer check in?**
+- Periodic: Every 30-60 seconds for status updates
+- Event-driven: On significant events (task complete, problem found)
+- Conversation-driven: When player speaks
+
+**Q: How do scripts get refined?**
+1. Script fails or performs poorly
+2. Error logged to blackboard
+3. LLM analyzes error during next check-in
+4. LLM generates improved script
+5. New script tested, old script kept as fallback
+
+**Q: How do multiple agents coordinate?**
+- Shared blackboard for world state
+- Script parameters can reference blackboard
+- LLM coordination happens at Brain layer
+- Scripts can signal each other (events)
+
+**Q: What if player interrupts?**
+- Scripts are interruptible by design
+- New command triggers immediate Brain check-in
+- Script paused, parameters updated, resumed
+- Or entirely new script generated
+
+### Example: Mining Operation
+
+```
+Player: "Mace, I need a lot of stone for the castle"
+
+Mace (Brain Layer):
+  [LLM Call #1 - Strategic Planning]
+  "Dusty, Sparks - new mining operation. Quarry at coords X,Z.
+   Target: 20 stacks of cobble. Generate your scripts."
+
+Dusty (Brain Layer):
+  [LLM Call #2 - Script Generation]
+  Generates behavior tree:
+  ┌─ Sequence
+  │  ├─ Condition: Has pickaxe?
+  │  │  └─ No → Selector
+  │  │     ├─ Craft pickaxe
+  │  │     └─ Get from chest
+  │  ├─ Find stone near X,Z
+  │  ├─ Path to stone
+  │  ├─ Mine until inventory 80% full
+  │  ├─ Path to chest
+  │  └─ Deposit items
+  └─ Loop until cancelled
+
+Sparks (Brain Layer):
+  [LLM Call #3 - Script Generation]
+  Generates similar tree with variations
+
+[TIME PASSES - Scripts run autonomously, no LLM calls]
+
+Dusty's Script (Operational):
+  [Tick 1] Check pickaxe → Has one ✓
+  [Tick 2] Find stone → Stone at (X+5, Y-3, Z+2)
+  [Tick 3-15] Path to stone
+  [Tick 16-50] Mine stone (swing pickaxe each tick)
+  [Tick 51] Inventory 80% full → Path to chest
+  ...
+
+Mace (Brain Layer):
+  [LLM Call #4 - Check-in after 60 seconds]
+  "How's the quarry coming?"
+  Dusty: "Mined 3 stacks, script's running smooth."
+  Sparks: "Hit a cave, adapted script to explore it."
+  Mace: "Good. Client, we're at 15% completion."
+```
+
+**Total LLM calls for 20 stacks: ~5-10 calls**
+**Traditional approach: 10,000+ calls**
 
 ---
 
