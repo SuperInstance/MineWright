@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * Parses AI responses containing structured task data in JSON format.
+ * Handles Gson's LazilyParsedNumber by converting to proper Integer/Double types.
+ */
 public class ResponseParser {
 
     // Optional logger for error reporting (can be set in tests or production)
@@ -31,7 +35,7 @@ public class ResponseParser {
             logger.accept(message + ": " + cause.getMessage());
         }
     }
-    
+
     public static ParsedResponse parseAIResponse(String response) {
         if (response == null || response.isEmpty()) {
             return null;
@@ -39,16 +43,16 @@ public class ResponseParser {
 
         try {
             String jsonString = extractJSON(response);
-            
+
             JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
-            
+
             String reasoning = json.has("reasoning") ? json.get("reasoning").getAsString() : "";
             String plan = json.has("plan") ? json.get("plan").getAsString() : "";
             List<Task> tasks = new ArrayList<>();
-            
+
             if (json.has("tasks") && json.get("tasks").isJsonArray()) {
                 JsonArray tasksArray = json.getAsJsonArray("tasks");
-                
+
                 for (JsonElement taskElement : tasksArray) {
                     if (taskElement.isJsonObject()) {
                         JsonObject taskObj = taskElement.getAsJsonObject();
@@ -59,9 +63,7 @@ public class ResponseParser {
                     }
                 }
             }
-            
-            if (!reasoning.isEmpty()) {            }
-            
+
             return new ParsedResponse(reasoning, plan, tasks);
 
         } catch (Exception e) {
@@ -72,69 +74,89 @@ public class ResponseParser {
 
     private static String extractJSON(String response) {
         String cleaned = response.trim();
-        
+
         if (cleaned.startsWith("```json")) {
             cleaned = cleaned.substring(7);
         } else if (cleaned.startsWith("```")) {
             cleaned = cleaned.substring(3);
         }
-        
+
         if (cleaned.endsWith("```")) {
             cleaned = cleaned.substring(0, cleaned.length() - 3);
         }
-        
+
         cleaned = cleaned.trim();
-        
+
         // Fix common JSON formatting issues
         cleaned = cleaned.replaceAll("\\n\\s*", " ");
-        
+
         // Fix missing commas between array/object elements (common AI mistake)
         cleaned = cleaned.replaceAll("}\\s+\\{", "},{");
         cleaned = cleaned.replaceAll("}\\s+\\[", "},[");
         cleaned = cleaned.replaceAll("]\\s+\\{", "],{");
         cleaned = cleaned.replaceAll("]\\s+\\[", "],[");
-        
+
         return cleaned;
+    }
+
+    /**
+     * Converts a Gson JsonElement to a proper Java Object.
+     * Handles LazilyParsedNumber by converting to Integer or Double.
+     * Recursively handles nested objects and arrays.
+     */
+    private static Object convertJsonElement(JsonElement element) {
+        if (element.isJsonNull()) {
+            return null;
+        } else if (element.isJsonPrimitive()) {
+            if (element.getAsJsonPrimitive().isBoolean()) {
+                return element.getAsBoolean();
+            } else if (element.getAsJsonPrimitive().isNumber()) {
+                // Convert LazilyParsedNumber to proper Integer/Double
+                Number number = element.getAsNumber();
+                // Check if it's a whole number that fits in an integer
+                double doubleValue = number.doubleValue();
+                if (doubleValue == number.intValue() &&
+                    doubleValue >= Integer.MIN_VALUE &&
+                    doubleValue <= Integer.MAX_VALUE) {
+                    return number.intValue();
+                }
+                return number.doubleValue();
+            } else {
+                return element.getAsString();
+            }
+        } else if (element.isJsonArray()) {
+            List<Object> list = new ArrayList<>();
+            for (JsonElement item : element.getAsJsonArray()) {
+                list.add(convertJsonElement(item));
+            }
+            return list;
+        } else if (element.isJsonObject()) {
+            Map<String, Object> map = new HashMap<>();
+            for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+                map.put(entry.getKey(), convertJsonElement(entry.getValue()));
+            }
+            return map;
+        }
+        return null;
     }
 
     private static Task parseTask(JsonObject taskObj) {
         if (!taskObj.has("action")) {
             return null;
         }
-        
+
         String action = taskObj.get("action").getAsString();
         Map<String, Object> parameters = new HashMap<>();
-        
+
         if (taskObj.has("parameters") && taskObj.get("parameters").isJsonObject()) {
             JsonObject paramsObj = taskObj.getAsJsonObject("parameters");
-            
+
             for (String key : paramsObj.keySet()) {
                 JsonElement value = paramsObj.get(key);
-                
-                if (value.isJsonPrimitive()) {
-                    if (value.getAsJsonPrimitive().isNumber()) {
-                        parameters.put(key, value.getAsNumber());
-                    } else if (value.getAsJsonPrimitive().isBoolean()) {
-                        parameters.put(key, value.getAsBoolean());
-                    } else {
-                        parameters.put(key, value.getAsString());
-                    }
-                } else if (value.isJsonArray()) {
-                    List<Object> list = new ArrayList<>();
-                    for (JsonElement element : value.getAsJsonArray()) {
-                        if (element.isJsonPrimitive()) {
-                            if (element.getAsJsonPrimitive().isNumber()) {
-                                list.add(element.getAsNumber());
-                            } else {
-                                list.add(element.getAsString());
-                            }
-                        }
-                    }
-                    parameters.put(key, list);
-                }
+                parameters.put(key, convertJsonElement(value));
             }
         }
-        
+
         return new Task(action, parameters);
     }
 
@@ -162,4 +184,3 @@ public class ResponseParser {
         }
     }
 }
-

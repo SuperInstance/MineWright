@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link WorldKnowledge} cache logic.
@@ -57,29 +56,25 @@ class WorldKnowledgeCacheTest {
     @Test
     @DisplayName("Cache key is based on chunk coordinates")
     void testCacheKeyGeneration() throws Exception {
-        // Create a mock ForemanEntity at position (100, 64, 200)
-        // Chunk coordinates would be: x=6 (100>>4), y=4 (64>>4), z=12 (200>>4)
-        // Expected key: (6 * 31 + 4) * 31 + 12 = 5822
-
-        com.minewright.entity.ForemanEntity mockEntity = mock(com.minewright.entity.ForemanEntity.class);
-        net.minecraft.core.BlockPos mockPos = mock(net.minecraft.core.BlockPos.class);
-
-        when(mockPos.getX()).thenReturn(100);
-        when(mockPos.getY()).thenReturn(64);
-        when(mockPos.getZ()).thenReturn(200);
-        when(mockEntity.blockPosition()).thenReturn(mockPos);
+        // Test the cache key formula: (chunkX * 31 + chunkY) * 31 + chunkZ
+        // For block position (100, 64, 200):
+        // Chunk coordinates: x=6 (100>>4), y=4 (64>>4), z=12 (200>>4)
+        // Expected key: (6 * 31 + 4) * 31 + 12 = 5902
 
         // The cache key calculation should match the formula
         int expectedKey = (6 * 31 + 4) * 31 + 12; // (chunkX * 31 + chunkY) * 31 + chunkZ
 
-        // Since we can't directly call generateCacheKey, we verify the logic is correct
-        // by testing that positions in the same chunk produce the same key
+        // Verify the formula is correct by testing position (100, 64, 200)
         int chunkX = 100 >> 4;
         int chunkY = 64 >> 4;
         int chunkZ = 200 >> 4;
         int calculatedKey = (chunkX * 31 + chunkY) * 31 + chunkZ;
 
         assertEquals(expectedKey, calculatedKey, "Cache key formula should match implementation");
+        assertEquals(6, chunkX, "Block X 100 should be in chunk 6");
+        assertEquals(4, chunkY, "Block Y 64 should be in chunk 4");
+        assertEquals(12, chunkZ, "Block Z 200 should be in chunk 12");
+        assertEquals(5902, calculatedKey, "Cache key for chunk (6, 4, 12) should be 5902");
     }
 
     @Test
