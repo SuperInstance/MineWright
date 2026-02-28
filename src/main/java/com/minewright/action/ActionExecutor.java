@@ -18,7 +18,7 @@ import com.minewright.voice.VoiceManager;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Executes actions for a MineWright crew member using a tick-based execution model.
@@ -152,8 +152,9 @@ public class ActionExecutor {
     /**
      * Flag indicating whether async planning is currently in progress.
      * Prevents concurrent planning requests which could cause state corruption.
+     * Uses AtomicBoolean for thread-safe compare-and-set operations.
      */
-    private volatile boolean isPlanning = false;
+    private final AtomicBoolean isPlanning = new AtomicBoolean(false);
 
     /**
      * Command text being processed during async planning.
@@ -244,13 +245,17 @@ public class ActionExecutor {
      *   <li>When done, tasks are queued and execution begins</li>
      * </ol>
      *
+     * <p><b>Thread Safety:</b> Uses AtomicBoolean.compareAndSet() to prevent race conditions
+     * when multiple commands are submitted simultaneously.</p>
+     *
      * @param command The natural language command from the user
      */
     public void processNaturalLanguageCommand(String command) {
         MineWrightMod.LOGGER.info("Foreman '{}' processing command (async): {}", foreman.getEntityName(), command);
 
-        // If already planning, ignore new commands
-        if (isPlanning) {
+        // THREAD-SAFE: Use compareAndSet to atomically check and set planning state
+        // This prevents race conditions when multiple threads submit commands
+        if (!isPlanning.compareAndSet(false, true)) {
             MineWrightMod.LOGGER.warn("Foreman '{}' is already planning, ignoring command: {}", foreman.getEntityName(), command);
             sendToGUI(foreman.getEntityName(), "Hold your horses! I'm still figuring out the last job. Give me a moment!");
             return;
@@ -270,7 +275,6 @@ public class ActionExecutor {
         try {
             // Store command and start async planning
             this.pendingCommand = command;
-            this.isPlanning = true;
 
             // Send immediate feedback to user
             sendToGUI(foreman.getEntityName(), "Looking over the blueprints...");
@@ -283,12 +287,12 @@ public class ActionExecutor {
         } catch (NoClassDefFoundError e) {
             MineWrightMod.LOGGER.error("Failed to initialize AI components", e);
             sendToGUI(foreman.getEntityName(), "Sorry boss, my planning tools aren't working right now!");
-            isPlanning = false;
+            isPlanning.set(false);
             planningFuture = null;
         } catch (Exception e) {
             MineWrightMod.LOGGER.error("Error starting async planning", e);
             sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Try again in a moment.");
-            isPlanning = false;
+            isPlanning.set(false);
             planningFuture = null;
         }
     }
@@ -369,7 +373,7 @@ public class ActionExecutor {
      * <p><b>Non-Blocking Design:</b></p>
      * <ul>
      *   <li>LLM planning results are checked via {@link CompletableFuture#isDone()}</li>
-     *   <li>Results are retrieved with a 60-second timeout to prevent hangs</li>
+     *   <li>Results are retrieved with getNow() which NEVER blocks</li>
      *   <li>All long-running work happens on separate threads</li>
      *   <li>This method always returns quickly to maintain server performance</li>
      * </ul>
@@ -377,22 +381,21 @@ public class ActionExecutor {
      * <p><b>Error Handling:</b></p>
      * <ul>
      *   <li>Planning cancellations reset state machine to IDLE</li>
-     *   <li>Timeouts (60s) reset and notify user</li>
      *   <li>Exceptions are caught and logged, resetting state</li>
      *   <li>Action failures notify player and may trigger replanning</li>
      * </ul>
      *
      * <p><b>Thread Safety:</b> Called on the Minecraft server thread only.
-     * Interacts with volatile fields for visibility across threads.</p>
+     * Interacts with volatile/atomic fields for visibility across threads.</p>
      */
     public void tick() {
         ticksSinceLastAction++;
 
         // Check if async planning is complete (non-blocking check!)
-        if (isPlanning && planningFuture != null && planningFuture.isDone()) {
+        if (isPlanning.get() && planningFuture != null && planningFuture.isDone()) {
             try {
-                // Use timeout to prevent indefinite blocking (60 second max wait)
-                ResponseParser.ParsedResponse response = planningFuture.get(60, TimeUnit.SECONDS);
+                // NON-BLOCKING: getNow() returns immediately, never blocks the server thread
+                ResponseParser.ParsedResponse response = planningFuture.getNow(null);
 
                 if (response != null) {
                     currentGoal = response.getPlan();
@@ -417,18 +420,18 @@ public class ActionExecutor {
                 sendToGUI(foreman.getEntityName(), "Planning cancelled. Back to work!");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning cancelled");
-            } catch (java.util.concurrent.TimeoutException e) {
-                MineWrightMod.LOGGER.error("Foreman '{}' planning timed out after 60 seconds", foreman.getEntityName());
-                sendToGUI(foreman.getEntityName(), "Took too long to figure out the plan. The blueprints were too complex! Try a simpler task?");
+            } catch (java.util.concurrent.CompletionException e) {
+                MineWrightMod.LOGGER.error("Foreman '{}' planning failed with exception", foreman.getEntityName(), e.getCause());
+                sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Let's try that again.");
                 // Reset state machine to allow recovery
-                stateMachine.forceTransition(AgentState.IDLE, "planning timeout");
+                stateMachine.forceTransition(AgentState.IDLE, "planning failed");
             } catch (Exception e) {
                 MineWrightMod.LOGGER.error("Foreman '{}' failed to get planning result", foreman.getEntityName(), e);
                 sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Let's try that again.");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning failed");
             } finally {
-                isPlanning = false;
+                isPlanning.set(false);
                 planningFuture = null;
                 pendingCommand = null;
             }
@@ -634,7 +637,7 @@ public class ActionExecutor {
      * @return true if planning
      */
     public boolean isPlanning() {
-        return isPlanning;
+        return isPlanning.get();
     }
 
     /**

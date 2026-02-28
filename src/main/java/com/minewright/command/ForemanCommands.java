@@ -21,40 +21,71 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ForemanCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForemanCommands.class);
 
+    /** Shared executor for async command processing - prevents uncontrolled thread creation */
+    private static final ExecutorService COMMAND_EXECUTOR = Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r, "minewright-command-handler");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /**
+     * Shuts down the command executor. Should be called during mod unload.
+     */
+    public static void shutdown() {
+        COMMAND_EXECUTOR.shutdown();
+    }
+
+    /**
+     * Permission level required for administrative commands (spawn, remove, etc.)
+     * Level 2 = Game Masters (OPs)
+     */
+    private static final int PERMISSION_ADMIN = 2;
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("minewright")
+            // Administrative commands require OP permission
             .then(Commands.literal("spawn")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
                 .then(Commands.argument("name", StringArgumentType.string())
                     .executes(ForemanCommands::spawnSteve)))
             .then(Commands.literal("remove")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
                 .then(Commands.argument("name", StringArgumentType.string())
                     .executes(ForemanCommands::removeSteve)))
+            // Read-only commands available to all players
             .then(Commands.literal("list")
                 .executes(ForemanCommands::listSteves))
             .then(Commands.literal("status")
                 .executes(ForemanCommands::statusSteves))
-            .then(Commands.literal("stop")
-                .then(Commands.argument("name", StringArgumentType.string())
-                    .executes(ForemanCommands::stopSteve)))
-            .then(Commands.literal("tell")
-                .then(Commands.argument("name", StringArgumentType.string())
-                    .then(Commands.argument("command", StringArgumentType.greedyString())
-                        .executes(ForemanCommands::tellSteve))))
             .then(Commands.literal("relationship")
                 .then(Commands.argument("name", StringArgumentType.string())
                     .executes(ForemanCommands::showRelationship)))
-            // Coordination commands
+            // Control commands require OP permission
+            .then(Commands.literal("stop")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
+                .then(Commands.argument("name", StringArgumentType.string())
+                    .executes(ForemanCommands::stopSteve)))
+            .then(Commands.literal("tell")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
+                .then(Commands.argument("name", StringArgumentType.string())
+                    .then(Commands.argument("command", StringArgumentType.greedyString())
+                        .executes(ForemanCommands::tellSteve))))
+            // Coordination commands require OP permission
             .then(Commands.literal("promote")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
                 .then(Commands.argument("name", StringArgumentType.string())
                     .executes(ForemanCommands::promoteSteve)))
             .then(Commands.literal("demote")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
                 .then(Commands.argument("name", StringArgumentType.string())
                     .executes(ForemanCommands::demoteSteve)))
-            // Voice commands
+            // Voice commands available to all players (client-side feature)
             .then(Commands.literal("voice")
                 .then(Commands.literal("on")
                     .executes(ForemanCommands::voiceOn))
@@ -170,13 +201,14 @@ public class ForemanCommands {
             // Send immediate feedback that the order was received
             source.sendSuccess(() -> Component.literal("Order sent to " + name + ": \"" + command + "\""), true);
 
-            new Thread(() -> {
+            // Use shared executor instead of creating new threads
+            COMMAND_EXECUTOR.submit(() -> {
                 try {
                     crewMember.getActionExecutor().processNaturalLanguageCommand(command);
                 } catch (Exception e) {
                     LOGGER.error("Error processing command for crew member '{}': {}", name, command, e);
                 }
-            }).start();
+            });
 
             return 1;
         } else {

@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *   <li>Eviction: LRU (Least Recently Used)</li>
  * </ul>
  *
+ * <p><b>Thread Safety:</b> All operations are synchronized to ensure atomic LRU updates.</p>
+ *
  * @since 1.1.0
  */
 public class LLMCache {
@@ -37,6 +39,9 @@ public class LLMCache {
     private final AtomicLong missCount = new AtomicLong(0);
     private final AtomicLong evictionCount = new AtomicLong(0);
 
+    /** Lock object for synchronizing LRU operations */
+    private final Object lruLock = new Object();
+
     /**
      * Constructs a new LLMCache with default configuration.
      */
@@ -49,6 +54,7 @@ public class LLMCache {
 
     /**
      * Retrieves a cached response if available and not expired.
+     * Thread-safe: LRU update is synchronized.
      */
     public Optional<LLMResponse> get(String prompt, String model, String providerId) {
         int key = generateKey(prompt, model, providerId);
@@ -56,17 +62,21 @@ public class LLMCache {
 
         if (entry != null) {
             if (System.currentTimeMillis() - entry.timestamp < TTL_MS) {
-                // Cache hit - update access order
+                // Cache hit - update access order atomically
                 hitCount.incrementAndGet();
-                accessOrder.remove(key);
-                accessOrder.addLast(key);
+                synchronized (lruLock) {
+                    accessOrder.remove(key);
+                    accessOrder.addLast(key);
+                }
                 LOGGER.debug("Cache HIT for provider={}, model={}, key={}",
                     providerId, model, key);
                 return Optional.of(entry.response);
             } else {
-                // Expired - remove it
-                cache.remove(key);
-                accessOrder.remove(key);
+                // Expired - remove it atomically
+                synchronized (lruLock) {
+                    cache.remove(key);
+                    accessOrder.remove(key);
+                }
             }
         }
 
@@ -78,19 +88,23 @@ public class LLMCache {
 
     /**
      * Stores a response in the cache.
+     * Thread-safe: LRU eviction is synchronized.
      */
     public void put(String prompt, String model, String providerId, LLMResponse response) {
         int key = generateKey(prompt, model, providerId);
 
-        // Evict if at capacity
-        while (cache.size() >= MAX_CACHE_SIZE) {
-            evictOldest();
-        }
-
         // Mark response as cached
         LLMResponse cachedResponse = response.withCacheFlag(true);
-        cache.put(key, new CacheEntry(cachedResponse));
-        accessOrder.addLast(key);
+
+        synchronized (lruLock) {
+            // Evict if at capacity
+            while (cache.size() >= MAX_CACHE_SIZE) {
+                evictOldestLocked();
+            }
+
+            cache.put(key, new CacheEntry(cachedResponse));
+            accessOrder.addLast(key);
+        }
 
         LOGGER.debug("Cached response for provider={}, model={}, key={}, tokens={}",
             providerId, model, key, response.getTokensUsed());
@@ -98,8 +112,9 @@ public class LLMCache {
 
     /**
      * Evicts the oldest (least recently used) entry.
+     * MUST be called while holding lruLock.
      */
-    private void evictOldest() {
+    private void evictOldestLocked() {
         Integer oldest = accessOrder.pollFirst();
         if (oldest != null) {
             cache.remove(oldest);
@@ -138,11 +153,15 @@ public class LLMCache {
 
     /**
      * Invalidates all entries in the cache.
+     * Thread-safe: clears both cache and access order atomically.
      */
     public void clear() {
-        long sizeBefore = cache.size();
-        cache.clear();
-        accessOrder.clear();
+        long sizeBefore;
+        synchronized (lruLock) {
+            sizeBefore = cache.size();
+            cache.clear();
+            accessOrder.clear();
+        }
         LOGGER.info("Cache cleared, removed ~{} entries", sizeBefore);
     }
 

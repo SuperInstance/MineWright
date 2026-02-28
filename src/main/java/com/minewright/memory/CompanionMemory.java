@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -78,6 +79,7 @@ public class CompanionMemory {
 
     /**
      * Emotional memories - high-impact moments.
+     * Uses CopyOnWriteArrayList for thread-safe iteration and modification.
      */
     private final List<EmotionalMemory> emotionalMemories;
 
@@ -175,7 +177,7 @@ public class CompanionMemory {
     public CompanionMemory() {
         this.episodicMemories = new ArrayDeque<>();
         this.semanticMemories = new ConcurrentHashMap<>();
-        this.emotionalMemories = new ArrayList<>();
+        this.emotionalMemories = new CopyOnWriteArrayList<>(); // Thread-safe
         this.conversationalMemory = new ConversationalMemory();
         this.workingMemory = new ArrayDeque<>();
 
@@ -266,21 +268,34 @@ public class CompanionMemory {
 
     /**
      * Records an emotionally significant moment.
+     * Thread-safe: uses synchronized block for sort and trim operations.
      */
     private void recordEmotionalMemory(String eventType, String description, int emotionalWeight) {
         EmotionalMemory memory = new EmotionalMemory(
             eventType, description, emotionalWeight, Instant.now()
         );
+
+        // CopyOnWriteArrayList handles add() safely
         emotionalMemories.add(memory);
 
-        // Keep emotional memories sorted by significance
-        emotionalMemories.sort((a, b) -> Integer.compare(
-            Math.abs(b.emotionalWeight), Math.abs(a.emotionalWeight)
-        ));
+        // Sort and trim requires synchronization
+        synchronized (this) {
+            // Keep emotional memories sorted by significance
+            emotionalMemories.sort((a, b) -> Integer.compare(
+                Math.abs(b.emotionalWeight), Math.abs(a.emotionalWeight)
+            ));
 
-        // Cap at 50 emotional memories
-        if (emotionalMemories.size() > 50) {
-            emotionalMemories.remove(emotionalMemories.size() - 1);
+            // Cap at 50 emotional memories
+            if (emotionalMemories.size() > 50) {
+                // CopyOnWriteArrayList doesn't support remove by index efficiently
+                // Create new sorted list and clear/re-add
+                List<EmotionalMemory> sorted = new ArrayList<>(emotionalMemories);
+                sorted.sort((a, b) -> Integer.compare(
+                    Math.abs(b.emotionalWeight), Math.abs(a.emotionalWeight)
+                ));
+                emotionalMemories.clear();
+                emotionalMemories.addAll(sorted.subList(0, Math.min(50, sorted.size())));
+            }
         }
 
         LOGGER.info("Recorded emotional memory: {} (weight={})", eventType, emotionalWeight);
@@ -1153,18 +1168,23 @@ public class CompanionMemory {
 
     /**
      * Conversational memory including jokes and references.
+     * Thread-safe: uses CopyOnWriteArrayList for safe concurrent access.
      */
     public static class ConversationalMemory {
-        private final List<InsideJoke> insideJokes = new ArrayList<>();
+        private final List<InsideJoke> insideJokes = new CopyOnWriteArrayList<>();
         private final Set<String> discussedTopics = ConcurrentHashMap.newKeySet();
         private final Map<String, Integer> phraseUsage = new ConcurrentHashMap<>();
 
         public void addInsideJoke(InsideJoke joke) {
             insideJokes.add(joke);
             if (insideJokes.size() > MAX_INSIDE_JOKES) {
-                // Remove least referenced joke
-                insideJokes.sort(Comparator.comparingInt(j -> j.referenceCount));
-                insideJokes.remove(0);
+                // Remove least referenced joke - needs synchronization for sort
+                synchronized (this) {
+                    List<InsideJoke> sorted = new ArrayList<>(insideJokes);
+                    sorted.sort(Comparator.comparingInt(j -> j.referenceCount));
+                    insideJokes.clear();
+                    insideJokes.addAll(sorted.subList(1, sorted.size())); // Remove lowest
+                }
             }
         }
 
@@ -1281,22 +1301,23 @@ public class CompanionMemory {
     /**
      * Personality profile for the foreman.
      * Now includes enhanced speech patterns and verbal tics support.
+     * Thread-safe: uses synchronized collections for concurrent access.
      */
     public static class PersonalityProfile {
         // Big Five traits (0-100)
-        public int openness = 70;          // Curious, creative
-        public int conscientiousness = 80; // Organized, responsible
-        public int extraversion = 60;      // Sociable, energetic
-        public int agreeableness = 75;     // Cooperative, trusting
-        public int neuroticism = 30;       // Calm, stable
+        public volatile int openness = 70;          // Curious, creative
+        public volatile int conscientiousness = 80; // Organized, responsible
+        public volatile int extraversion = 60;      // Sociable, energetic
+        public volatile int agreeableness = 75;     // Cooperative, trusting
+        public volatile int neuroticism = 30;       // Calm, stable
 
         // Custom traits
-        public int humor = 65;             // How often uses humor
-        public int encouragement = 80;     // How encouraging
-        public int formality = 40;         // 0 = casual, 100 = formal
+        public volatile int humor = 65;             // How often uses humor
+        public volatile int encouragement = 80;     // How encouraging
+        public volatile int formality = 40;         // 0 = casual, 100 = formal
 
-        // Verbal tics and catchphrases
-        public List<String> catchphrases = new ArrayList<>(List.of(
+        // Verbal tics and catchphrases - thread-safe lists
+        public List<String> catchphrases = new CopyOnWriteArrayList<>(List.of(
             "Right then,",
             "Let's get to work!",
             "We've got this.",
@@ -1304,7 +1325,7 @@ public class CompanionMemory {
         ));
 
         // Enhanced speech patterns
-        public List<String> verbalTics = new ArrayList<>(List.of(
+        public List<String> verbalTics = new CopyOnWriteArrayList<>(List.of(
             "Well,",
             "You see,",
             "Here's the thing"
