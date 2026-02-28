@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>This implementation uses:</p>
  * <ul>
  *   <li><b>STT:</b> OpenAI Whisper API for accurate speech recognition</li>
- *   <li><b>TTS:</b> ElevenLabs for high-quality voice output (optional)</li>
+ *   <li><b>TTS:</b> ElevenLabs via Docker MCP (preferred) or direct API</li>
  * </ul>
  *
  * <p><b>Usage:</b></p>
@@ -23,11 +23,11 @@ import java.util.concurrent.CompletableFuture;
  * mode = "real"
  * </pre>
  *
- * <p>For ElevenLabs TTS, set environment variable:</p>
- * <pre>
- * ELEVENLABS_API_KEY=your-key
- * ELEVENLABS_VOICE_ID=voice-id
- * </pre>
+ * <p><b>TTS Priority:</b></p>
+ * <ol>
+ *   <li>Docker MCP ElevenLabs (if Docker running with ElevenLabs MCP)</li>
+ *   <li>Direct ElevenLabs API (if ELEVENLABS_API_KEY set)</li>
+ * </ol>
  *
  * @since 1.2.0
  */
@@ -35,20 +35,53 @@ public class RealVoiceSystem implements VoiceSystem {
     private static final Logger LOGGER = TestLogger.getLogger(RealVoiceSystem.class);
 
     private final WhisperSTT stt;
-    private final ElevenLabsTTS tts;
+    private TextToSpeech tts;  // Dynamically selected
     private boolean enabled = true;
 
     public RealVoiceSystem() {
         this.stt = new WhisperSTT();
-        this.tts = new ElevenLabsTTS();
+        this.tts = null; // Will be initialized based on availability
     }
 
     @Override
     public void initialize() throws VoiceException {
         LOGGER.info("[RealVoice] Initializing real voice system...");
         stt.initialize();
-        tts.initialize();
-        LOGGER.info("[RealVoice] Voice system initialized (STT: Whisper, TTS: ElevenLabs)");
+
+        // Try Docker MCP first, then direct API
+        initializeTTS();
+
+        String ttsType = tts != null ? tts.getClass().getSimpleName() : "none";
+        LOGGER.info("[RealVoice] Voice system initialized (STT: Whisper, TTS: {})", ttsType);
+    }
+
+    /**
+     * Initializes TTS with fallback chain.
+     */
+    private void initializeTTS() {
+        // Try Docker MCP first
+        try {
+            DockerMCPTTS mcpTTS = new DockerMCPTTS();
+            mcpTTS.initialize();
+            if (mcpTTS.isMCPAvailable()) {
+                this.tts = mcpTTS;
+                LOGGER.info("[RealVoice] Using Docker MCP ElevenLabs for TTS");
+                return;
+            }
+        } catch (Exception e) {
+            LOGGER.debug("[RealVoice] Docker MCP TTS not available: {}", e.getMessage());
+        }
+
+        // Fall back to direct ElevenLabs API
+        try {
+            ElevenLabsTTS apiTTS = new ElevenLabsTTS();
+            apiTTS.initialize();
+            this.tts = apiTTS;
+            LOGGER.info("[RealVoice] Using direct ElevenLabs API for TTS");
+        } catch (Exception e) {
+            LOGGER.warn("[RealVoice] No TTS available: {}", e.getMessage());
+            LOGGER.warn("[RealVoice] Set ELEVENLABS_API_KEY or run Docker MCP with ElevenLabs");
+        }
     }
 
     @Override
@@ -84,20 +117,21 @@ public class RealVoiceSystem implements VoiceSystem {
 
     @Override
     public void speak(String text) throws VoiceException {
-        if (!enabled) return;
+        if (!enabled || tts == null) return;
         LOGGER.info("[RealVoice] Speaking: \"{}\"", text);
         tts.speak(text);
     }
 
     @Override
     public void stopSpeaking() {
+        if (tts == null) return;
         LOGGER.info("[RealVoice] Stopping speech");
         tts.stop();
     }
 
     @Override
     public boolean isSpeaking() {
-        return tts.isSpeaking();
+        return tts != null && tts.isSpeaking();
     }
 
     @Override
@@ -138,7 +172,9 @@ public class RealVoiceSystem implements VoiceSystem {
     public void shutdown() {
         LOGGER.info("[RealVoice] Shutting down voice system");
         stt.shutdown();
-        tts.shutdown();
+        if (tts != null) {
+            tts.shutdown();
+        }
     }
 
     @Override
