@@ -5,8 +5,76 @@
 **Mission:** Create "Cursor for Minecraft" - an autonomous AI foreman that coordinates a team of specialized builders and helpers through natural language commands.
 
 **Character:** Mason "Mace" MineWright - Cross-Dimensional Auditor / Site Foreman
-**Repository:** https://github.com/minewright/minewright
+**Repository:** https://github.com/SuperInstance/MineWright
 **Active Since:** 2026-02-27
+
+---
+
+## 🚀 Current Sprint Progress (2026-02-28)
+
+### ✅ Completed This Session
+
+**UX Improvements:**
+- [x] **Mace as Default Agent** - Changed spawn names from "Foreman, Alex, Bob, Charlie" to "Mace, Dusty, Sparks, Foundation"
+- [x] **K+TTS Integration** - Pressing K now opens GUI AND starts voice input automatically
+- [x] **Role Assignment** - Mace spawns as FOREMAN role, workers as WORKER role
+
+**Research & Documentation:**
+- [x] R&D Roadmap created at `docs/research/RD_ROADMAP.md`
+- [x] Fork analysis at `docs/research/FORK_ANALYSIS.md`
+- [x] Comprehensive research docs for automation system
+
+**Code Changes:**
+- `ServerEventHandler.java` - Updated spawn names and role assignment
+- `ForemanOfficeGUI.java` - Auto-start voice input on GUI open
+- `CLAUDE.md` - Vision pipeline strategy, roadmap integration
+
+### 🔄 In Progress - Research Phase
+
+**8 Research Agents Running** - Documenting pre-LLM game automation to enhance with AI:
+
+1. **Pre-LLM Game Automation** (`PRE_LLM_GAME_AUTOMATION.md`)
+   - Quake/QuakeWorld bots, MMO bots, RTS AI patterns
+   - How decisions were made without neural networks
+
+2. **Trigger & Weight Systems** (`TRIGGER_WEIGHT_DECISION_SYSTEMS.md`)
+   - Event-based activation, priority systems
+   - Weight-based decision systems (utility AI before it was named)
+
+3. **Self-Modifying Scripts** (`SELF_MODIFYING_SCRIPTS.md`)
+   - Scripts that write scripts
+   - Genetic algorithms in games
+   - Community script sharing patterns
+
+4. **RTS/MMO Automation** (`RTS_MMO_AUTOMATION_HISTORY.md`)
+   - Build orders, resource gathering, combat rotations
+   - Pixel detection, memory reading, input injection
+
+5. **FSM Evolution** (`FSM_EVOLUTION_AND_PATTERNS.md`)
+   - State machines, transitions, hierarchical FSMs
+   - How LLMs can dynamically create states
+
+6. **Behavior Tree Evolution** (`BEHAVIOR_TREE_EVOLUTION.md`)
+   - From Halo 2 to modern games
+   - Node types, patterns, LLM integration
+
+7. **GOAP Deep Dive** (`GOAP_DEEP_DIVE.md`)
+   - Goal-Oriented Action Planning
+   - A* planning through action space
+
+8. **LLM-Augmented Automation** (`LLM_AUGMENTED_AUTOMATION.md`)
+   - The core design for our "One Abstraction Away" system
+   - How LLMs enhance 30 years of automation technology
+
+### 🎯 Next Steps
+
+After research completes:
+1. Synthesize findings into `AUTOMATION_SYSTEM_DESIGN.md`
+2. Implement core behavior tree infrastructure
+3. Create Script DSL for automation patterns
+4. Build LLM-to-Script generation pipeline
+
+**Philosophy:** "AI tools are not our crutch, they are our wings" - We use LLMs to enhance 30 years of game automation technology, not replace it.
 
 ---
 
