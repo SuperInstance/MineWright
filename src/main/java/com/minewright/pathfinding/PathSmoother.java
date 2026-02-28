@@ -243,7 +243,7 @@ public class PathSmoother {
         int dy = endPos.getY() - startPos.getY();
         int dz = endPos.getZ() - startPos.getZ();
 
-        int steps = (int) Math.max(Math.max(Math.abs(dx), Math.abs(dy)), Math.abs(dz));
+        int steps = Math.max(Math.max(Math.abs(dx), Math.abs(dy)), Math.abs(dz));
 
         if (steps == 0) {
             return true;

@@ -21,6 +21,7 @@ package com.minewright.exception;
  * @since 1.2.0
  */
 public class ActionException extends MineWrightException {
+    private static final long serialVersionUID = 1L;
 
     private final String actionType;
     private final boolean requiresReplanning;

@@ -275,6 +275,7 @@ public class AsyncOpenAIClient implements AsyncLLMClient {
      * Internal exception used to signal that a request should be retried.
      */
     private static class RetryableException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
         final long backoffMs;
         final int nextRetryCount;
 

@@ -146,6 +146,8 @@ public interface ServiceContainer {
      * Exception thrown when a requested service is not found.
      */
     class ServiceNotFoundException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         public ServiceNotFoundException(String message) {
             super(message);
         }

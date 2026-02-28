@@ -28,6 +28,7 @@ package com.minewright.llm.async;
  * @since 1.1.0
  */
 public class LLMException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Enumeration of LLM error types.

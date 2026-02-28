@@ -133,7 +133,18 @@ public class CascadeRouter {
      * @return Cached response if present
      */
     private Optional<LLMResponse> checkCache(String command, Map<String, Object> context) {
-        String model = (String) context.getOrDefault("model", MineWrightConfig.OPENAI_MODEL.get());
+        // Get model from context, or try config, or use default
+        String model;
+        if (context.containsKey("model")) {
+            model = (String) context.get("model");
+        } else {
+            try {
+                model = MineWrightConfig.OPENAI_MODEL.get();
+            } catch (IllegalStateException e) {
+                // Config not loaded (e.g., during tests), use default
+                model = "gpt-4";
+            }
+        }
         String providerId = (String) context.getOrDefault("providerId", "cascade");
 
         Optional<LLMResponse> cached = cache.get(command, model, providerId);
@@ -243,8 +254,17 @@ public class CascadeRouter {
 
                 // Store in cache if applicable
                 if (config.isCachingEnabled() && complexity.isCacheable()) {
-                    String model = (String) context.getOrDefault("model",
-                        MineWrightConfig.OPENAI_MODEL.get());
+                    String model;
+                    if (context.containsKey("model")) {
+                        model = (String) context.get("model");
+                    } else {
+                        try {
+                            model = MineWrightConfig.OPENAI_MODEL.get();
+                        } catch (IllegalStateException e) {
+                            // Config not loaded (e.g., during tests), use default
+                            model = "gpt-4";
+                        }
+                    }
                     cache.put(command, model, currentTier.getTierId(), response);
                 }
 

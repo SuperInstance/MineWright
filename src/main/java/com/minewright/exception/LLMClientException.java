@@ -26,6 +26,7 @@ import java.time.Duration;
  * @since 1.2.0
  */
 public class LLMClientException extends MineWrightException {
+    private static final long serialVersionUID = 1L;
 
     private final String provider;
     private final int statusCode;

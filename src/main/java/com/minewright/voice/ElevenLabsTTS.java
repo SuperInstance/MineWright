@@ -476,7 +476,9 @@ public class ElevenLabsTTS implements TextToSpeech {
             if (value instanceof String) {
                 sb.append("\"").append(escapeJson((String) value)).append("\"");
             } else if (value instanceof Map) {
-                sb.append(toJson((Map<String, Object>) value));
+                @SuppressWarnings("unchecked")
+                Map<String, Object> mapValue = (Map<String, Object>) value;
+                sb.append(toJson(mapValue));
             } else {
                 sb.append(value);
             }

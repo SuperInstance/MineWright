@@ -135,7 +135,7 @@ public class CacheStats {
         // - Embedding: 256 dimensions * 4 bytes = ~1024 bytes
         // - Metadata: ~200 bytes
         // = ~2500 bytes per entry
-        return (long) (size * 2500L);
+        return size * 2500L;
     }
 
     /**

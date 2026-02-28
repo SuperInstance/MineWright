@@ -17,6 +17,7 @@ package com.minewright.exception;
  * @since 1.2.0
  */
 public class MineWrightException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Error codes for categorizing exceptions.
