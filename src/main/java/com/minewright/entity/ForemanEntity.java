@@ -142,6 +142,11 @@ public class ForemanEntity extends PathfinderMob {
     private int tickCounter = 0;
 
     /**
+     * Counter for consecutive errors in action executor - used for recovery.
+     */
+    private int errorRecoveryTicks = 0;
+
+    /**
      * Whether this entity is currently in flying mode.
      * When flying, gravity is disabled and movement is unrestricted.
      */
@@ -348,15 +353,32 @@ public class ForemanEntity extends PathfinderMob {
             // Execute actions - most critical, wrap carefully
             try {
                 actionExecutor.tick();
+                errorRecoveryTicks = 0; // Reset error counter on success
             } catch (Exception e) {
                 LOGGER.error("[{}] Critical error in action executor", entityName, e);
-                // Notify player of the error
-                try {
-                    sendChatMessage("I'm having some trouble. Give me a moment to recover.");
-                } catch (Exception ignored) {
-                    // If chat fails too, just log and continue
+                errorRecoveryTicks++;
+
+                // Only send chat message once per error burst (not every tick)
+                if (errorRecoveryTicks == 1) {
+                    try {
+                        sendChatMessage("Hit a snag there boss. Working on it...");
+                    } catch (Exception ignored) {
+                        // If chat fails too, just log and continue
+                    }
                 }
-                // The entity will continue ticking - errors are isolated per tick
+
+                // After 3 consecutive errors, reset the action executor to recover
+                if (errorRecoveryTicks >= 3) {
+                    LOGGER.warn("[{}] Too many errors, resetting action executor", entityName);
+                    try {
+                        actionExecutor.stopCurrentAction();
+                        actionExecutor = new ActionExecutor(this);
+                        errorRecoveryTicks = 0;
+                        sendChatMessage("Alright, I'm back on track now.");
+                    } catch (Exception resetError) {
+                        LOGGER.error("[{}] Failed to reset action executor", entityName, resetError);
+                    }
+                }
             }
 
             // Check for proactive dialogue triggers

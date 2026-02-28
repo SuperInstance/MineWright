@@ -230,11 +230,8 @@ public class VoiceManager {
                 yield new LoggingVoiceSystem();
             }
             case "real" -> {
-                LOGGER.info("Creating real voice system (actual TTS/STT)");
-                // Note: Real voice system implementation with actual TTS/STT APIs
-                // will be added in a future update. For now, fall back to logging mode.
-                LOGGER.warn("Real voice system not yet implemented - using logging mode");
-                yield new LoggingVoiceSystem();
+                LOGGER.info("Creating real voice system with Whisper STT");
+                yield new RealVoiceSystem();
             }
             case "disabled", "off", "false" -> {
                 LOGGER.info("Voice system disabled");

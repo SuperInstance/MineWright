@@ -218,12 +218,13 @@ public class ProactiveDialogueManager {
         this.phraseUsageCount = new ConcurrentHashMap<>();
         this.recentPhrases = new LinkedList<>();
 
-        // Load configuration
-        this.enabled = true;  // Could add config option later
-        this.baseCheckInterval = 100;  // Check every 5 seconds
-        this.baseCooldownTicks = 600;  // Minimum 30 seconds between comments
+        // Load configuration - MINIMAL CHATTER MODE
+        // User preference: conversations should be useful, not constant banter
+        this.enabled = true;
+        this.baseCheckInterval = 600;  // Check every 30 seconds (was 5 seconds)
+        this.baseCooldownTicks = 6000;  // Minimum 5 minutes between comments (was 30 seconds)
 
-        // Initialize LLM client for generating comments
+        // Initialize LLM client for generating comments (but rarely used now)
         // Use Groq for fast, free responses
         this.llmClient = new AsyncGroqClient(
             MineWrightConfig.OPENAI_API_KEY.get(),
@@ -232,13 +233,15 @@ public class ProactiveDialogueManager {
             0.9   // High creativity
         );
 
-        LOGGER.info("ProactiveDialogueManager initialized for MineWright '{}'",
+        LOGGER.info("ProactiveDialogueManager initialized (minimal chatter mode) for '{}'",
             minewright.getEntityName());
     }
 
     /**
      * Called every tick to check for proactive dialogue triggers.
      * This is lightweight and only does expensive work periodically.
+     *
+     * REDUCED CHATTER: Only checks important triggers now.
      */
     public void tick() {
         if (!enabled) {
@@ -255,12 +258,11 @@ public class ProactiveDialogueManager {
 
         ticksSinceLastCheck = 0;
 
-        // Check triggers
-        checkTimeBasedTriggers();
-        checkContextBasedTriggers();
-        checkWeatherTriggers();
-        checkPlayerProximityTriggers();
-        checkActionStateTriggers();
+        // ONLY check IMPORTANT triggers - no idle chatter
+        // Removed: checkTimeBasedTriggers(), checkWeatherTriggers(), checkPlayerProximityTriggers()
+        // These just add noise. Keep only danger and action completion triggers.
+        checkContextBasedTriggers();  // For danger warnings
+        checkActionStateTriggers();   // For task-related updates
     }
 
     /**
