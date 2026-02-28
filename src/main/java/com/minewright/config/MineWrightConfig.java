@@ -25,8 +25,8 @@ import java.util.List;
  *
  * <h2>Configuration Sections</h2>
  * <ul>
- *   <li><b>{@code [ai]}</b> - AI provider selection</li>
- *   <li><b>{@code [openai]}</b> - API credentials and model settings</li>
+ *   <li><b>{@code [ai]}</b> - AI provider selection (default: openai/z.ai)</li>
+ *   <li><b>{@code [openai]}</b> - z.ai API credentials and model settings</li>
  *   <li><b>{@code [behavior]}</b> - Crew behavior settings</li>
  *   <li><b>{@code [voice]}</b> - Voice input/output configuration</li>
  *   <li><b>{@code [hivemind]}</b> - Cloudflare Edge integration</li>
@@ -56,8 +56,8 @@ import java.util.List;
  */
 public class MineWrightConfig {
     private static final Logger LOGGER = TestLogger.getLogger(MineWrightConfig.class);
-    // Valid AI providers
-    private static final List<String> VALID_PROVIDERS = Arrays.asList("groq", "openai", "gemini");
+    // Valid AI providers (openai uses z.ai API)
+    private static final List<String> VALID_PROVIDERS = Arrays.asList("openai", "groq", "gemini");
     private static final List<String> VALID_VOICE_MODES = Arrays.asList("disabled", "logging", "real");
 
     // ========================================================================
@@ -573,19 +573,19 @@ public class MineWrightConfig {
         builder.comment("AI API Configuration").push("ai");
 
         AI_PROVIDER = builder
-            .comment("AI provider to use: 'groq' (FASTEST, FREE), 'openai', or 'gemini'")
-            .define("provider", "groq");
+            .comment("AI provider to use: 'openai' (z.ai GLM-5, RECOMMENDED), 'groq', or 'gemini'")
+            .define("provider", "openai");
 
         builder.pop();
 
-        builder.comment("OpenAI/Gemini API Configuration (same key field used for both)").push("openai");
+        builder.comment("z.ai/OpenAI API Configuration").push("openai");
 
         OPENAI_API_KEY = builder
-            .comment("Your OpenAI API key (required)")
+            .comment("Your z.ai API key (required - get from console.z.ai)")
             .define("apiKey", "");
 
         OPENAI_MODEL = builder
-            .comment("LLM model to use (glm-5 for z.ai, gpt-4 for OpenAI)")
+            .comment("LLM model: 'glm-5' (recommended), 'glm-4-flash' (faster), or 'gpt-4' (OpenAI)")
             .define("model", "glm-5");
 
         MAX_TOKENS = builder
@@ -886,10 +886,10 @@ public class MineWrightConfig {
         // Validate AI provider
         String provider = AI_PROVIDER.get();
         if (provider == null || provider.trim().isEmpty()) {
-            LOGGER.warn("AI provider is not set! Defaulting to 'groq'.");
+            LOGGER.warn("AI provider is not set! Defaulting to 'openai' (z.ai).");
             isValid = false;
         } else if (!VALID_PROVIDERS.contains(provider.toLowerCase())) {
-            LOGGER.warn("Invalid AI provider '{}'. Valid options: {}. Defaulting to 'groq'.",
+            LOGGER.warn("Invalid AI provider '{}'. Valid options: {}. Defaulting to 'openai' (z.ai).",
                 provider, VALID_PROVIDERS);
             isValid = false;
         } else {
@@ -1074,7 +1074,7 @@ public class MineWrightConfig {
         // Validate AI provider
         String provider = AI_PROVIDER.get();
         if (provider == null || provider.trim().isEmpty()) {
-            LOGGER.warn("AI provider is empty, will use 'groq' as fallback");
+            LOGGER.warn("AI provider is empty, will use 'openai' (z.ai) as fallback");
         } else if (!VALID_PROVIDERS.contains(provider.toLowerCase())) {
             throw ConfigException.invalidValue("provider", provider,
                 String.join(", ", VALID_PROVIDERS), "ai");
@@ -1141,13 +1141,13 @@ public class MineWrightConfig {
     public static String getValidatedProvider() {
         String provider = AI_PROVIDER.get();
         if (provider == null || provider.trim().isEmpty()) {
-            LOGGER.warn("AI provider not configured, using 'groq' as default");
-            return "groq";
+            LOGGER.warn("AI provider not configured, using 'openai' (z.ai) as default");
+            return "openai";
         }
         String lowerProvider = provider.toLowerCase();
         if (!VALID_PROVIDERS.contains(lowerProvider)) {
-            LOGGER.warn("Unknown AI provider '{}', using 'groq' as default", provider);
-            return "groq";
+            LOGGER.warn("Unknown AI provider '{}', using 'openai' (z.ai) as default", provider);
+            return "openai";
         }
         return lowerProvider;
     }
