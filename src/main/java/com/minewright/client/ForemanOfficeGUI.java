@@ -134,6 +134,9 @@ public class ForemanOfficeGUI {
             fadeAlpha = 0.0f;
             // Play subtle open sound
             playUISound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5f);
+
+            // Auto-start voice input when GUI opens (K key activates TTS)
+            startVoiceInput();
         } else {
             if (inputBox != null) {
                 inputBox = null;
@@ -145,6 +148,11 @@ public class ForemanOfficeGUI {
             hoveredCrewIndex = -1;
             hoveredButtonIndex = -1;
             hoverScale = 1.0f;
+
+            // Stop voice input if active when closing
+            if (isVoiceInputActive) {
+                isVoiceInputActive = false;
+            }
         }
     }
 

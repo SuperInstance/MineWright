@@ -59,6 +59,11 @@
 - **[RYZEN_AI_NPU.md](RYZEN_AI_NPU.md)** - AMD Ryzen AI NPU overview
 - **[WHATIF_MULTIPLAYER_FOREMAN.md](WHATIF_MULTIPLAYER_FOREMAN.md)** - Multiplayer foreman mode
 
+### 🔼 Upstream Research (NEW)
+- **[UPSTREAM_ANALYSIS.md](UPSTREAM_ANALYSIS.md)** - Comprehensive analysis of YuvDwi/Steve upstream repository
+- **[UPSTREAM_DIFF_SUMMARY.md](UPSTREAM_DIFF_SUMMARY.md)** - Quick reference for upstream differences
+- **[CHERRYPICK_GUIDE.md](CHERRYPICK_GUIDE.md)** - Implementation guide for selective upstream adoption
+
 ---
 
 ## Companion UI/UX Research (Latest)

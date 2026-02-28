@@ -35,7 +35,9 @@ public class ServerEventHandler {
                 }                Vec3 playerPos = player.position();
                 Vec3 lookVec = player.getLookAngle();
 
-                String[] names = {"Foreman", "Alex", "Bob", "Charlie"};
+                // Mace is the primary foreman with construction crew nicknames
+                // Mace assigns nicknames based on role: Dusty (mining), Sparks (electrical/fast), Foundation (builder)
+                String[] names = {"Mace", "Dusty", "Sparks", "Foundation"};
 
                 for (int i = 0; i < 4; i++) {
                     double offsetX = lookVec.x * 5 + (lookVec.z * (i - 1.5) * 2);
@@ -48,7 +50,14 @@ public class ServerEventHandler {
                     );
 
                     ForemanEntity foreman = manager.spawnCrewMember(level, spawnPos, names[i]);
-                    if (foreman != null) {                    }
+                    if (foreman != null) {
+                        // Mace is the foreman, others are workers
+                        if (i == 0) {
+                            foreman.setRole(com.minewright.orchestration.AgentRole.FOREMAN);
+                        } else {
+                            foreman.setRole(com.minewright.orchestration.AgentRole.WORKER);
+                        }
+                    }
                 }
 
                 crewSpawned = true;            }
