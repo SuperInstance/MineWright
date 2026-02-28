@@ -1,6 +1,7 @@
 package com.minewright.structure;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -22,6 +23,7 @@ import java.util.List;
  * Loads Minecraft structure templates from NBT files for sequential block-by-block placement
  */
 public class StructureTemplateLoader {
+    private static final Logger LOGGER = TestLogger.getLogger(StructureTemplateLoader.class);
     
     public static class TemplateBlock {
         public final BlockPos relativePos;
@@ -65,13 +67,13 @@ public class StructureTemplateLoader {
             InputStream resourceStream = StructureTemplateLoader.class.getClassLoader().getResourceAsStream(resourcePath);
 
             if (resourceStream != null) {
-                MineWrightMod.LOGGER.info("Found structure in resources: {}", resourcePath);
+                LOGGER.info("Found structure in resources: {}", resourcePath);
                 try {
                     CompoundTag nbt = NbtIo.readCompressed(resourceStream);
                     resourceStream.close();
                     return parseNBTStructure(nbt, structureName);
                 } catch (IOException e) {
-                    MineWrightMod.LOGGER.error("Failed to load structure from resources: {}", resourcePath, e);
+                    LOGGER.error("Failed to load structure from resources: {}", resourcePath, e);
                 }
             }
         }
@@ -85,7 +87,7 @@ public class StructureTemplateLoader {
             }
         } catch (Exception e) {        }
         
-        MineWrightMod.LOGGER.warn("Structure '{}' not found. Available structures: {}", 
+        LOGGER.warn("Structure '{}' not found. Available structures: {}", 
             structureName, getAvailableStructures());
         return null;
     }
@@ -98,7 +100,7 @@ public class StructureTemplateLoader {
             CompoundTag nbt = NbtIo.readCompressed(inputStream);
             return parseNBTStructure(nbt, name);
         } catch (IOException e) {
-            MineWrightMod.LOGGER.error("Failed to load structure from file: {}", file, e);
+            LOGGER.error("Failed to load structure from file: {}", file, e);
             return null;
         }
     }
@@ -117,7 +119,7 @@ public class StructureTemplateLoader {
         
         // This method is here for future compatibility with Minecraft's template system
         
-        MineWrightMod.LOGGER.warn("Direct template loading not fully implemented, please use NBT files directly");
+        LOGGER.warn("Direct template loading not fully implemented, please use NBT files directly");
         return null;
     }
     
@@ -144,7 +146,7 @@ public class StructureTemplateLoader {
                 Block block = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(blockLocation);
                 palette.add(block.defaultBlockState());
             } catch (Exception e) {
-                MineWrightMod.LOGGER.warn("Unknown block in structure: {}", blockName);
+                LOGGER.warn("Unknown block in structure: {}", blockName);
                 palette.add(Blocks.AIR.defaultBlockState());
             }
         }
@@ -168,7 +170,7 @@ public class StructureTemplateLoader {
             }
         }
         
-        MineWrightMod.LOGGER.info("Loaded {} blocks from NBT '{}' ({}x{}x{})", blocks.size(), name, width, height, depth);
+        LOGGER.info("Loaded {} blocks from NBT '{}' ({}x{}x{})", blocks.size(), name, width, height, depth);
         return new LoadedTemplate(name, blocks, width, height, depth);
     }
     

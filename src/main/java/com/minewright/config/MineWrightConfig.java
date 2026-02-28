@@ -1,6 +1,7 @@
 package com.minewright.config;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.exception.ConfigException;
 import net.minecraftforge.common.ForgeConfigSpec;
 
@@ -54,6 +55,7 @@ import java.util.List;
  * @since 1.0.0
  */
 public class MineWrightConfig {
+    private static final Logger LOGGER = TestLogger.getLogger(MineWrightConfig.class);
     // Valid AI providers
     private static final List<String> VALID_PROVIDERS = Arrays.asList("groq", "openai", "gemini");
     private static final List<String> VALID_VOICE_MODES = Arrays.asList("disabled", "logging", "real");
@@ -345,6 +347,226 @@ public class MineWrightConfig {
      */
     public static final ForgeConfigSpec.BooleanValue HIVEMIND_FALLBACK_TO_LOCAL;
 
+    // ------------------------------------------------------------------------
+    // Skill Library Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable skill library for learning and storing successful action patterns.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code skill_library.enabled}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.BooleanValue SKILL_LIBRARY_ENABLED;
+
+    /**
+     * Maximum number of skills to store in the library.
+     * <p><b>Range:</b> 10 to 1000</p>
+     * <p><b>Default:</b> 100</p>
+     * <p><b>Config key:</b> {@code skill_library.max_skills}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.IntValue MAX_SKILLS_STORED;
+
+    /**
+     * Success threshold for considering a skill as learned.
+     * <p><b>Range:</b> 0.0 to 1.0</p>
+     * <p><b>Default:</b> 0.7</p>
+     * <p><b>Config key:</b> {@code skill_library.success_threshold}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.DoubleValue SKILL_SUCCESS_THRESHOLD;
+
+    // ------------------------------------------------------------------------
+    // Cascade Router Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable cascade router for intelligent LLM selection.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code cascade_router.enabled}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.BooleanValue CASCADE_ROUTER_ENABLED;
+
+    /**
+     * Semantic similarity threshold for cascade routing decisions.
+     * <p><b>Range:</b> 0.0 to 1.0</p>
+     * <p><b>Default:</b> 0.85</p>
+     * <p><b>Config key:</b> {@code cascade_router.similarity_threshold}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.DoubleValue SEMANTIC_SIMILARITY_THRESHOLD;
+
+    /**
+     * Use local LLM for cascade router fallback.
+     * <p><b>Default:</b> {@code false}</p>
+     * <p><b>Config key:</b> {@code cascade_router.use_local_llm}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.BooleanValue USE_LOCAL_LLM;
+
+    // ------------------------------------------------------------------------
+    // Utility AI Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable utility AI for decision-making.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code utility_ai.enabled}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.BooleanValue UTILITY_AI_ENABLED;
+
+    /**
+     * Weight for urgency in utility calculations.
+     * <p><b>Range:</b> 0.0 to 2.0</p>
+     * <p><b>Default:</b> 1.0</p>
+     * <p><b>Config key:</b> {@code utility_ai.urgency_weight}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.DoubleValue URGENCY_WEIGHT;
+
+    /**
+     * Weight for proximity in utility calculations.
+     * <p><b>Range:</b> 0.0 to 2.0</p>
+     * <p><b>Default:</b> 0.8</p>
+     * <p><b>Config key:</b> {@code utility_ai.proximity_weight}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.DoubleValue PROXIMITY_WEIGHT;
+
+    /**
+     * Weight for safety in utility calculations.
+     * <p><b>Range:</b> 0.0 to 2.0</p>
+     * <p><b>Default:</b> 1.2</p>
+     * <p><b>Config key:</b> {@code utility_ai.safety_weight}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.DoubleValue SAFETY_WEIGHT;
+
+    // ------------------------------------------------------------------------
+    // Multi-Agent Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable multi-agent coordination features.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code multi_agent.enabled}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.BooleanValue MULTI_AGENT_ENABLED;
+
+    /**
+     * Maximum time to wait for agent bids in milliseconds.
+     * <p><b>Range:</b> 100 to 5000</p>
+     * <p><b>Default:</b> 1000</p>
+     * <p><b>Config key:</b> {@code multi_agent.max_bid_wait_ms}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.IntValue MAX_BID_WAIT_MS;
+
+    /**
+     * Time-to-live for blackboard entries in seconds.
+     * <p><b>Range:</b> 60 to 3600</p>
+     * <p><b>Default:</b> 300</p>
+     * <p><b>Config key:</b> {@code multi_agent.blackboard_ttl_seconds}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.IntValue BLACKBOARD_TTL_SECONDS;
+
+    // ------------------------------------------------------------------------
+    // Pathfinding Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable enhanced pathfinding algorithms.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code pathfinding.enhanced}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.BooleanValue ENHANCED_PATHFINDING;
+
+    /**
+     * Maximum nodes to search in pathfinding algorithms.
+     * <p><b>Range:</b> 1000 to 50000</p>
+     * <p><b>Default:</b> 10000</p>
+     * <p><b>Config key:</b> {@code pathfinding.max_search_nodes}</p>
+     *
+     * @since 2.0.0
+     */
+    public static final ForgeConfigSpec.IntValue MAX_PATH_SEARCH_NODES;
+
+    // ------------------------------------------------------------------------
+    // Semantic Cache Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * Enable semantic caching for LLM responses.
+     * <p>When enabled, caches similar prompts using text similarity matching.</p>
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code semantic_cache.enabled}</p>
+     *
+     * @since 1.6.0
+     */
+    public static final ForgeConfigSpec.BooleanValue SEMANTIC_CACHE_ENABLED;
+
+    /**
+     * Minimum similarity threshold for semantic cache hits.
+     * <p>Prompts with similarity above this threshold are considered matches.</p>
+     * <p><b>Range:</b> 0.5 to 1.0</p>
+     * <p><b>Default:</b> 0.85</p>
+     * <p><b>Config key:</b> {@code semantic_cache.similarity_threshold}</p>
+     *
+     * @since 1.6.0
+     */
+    public static final ForgeConfigSpec.DoubleValue SEMANTIC_CACHE_SIMILARITY_THRESHOLD;
+
+    /**
+     * Maximum number of entries in the semantic cache.
+     * <p><b>Range:</b> 100 to 2000</p>
+     * <p><b>Default:</b> 500</p>
+     * <p><b>Config key:</b> {@code semantic_cache.max_size}</p>
+     *
+     * @since 1.6.0
+     */
+    public static final ForgeConfigSpec.IntValue SEMANTIC_CACHE_MAX_SIZE;
+
+    /**
+     * Time-to-live for semantic cache entries in minutes.
+     * <p>Entries older than this are evicted from the cache.</p>
+     * <p><b>Range:</b> 1 to 60</p>
+     * <p><b>Default:</b> 5</p>
+     * <p><b>Config key:</b> {@code semantic_cache.ttl_minutes}</p>
+     *
+     * @since 1.6.0
+     */
+    public static final ForgeConfigSpec.IntValue SEMANTIC_CACHE_TTL_MINUTES;
+
+    /**
+     * Embedding method to use for semantic similarity.
+     * <p><b>Valid values:</b> {@code tfidf}, {@code ngram}</p>
+     * <p><b>Default:</b> {@code tfidf}</p>
+     * <p><b>Config key:</b> {@code semantic_cache.embedding_method}</p>
+     *
+     * @since 1.6.0
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> SEMANTIC_CACHE_EMBEDDING_METHOD;
+
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
@@ -485,6 +707,162 @@ public class MineWrightConfig {
 
         builder.pop();
 
+        // Skill Library Configuration
+        builder.comment("Skill Library Configuration (Learning and pattern storage)").push("skill_library");
+
+        SKILL_LIBRARY_ENABLED = builder
+            .comment("Enable skill library for learning and storing successful action patterns",
+                     "When enabled, agents learn from successful executions and reuse patterns",
+                     "When disabled, each action is planned from scratch")
+            .define("enabled", true);
+
+        MAX_SKILLS_STORED = builder
+            .comment("Maximum number of skills to store in the library",
+                     "Higher = more learned patterns but more memory usage",
+                     "Recommended: 100 for balanced performance")
+            .defineInRange("max_skills", 100, 10, 1000);
+
+        SKILL_SUCCESS_THRESHOLD = builder
+            .comment("Success threshold for considering a skill as learned (0.0 to 1.0)",
+                     "Skills with success rate above this threshold are stored",
+                     "Higher = fewer but more reliable skills")
+            .defineInRange("success_threshold", 0.7, 0.0, 1.0);
+
+        builder.pop();
+
+        // Cascade Router Configuration
+        builder.comment("Cascade Router Configuration (Intelligent LLM selection)").push("cascade_router");
+
+        CASCADE_ROUTER_ENABLED = builder
+            .comment("Enable cascade router for intelligent LLM selection",
+                     "When enabled, routes tasks to appropriate LLM based on complexity",
+                     "When disabled, always uses primary LLM")
+            .define("enabled", true);
+
+        SEMANTIC_SIMILARITY_THRESHOLD = builder
+            .comment("Semantic similarity threshold for cascade routing decisions (0.0 to 1.0)",
+                     "Tasks with similarity above this threshold use cached/local LLM",
+                     "Higher = more local processing, less API usage")
+            .defineInRange("similarity_threshold", 0.85, 0.0, 1.0);
+
+        USE_LOCAL_LLM = builder
+            .comment("Use local LLM for cascade router fallback",
+                     "When true, falls back to local LLM for similar tasks",
+                     "When false, always uses primary API LLM")
+            .define("use_local_llm", false);
+
+        builder.pop();
+
+        // Utility AI Configuration
+        builder.comment("Utility AI Configuration (Decision-making weights)").push("utility_ai");
+
+        UTILITY_AI_ENABLED = builder
+            .comment("Enable utility AI for decision-making",
+                     "When enabled, uses weighted scoring for action selection",
+                     "When disabled, uses simple priority-based selection")
+            .define("enabled", true);
+
+        URGENCY_WEIGHT = builder
+            .comment("Weight for urgency in utility calculations (0.0 to 2.0)",
+                     "Higher = prioritizes time-sensitive actions more",
+                     "Recommended: 1.0 for balanced behavior")
+            .defineInRange("urgency_weight", 1.0, 0.0, 2.0);
+
+        PROXIMITY_WEIGHT = builder
+            .comment("Weight for proximity in utility calculations (0.0 to 2.0)",
+                     "Higher = prioritizes nearby tasks more",
+                     "Recommended: 0.8 for balanced behavior")
+            .defineInRange("proximity_weight", 0.8, 0.0, 2.0);
+
+        SAFETY_WEIGHT = builder
+            .comment("Weight for safety in utility calculations (0.0 to 2.0)",
+                     "Higher = prioritizes safe actions over risky ones",
+                     "Recommended: 1.2 for safety-focused behavior")
+            .defineInRange("safety_weight", 1.2, 0.0, 2.0);
+
+        builder.pop();
+
+        // Multi-Agent Configuration
+        builder.comment("Multi-Agent Configuration (Coordination features)").push("multi_agent");
+
+        MULTI_AGENT_ENABLED = builder
+            .comment("Enable multi-agent coordination features",
+                     "When enabled, agents can collaborate and coordinate tasks",
+                     "When disabled, each agent operates independently")
+            .define("enabled", true);
+
+        MAX_BID_WAIT_MS = builder
+            .comment("Maximum time to wait for agent bids in milliseconds",
+                     "Lower = faster coordination but may miss capable agents",
+                     "Recommended: 1000 for balanced performance")
+            .defineInRange("max_bid_wait_ms", 1000, 100, 5000);
+
+        BLACKBOARD_TTL_SECONDS = builder
+            .comment("Time-to-live for blackboard entries in seconds",
+                     "Lower = less stale data but more frequent updates",
+                     "Recommended: 300 (5 minutes)")
+            .defineInRange("blackboard_ttl_seconds", 300, 60, 3600);
+
+        builder.pop();
+
+        // Pathfinding Configuration
+        builder.comment("Pathfinding Configuration (Navigation algorithms)").push("pathfinding");
+
+        ENHANCED_PATHFINDING = builder
+            .comment("Enable enhanced pathfinding algorithms",
+                     "When enabled, uses advanced pathfinding with obstacle avoidance",
+                     "When disabled, uses basic pathfinding")
+            .define("enhanced", true);
+
+        MAX_PATH_SEARCH_NODES = builder
+            .comment("Maximum nodes to search in pathfinding algorithms",
+                     "Higher = can find longer paths but uses more CPU",
+                     "Recommended: 10000 for balanced performance")
+            .defineInRange("max_search_nodes", 10000, 1000, 50000);
+
+        builder.pop();
+
+        // Semantic Cache Configuration
+        builder.comment("Semantic Cache Configuration (Intelligent LLM response caching)").push("semantic_cache");
+
+        SEMANTIC_CACHE_ENABLED = builder
+            .comment("Enable semantic caching for LLM responses",
+                     "When enabled, caches similar prompts using text similarity matching",
+                     "Significantly reduces API costs for repetitive command patterns",
+                     "When disabled, only exact-match caching is used")
+            .define("enabled", true);
+
+        SEMANTIC_CACHE_SIMILARITY_THRESHOLD = builder
+            .comment("Minimum similarity threshold for semantic cache hits (0.5 to 1.0)",
+                     "Prompts with similarity above this threshold are considered matches",
+                     "Higher = more strict matching (fewer cache hits)",
+                     "Lower = more permissive matching (may return incorrect responses)",
+                     "Recommended: 0.85 for balanced accuracy and hit rate")
+            .defineInRange("similarity_threshold", 0.85, 0.5, 1.0);
+
+        SEMANTIC_CACHE_MAX_SIZE = builder
+            .comment("Maximum number of entries in the semantic cache",
+                     "Higher = more cache hits but more memory usage",
+                     "Each entry ~2.5KB, so 500 entries ~1.25MB",
+                     "Recommended: 500 for balanced performance")
+            .defineInRange("max_size", 500, 100, 2000);
+
+        SEMANTIC_CACHE_TTL_MINUTES = builder
+            .comment("Time-to-live for semantic cache entries in minutes",
+                     "Entries older than this are evicted from the cache",
+                     "Lower = fresher responses but more cache misses",
+                     "Recommended: 5 minutes for typical command patterns")
+            .defineInRange("ttl_minutes", 5, 1, 60);
+
+        SEMANTIC_CACHE_EMBEDDING_METHOD = builder
+            .comment("Embedding method to use for semantic similarity",
+                     "'tfidf' - Term frequency-inverse document frequency (recommended)",
+                     "'ngram' - N-gram based similarity (faster, less accurate)",
+                     "For production use, 'tfidf' is recommended")
+            .define("embedding_method", "tfidf");
+
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -503,70 +881,176 @@ public class MineWrightConfig {
      */
     public static boolean validateAndLog() {
         boolean isValid = true;
-        MineWrightMod.LOGGER.info("Validating MineWright configuration...");
+        LOGGER.info("Validating MineWright configuration...");
 
         // Validate AI provider
         String provider = AI_PROVIDER.get();
         if (provider == null || provider.trim().isEmpty()) {
-            MineWrightMod.LOGGER.warn("AI provider is not set! Defaulting to 'groq'.");
+            LOGGER.warn("AI provider is not set! Defaulting to 'groq'.");
             isValid = false;
         } else if (!VALID_PROVIDERS.contains(provider.toLowerCase())) {
-            MineWrightMod.LOGGER.warn("Invalid AI provider '{}'. Valid options: {}. Defaulting to 'groq'.",
+            LOGGER.warn("Invalid AI provider '{}'. Valid options: {}. Defaulting to 'groq'.",
                 provider, VALID_PROVIDERS);
             isValid = false;
         } else {
-            MineWrightMod.LOGGER.info("AI provider: {}", provider);
+            LOGGER.info("AI provider: {}", provider);
         }
 
         // Validate API key
         String apiKey = OPENAI_API_KEY.get();
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            MineWrightMod.LOGGER.error("API key is not configured! AI features will not work.");
-            MineWrightMod.LOGGER.error("Please set 'apiKey' in [openai] section of config/minewright-common.toml");
+            LOGGER.error("API key is not configured! AI features will not work.");
+            LOGGER.error("Please set 'apiKey' in [openai] section of config/minewright-common.toml");
             isValid = false;
         } else {
             // Log first few chars to confirm it's set without leaking the full key
             String preview = apiKey.length() > 8
                 ? apiKey.substring(0, 4) + "..." + apiKey.substring(apiKey.length() - 4)
                 : "****";
-            MineWrightMod.LOGGER.info("API key configured: {}", preview);
+            LOGGER.info("API key configured: {}", preview);
         }
 
         // Validate voice mode
         String voiceMode = VOICE_MODE.get();
         if (voiceMode != null && !VALID_VOICE_MODES.contains(voiceMode.toLowerCase())) {
-            MineWrightMod.LOGGER.warn("Invalid voice mode '{}'. Valid options: {}. Defaulting to 'disabled'.",
+            LOGGER.warn("Invalid voice mode '{}'. Valid options: {}. Defaulting to 'disabled'.",
                 voiceMode, VALID_VOICE_MODES);
             isValid = false;
         }
 
         // Log voice status
         if (VOICE_ENABLED.get()) {
-            MineWrightMod.LOGGER.info("Voice system: enabled (mode: {})", VOICE_MODE.get());
+            LOGGER.info("Voice system: enabled (mode: {})", VOICE_MODE.get());
         } else {
-            MineWrightMod.LOGGER.info("Voice system: disabled");
+            LOGGER.info("Voice system: disabled");
         }
 
         // Log other important settings
-        MineWrightMod.LOGGER.info("Max active crew members: {}", MAX_ACTIVE_CREW_MEMBERS.get());
-        MineWrightMod.LOGGER.info("Action tick delay: {} ticks ({} seconds)",
+        LOGGER.info("Max active crew members: {}", MAX_ACTIVE_CREW_MEMBERS.get());
+        LOGGER.info("Action tick delay: {} ticks ({} seconds)",
             ACTION_TICK_DELAY.get(), ACTION_TICK_DELAY.get() / 20.0);
-        MineWrightMod.LOGGER.info("Chat responses: {}", ENABLE_CHAT_RESPONSES.get() ? "enabled" : "disabled");
+        LOGGER.info("Chat responses: {}", ENABLE_CHAT_RESPONSES.get() ? "enabled" : "disabled");
 
         // Log Hive Mind status
         if (HIVEMIND_ENABLED.get()) {
-            MineWrightMod.LOGGER.info("Hive Mind: enabled (URL: {})", HIVEMIND_WORKER_URL.get());
+            LOGGER.info("Hive Mind: enabled (URL: {})", HIVEMIND_WORKER_URL.get());
         } else {
-            MineWrightMod.LOGGER.info("Hive Mind: disabled");
+            LOGGER.info("Hive Mind: disabled");
         }
 
+        // Validate and log new feature configurations
+        validateNewFeatures();
+
         if (isValid) {
-            MineWrightMod.LOGGER.info("MineWright configuration validated successfully.");
+            LOGGER.info("MineWright configuration validated successfully.");
         } else {
-            MineWrightMod.LOGGER.warn("MineWright configuration has issues. Please check config/minewright-common.toml");
+            LOGGER.warn("MineWright configuration has issues. Please check config/minewright-common.toml");
         }
 
         return isValid;
+    }
+
+    /**
+     * Validates new feature configurations.
+     *
+     * <p>This method validates:
+     * <ul>
+     *   <li>Skill Library thresholds and limits</li>
+     *   <li>Cascade Router similarity thresholds</li>
+     *   <li>Utility AI weight sums</li>
+     *   <li>Multi-Agent timeout values</li>
+     *   <li>Pathfinding node limits</li>
+     * </ul>
+     *
+     * @since 2.0.0
+     */
+    private static void validateNewFeatures() {
+        LOGGER.debug("Validating new feature configurations...");
+
+        // Validate Skill Library
+        if (SKILL_LIBRARY_ENABLED.get()) {
+            double threshold = SKILL_SUCCESS_THRESHOLD.get();
+            if (threshold < 0.0 || threshold > 1.0) {
+                LOGGER.warn("Skill Library success threshold out of range: {}. Should be 0.0-1.0", threshold);
+            }
+            int maxSkills = MAX_SKILLS_STORED.get();
+            if (maxSkills < 10 || maxSkills > 1000) {
+                LOGGER.warn("Max skills stored out of range: {}. Should be 10-1000", maxSkills);
+            }
+            LOGGER.info("Skill Library: enabled (threshold: {}, max skills: {})", threshold, maxSkills);
+        } else {
+            LOGGER.info("Skill Library: disabled");
+        }
+
+        // Validate Cascade Router
+        if (CASCADE_ROUTER_ENABLED.get()) {
+            double similarity = SEMANTIC_SIMILARITY_THRESHOLD.get();
+            if (similarity < 0.0 || similarity > 1.0) {
+                LOGGER.warn("Semantic similarity threshold out of range: {}. Should be 0.0-1.0", similarity);
+            }
+            LOGGER.info("Cascade Router: enabled (similarity: {}, use_local_llm: {})",
+                similarity, USE_LOCAL_LLM.get());
+        } else {
+            LOGGER.info("Cascade Router: disabled");
+        }
+
+        // Validate Utility AI
+        if (UTILITY_AI_ENABLED.get()) {
+            double urgency = URGENCY_WEIGHT.get();
+            double proximity = PROXIMITY_WEIGHT.get();
+            double safety = SAFETY_WEIGHT.get();
+            double totalWeight = urgency + proximity + safety;
+
+            if (urgency < 0.0 || urgency > 2.0) {
+                LOGGER.warn("Urgency weight out of range: {}. Should be 0.0-2.0", urgency);
+            }
+            if (proximity < 0.0 || proximity > 2.0) {
+                LOGGER.warn("Proximity weight out of range: {}. Should be 0.0-2.0", proximity);
+            }
+            if (safety < 0.0 || safety > 2.0) {
+                LOGGER.warn("Safety weight out of range: {}. Should be 0.0-2.0", safety);
+            }
+
+            LOGGER.info("Utility AI: enabled (urgency: {}, proximity: {}, safety: {}, total: {})",
+                urgency, proximity, safety, totalWeight);
+
+            if (totalWeight > 5.0) {
+                LOGGER.warn("Utility AI weights sum to {}, which is high. Consider balancing weights.", totalWeight);
+            }
+        } else {
+            LOGGER.info("Utility AI: disabled");
+        }
+
+        // Validate Multi-Agent
+        if (MULTI_AGENT_ENABLED.get()) {
+            int maxBidWait = MAX_BID_WAIT_MS.get();
+            int ttl = BLACKBOARD_TTL_SECONDS.get();
+
+            if (maxBidWait < 100 || maxBidWait > 5000) {
+                LOGGER.warn("Max bid wait out of range: {}. Should be 100-5000ms", maxBidWait);
+            }
+            if (ttl < 60 || ttl > 3600) {
+                LOGGER.warn("Blackboard TTL out of range: {}. Should be 60-3600 seconds", ttl);
+            }
+
+            LOGGER.info("Multi-Agent: enabled (max_bid_wait: {}ms, blackboard_ttl: {}s)",
+                maxBidWait, ttl);
+        } else {
+            LOGGER.info("Multi-Agent: disabled");
+        }
+
+        // Validate Pathfinding
+        if (ENHANCED_PATHFINDING.get()) {
+            int maxNodes = MAX_PATH_SEARCH_NODES.get();
+            if (maxNodes < 1000 || maxNodes > 50000) {
+                LOGGER.warn("Max path search nodes out of range: {}. Should be 1000-50000", maxNodes);
+            }
+            LOGGER.info("Pathfinding: enhanced (max_search_nodes: {})", maxNodes);
+        } else {
+            LOGGER.info("Pathfinding: basic");
+        }
+
+        LOGGER.debug("New feature configuration validation completed");
     }
 
     /**
@@ -579,7 +1063,7 @@ public class MineWrightConfig {
      * @since 1.5.0
      */
     public static void validateOrThrow() throws ConfigException {
-        MineWrightMod.LOGGER.debug("Performing strict configuration validation...");
+        LOGGER.debug("Performing strict configuration validation...");
 
         // Validate API key (critical)
         String apiKey = OPENAI_API_KEY.get();
@@ -590,7 +1074,7 @@ public class MineWrightConfig {
         // Validate AI provider
         String provider = AI_PROVIDER.get();
         if (provider == null || provider.trim().isEmpty()) {
-            MineWrightMod.LOGGER.warn("AI provider is empty, will use 'groq' as fallback");
+            LOGGER.warn("AI provider is empty, will use 'groq' as fallback");
         } else if (!VALID_PROVIDERS.contains(provider.toLowerCase())) {
             throw ConfigException.invalidValue("provider", provider,
                 String.join(", ", VALID_PROVIDERS), "ai");
@@ -609,7 +1093,44 @@ public class MineWrightConfig {
             }
         }
 
-        MineWrightMod.LOGGER.debug("Configuration validation passed");
+        // Validate thresholds are 0-1
+        if (SKILL_LIBRARY_ENABLED.get()) {
+            double threshold = SKILL_SUCCESS_THRESHOLD.get();
+            if (threshold < 0.0 || threshold > 1.0) {
+                throw ConfigException.validationFailed("skill_library.success_threshold",
+                    "Threshold must be between 0.0 and 1.0, got: " + threshold);
+            }
+        }
+
+        if (CASCADE_ROUTER_ENABLED.get()) {
+            double similarity = SEMANTIC_SIMILARITY_THRESHOLD.get();
+            if (similarity < 0.0 || similarity > 1.0) {
+                throw ConfigException.validationFailed("cascade_router.similarity_threshold",
+                    "Similarity must be between 0.0 and 1.0, got: " + similarity);
+            }
+        }
+
+        // Validate utility AI weights are reasonable
+        if (UTILITY_AI_ENABLED.get()) {
+            double urgency = URGENCY_WEIGHT.get();
+            double proximity = PROXIMITY_WEIGHT.get();
+            double safety = SAFETY_WEIGHT.get();
+
+            if (urgency < 0.0 || urgency > 2.0) {
+                throw ConfigException.validationFailed("utility_ai.urgency_weight",
+                    "Weight must be between 0.0 and 2.0, got: " + urgency);
+            }
+            if (proximity < 0.0 || proximity > 2.0) {
+                throw ConfigException.validationFailed("utility_ai.proximity_weight",
+                    "Weight must be between 0.0 and 2.0, got: " + proximity);
+            }
+            if (safety < 0.0 || safety > 2.0) {
+                throw ConfigException.validationFailed("utility_ai.safety_weight",
+                    "Weight must be between 0.0 and 2.0, got: " + safety);
+            }
+        }
+
+        LOGGER.debug("Configuration validation passed");
     }
 
     /**
@@ -620,12 +1141,12 @@ public class MineWrightConfig {
     public static String getValidatedProvider() {
         String provider = AI_PROVIDER.get();
         if (provider == null || provider.trim().isEmpty()) {
-            MineWrightMod.LOGGER.warn("AI provider not configured, using 'groq' as default");
+            LOGGER.warn("AI provider not configured, using 'groq' as default");
             return "groq";
         }
         String lowerProvider = provider.toLowerCase();
         if (!VALID_PROVIDERS.contains(lowerProvider)) {
-            MineWrightMod.LOGGER.warn("Unknown AI provider '{}', using 'groq' as default", provider);
+            LOGGER.warn("Unknown AI provider '{}', using 'groq' as default", provider);
             return "groq";
         }
         return lowerProvider;
@@ -673,7 +1194,8 @@ public class MineWrightConfig {
     public static String getConfigSummary() {
         return String.format(
             "MineWrightConfig[provider=%s, model=%s, maxTokens=%d, temperature=%.2f, " +
-            "actionTickDelay=%d, maxCrew=%d, voice=%s, hivemind=%s]",
+            "actionTickDelay=%d, maxCrew=%d, voice=%s, hivemind=%s, " +
+            "skillLibrary=%s, cascadeRouter=%s, utilityAI=%s, multiAgent=%s, pathfinding=%s]",
             getValidatedProvider(),
             OPENAI_MODEL.get(),
             MAX_TOKENS.get(),
@@ -681,7 +1203,12 @@ public class MineWrightConfig {
             ACTION_TICK_DELAY.get(),
             MAX_ACTIVE_CREW_MEMBERS.get(),
             VOICE_ENABLED.get() ? "enabled(" + VOICE_MODE.get() + ")" : "disabled",
-            HIVEMIND_ENABLED.get() ? "enabled" : "disabled"
+            HIVEMIND_ENABLED.get() ? "enabled" : "disabled",
+            SKILL_LIBRARY_ENABLED.get() ? "enabled" : "disabled",
+            CASCADE_ROUTER_ENABLED.get() ? "enabled" : "disabled",
+            UTILITY_AI_ENABLED.get() ? "enabled" : "disabled",
+            MULTI_AGENT_ENABLED.get() ? "enabled" : "disabled",
+            ENHANCED_PATHFINDING.get() ? "enhanced" : "basic"
         );
     }
 }

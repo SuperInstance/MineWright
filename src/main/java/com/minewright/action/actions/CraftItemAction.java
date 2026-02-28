@@ -1,11 +1,13 @@
 package com.minewright.action.actions;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.action.ActionResult;
 import com.minewright.action.Task;
 import com.minewright.entity.ForemanEntity;
 
 public class CraftItemAction extends BaseAction {
+    private static final Logger LOGGER = TestLogger.getLogger(CraftItemAction.class);
     private String itemName;
     private int quantity;
     private int ticksRunning;
@@ -35,13 +37,13 @@ public class CraftItemAction extends BaseAction {
 
         ticksRunning = 0;
 
-        MineWrightMod.LOGGER.info("[{}] Craft action started: {}x {}", foreman.getEntityName(), quantity, itemName);
+        LOGGER.info("[{}] Craft action started: {}x {}", foreman.getEntityName(), quantity, itemName);
 
         // - Check if recipe exists
         // - Check if Foreman has ingredients
         // - Navigate to crafting table if needed
 
-        MineWrightMod.LOGGER.warn("[{}] Crafting not yet implemented for item: {}", foreman.getEntityName(), itemName);
+        LOGGER.warn("[{}] Crafting not yet implemented for item: {}", foreman.getEntityName(), itemName);
         result = ActionResult.failure("Crafting not yet implemented", false);
     }
 
@@ -53,7 +55,7 @@ public class CraftItemAction extends BaseAction {
     @Override
     protected void onCancel() {
         if (foreman != null) {
-            MineWrightMod.LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getEntityName(), quantity, itemName);
+            LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getEntityName(), quantity, itemName);
             if (foreman.getNavigation() != null) {
                 foreman.getNavigation().stop();
             }

@@ -3,7 +3,8 @@ package com.minewright.llm;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.config.MineWrightConfig;
 import com.minewright.exception.LLMClientException;
 
@@ -27,6 +28,7 @@ import java.time.Duration;
  * </ul>
  */
 public class GeminiClient {
+    private static final Logger LOGGER = TestLogger.getLogger(GeminiClient.class);
     private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
     private static final int MAX_RETRIES = 3;
     private static final int INITIAL_RETRY_DELAY_MS = 1000;
@@ -98,7 +100,7 @@ public class GeminiClient {
 
                 // Calculate delay with exponential backoff
                 int delayMs = INITIAL_RETRY_DELAY_MS * (1 << attempt);
-                MineWrightMod.LOGGER.warn("[{}] Request failed (attempt {}/{}), retrying in {}ms: {}",
+                LOGGER.warn("[{}] Request failed (attempt {}/{}), retrying in {}ms: {}",
                     PROVIDER_NAME, attempt + 1, MAX_RETRIES, delayMs, lastException.getMessage());
                 Thread.sleep(delayMs);
 
@@ -113,7 +115,7 @@ public class GeminiClient {
                     throw lastException;
                 }
                 int delayMs = INITIAL_RETRY_DELAY_MS * (1 << attempt);
-                MineWrightMod.LOGGER.warn("[{}] Network error (attempt {}/{}), retrying in {}ms: {}",
+                LOGGER.warn("[{}] Network error (attempt {}/{}), retrying in {}ms: {}",
                     PROVIDER_NAME, attempt + 1, MAX_RETRIES, delayMs, e.getMessage());
                 try {
                     Thread.sleep(delayMs);
@@ -168,7 +170,7 @@ public class GeminiClient {
                 if (firstCandidate.has("finishReason")) {
                     String finishReason = firstCandidate.get("finishReason").getAsString();
                     if ("MAX_TOKENS".equals(finishReason)) {
-                        MineWrightMod.LOGGER.warn("[{}] Response was cut off due to MAX_TOKENS limit",
+                        LOGGER.warn("[{}] Response was cut off due to MAX_TOKENS limit",
                             PROVIDER_NAME);
                     }
                 }

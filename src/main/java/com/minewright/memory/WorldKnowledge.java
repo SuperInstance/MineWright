@@ -29,6 +29,10 @@ public class WorldKnowledge {
     private List<Entity> nearbyEntities;
     private String biomeName;
 
+    // Reusable collections to reduce per-tick allocations (Phase 2 optimization)
+    private final Map<Block, Integer> reusableBlocksMap = new HashMap<>();
+    private final List<Entity> reusableEntitiesList = new ArrayList<>();
+
     // Priority lists for filtering relevant info
     private static final List<String> VALUABLE_BLOCKS = List.of(
         "diamond_ore", "deepslate_diamond_ore", "iron_ore", "deepslate_iron_ore",
@@ -167,9 +171,11 @@ public class WorldKnowledge {
     }
 
     private void scanBlocks() {
-        nearbyBlocks = new HashMap<>();
+        // Phase 2 optimization: Reuse HashMap instead of creating new one each scan
+        reusableBlocksMap.clear();
 
         if (minewright == null || minewright.level() == null) {
+            nearbyBlocks = reusableBlocksMap;
             return;
         }
 
@@ -184,17 +190,21 @@ public class WorldKnowledge {
                     Block block = state.getBlock();
 
                     if (block != Blocks.AIR && block != Blocks.CAVE_AIR && block != Blocks.VOID_AIR) {
-                        nearbyBlocks.put(block, nearbyBlocks.getOrDefault(block, 0) + 1);
+                        reusableBlocksMap.put(block, reusableBlocksMap.getOrDefault(block, 0) + 1);
                     }
                 }
             }
         }
+
+        nearbyBlocks = reusableBlocksMap;
     }
 
     private void scanEntities() {
-        nearbyEntities = new ArrayList<>();
+        // Phase 2 optimization: Reuse ArrayList instead of creating new one each scan
+        reusableEntitiesList.clear();
 
         if (minewright == null || minewright.level() == null || minewright.getBoundingBox() == null) {
+            nearbyEntities = reusableEntitiesList;
             return;
         }
 
@@ -202,9 +212,11 @@ public class WorldKnowledge {
         AABB searchBox = minewright.getBoundingBox().inflate(scanRadius);
         List<Entity> entities = level.getEntities(minewright, searchBox);
 
-        if (entities != null) {
-            nearbyEntities = entities;
+        if (entities != null && !entities.isEmpty()) {
+            reusableEntitiesList.addAll(entities);
         }
+
+        nearbyEntities = reusableEntitiesList;
     }
 
     public String getBiomeName() {

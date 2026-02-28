@@ -1,6 +1,6 @@
 package com.minewright.config;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
 import com.minewright.exception.ConfigException;
 import com.minewright.exception.MineWrightException.ErrorCode;
 import org.slf4j.Logger;
@@ -31,8 +31,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @since 1.5.0
  */
 public class ConfigManager {
+    private static final Logger LOGGER = TestLogger.getLogger(ConfigManager.class);
 
-    private static final Logger LOGGER = MineWrightMod.LOGGER;
     private static ConfigManager instance;
 
     private final List<ConfigChangeListener> listeners;

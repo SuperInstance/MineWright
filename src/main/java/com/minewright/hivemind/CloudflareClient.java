@@ -1,8 +1,9 @@
 package com.minewright.hivemind;
 
 import com.google.gson.*;
-import com.minewright.MineWrightMod;
 import com.minewright.config.MineWrightConfig;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -28,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
  * @since 1.2.0
  */
 public class CloudflareClient {
+    private static final Logger LOGGER = TestLogger.getLogger(CloudflareClient.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final HttpClient httpClient;
@@ -43,9 +45,9 @@ public class CloudflareClient {
             .build();
 
         if (enabled) {
-            MineWrightMod.LOGGER.info("CloudflareClient initialized with worker: {}", workerUrl);
+            LOGGER.info("CloudflareClient initialized with worker: {}", workerUrl);
         } else {
-            MineWrightMod.LOGGER.info("CloudflareClient disabled (Hive Mind not enabled in config)");
+            LOGGER.info("CloudflareClient disabled (Hive Mind not enabled in config)");
         }
     }
 
@@ -77,7 +79,7 @@ public class CloudflareClient {
         return sendAsync(url, request, MineWrightConfig.HIVEMIND_TACTICAL_TIMEOUT.get())
             .thenApply(this::parseTacticalDecision)
             .exceptionally(e -> {
-                MineWrightMod.LOGGER.debug("Tactical decision failed, using fallback: {}", e.getMessage());
+                LOGGER.debug("Tactical decision failed, using fallback: {}", e.getMessage());
                 return TacticalDecision.fallback(e.getMessage());
             });
     }
@@ -121,7 +123,7 @@ public class CloudflareClient {
         return getAsync(url, MineWrightConfig.HIVEMIND_SYNC_TIMEOUT.get())
             .thenApply(this::parseMissionData)
             .exceptionally(e -> {
-                MineWrightMod.LOGGER.debug("Failed to get mission: {}", e.getMessage());
+                LOGGER.debug("Failed to get mission: {}", e.getMessage());
                 return null;
             });
     }
@@ -147,7 +149,7 @@ public class CloudflareClient {
 
         sendAsync(url, payload, MineWrightConfig.HIVEMIND_SYNC_TIMEOUT.get())
             .exceptionally(e -> {
-                MineWrightMod.LOGGER.debug("Failed to report mission complete: {}", e.getMessage());
+                LOGGER.debug("Failed to report mission complete: {}", e.getMessage());
                 return null;
             });
     }
@@ -220,7 +222,7 @@ public class CloudflareClient {
 
             return new TacticalDecision(action, priority, reasoning, latency);
         } catch (Exception e) {
-            MineWrightMod.LOGGER.warn("Failed to parse tactical decision: {}", e.getMessage());
+            LOGGER.warn("Failed to parse tactical decision: {}", e.getMessage());
             return TacticalDecision.fallback("Parse error: " + e.getMessage());
         }
     }
@@ -259,7 +261,7 @@ public class CloudflareClient {
 
             return new MissionData(id, type, description, payload);
         } catch (Exception e) {
-            MineWrightMod.LOGGER.debug("Failed to parse mission data: {}", e.getMessage());
+            LOGGER.debug("Failed to parse mission data: {}", e.getMessage());
             return null;
         }
     }

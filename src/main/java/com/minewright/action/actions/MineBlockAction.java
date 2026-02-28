@@ -1,6 +1,7 @@
 package com.minewright.action.actions;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.action.ActionResult;
 import com.minewright.action.Task;
 import com.minewright.entity.ForemanEntity;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MineBlockAction extends BaseAction {
+    private static final Logger LOGGER = TestLogger.getLogger(MineBlockAction.class);
     private Block targetBlock;
     private int targetQuantity;
     private int minedCount;
@@ -114,7 +116,7 @@ public class MineBlockAction extends BaseAction {
             
             String[] dirNames = {"North", "East", "South", "West"};
             int dirIndex = miningDirectionZ == -1 ? 0 : (miningDirectionX == 1 ? 1 : (miningDirectionZ == 1 ? 2 : 3));
-            MineWrightMod.LOGGER.info("Foreman '{}' mining {} in ONE direction: {}",
+            LOGGER.info("Foreman '{}' mining {} in ONE direction: {}",
                 foreman.getEntityName(), targetBlock.getName().getString(), dirNames[dirIndex]);
         } else {
             miningStartPos = foreman.blockPosition();
@@ -127,7 +129,7 @@ public class MineBlockAction extends BaseAction {
         
         equipIronPickaxe();
         
-        MineWrightMod.LOGGER.info("Foreman '{}' mining {} - staying at {} [SLOW & VISIBLE]",
+        LOGGER.info("Foreman '{}' mining {} - staying at {} [SLOW & VISIBLE]",
             foreman.getEntityName(), targetBlock.getName().getString(), miningStartPos);
         
         // Look for ore nearby
@@ -182,7 +184,7 @@ public class MineBlockAction extends BaseAction {
             minedCount++;
             ticksSinceLastMine = 0; // Reset delay timer
             
-            MineWrightMod.LOGGER.info("Foreman '{}' moved to ore and mined {} at {} - Total: {}/{}",
+            LOGGER.info("Foreman '{}' moved to ore and mined {} at {} - Total: {}/{}",
                 foreman.getEntityName(), targetBlock.getName().getString(), currentTarget,
                 minedCount, targetQuantity);
             
@@ -223,7 +225,7 @@ public class MineBlockAction extends BaseAction {
             
             if (torchPos != null && foreman.level().getBlockState(torchPos).isAir()) {
                 foreman.level().setBlock(torchPos, Blocks.TORCH.defaultBlockState(), 3);
-                MineWrightMod.LOGGER.info("Foreman '{}' placed torch at {} (light level was {})",
+                LOGGER.info("Foreman '{}' placed torch at {} (light level was {})",
                     foreman.getEntityName(), torchPos, lightLevel);
                 
                 foreman.swing(InteractionHand.MAIN_HAND, true);
@@ -269,7 +271,7 @@ public class MineBlockAction extends BaseAction {
             foreman.teleportTo(centerPos.getX() + 0.5, centerPos.getY(), centerPos.getZ() + 0.5);
             foreman.swing(InteractionHand.MAIN_HAND, true);
             foreman.level().destroyBlock(centerPos, true);
-            MineWrightMod.LOGGER.info("Foreman '{}' mining tunnel at {}", foreman.getEntityName(), centerPos);
+            LOGGER.info("Foreman '{}' mining tunnel at {}", foreman.getEntityName(), centerPos);
         }
         
         BlockState aboveState = foreman.level().getBlockState(abovePos);
@@ -313,7 +315,7 @@ public class MineBlockAction extends BaseAction {
                 .orElse(null);
             
             if (currentTarget != null) {
-                MineWrightMod.LOGGER.info("Foreman '{}' found {} ahead in tunnel at {}",
+                LOGGER.info("Foreman '{}' found {} ahead in tunnel at {}",
                     foreman.getEntityName(), targetBlock.getName().getString(), currentTarget);
             }
         }
@@ -328,7 +330,7 @@ public class MineBlockAction extends BaseAction {
             net.minecraft.world.item.Items.IRON_PICKAXE
         );
         foreman.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, pickaxe);
-        MineWrightMod.LOGGER.info("Foreman '{}' equipped iron pickaxe for mining", foreman.getEntityName());
+        LOGGER.info("Foreman '{}' equipped iron pickaxe for mining", foreman.getEntityName());
     }
 
     /**

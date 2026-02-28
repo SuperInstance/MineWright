@@ -1,6 +1,7 @@
 package com.minewright.action.actions;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.action.ActionResult;
 import com.minewright.action.CollaborativeBuildManager;
 import com.minewright.action.Task;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuildStructureAction extends BaseAction {
+    private static final Logger LOGGER = TestLogger.getLogger(BuildStructureAction.class);
 
     private String structureType;
     private List<BlockPlacement> buildPlan;
@@ -52,7 +54,7 @@ public class BuildStructureAction extends BaseAction {
 
             foreman.setFlying(true);
 
-            MineWrightMod.LOGGER.info("Foreman '{}' JOINING collaborative build of '{}' ({}% complete) - FLYING & INVULNERABLE ENABLED",
+            LOGGER.info("Foreman '{}' JOINING collaborative build of '{}' ({}% complete) - FLYING & INVULNERABLE ENABLED",
                 foreman.getEntityName(), structureType, collaborativeBuild.getProgressPercentage());
 
             buildMaterials = new ArrayList<>();
@@ -126,7 +128,7 @@ public class BuildStructureAction extends BaseAction {
                 ));
             }
             
-            MineWrightMod.LOGGER.info("Building in player's field of view at {} (looking from {} towards {})",
+            LOGGER.info("Building in player's field of view at {} (looking from {} towards {})",
                 groundPos, eyePos, targetPos);
         } else {
             BlockPos buildPos = foreman.blockPosition().offset(2, 0, 2);
@@ -138,7 +140,7 @@ public class BuildStructureAction extends BaseAction {
             return;
         }
 
-        MineWrightMod.LOGGER.info("Found ground at Y={} (Build starting at {})", groundPos.getY(), groundPos);
+        LOGGER.info("Found ground at Y={} (Build starting at {})", groundPos.getY(), groundPos);
 
         BlockPos clearPos = groundPos;
 
@@ -147,7 +149,7 @@ public class BuildStructureAction extends BaseAction {
         if (buildPlan == null) {
             // Fall back to procedural generation            buildPlan = generateBuildPlan(structureType, clearPos, width, height, depth);
         } else {
-            MineWrightMod.LOGGER.info("Loaded '{}' from NBT template with {} blocks", structureType, buildPlan.size());
+            LOGGER.info("Loaded '{}' from NBT template with {} blocks", structureType, buildPlan.size());
         }
         
         if (buildPlan == null || buildPlan.isEmpty()) {
@@ -161,7 +163,7 @@ public class BuildStructureAction extends BaseAction {
 
         if (collaborativeBuild != null) {
             isCollaborative = true;
-            MineWrightMod.LOGGER.info("Foreman '{}' JOINING existing {} collaborative build at {}",
+            LOGGER.info("Foreman '{}' JOINING existing {} collaborative build at {}",
                 foreman.getEntityName(), structureType, collaborativeBuild.startPos);
         } else {
             List<BlockPlacement> collaborativeBlocks = new ArrayList<>();
@@ -171,13 +173,13 @@ public class BuildStructureAction extends BaseAction {
 
             collaborativeBuild = CollaborativeBuildManager.registerBuild(structureType, collaborativeBlocks, clearPos);
             isCollaborative = true;
-            MineWrightMod.LOGGER.info("Foreman '{}' CREATED new {} collaborative build at {}",
+            LOGGER.info("Foreman '{}' CREATED new {} collaborative build at {}",
                 foreman.getEntityName(), structureType, clearPos);
         }
 
         foreman.setFlying(true);
 
-        MineWrightMod.LOGGER.info("Foreman '{}' starting COLLABORATIVE build of {} at {} with {} blocks using materials: {} [FLYING ENABLED]",
+        LOGGER.info("Foreman '{}' starting COLLABORATIVE build of {} at {} with {} blocks using materials: {} [FLYING ENABLED]",
             foreman.getEntityName(), structureType, clearPos, buildPlan.size(), buildMaterials);
     }
 
@@ -205,7 +207,7 @@ public class BuildStructureAction extends BaseAction {
 
                 if (placement == null) {
                     if (ticksRunning % 20 == 0) {
-                        MineWrightMod.LOGGER.info("Foreman '{}' has no more blocks! Build {}% complete",
+                        LOGGER.info("Foreman '{}' has no more blocks! Build {}% complete",
                             foreman.getEntityName(), collaborativeBuild.getProgressPercentage());
                     }
                     break;
@@ -215,7 +217,7 @@ public class BuildStructureAction extends BaseAction {
                 double distance = Math.sqrt(foreman.blockPosition().distSqr(pos));
                 if (distance > 5) {
                     foreman.teleportTo(pos.getX() + 2, pos.getY(), pos.getZ() + 2);
-                    MineWrightMod.LOGGER.info("Foreman '{}' teleported to block at {}", foreman.getEntityName(), pos);
+                    LOGGER.info("Foreman '{}' teleported to block at {}", foreman.getEntityName(), pos);
                 }
 
                 foreman.getLookControl().setLookAt(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
@@ -227,7 +229,7 @@ public class BuildStructureAction extends BaseAction {
                 BlockState blockState = placement.block.defaultBlockState();
                 foreman.level().setBlock(pos, blockState, 3);
 
-                MineWrightMod.LOGGER.info("Foreman '{}' PLACED BLOCK at {} - Total: {}/{}",
+                LOGGER.info("Foreman '{}' PLACED BLOCK at {} - Total: {}/{}",
                     foreman.getEntityName(), pos, collaborativeBuild.getBlocksPlaced(),
                     collaborativeBuild.getTotalBlocks());
 
@@ -247,7 +249,7 @@ public class BuildStructureAction extends BaseAction {
 
             if (ticksRunning % 100 == 0 && collaborativeBuild.getBlocksPlaced() > 0) {
                 int percentComplete = collaborativeBuild.getProgressPercentage();
-                MineWrightMod.LOGGER.info("{} build progress: {}/{} ({}%) - {} Foremen working",
+                LOGGER.info("{} build progress: {}/{} ({}%) - {} Foremen working",
                     structureType,
                     collaborativeBuild.getBlocksPlaced(),
                     collaborativeBuild.getTotalBlocks(),
@@ -372,13 +374,13 @@ public class BuildStructureAction extends BaseAction {
                 
                 BlockPos groundPos = findGroundLevel(testPos);
                 if (groundPos != null && isAreaSuitable(groundPos, width, height, depth)) {
-                    MineWrightMod.LOGGER.info("Found suitable flat ground at {} ({}m away)", groundPos, radius);
+                    LOGGER.info("Found suitable flat ground at {} ({}m away)", groundPos, radius);
                     return groundPos;
                 }
             }
         }
 
-        MineWrightMod.LOGGER.warn("Could not find suitable flat ground within {}m", maxSearchRadius);
+        LOGGER.warn("Could not find suitable flat ground within {}m", maxSearchRadius);
         return null;
     }
     
@@ -441,7 +443,7 @@ public class BuildStructureAction extends BaseAction {
 
         int heightVariation = maxY - minY;
         if (heightVariation > 2) {
-            MineWrightMod.LOGGER.debug("Area at {} too uneven ({}m height difference)", startPos, heightVariation);
+            LOGGER.debug("Area at {} too uneven ({}m height difference)", startPos, heightVariation);
             return false;
         }
 
@@ -449,7 +451,7 @@ public class BuildStructureAction extends BaseAction {
         boolean suitable = unsuitable < (maxSamples * 0.3);
 
         if (!suitable) {
-            MineWrightMod.LOGGER.debug("Area at {} has too many obstructions ({}/{})", startPos, unsuitable, samples);
+            LOGGER.debug("Area at {} has too many obstructions ({}/{})", startPos, unsuitable, samples);
         }
 
         return suitable;

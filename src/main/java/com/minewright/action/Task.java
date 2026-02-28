@@ -41,6 +41,10 @@ public class Task {
         return defaultValue;
     }
 
+    public boolean hasParameter(String key) {
+        return parameters.containsKey(key);
+    }
+
     public boolean hasParameters(String... keys) {
         for (String key : keys) {
             if (!parameters.containsKey(key)) {
@@ -48,6 +52,25 @@ public class Task {
             }
         }
         return true;
+    }
+
+    public boolean getBooleanParameter(String key, boolean defaultValue) {
+        Object value = parameters.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return defaultValue;
+    }
+
+    public long getLongParameter(String key, long defaultValue) {
+        Object value = parameters.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return defaultValue;
     }
 
     @Override

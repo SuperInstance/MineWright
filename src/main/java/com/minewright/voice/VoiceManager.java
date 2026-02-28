@@ -1,6 +1,6 @@
 package com.minewright.voice;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
 import com.minewright.config.MineWrightConfig;
 import org.slf4j.Logger;
 
@@ -36,8 +36,8 @@ import java.util.concurrent.CompletableFuture;
  * @since 1.2.0
  */
 public class VoiceManager {
+    private static final Logger LOGGER = TestLogger.getLogger(VoiceManager.class);
 
-    private static final Logger LOGGER = MineWrightMod.LOGGER;
     private static VoiceManager instance;
 
     private final VoiceSystem voiceSystem;

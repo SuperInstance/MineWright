@@ -1,6 +1,7 @@
 package com.minewright.action.actions;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.action.ActionResult;
 import com.minewright.action.Task;
 import com.minewright.entity.ForemanEntity;
@@ -28,6 +29,8 @@ import com.minewright.exception.ActionException;
  * Do not block in onTick() - all long-running operations must be async.</p>
  */
 public abstract class BaseAction {
+    private static final Logger LOGGER = TestLogger.getLogger(BaseAction.class);
+
     protected final ForemanEntity foreman;
     protected final Task task;
     protected ActionResult result;
@@ -46,11 +49,11 @@ public abstract class BaseAction {
      */
     public void start() {
         if (started) {
-            MineWrightMod.LOGGER.warn("[{}] Action already started: {}", foreman.getEntityName(), getDescription());
+            LOGGER.warn("[{}] Action already started: {}", foreman.getEntityName(), getDescription());
             return;
         }
         started = true;
-        MineWrightMod.LOGGER.debug("[{}] Starting action: {}", foreman.getEntityName(), getDescription());
+        LOGGER.debug("[{}] Starting action: {}", foreman.getEntityName(), getDescription());
         try {
             onStart();
         } catch (ActionException e) {
@@ -81,16 +84,16 @@ public abstract class BaseAction {
      */
     public void cancel() {
         if (cancelled) {
-            MineWrightMod.LOGGER.debug("[{}] Action already cancelled: {}", foreman.getEntityName(), getDescription());
+            LOGGER.debug("[{}] Action already cancelled: {}", foreman.getEntityName(), getDescription());
             return;
         }
         cancelled = true;
         result = ActionResult.failure("Action cancelled", false);
-        MineWrightMod.LOGGER.info("[{}] Cancelling action: {}", foreman.getEntityName(), getDescription());
+        LOGGER.info("[{}] Cancelling action: {}", foreman.getEntityName(), getDescription());
         try {
             onCancel();
         } catch (Exception e) {
-            MineWrightMod.LOGGER.warn("[{}] Error during action cancellation: {}",
+            LOGGER.warn("[{}] Error during action cancellation: {}",
                 foreman.getEntityName(), getDescription(), e);
         }
     }
@@ -124,7 +127,7 @@ public abstract class BaseAction {
      * @param e The exception to handle
      */
     protected void handleActionException(ActionException e) {
-        MineWrightMod.LOGGER.error("[{}] Action error [{}]: {}",
+        LOGGER.error("[{}] Action error [{}]: {}",
             foreman.getEntityName(), e.getActionType(), e.getMessage());
 
         this.result = ActionResult.fromException(e);
@@ -143,7 +146,7 @@ public abstract class BaseAction {
      * @param phase     The action phase where it occurred
      */
     protected void handleUnexpectedException(Exception e, String phase) {
-        MineWrightMod.LOGGER.error("[{}] Unexpected error during {}: {}",
+        LOGGER.error("[{}] Unexpected error during {}: {}",
             foreman.getEntityName(), phase, e.getMessage(), e);
 
         String actionType = task != null ? task.getAction() : "unknown";
@@ -162,7 +165,7 @@ public abstract class BaseAction {
      * @param reason The cancellation reason
      */
     protected void handleCancellation(String reason) {
-        MineWrightMod.LOGGER.info("[{}] Action cancelled: {}", foreman.getEntityName(), reason);
+        LOGGER.info("[{}] Action cancelled: {}", foreman.getEntityName(), reason);
         this.result = ActionResult.failure(reason, false);
         this.cancelled = true;
     }

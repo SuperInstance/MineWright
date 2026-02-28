@@ -1,6 +1,7 @@
 package com.minewright.memory;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 
@@ -11,6 +12,7 @@ import java.util.List;
  * Tracks all built structures to prevent overlapping builds
  */
 public class StructureRegistry {
+    private static final Logger LOGGER = TestLogger.getLogger(StructureRegistry.class);
     private static final List<BuiltStructure> structures = new ArrayList<>();
     private static final int MIN_SPACING = 5; // Minimum blocks between structures
     
@@ -65,7 +67,7 @@ public class StructureRegistry {
     public static void register(BlockPos pos, int width, int height, int depth, String type) {
         BuiltStructure structure = new BuiltStructure(pos, width, height, depth, type);
         structures.add(structure);
-        MineWrightMod.LOGGER.info("Registered structure '{}' at {} ({}x{}x{})", type, pos, width, height, depth);
+        LOGGER.info("Registered structure '{}' at {} ({}x{}x{})", type, pos, width, height, depth);
     }
     
     /**
@@ -105,7 +107,7 @@ public class StructureRegistry {
                 );
 
                 if (!hasConflict(testPos, width, height, depth)) {
-                    MineWrightMod.LOGGER.info("Found clear position at {} ({}m away)", testPos, radius);
+                    LOGGER.info("Found clear position at {} ({}m away)", testPos, radius);
                     return testPos;
                 }
             }
@@ -116,7 +118,7 @@ public class StructureRegistry {
             originalPos.getY(),
             originalPos.getZ()
         );
-        MineWrightMod.LOGGER.warn("No clear position found, using fallback at {}", fallbackPos);
+        LOGGER.warn("No clear position found, using fallback at {}", fallbackPos);
         return fallbackPos;
     }
     

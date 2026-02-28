@@ -7,9 +7,27 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
+/**
+ * Builds prompts for LLM interactions with performance optimizations.
+ * Phase 2: Caches static system prompt and optimizes StringBuilder usage.
+ */
 public class PromptBuilder {
-    
+
+    // Phase 2 optimization: Cache the system prompt since it never changes
+    private static final String CACHED_SYSTEM_PROMPT = buildSystemPromptInternal();
+
+    /**
+     * Returns the cached system prompt.
+     * Phase 2 optimization: Static prompt is cached to avoid repeated string construction.
+     */
     public static String buildSystemPrompt() {
+        return CACHED_SYSTEM_PROMPT;
+    }
+
+    /**
+     * Internal method to build the system prompt (called once at class initialization).
+     */
+    private static String buildSystemPromptInternal() {
         return """
             You are a Minecraft AI. Respond ONLY with valid JSON.
 
@@ -52,10 +70,15 @@ public class PromptBuilder {
     }
 
     public static String buildUserPrompt(ForemanEntity foreman, String command, WorldKnowledge worldKnowledge) {
-        StringBuilder prompt = new StringBuilder(256); // Pre-allocate for efficiency
+        // Phase 2 optimization: Increased capacity to reduce allocations
+        StringBuilder prompt = new StringBuilder(384);
 
         // Compact situation report - only relevant info
-        prompt.append("POS:").append(formatPosition(foreman.blockPosition()));
+        prompt.append("POS:[");
+
+        // Phase 2 optimization: Inline position formatting to avoid String.format() overhead
+        BlockPos pos = foreman.blockPosition();
+        prompt.append(pos.getX()).append(',').append(pos.getY()).append(',').append(pos.getZ()).append(']');
 
         String players = worldKnowledge.getNearbyPlayerNames();
         if (!"none".equals(players)) {
@@ -78,10 +101,6 @@ public class PromptBuilder {
         return prompt.toString();
     }
 
-    private static String formatPosition(BlockPos pos) {
-        return String.format("[%d,%d,%d]", pos.getX(), pos.getY(), pos.getZ());
-    }
-
     private static String formatInventory(ForemanEntity foreman) {
         return "[empty]";
     }
@@ -96,4 +115,3 @@ public class PromptBuilder {
         return buildUserPrompt(foreman, command, worldKnowledge).length() / 4;
     }
 }
-

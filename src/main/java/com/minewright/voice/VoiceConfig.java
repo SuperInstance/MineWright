@@ -1,6 +1,6 @@
 package com.minewright.voice;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
 import com.minewright.config.ConfigChangeEvent;
 import com.minewright.config.ConfigChangeListener;
 import com.minewright.config.MineWrightConfig;
@@ -19,8 +19,7 @@ import org.slf4j.Logger;
  * @since 1.2.0
  */
 public class VoiceConfig implements ConfigChangeListener {
-
-    private static final Logger LOGGER = MineWrightMod.LOGGER;
+    private static final Logger LOGGER = TestLogger.getLogger(VoiceConfig.class);
 
     private boolean enabled;
     private String mode;

@@ -1,6 +1,7 @@
 package com.minewright.action;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.structure.BlockPlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
@@ -13,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Manages collaborative building where multiple Foremen work on DIFFERENT SECTIONS of the same structure
  */
 public class CollaborativeBuildManager {
+    private static final Logger LOGGER = TestLogger.getLogger(CollaborativeBuildManager.class);
 
     // Reusable comparator for sorting blocks by Y level (bottom-to-top)
     private static final Comparator<BlockPlacement> BOTTOM_TO_TOP_COMPARATOR =
@@ -21,7 +23,7 @@ public class CollaborativeBuildManager {
     public static class CollaborativeBuild {
         public final String structureId;
         public final List<BlockPlacement> buildPlan;
-        private final List<BuildSection> sections;
+        public final List<BuildSection> sections;
         private final Map<String, Integer> foremanToSectionMap;
         private final AtomicInteger nextSectionIndex;
         public final Set<String> participatingForemen;
@@ -36,7 +38,7 @@ public class CollaborativeBuildManager {
             this.nextSectionIndex = new AtomicInteger(0);
             this.sections = divideBuildIntoSections(buildPlan);
 
-            MineWrightMod.LOGGER.info("Divided '{}' into {} sections for collaborative building",
+            LOGGER.info("Divided '{}' into {} sections for collaborative building",
                 structureId, sections.size());
         }
         
@@ -93,7 +95,7 @@ public class CollaborativeBuildManager {
             if (!southWest.isEmpty()) sectionList.add(new BuildSection(2, southWest, "SOUTH-WEST"));
             if (!southEast.isEmpty()) sectionList.add(new BuildSection(3, southEast, "SOUTH-EAST"));
             
-            MineWrightMod.LOGGER.info("Divided structure into {} quadrants (BOTTOM-TO-TOP): NW={}, NE={}, SW={}, SE={} blocks",
+            LOGGER.info("Divided structure into {} quadrants (BOTTOM-TO-TOP): NW={}, NE={}, SW={}, SE={} blocks",
                 sectionList.size(), northWest.size(), northEast.size(), southWest.size(), southEast.size());
 
             return sectionList;
@@ -131,7 +133,7 @@ public class CollaborativeBuildManager {
     public static class BuildSection {
         public final int yLevel; // Used as section ID
         public final String sectionName;
-        private final List<BlockPlacement> blocks;
+        public final List<BlockPlacement> blocks;
         private final AtomicInteger nextBlockIndex;
         
         public BuildSection(int sectionId, List<BlockPlacement> blocks, String sectionName) {
@@ -172,7 +174,7 @@ public class CollaborativeBuildManager {
         CollaborativeBuild build = new CollaborativeBuild(structureId, buildPlan, startPos);
         activeBuilds.put(structureId, build);
 
-        MineWrightMod.LOGGER.info("Registered collaborative build '{}' at {} with {} blocks",
+        LOGGER.info("Registered collaborative build '{}' at {} with {} blocks",
             structureType, startPos, buildPlan.size());
 
         return build;
@@ -217,7 +219,7 @@ public class CollaborativeBuildManager {
 
                 if (!alreadyAssigned) {
                     build.foremanToSectionMap.put(foremanName, i);
-                    MineWrightMod.LOGGER.info("Assigned Foreman '{}' to {} quadrant - will build {} blocks BOTTOM-TO-TOP",
+                    LOGGER.info("Assigned Foreman '{}' to {} quadrant - will build {} blocks BOTTOM-TO-TOP",
                         foremanName, section.sectionName, section.getTotalBlocks());
                     return i;
                 }
@@ -229,7 +231,7 @@ public class CollaborativeBuildManager {
             BuildSection section = build.sections.get(i);
             if (!section.isComplete()) {
                 build.foremanToSectionMap.put(foremanName, i);
-                MineWrightMod.LOGGER.info("Foreman '{}' helping with {} quadrant ({} blocks remaining)",
+                LOGGER.info("Foreman '{}' helping with {} quadrant ({} blocks remaining)",
                     foremanName, section.sectionName, section.getTotalBlocks() - section.getBlocksPlaced());
                 return i;
             }
@@ -252,7 +254,7 @@ public class CollaborativeBuildManager {
     public static void completeBuild(String structureId) {
         CollaborativeBuild build = activeBuilds.remove(structureId);
         if (build != null) {
-            MineWrightMod.LOGGER.info("Collaborative build '{}' completed by {} Foremen",
+            LOGGER.info("Collaborative build '{}' completed by {} Foremen",
                 structureId, build.participatingForemen.size());
         }
     }

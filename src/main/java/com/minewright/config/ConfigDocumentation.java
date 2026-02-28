@@ -380,6 +380,235 @@ public final class ConfigDocumentation {
     }
 
     // ========================================================================
+    // Skill Library Configuration Section
+    // ========================================================================
+
+    /**
+     * Skill Library Configuration
+     */
+    public static final class SKILL_LIBRARY {
+        /** Config section: skill_library */
+        public static final String SECTION = "skill_library";
+
+        /** Configuration keys */
+        public static final String ENABLED_KEY = SECTION + ".enabled";
+        public static final String MAX_SKILLS_KEY = SECTION + ".max_skills";
+        public static final String SUCCESS_THRESHOLD_KEY = SECTION + ".success_threshold";
+
+        /** Default values */
+        public static final boolean ENABLED_DEFAULT = true;
+        public static final int MAX_SKILLS_DEFAULT = 100;
+        public static final double SUCCESS_THRESHOLD_DEFAULT = 0.7;
+
+        /** Value ranges */
+        public static final int MAX_SKILLS_MIN = 10;
+        public static final int MAX_SKILLS_MAX = 1000;
+        public static final double SUCCESS_THRESHOLD_MIN = 0.0;
+        public static final double SUCCESS_THRESHOLD_MAX = 1.0;
+
+        /** Descriptions */
+        public static final String ENABLED_DESCRIPTION = """
+            Enable skill library for learning and storing successful action patterns.
+            When enabled, agents learn from successful executions and reuse patterns.
+            When disabled, each action is planned from scratch.
+            """;
+
+        public static final String MAX_SKILLS_DESCRIPTION = """
+            Maximum number of skills to store in the library.
+            Higher = more learned patterns but more memory usage.
+            Recommended: 100 for balanced performance.
+            """;
+
+        public static final String SUCCESS_THRESHOLD_DESCRIPTION = """
+            Success threshold for considering a skill as learned (0.0 to 1.0).
+            Skills with success rate above this threshold are stored.
+            Higher = fewer but more reliable skills.
+            """;
+    }
+
+    // ========================================================================
+    // Cascade Router Configuration Section
+    // ========================================================================
+
+    /**
+     * Cascade Router Configuration
+     */
+    public static final class CASCADE_ROUTER {
+        /** Config section: cascade_router */
+        public static final String SECTION = "cascade_router";
+
+        /** Configuration keys */
+        public static final String ENABLED_KEY = SECTION + ".enabled";
+        public static final String SIMILARITY_THRESHOLD_KEY = SECTION + ".similarity_threshold";
+        public static final String USE_LOCAL_LLM_KEY = SECTION + ".use_local_llm";
+
+        /** Default values */
+        public static final boolean ENABLED_DEFAULT = true;
+        public static final double SIMILARITY_THRESHOLD_DEFAULT = 0.85;
+        public static final boolean USE_LOCAL_LLM_DEFAULT = false;
+
+        /** Value ranges */
+        public static final double SIMILARITY_THRESHOLD_MIN = 0.0;
+        public static final double SIMILARITY_THRESHOLD_MAX = 1.0;
+
+        /** Descriptions */
+        public static final String ENABLED_DESCRIPTION = """
+            Enable cascade router for intelligent LLM selection.
+            When enabled, routes tasks to appropriate LLM based on complexity.
+            When disabled, always uses primary LLM.
+            """;
+
+        public static final String SIMILARITY_THRESHOLD_DESCRIPTION = """
+            Semantic similarity threshold for cascade routing decisions (0.0 to 1.0).
+            Tasks with similarity above this threshold use cached/local LLM.
+            Higher = more local processing, less API usage.
+            """;
+
+        public static final String USE_LOCAL_LLM_DESCRIPTION = """
+            Use local LLM for cascade router fallback.
+            When true, falls back to local LLM for similar tasks.
+            When false, always uses primary API LLM.
+            """;
+    }
+
+    // ========================================================================
+    // Utility AI Configuration Section
+    // ========================================================================
+
+    /**
+     * Utility AI Configuration
+     */
+    public static final class UTILITY_AI {
+        /** Config section: utility_ai */
+        public static final String SECTION = "utility_ai";
+
+        /** Configuration keys */
+        public static final String ENABLED_KEY = SECTION + ".enabled";
+        public static final String URGENCY_WEIGHT_KEY = SECTION + ".urgency_weight";
+        public static final String PROXIMITY_WEIGHT_KEY = SECTION + ".proximity_weight";
+        public static final String SAFETY_WEIGHT_KEY = SECTION + ".safety_weight";
+
+        /** Default values */
+        public static final boolean ENABLED_DEFAULT = true;
+        public static final double URGENCY_WEIGHT_DEFAULT = 1.0;
+        public static final double PROXIMITY_WEIGHT_DEFAULT = 0.8;
+        public static final double SAFETY_WEIGHT_DEFAULT = 1.2;
+
+        /** Value ranges */
+        public static final double WEIGHT_MIN = 0.0;
+        public static final double WEIGHT_MAX = 2.0;
+
+        /** Descriptions */
+        public static final String ENABLED_DESCRIPTION = """
+            Enable utility AI for decision-making.
+            When enabled, uses weighted scoring for action selection.
+            When disabled, uses simple priority-based selection.
+            """;
+
+        public static final String URGENCY_WEIGHT_DESCRIPTION = """
+            Weight for urgency in utility calculations (0.0 to 2.0).
+            Higher = prioritizes time-sensitive actions more.
+            Recommended: 1.0 for balanced behavior.
+            """;
+
+        public static final String PROXIMITY_WEIGHT_DESCRIPTION = """
+            Weight for proximity in utility calculations (0.0 to 2.0).
+            Higher = prioritizes nearby tasks more.
+            Recommended: 0.8 for balanced behavior.
+            """;
+
+        public static final String SAFETY_WEIGHT_DESCRIPTION = """
+            Weight for safety in utility calculations (0.0 to 2.0).
+            Higher = prioritizes safe actions over risky ones.
+            Recommended: 1.2 for safety-focused behavior.
+            """;
+    }
+
+    // ========================================================================
+    // Multi-Agent Configuration Section
+    // ========================================================================
+
+    /**
+     * Multi-Agent Configuration
+     */
+    public static final class MULTI_AGENT {
+        /** Config section: multi_agent */
+        public static final String SECTION = "multi_agent";
+
+        /** Configuration keys */
+        public static final String ENABLED_KEY = SECTION + ".enabled";
+        public static final String MAX_BID_WAIT_MS_KEY = SECTION + ".max_bid_wait_ms";
+        public static final String BLACKBOARD_TTL_SECONDS_KEY = SECTION + ".blackboard_ttl_seconds";
+
+        /** Default values */
+        public static final boolean ENABLED_DEFAULT = true;
+        public static final int MAX_BID_WAIT_MS_DEFAULT = 1000;
+        public static final int BLACKBOARD_TTL_SECONDS_DEFAULT = 300;
+
+        /** Value ranges */
+        public static final int MAX_BID_WAIT_MS_MIN = 100;
+        public static final int MAX_BID_WAIT_MS_MAX = 5000;
+        public static final int BLACKBOARD_TTL_SECONDS_MIN = 60;
+        public static final int BLACKBOARD_TTL_SECONDS_MAX = 3600;
+
+        /** Descriptions */
+        public static final String ENABLED_DESCRIPTION = """
+            Enable multi-agent coordination features.
+            When enabled, agents can collaborate and coordinate tasks.
+            When disabled, each agent operates independently.
+            """;
+
+        public static final String MAX_BID_WAIT_MS_DESCRIPTION = """
+            Maximum time to wait for agent bids in milliseconds.
+            Lower = faster coordination but may miss capable agents.
+            Recommended: 1000 for balanced performance.
+            """;
+
+        public static final String BLACKBOARD_TTL_SECONDS_DESCRIPTION = """
+            Time-to-live for blackboard entries in seconds.
+            Lower = less stale data but more frequent updates.
+            Recommended: 300 (5 minutes).
+            """;
+    }
+
+    // ========================================================================
+    // Pathfinding Configuration Section
+    // ========================================================================
+
+    /**
+     * Pathfinding Configuration
+     */
+    public static final class PATHFINDING {
+        /** Config section: pathfinding */
+        public static final String SECTION = "pathfinding";
+
+        /** Configuration keys */
+        public static final String ENHANCED_KEY = SECTION + ".enhanced";
+        public static final String MAX_SEARCH_NODES_KEY = SECTION + ".max_search_nodes";
+
+        /** Default values */
+        public static final boolean ENHANCED_DEFAULT = true;
+        public static final int MAX_SEARCH_NODES_DEFAULT = 10000;
+
+        /** Value ranges */
+        public static final int MAX_SEARCH_NODES_MIN = 1000;
+        public static final int MAX_SEARCH_NODES_MAX = 50000;
+
+        /** Descriptions */
+        public static final String ENHANCED_DESCRIPTION = """
+            Enable enhanced pathfinding algorithms.
+            When enabled, uses advanced pathfinding with obstacle avoidance.
+            When disabled, uses basic pathfinding.
+            """;
+
+        public static final String MAX_SEARCH_NODES_DESCRIPTION = """
+            Maximum nodes to search in pathfinding algorithms.
+            Higher = can find longer paths but uses more CPU.
+            Recommended: 10000 for balanced performance.
+            """;
+    }
+
+    // ========================================================================
     // Configuration File Template
     // ========================================================================
 
@@ -539,6 +768,97 @@ public final class ConfigDocumentation {
             # When edge is unavailable, fall back to local decision-making
             # Default: true
             fallbackToLocal = %b
+
+            # ------------------------------------------------------------------------
+            # Skill Library Configuration
+            # ------------------------------------------------------------------------
+            [skill_library]
+            # Enable skill library for learning and storing successful action patterns
+            # When enabled, agents learn from successful executions and reuse patterns
+            # Default: true
+            enabled = %b
+
+            # Maximum number of skills to store in the library
+            # Range: 10 to 1000, Default: 100
+            max_skills = %d
+
+            # Success threshold for considering a skill as learned (0.0 to 1.0)
+            # Skills with success rate above this threshold are stored
+            # Default: 0.7
+            success_threshold = %.1f
+
+            # ------------------------------------------------------------------------
+            # Cascade Router Configuration
+            # ------------------------------------------------------------------------
+            [cascade_router]
+            # Enable cascade router for intelligent LLM selection
+            # When enabled, routes tasks to appropriate LLM based on complexity
+            # Default: true
+            enabled = %b
+
+            # Semantic similarity threshold for cascade routing decisions (0.0 to 1.0)
+            # Tasks with similarity above this threshold use cached/local LLM
+            # Default: 0.85
+            similarity_threshold = %.2f
+
+            # Use local LLM for cascade router fallback
+            # When true, falls back to local LLM for similar tasks
+            # Default: false
+            use_local_llm = %b
+
+            # ------------------------------------------------------------------------
+            # Utility AI Configuration
+            # ------------------------------------------------------------------------
+            [utility_ai]
+            # Enable utility AI for decision-making
+            # When enabled, uses weighted scoring for action selection
+            # Default: true
+            enabled = %b
+
+            # Weight for urgency in utility calculations (0.0 to 2.0)
+            # Higher = prioritizes time-sensitive actions more
+            # Default: 1.0
+            urgency_weight = %.1f
+
+            # Weight for proximity in utility calculations (0.0 to 2.0)
+            # Higher = prioritizes nearby tasks more
+            # Default: 0.8
+            proximity_weight = %.1f
+
+            # Weight for safety in utility calculations (0.0 to 2.0)
+            # Higher = prioritizes safe actions over risky ones
+            # Default: 1.2
+            safety_weight = %.1f
+
+            # ------------------------------------------------------------------------
+            # Multi-Agent Configuration
+            # ------------------------------------------------------------------------
+            [multi_agent]
+            # Enable multi-agent coordination features
+            # When enabled, agents can collaborate and coordinate tasks
+            # Default: true
+            enabled = %b
+
+            # Maximum time to wait for agent bids in milliseconds
+            # Range: 100 to 5000, Default: 1000
+            max_bid_wait_ms = %d
+
+            # Time-to-live for blackboard entries in seconds
+            # Range: 60 to 3600, Default: 300
+            blackboard_ttl_seconds = %d
+
+            # ------------------------------------------------------------------------
+            # Pathfinding Configuration
+            # ------------------------------------------------------------------------
+            [pathfinding]
+            # Enable enhanced pathfinding algorithms
+            # When enabled, uses advanced pathfinding with obstacle avoidance
+            # Default: true
+            enhanced = %b
+
+            # Maximum nodes to search in pathfinding algorithms
+            # Range: 1000 to 50000, Default: 10000
+            max_search_nodes = %d
             """.formatted(
             AI.PROVIDER_DEFAULT,
             OPENAI.API_KEY_DEFAULT,
@@ -566,7 +886,22 @@ public final class ConfigDocumentation {
             HIVEMIND.SYNC_TIMEOUT_DEFAULT,
             HIVEMIND.TACTICAL_CHECK_INTERVAL_DEFAULT,
             HIVEMIND.SYNC_INTERVAL_DEFAULT,
-            HIVEMIND.FALLBACK_TO_LOCAL_DEFAULT
+            HIVEMIND.FALLBACK_TO_LOCAL_DEFAULT,
+            SKILL_LIBRARY.ENABLED_DEFAULT,
+            SKILL_LIBRARY.MAX_SKILLS_DEFAULT,
+            SKILL_LIBRARY.SUCCESS_THRESHOLD_DEFAULT,
+            CASCADE_ROUTER.ENABLED_DEFAULT,
+            CASCADE_ROUTER.SIMILARITY_THRESHOLD_DEFAULT,
+            CASCADE_ROUTER.USE_LOCAL_LLM_DEFAULT,
+            UTILITY_AI.ENABLED_DEFAULT,
+            UTILITY_AI.URGENCY_WEIGHT_DEFAULT,
+            UTILITY_AI.PROXIMITY_WEIGHT_DEFAULT,
+            UTILITY_AI.SAFETY_WEIGHT_DEFAULT,
+            MULTI_AGENT.ENABLED_DEFAULT,
+            MULTI_AGENT.MAX_BID_WAIT_MS_DEFAULT,
+            MULTI_AGENT.BLACKBOARD_TTL_SECONDS_DEFAULT,
+            PATHFINDING.ENHANCED_DEFAULT,
+            PATHFINDING.MAX_SEARCH_NODES_DEFAULT
         );
     }
 }

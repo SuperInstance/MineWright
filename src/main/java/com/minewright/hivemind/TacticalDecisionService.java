@@ -2,7 +2,8 @@ package com.minewright.hivemind;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.config.MineWrightConfig;
 import com.minewright.entity.ForemanEntity;
 import net.minecraft.core.BlockPos;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 1.2.0
  */
 public class TacticalDecisionService {
+    private static final Logger LOGGER = TestLogger.getLogger(TacticalDecisionService.class);
     private static final TacticalDecisionService INSTANCE = new TacticalDecisionService();
 
     private final CloudflareClient client;
@@ -114,7 +116,7 @@ public class TacticalDecisionService {
             try {
                 return future.getNow(CloudflareClient.TacticalDecision.fallback("Not ready"));
             } catch (Exception e) {
-                MineWrightMod.LOGGER.debug("Tactical decision error: {}", e.getMessage());
+                LOGGER.debug("Tactical decision error: {}", e.getMessage());
             }
         }
 
@@ -150,11 +152,11 @@ public class TacticalDecisionService {
             .thenAccept(result -> {
                 if (result.synced && result.mission != null) {
                     // New mission available - would trigger mission handling
-                    MineWrightMod.LOGGER.debug("Mission available from edge: {}", result.mission);
+                    LOGGER.debug("Mission available from edge: {}", result.mission);
                 }
             })
             .exceptionally(e -> {
-                MineWrightMod.LOGGER.debug("State sync failed for {}: {}", foreman.getUUID(), e.getMessage());
+                LOGGER.debug("State sync failed for {}: {}", foreman.getUUID(), e.getMessage());
                 return null;
             });
     }

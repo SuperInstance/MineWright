@@ -3,7 +3,8 @@ package com.minewright.llm;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.config.MineWrightConfig;
 import com.minewright.exception.LLMClientException;
 
@@ -26,6 +27,7 @@ import java.time.Duration;
  * </ul>
  */
 public class GroqClient {
+    private static final Logger LOGGER = TestLogger.getLogger(GroqClient.class);
     private static final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
     private static final int MAX_RETRIES = 3;
     private static final int INITIAL_RETRY_DELAY_MS = 500;
@@ -93,7 +95,7 @@ public class GroqClient {
 
                 // Calculate delay with exponential backoff
                 int delayMs = INITIAL_RETRY_DELAY_MS * (1 << attempt);
-                MineWrightMod.LOGGER.warn("[{}] Request failed (attempt {}/{}), retrying in {}ms: {}",
+                LOGGER.warn("[{}] Request failed (attempt {}/{}), retrying in {}ms: {}",
                     PROVIDER_NAME, attempt + 1, MAX_RETRIES, delayMs, lastException.getMessage());
                 Thread.sleep(delayMs);
 
@@ -108,7 +110,7 @@ public class GroqClient {
                     throw lastException;
                 }
                 int delayMs = INITIAL_RETRY_DELAY_MS * (1 << attempt);
-                MineWrightMod.LOGGER.warn("[{}] Network error (attempt {}/{}), retrying in {}ms: {}",
+                LOGGER.warn("[{}] Network error (attempt {}/{}), retrying in {}ms: {}",
                     PROVIDER_NAME, attempt + 1, MAX_RETRIES, delayMs, e.getMessage());
                 try {
                     Thread.sleep(delayMs);

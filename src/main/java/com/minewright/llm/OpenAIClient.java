@@ -3,7 +3,8 @@ package com.minewright.llm;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.config.MineWrightConfig;
 import com.minewright.exception.LLMClientException;
 
@@ -34,6 +35,7 @@ import java.time.Duration;
  * </ul>
  */
 public class OpenAIClient {
+    private static final Logger LOGGER = TestLogger.getLogger(OpenAIClient.class);
     private static final String OPENAI_API_URL = "https://api.z.ai/api/paas/v4/chat/completions";
     private static final int MAX_RETRIES = 5;
     private static final int INITIAL_RETRY_DELAY_MS = 1000;
@@ -110,7 +112,7 @@ public class OpenAIClient {
 
                 // Calculate delay with exponential backoff
                 int delayMs = calculateRetryDelay(attempt);
-                MineWrightMod.LOGGER.warn("[{}] Request failed (attempt {}/{}), retrying in {}ms: {}",
+                LOGGER.warn("[{}] Request failed (attempt {}/{}), retrying in {}ms: {}",
                     PROVIDER_NAME, attempt + 1, MAX_RETRIES, delayMs, lastException.getMessage());
 
                 Thread.sleep(delayMs);
@@ -127,7 +129,7 @@ public class OpenAIClient {
 
                 if (attempt < MAX_RETRIES - 1) {
                     int delayMs = calculateRetryDelay(attempt);
-                    MineWrightMod.LOGGER.warn("[{}] Network error (attempt {}/{}), retrying in {}ms: {}",
+                    LOGGER.warn("[{}] Network error (attempt {}/{}), retrying in {}ms: {}",
                         PROVIDER_NAME, attempt + 1, MAX_RETRIES, delayMs, e.getMessage());
                     try {
                         Thread.sleep(delayMs);

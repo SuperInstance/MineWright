@@ -3,11 +3,14 @@ package com.minewright.action.actions;
 import com.minewright.action.ActionResult;
 import com.minewright.action.Task;
 import com.minewright.entity.ForemanEntity;
+import com.minewright.testutil.TestLogger;
 import net.minecraft.world.entity.player.Player;
+import org.slf4j.Logger;
 
 import java.util.List;
 
 public class FollowPlayerAction extends BaseAction {
+    private static final Logger LOGGER = TestLogger.getLogger(FollowPlayerAction.class);
     private String playerName;
     private Player targetPlayer;
     private int ticksRunning;
@@ -116,7 +119,7 @@ public class FollowPlayerAction extends BaseAction {
             if (nearest != null) {
                 targetPlayer = nearest;
                 playerName = nearest.getName().getString(); // Update to actual name
-                com.minewright.MineWrightMod.LOGGER.info("Foreman '{}' following nearest player: {}",
+                LOGGER.info("Foreman '{}' following nearest player: {}",
                     foreman.getEntityName(), playerName);
             }
         }

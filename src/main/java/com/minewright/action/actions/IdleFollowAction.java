@@ -1,6 +1,7 @@
 package com.minewright.action.actions;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.action.ActionResult;
 import com.minewright.action.Task;
 import com.minewright.entity.ForemanEntity;
@@ -15,12 +16,16 @@ import java.util.List;
  * Teleports to player if too far away.
  */
 public class IdleFollowAction extends BaseAction {
+    private static final Logger LOGGER = TestLogger.getLogger(IdleFollowAction.class);
     private Player targetPlayer;
     private int ticksSincePlayerSearch;
     private static final int PLAYER_SEARCH_INTERVAL = 100; // Search for new player every 5 seconds
     private static final double FOLLOW_DISTANCE = 4.0; // Stay this far from player
     private static final double MIN_DISTANCE = 2.5; // Stop moving if closer than this
     private static final double TELEPORT_DISTANCE = 50.0; // Teleport if further than 50 blocks
+
+    // Phase 2 optimization: Reuse mutable BlockPos to reduce allocations during teleport checks
+    private final net.minecraft.core.BlockPos.MutableBlockPos mutablePos = new net.minecraft.core.BlockPos.MutableBlockPos();
 
     public IdleFollowAction(ForemanEntity foreman) {
         super(foreman, new Task("idle_follow", new HashMap<>()));
@@ -29,7 +34,7 @@ public class IdleFollowAction extends BaseAction {
     @Override
     protected void onStart() {
         if (foreman == null || foreman.level() == null || foreman.getNavigation() == null) {
-            MineWrightMod.LOGGER.warn("Foreman, level, or navigation not available for idle follow");
+            LOGGER.warn("Foreman, level, or navigation not available for idle follow");
             return;
         }
 
@@ -37,7 +42,7 @@ public class IdleFollowAction extends BaseAction {
         findNearestPlayer();
 
         if (targetPlayer == null) {
-            MineWrightMod.LOGGER.debug("Foreman '{}' has no player to follow (idle)", foreman.getEntityName());
+            LOGGER.debug("Foreman '{}' has no player to follow (idle)", foreman.getEntityName());
         }
     }
 
@@ -75,9 +80,10 @@ public class IdleFollowAction extends BaseAction {
             double targetY = targetPlayer.getY();
             double targetZ = targetPlayer.getZ() + offsetZ;
 
-            net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos((int)targetX, (int)targetY, (int)targetZ);
+            // Phase 2 optimization: Reuse mutable BlockPos instead of creating new objects
+            mutablePos.set((int)targetX, (int)targetY, (int)targetZ);
             for (int i = 0; i < 10; i++) {
-                net.minecraft.core.BlockPos groundPos = checkPos.below(i);
+                net.minecraft.core.BlockPos groundPos = mutablePos.below(i);
                 if (!foreman.level().getBlockState(groundPos).isAir() &&
                     foreman.level().getBlockState(groundPos.above()).isAir()) {
                     // Found solid ground with air above
@@ -89,7 +95,7 @@ public class IdleFollowAction extends BaseAction {
             foreman.teleportTo(targetX, targetY, targetZ);
             foreman.getNavigation().stop(); // Clear navigation after teleport
 
-            MineWrightMod.LOGGER.info("Foreman '{}' teleported to player (was {} blocks away)",
+            LOGGER.info("Foreman '{}' teleported to player (was {} blocks away)",
                 foreman.getEntityName(), (int)distance);
 
         } else if (distance > FOLLOW_DISTANCE) {
@@ -149,7 +155,7 @@ public class IdleFollowAction extends BaseAction {
         }
 
         if (nearest != targetPlayer && nearest != null) {
-            MineWrightMod.LOGGER.debug("Foreman '{}' now following {} (idle)",
+            LOGGER.debug("Foreman '{}' now following {} (idle)",
                 foreman.getEntityName(), nearest.getName().getString());
         }
 

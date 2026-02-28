@@ -1,6 +1,6 @@
 package com.minewright.voice;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
 import org.slf4j.Logger;
 
 import javax.sound.sampled.AudioFormat;
@@ -27,8 +27,7 @@ import java.util.function.Consumer;
  * @since 1.2.0
  */
 public class LoggingVoiceSystem implements VoiceSystem {
-
-    private static final Logger LOGGER = MineWrightMod.LOGGER;
+    private static final Logger LOGGER = TestLogger.getLogger(LoggingVoiceSystem.class);
 
     private final LoggingSpeechToText stt;
     private final LoggingTextToSpeech tts;

@@ -1,6 +1,7 @@
 package com.minewright.action;
 
-import com.minewright.MineWrightMod;
+import com.minewright.testutil.TestLogger;
+import org.slf4j.Logger;
 import com.minewright.action.actions.*;
 import com.minewright.di.ServiceContainer;
 import com.minewright.di.SimpleServiceContainer;
@@ -100,6 +101,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 1.0.0
  */
 public class ActionExecutor {
+    private static final Logger LOGGER = TestLogger.getLogger(ActionExecutor.class);
     /**
      * The foreman entity this executor is managing actions for.
      * Used for context, world access, and state updates.
@@ -214,7 +216,7 @@ public class ActionExecutor {
             .interceptorChain(interceptorChain)
             .build();
 
-        MineWrightMod.LOGGER.debug("ActionExecutor initialized with plugin architecture for Foreman '{}'",
+        LOGGER.debug("ActionExecutor initialized with plugin architecture for Foreman '{}'",
             foreman.getEntityName());
     }
 
@@ -224,7 +226,7 @@ public class ActionExecutor {
      */
     public TaskPlanner getTaskPlanner() {
         if (taskPlanner == null) {
-            MineWrightMod.LOGGER.info("Initializing TaskPlanner for Foreman '{}'", foreman.getEntityName());
+            LOGGER.info("Initializing TaskPlanner for Foreman '{}'", foreman.getEntityName());
             taskPlanner = new TaskPlanner();
         }
         return taskPlanner;
@@ -251,12 +253,12 @@ public class ActionExecutor {
      * @param command The natural language command from the user
      */
     public void processNaturalLanguageCommand(String command) {
-        MineWrightMod.LOGGER.info("Foreman '{}' processing command (async): {}", foreman.getEntityName(), command);
+        LOGGER.info("Foreman '{}' processing command (async): {}", foreman.getEntityName(), command);
 
         // THREAD-SAFE: Use compareAndSet to atomically check and set planning state
         // This prevents race conditions when multiple threads submit commands
         if (!isPlanning.compareAndSet(false, true)) {
-            MineWrightMod.LOGGER.warn("Foreman '{}' is already planning, ignoring command: {}", foreman.getEntityName(), command);
+            LOGGER.warn("Foreman '{}' is already planning, ignoring command: {}", foreman.getEntityName(), command);
             sendToGUI(foreman.getEntityName(), "Hold your horses! I'm still figuring out the last job. Give me a moment!");
             return;
         }
@@ -282,15 +284,15 @@ public class ActionExecutor {
             // Start async LLM call - returns immediately!
             planningFuture = getTaskPlanner().planTasksAsync(foreman, command);
 
-            MineWrightMod.LOGGER.info("Foreman '{}' started async planning for: {}", foreman.getEntityName(), command);
+            LOGGER.info("Foreman '{}' started async planning for: {}", foreman.getEntityName(), command);
 
         } catch (NoClassDefFoundError e) {
-            MineWrightMod.LOGGER.error("Failed to initialize AI components", e);
+            LOGGER.error("Failed to initialize AI components", e);
             sendToGUI(foreman.getEntityName(), "Sorry boss, my planning tools aren't working right now!");
             isPlanning.set(false);
             planningFuture = null;
         } catch (Exception e) {
-            MineWrightMod.LOGGER.error("Error starting async planning", e);
+            LOGGER.error("Error starting async planning", e);
             sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Try again in a moment.");
             isPlanning.set(false);
             planningFuture = null;
@@ -308,7 +310,7 @@ public class ActionExecutor {
      */
     @Deprecated
     public void processNaturalLanguageCommandSync(String command) {
-        MineWrightMod.LOGGER.info("Foreman '{}' processing command (SYNC - blocking!): {}", foreman.getEntityName(), command);
+        LOGGER.info("Foreman '{}' processing command (SYNC - blocking!): {}", foreman.getEntityName(), command);
 
         if (currentAction != null) {
             currentAction.cancel();
@@ -339,11 +341,11 @@ public class ActionExecutor {
                 sendToGUI(foreman.getEntityName(), "You got it! " + currentGoal);
             }
         } catch (NoClassDefFoundError e) {
-            MineWrightMod.LOGGER.error("Failed to initialize AI components", e);
+            LOGGER.error("Failed to initialize AI components", e);
             sendToGUI(foreman.getEntityName(), "Sorry boss, my planning tools aren't working right now!");
         }
 
-        MineWrightMod.LOGGER.info("Foreman '{}' queued {} tasks", foreman.getEntityName(), taskQueue.size());
+        LOGGER.info("Foreman '{}' queued {} tasks", foreman.getEntityName(), taskQueue.size());
     }
     
     /**
@@ -408,25 +410,25 @@ public class ActionExecutor {
                         sendToGUI(foreman.getEntityName(), "You got it! " + currentGoal);
                     }
 
-                    MineWrightMod.LOGGER.info("Foreman '{}' async planning complete: {} tasks queued",
+                    LOGGER.info("Foreman '{}' async planning complete: {} tasks queued",
                         foreman.getEntityName(), taskQueue.size());
                 } else {
                     sendToGUI(foreman.getEntityName(), "I couldn't make heads or tails of that order, boss. Could you rephrase it?");
-                    MineWrightMod.LOGGER.warn("Foreman '{}' async planning returned null response", foreman.getEntityName());
+                    LOGGER.warn("Foreman '{}' async planning returned null response", foreman.getEntityName());
                 }
 
             } catch (java.util.concurrent.CancellationException e) {
-                MineWrightMod.LOGGER.info("Foreman '{}' planning was cancelled", foreman.getEntityName());
+                LOGGER.info("Foreman '{}' planning was cancelled", foreman.getEntityName());
                 sendToGUI(foreman.getEntityName(), "Planning cancelled. Back to work!");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning cancelled");
             } catch (java.util.concurrent.CompletionException e) {
-                MineWrightMod.LOGGER.error("Foreman '{}' planning failed with exception", foreman.getEntityName(), e.getCause());
+                LOGGER.error("Foreman '{}' planning failed with exception", foreman.getEntityName(), e.getCause());
                 sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Let's try that again.");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning failed");
             } catch (Exception e) {
-                MineWrightMod.LOGGER.error("Foreman '{}' failed to get planning result", foreman.getEntityName(), e);
+                LOGGER.error("Foreman '{}' failed to get planning result", foreman.getEntityName(), e);
                 sendToGUI(foreman.getEntityName(), "Something went wrong with the planning! Let's try that again.");
                 // Reset state machine to allow recovery
                 stateMachine.forceTransition(AgentState.IDLE, "planning failed");
@@ -440,7 +442,7 @@ public class ActionExecutor {
         if (currentAction != null) {
             if (currentAction.isComplete()) {
                 ActionResult result = currentAction.getResult();
-                MineWrightMod.LOGGER.info("Foreman '{}' - Action completed: {} (Success: {})",
+                LOGGER.info("Foreman '{}' - Action completed: {} (Success: {})",
                     foreman.getEntityName(), result.getMessage(), result.isSuccess());
 
                 foreman.getMemory().addAction(currentAction.getDescription());
@@ -459,7 +461,7 @@ public class ActionExecutor {
                 currentAction = null;
             } else {
                 if (ticksSinceLastAction % 100 == 0) {
-                    MineWrightMod.LOGGER.info("Foreman '{}' - Ticking action: {}",
+                    LOGGER.info("Foreman '{}' - Ticking action: {}",
                         foreman.getEntityName(), currentAction.getDescription());
                 }
                 currentAction.tick();
@@ -496,21 +498,21 @@ public class ActionExecutor {
     }
 
     private void executeTask(Task task) {
-        MineWrightMod.LOGGER.info("Foreman '{}' executing task: {} (action type: {})",
+        LOGGER.info("Foreman '{}' executing task: {} (action type: {})",
             foreman.getEntityName(), task, task.getAction());
 
         currentAction = createAction(task);
 
         if (currentAction == null) {
             String errorMsg = "Unknown action type: " + task.getAction();
-            MineWrightMod.LOGGER.error("FAILED to create action for task: {}", task);
+            LOGGER.error("FAILED to create action for task: {}", task);
             foreman.sendChatMessage("Error: " + errorMsg);
             return;
         }
 
-        MineWrightMod.LOGGER.info("Created action: {} - starting now...", currentAction.getClass().getSimpleName());
+        LOGGER.info("Created action: {} - starting now...", currentAction.getClass().getSimpleName());
         currentAction.start();
-        MineWrightMod.LOGGER.info("Action started! Is complete: {}", currentAction.isComplete());
+        LOGGER.info("Action started! Is complete: {}", currentAction.isComplete());
     }
 
     /**
@@ -531,14 +533,14 @@ public class ActionExecutor {
         if (registry.hasAction(actionType)) {
             BaseAction action = registry.createAction(actionType, foreman, task, actionContext);
             if (action != null) {
-                MineWrightMod.LOGGER.debug("Created action '{}' via registry (plugin: {})",
+                LOGGER.debug("Created action '{}' via registry (plugin: {})",
                     actionType, registry.getPluginForAction(actionType));
                 return action;
             }
         }
 
         // Fallback to legacy switch statement for backward compatibility
-        MineWrightMod.LOGGER.debug("Using legacy fallback for action: {}", actionType);
+        LOGGER.debug("Using legacy fallback for action: {}", actionType);
         return createActionLegacy(task);
     }
 
@@ -565,7 +567,7 @@ public class ActionExecutor {
             case "gather" -> new GatherResourceAction(foreman, task);
             case "build" -> new BuildStructureAction(foreman, task);
             default -> {
-                MineWrightMod.LOGGER.warn("Unknown action type: {}", task.getAction());
+                LOGGER.warn("Unknown action type: {}", task.getAction());
                 yield null;
             }
         };
@@ -652,16 +654,16 @@ public class ActionExecutor {
      */
     public void queueTask(Task task) {
         if (task == null) {
-            MineWrightMod.LOGGER.warn("Attempted to queue null task for Foreman '{}'", foreman.getEntityName());
+            LOGGER.warn("Attempted to queue null task for Foreman '{}'", foreman.getEntityName());
             return;
         }
 
         // Use offer() for thread-safe, non-blocking insertion
         if (taskQueue.offer(task)) {
-            MineWrightMod.LOGGER.info("Foreman '{}' - Task queued: {}",
+            LOGGER.info("Foreman '{}' - Task queued: {}",
                 foreman.getEntityName(), task.getAction());
         } else {
-            MineWrightMod.LOGGER.warn("Foreman '{}' - Failed to queue task (queue full): {}",
+            LOGGER.warn("Foreman '{}' - Failed to queue task (queue full): {}",
                 foreman.getEntityName(), task.getAction());
         }
     }

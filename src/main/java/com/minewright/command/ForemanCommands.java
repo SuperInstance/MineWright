@@ -3,6 +3,7 @@ package com.minewright.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.minewright.testutil.TestLogger;
 import com.minewright.MineWrightMod;
 import com.minewright.entity.ForemanEntity;
 import com.minewright.entity.CrewManager;
@@ -16,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ForemanCommands {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ForemanCommands.class);
+    private static final Logger LOGGER = TestLogger.getLogger(ForemanCommands.class);
 
     /** Shared executor for async command processing - prevents uncontrolled thread creation */
     private static final ExecutorService COMMAND_EXECUTOR = Executors.newCachedThreadPool(r -> {
@@ -225,7 +225,7 @@ public class ForemanCommands {
         voice.setEnabled(true);
         source.sendSuccess(() -> Component.literal("Foreman radio is ON! Hold V to give voice commands."), true);
 
-        MineWrightMod.LOGGER.info("Voice system enabled via command");
+        LOGGER.info("Voice system enabled via command");
         return 1;
     }
 
@@ -237,7 +237,7 @@ public class ForemanCommands {
         voice.stopAll();
         source.sendSuccess(() -> Component.literal("Foreman radio is OFF. Back to manual commands."), true);
 
-        MineWrightMod.LOGGER.info("Voice system disabled via command");
+        LOGGER.info("Voice system disabled via command");
         return 1;
     }
 

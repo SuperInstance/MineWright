@@ -109,8 +109,8 @@ test {
     useJUnitPlatform()
     ignoreFailures = true  // Allow build to pass while we fix test issues
     testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat "full"
+        events = ["passed", "skipped", "failed"]
+        exceptionFormat = "full"
         showStandardStreams = false
     }
     // Set heap size for tests
@@ -229,7 +229,7 @@ publishing {
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/mcmodsrepo"
+            url = "file://${project.projectDir}/mcmodsrepo"
         }
     }
 }
