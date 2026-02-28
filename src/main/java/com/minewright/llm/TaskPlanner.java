@@ -114,6 +114,12 @@ public class TaskPlanner {
     private final OpenAIClient openAIClient;
 
     /**
+     * GLM cascade router for intelligent model selection on z.ai.
+     * Preprocesses messages and routes to appropriate GLM model.
+     */
+    private final GLMCascadeRouter glmCascadeRouter;
+
+    /**
      * Legacy synchronous Gemini client (for backward compatibility).
      * Blocking - prefer async clients for new code.
      */
@@ -183,6 +189,9 @@ public class TaskPlanner {
         this.openAIClient = new OpenAIClient();
         this.geminiClient = new GeminiClient();
         this.groqClient = new GroqClient();
+
+        // GLM cascade router for intelligent z.ai model selection
+        this.glmCascadeRouter = new GLMCascadeRouter();
 
         // Initialize async infrastructure
         this.llmCache = new LLMCache();
@@ -361,7 +370,11 @@ public class TaskPlanner {
         String response = switch (provider) {
             case "groq" -> groqClient.sendRequest(systemPrompt, userPrompt);
             case "gemini" -> geminiClient.sendRequest(systemPrompt, userPrompt);
-            case "openai" -> openAIClient.sendRequest(systemPrompt, userPrompt);
+            case "openai" -> {
+                // Use GLM cascade router for z.ai - intelligently selects model
+                LOGGER.info("Using GLM cascade router for intelligent model selection");
+                yield glmCascadeRouter.processWithCascade(systemPrompt, userPrompt);
+            }
             default -> {
                 LOGGER.warn("Unknown AI provider '{}', using Groq", provider);
                 yield groqClient.sendRequest(systemPrompt, userPrompt);
