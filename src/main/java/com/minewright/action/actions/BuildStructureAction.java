@@ -147,7 +147,10 @@ public class BuildStructureAction extends BaseAction {
         buildPlan = tryLoadFromTemplate(structureType, clearPos);
 
         if (buildPlan == null) {
-            // Fall back to procedural generation            buildPlan = generateBuildPlan(structureType, clearPos, width, height, depth);
+            // Fall back to procedural generation
+            buildPlan = generateBuildPlan(structureType, clearPos, width, height, depth);
+            LOGGER.info("Generated procedural build plan for '{}' with {} blocks", structureType,
+                buildPlan != null ? buildPlan.size() : 0);
         } else {
             LOGGER.info("Loaded '{}' from NBT template with {} blocks", structureType, buildPlan.size());
         }
