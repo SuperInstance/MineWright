@@ -1,6 +1,17 @@
 # MineWright
 
+<div align="center">
+
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-green.svg)](https://www.minecraft.net/)
+[![Forge](https://img.shields.io/badge/Forge-47.x-orange.svg)](https://files.minecraftforge.net/)
+[![Java](https://img.shields.io/badge/Java-17+-blue.svg)](https://adoptium.net/)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+
 **The first AI that doesn't just play Minecraft — it *understands* Minecraft.**
+
+[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Architecture](#technical-architecture)
+
+</div>
 
 ---
 
@@ -49,8 +60,6 @@ Mace: "Focus. We've got a Client waiting."
 
 ### Construction Crew Meets AI Terminology
 
-The crew talks like builders who happen to use AI as just another tool:
-
 | What They Say | What It Means |
 |---------------|---------------|
 | "Vector DB's running low" | Need more training examples |
@@ -58,50 +67,6 @@ The crew talks like builders who happen to use AI as just another tool:
 | "Let me RAG through my memory" | Looking up past experiences |
 | "The embedding's not taking cleanly" | Pattern not recognized |
 | "Transformer's having a rough day" | LLM is confused |
-
----
-
-## The Hive Mind Architecture
-
-MineWright isn't just local AI. It's a **distributed intelligence**:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    YOUR MINECRAFT WORLD                     │
-│                                                              │
-│   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐  │
-│   │   Mace      │────▶│   Workers   │────▶│   World     │   │
-│   │  (Foreman)  │     │ (Builders)  │     │  (Blocks)   │   │
-│   └──────┬──────┘     └──────┬──────┘     └─────────────┘  │
-│          │                   │                              │
-│          │   ┌───────────────┴───────────────┐             │
-│          │   │        STRATEGIC LAYER        │             │
-│          │   │   (Complex planning,          │             │
-│          │   │    Multi-agent coordination,  │             │
-│          │   │    Mental simulation)         │             │
-│          │   └───────────────────────────────┘             │
-└──────────┼───────────────────────────────────────────────────┘
-           │
-           │  < 20ms Edge Network
-           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    CLOUDFLARE HIVE MIND                     │
-│                                                              │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│   │  Tactical   │  │   Memory    │  │    State    │        │
-│   │  Reflexes   │  │   Vector    │  │    Sync     │        │
-│   │  <20ms      │  │   Store     │  │   Global    │        │
-│   └─────────────┘  └─────────────┘  └─────────────┘        │
-│                                                              │
-│   Combat reflexes │ Hazard avoidance │ Fast decisions       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Strategic decisions** (build planning, coordination) happen locally with full context.
-
-**Tactical reflexes** (combat, hazards) happen at the edge in under 20ms.
-
-This means your crew can dodge a creeper explosion *while* planning a castle.
 
 ---
 
@@ -118,38 +83,28 @@ follow me and kill any zombies that get close
 clear a 10x10 area and build a wheat farm
 ```
 
-The AI breaks down your command into executable steps and coordinates the crew.
-
 ### Multi-Agent Coordination
 
 - **Foreman** — Coordinates, plans, assigns work
 - **Workers** — Execute tasks, report progress
 - **Specialists** — Combat, mining, building, crafting
 
-Multiple workers can collaborate on large projects:
-
-```
-Mace: "Alright, 14x14 castle foundation. Sparks takes NW quadrant,
-Dusty takes NE, Beam takes SW, and I'll handle SE personally.
-Let's see some hustle, people."
-```
-
 ### Memory & Relationships
 
-The crew remembers:
-- Past conversations
-- Successful (and failed) projects
-- Player preferences
-- Inside jokes
+The crew remembers conversations, projects, preferences, and inside jokes. Relationships evolve from "New Hire" → "Trusted Worker" → "Senior Crew" through interactions.
 
-Relationships evolve from "New Hire" → "Trusted Worker" → "Senior Crew" through interactions.
+### Vision Understanding
 
-### Proactive Dialogue
+The crew can analyze screenshots to understand the world:
+- "What do you see ahead?" — General scene analysis
+- "Is this area safe?" — Threat detection
+- "Where should I build?" — Terrain assessment
 
-Crew members comment on:
-- **Achievements** — "We laid 200 blocks today. That's a record."
-- **Problems** — "Vector DB's got nothing on this terrain type. Learning as we go."
-- **Idle thoughts** — "Remember that time Dusty fell in the lava? Good times."
+### Voice Integration
+
+Speech-to-text and text-to-speech support:
+- **Whisper STT** — Accurate voice recognition
+- **ElevenLabs TTS** — High-quality voice synthesis via Docker MCP
 
 ---
 
@@ -180,8 +135,6 @@ Press **K** to open the command panel, then type:
 build me a small house nearby
 ```
 
-Watch Mace analyze, plan, and coordinate the build.
-
 ---
 
 ## Configuration
@@ -198,10 +151,6 @@ model = "llama-3.1-70b-versatile"
 
 [behavior]
 maxActiveCrewMembers = 10
-
-[hivemind]
-enabled = false  # Enable for edge AI reflexes
-workerUrl = "https://your-worker.workers.dev"
 ```
 
 ---
@@ -219,9 +168,18 @@ workerUrl = "https://your-worker.workers.dev"
 
 ---
 
-## Technical Architecture
+## Documentation
 
-### Enhanced Core Flow
+| Resource | Description |
+|----------|-------------|
+| [Architecture](docs/architecture/) | System design and patterns |
+| [Guides](docs/guides/) | How-to guides and tutorials |
+| [Research](docs/research/) | AI research and analysis |
+| [Reports](docs/reports/) | Audit and review reports |
+
+---
+
+## Technical Architecture
 
 ```
 User Command
@@ -229,9 +187,10 @@ User Command
     ├─► Skill Library (semantic search for learned patterns)
     │   └─► Skill found? → Execute directly (skip LLM)
     │
-    ├─► Cascade Router (complexity analysis)
-    │   ├─► Simple task → Fast model (glm-4.7-air)
-    │   └─► Complex task → Capable model (glm-5)
+    ├─► Smart Cascade Router (complexity analysis)
+    │   ├─► Simple task → Local LLM (SmolVLM) - FREE
+    │   ├─► Moderate task → glm-4.7-air - FAST
+    │   └─► Complex task → glm-5 - CAPABLE
     │
     ▼
 TaskPlanner ──(async)──▶ LLM
@@ -239,15 +198,12 @@ TaskPlanner ──(async)──▶ LLM
     │                      ▼
     │              ResponseParser
     │                      │
-    ├─► Utility AI (task prioritization by urgency, proximity, safety)
+    ├─► Utility AI (task prioritization)
     │
     ├─► Contract Net Protocol (multi-agent task allocation)
-    │   └─► Workers bid on tasks, best worker wins
     │
     ▼
 ActionExecutor ◀── Task Queue
-    │
-    ├─► Blackboard System (shared knowledge across agents)
     │
     └──▶ tick() per game tick (non-blocking!)
 ```
@@ -267,13 +223,13 @@ ActionExecutor ◀── Task Queue
 
 | System | Purpose | Benefit |
 |--------|---------|---------|
-| **Skill Library** | Self-improving code patterns | 40-60% fewer LLM calls for repeated tasks |
-| **Cascade Router** | Complexity-based model selection | 40-60% cost reduction |
-| **Utility AI** | Multi-factor task prioritization | Smarter decision making |
-| **Contract Net Protocol** | Competitive task bidding | Efficient worker allocation |
+| **Skill Library** | Self-improving code patterns | 40-60% fewer LLM calls |
+| **Smart Cascade Router** | Complexity-based model selection | 40-60% cost reduction |
+| **Utility AI** | Multi-factor task prioritization | Smarter decisions |
+| **Contract Net Protocol** | Competitive task bidding | Efficient allocation |
 | **Blackboard System** | Shared knowledge space | Emergent coordination |
 | **Semantic Cache** | Embedding-based response reuse | 30-50% fewer API calls |
-| **Enhanced Pathfinding** | Hierarchical A* with smoothing | 50-70% faster navigation |
+| **Vision Pipeline** | Screenshot analysis | Visual understanding |
 
 ### Project Structure
 
@@ -287,7 +243,6 @@ com.minewright/
 │   ├── cache/       # Semantic caching with embeddings
 │   └── resilience/  # Circuit breaker, retry
 ├── action/          # Task execution
-│   └── actions/     # Mine, Build, Combat, etc.
 ├── execution/       # State machine, interceptors, event bus
 ├── coordination/    # Contract Net Protocol, multi-agent
 ├── decision/        # Utility AI, task prioritization
@@ -295,12 +250,9 @@ com.minewright/
 ├── skill/           # Skill library, skill generation
 ├── pathfinding/     # Enhanced A*, hierarchical planning
 ├── communication/   # Inter-agent messaging, protocols
-├── hivemind/        # Cloudflare edge integration
-├── orchestration/   # Multi-agent coordination
 ├── memory/          # Persistence, relationships
 ├── plugin/          # Extensible action system
 ├── personality/     # AI character system
-├── integration/     # System integration layer
 └── voice/           # TTS/STT integration
 ```
 
@@ -315,39 +267,38 @@ com.minewright/
 ./gradlew test         # Run tests
 ```
 
-Output: `build/libs/minewright-1.0.0-all.jar`
+Output: `build/libs/minewright-1.0.0.jar`
 
 ---
 
 ## Roadmap
 
-### Completed ✅
+### Completed
 - [x] Natural language processing
 - [x] Async non-blocking architecture
 - [x] Multi-agent coordination
 - [x] Relationship evolution
 - [x] GUI command panel
 - [x] Plugin system
-- [x] Hive Mind edge integration
-- [x] **Skill Library System** — Self-improving code patterns (Voyager-style)
-- [x] **Cascade Router** — Complexity-based LLM tier selection
-- [x] **Utility AI** — Multi-factor task prioritization
-- [x] **Contract Net Protocol** — Competitive bidding for task allocation
-- [x] **Blackboard System** — Shared knowledge across agents
-- [x] **Semantic Cache** — Embedding-based response reuse
-- [x] **Enhanced Pathfinding** — Hierarchical A* with path smoothing
-- [x] **Agent Communication Protocol** — Inter-agent messaging
-- [x] **Integration Layer** — SteveOrchestrator, IntegrationHooks
+- [x] Skill Library System
+- [x] Cascade Router
+- [x] Utility AI
+- [x] Contract Net Protocol
+- [x] Blackboard System
+- [x] Semantic Cache
+- [x] Enhanced Pathfinding
+- [x] Agent Communication Protocol
+- [x] Vision understanding (screenshots)
+- [x] Smart Cascade Router with local LLM
+- [x] Voice I/O (Whisper STT + ElevenLabs TTS)
 
-### In Progress 🚧
-- [ ] Voice I/O (speech-to-text, text-to-speech)
+### In Progress
 - [ ] Vector memory for long-term learning
 - [ ] Mental simulation (what-if planning)
 - [ ] Test coverage for new systems
 
-### Planned 📋
-- [ ] Vision understanding (screenshots)
-- [ ] Local LLM support (Ollama, LM Studio)
+### Planned
+- [ ] Local LLM support (vLLM, Ollama)
 - [ ] Multiplayer synchronization
 - [ ] Multiple foreman archetypes
 - [ ] HTN planner for complex task decomposition
@@ -361,8 +312,6 @@ Output: `build/libs/minewright-1.0.0-all.jar`
 Cursor helps you code faster. MineWright gives you *friends* in a lonely blocky world.
 
 The goal isn't automation — it's **companionship**. The crew should feel like characters you want to spend time with, not tools you use. They should make you laugh, remember your inside jokes, and genuinely care about the projects you build together.
-
-When you log off, they should miss you. When you log back on, they should be excited to see what you'll build next.
 
 **That's the vision. Everything else is implementation.**
 
@@ -381,7 +330,8 @@ When you log off, they should miss you. When you log back on, they should be exc
 ## Credits
 
 - Built with [Minecraft Forge](https://files.minecraftforge.net/)
-- LLM integration via Groq, OpenAI, Gemini
+- LLM integration via Groq, OpenAI, Gemini, z.ai
+- Voice via Whisper and ElevenLabs
 - Inspired by Baritone, Cursor, and dreams of AI companions
 
 ---
@@ -392,6 +342,10 @@ MIT License
 
 ---
 
+<div align="center">
+
 **"We don't give you agents. We give you a Foreman."**
 
-**Repository:** https://github.com/SuperInstance/MineWright
+[GitHub](https://github.com/SuperInstance/MineWright) • [Issues](https://github.com/SuperInstance/MineWright/issues) • [Releases](https://github.com/SuperInstance/MineWright/releases)
+
+</div>

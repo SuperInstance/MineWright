@@ -1,10 +1,9 @@
-brain.md
-
 # Build
 build/
 .gradle/
 bin/
 out/
+*.jar
 
 # IDE
 .idea/
@@ -18,6 +17,11 @@ run/
 # Config with API keys
 config/minewright-common.toml
 run/config/minewright-common.toml
+
+# Logs and test output
+*.log
+logs/
+test-output.log
 
 # Media files (large binaries)
 *.mp4
@@ -37,14 +41,8 @@ run/config/minewright-common.toml
 Thumbs.db
 Desktop.ini
 
-# Misc
-*.log
-logs/
-nul
-
-# Old config file name
-config/minewright-common.toml
-run/config/minewright-common.toml
-
 # JDK
 jdk-17.0.2.jdk/
+
+# Claude Code context (keep local only)
+.claude/
