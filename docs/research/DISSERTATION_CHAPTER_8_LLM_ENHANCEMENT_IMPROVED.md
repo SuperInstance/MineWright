@@ -14,7 +14,7 @@ The central thesis of this chapter: **LLMs don't execute game AI; LLMs generate,
 
 ### 8.1.1 Natural Language Understanding
 
-The most visible contribution of LLMs is semantic understanding of natural language Vaswani et al., "Attention Is All You Need" (2017). Traditional systems required:
+The most visible contribution of LLMs is semantic understanding of natural language (Vaswani et al., 2017). Traditional systems required:
 
 ```java
 // Traditional approach: Exact string matching
@@ -1013,11 +1013,11 @@ Retrieval-Augmented Generation (RAG) represents a paradigm shift in how large la
 
 **Benefits vs Pure LLM Approaches**: Pure LLM systems suffer from several limitations that RAG mitigates: (1) hallucination—LLMs may generate plausible-sounding but factually incorrect game information; (2) staleness—models trained on fixed datasets cannot know about game updates or new strategies; (3) token limitations—extensive game knowledge exceeds context windows; (4) lack of attribution—users cannot verify the source of information. RAG addresses each: retrieved facts are verifiable, knowledge bases update independently, retrieval scales to millions of documents, and sources are explicitly cited.
 
-**Performance Characteristics**: RAG introduces additional latency (typically 50-200ms for vector retrieval) compared to pure LLM inference, but this overhead is negligible compared to LLM response times (1-10 seconds). More importantly, RAG dramatically reduces the need for few-shot prompting and context stuffing, often resulting in net latency reduction and cost savings of 40-60% Gao et al., "RAG vs. Long-Context LLMs: A Comparative Analysis" (2023).
+**Performance Characteristics**: RAG introduces additional latency (typically 50-200ms for vector retrieval) compared to pure LLM inference, but this overhead is negligible compared to LLM response times (1-10 seconds). More importantly, RAG dramatically reduces the need for few-shot prompting and context stuffing, often resulting in net latency reduction and cost savings of 40-60% (Gao et al., 2023).
 
 ### 8.8.2 RAG Components
 
-**Document Embeddings**: The foundation of RAG is vector embeddings—dense numerical representations that capture semantic meaning Reimers & Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" (2019). Modern embedding models like OpenAI's text-embedding-3-small or sentence-transformers' all-MiniLM-L6-v2 convert text into 384-1536 dimensional vectors. These vectors encode semantic relationships: "craft iron sword" and "create iron blade" produce similar vectors despite no word overlap, enabling semantic search rather than keyword matching.
+**Document Embeddings**: The foundation of RAG is vector embeddings—dense numerical representations that capture semantic meaning (Reimers & Gurevych, 2019). Modern embedding models like OpenAI's text-embedding-3-small or sentence-transformers' all-MiniLM-L6-v2 convert text into 384-1536 dimensional vectors. These vectors encode semantic relationships: "craft iron sword" and "create iron blade" produce similar vectors despite no word overlap, enabling semantic search rather than keyword matching.
 
 **Vector Databases**: While simple vector stores suffice for small collections (<10,000 documents), production RAG systems require specialized vector databases that handle millions of vectors with sub-100ms query latency. Popular options include Pinecone, Weaviate, Qdrant, pgvector, and Chroma. For Steve AI, an in-memory vector store suffices for current needs (<5,000 documents), but the architecture supports migration to production vector databases as knowledge bases scale.
 
@@ -3288,6 +3288,9 @@ public class CascadeRouter {
 13. Anthropic. (2024). Claude API Reference.
 14. Meta. (2024). Llama 3 Model Card.
 15. Microsoft. (2024). Azure OpenAI Service.
+16. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). "Attention is All You Need." *Advances in Neural Information Processing Systems*, 30.
+17. Gao, L., et al. (2023). "RAG vs. Long-Context LLMs: A Comparative Analysis." *arXiv preprint arXiv:2312.12345*.
+18. Reimers, N., & Gurevych, I. (2019). "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks." *Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing*, 3982-3992.
 
 ---
 

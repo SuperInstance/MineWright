@@ -3,21 +3,42 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Updated:** 2026-03-01
-**Version:** 2.3
+**Version:** 2.4
 
 ---
 
-## ⚡ ORCHESTRATOR MODE: CONTINUOUS OPERATION ⚡
+## ⚡ ORCHESTRATOR MODE: GAME BOT RESEARCH INITIATIVE ⚡
 
-**Mode:** ACTIVE - Work through all priorities until system is production-ready
-**Goal:** Perfect, push, and ship the mod
-**Strategy:** Parallel agent waves, continuous progress, no stopping
+**Mode:** ACTIVE - Research game automation history, apply insights to our system
+**Goal:** Learn from WoW Glider, Honorbuddy, and other successful game bots
+**Strategy:** Multi-wave research → comparison → design → implementation → push
 
-### Current Wave Focus
-Working through remaining priorities with parallel agents:
-- **Wave 1:** Integration tests, Script DSL foundation, Dissertation integration
-- **Wave 2:** Feature completion, CI/CD setup, Coverage reporting
-- **Wave 3:** Polish, documentation, final push preparation
+### Current Initiative: Game Bot Architecture Research
+
+**Phase 1: Research (In Progress)**
+Study successful game automation systems:
+- WoW Glider/WoWGlider - Memory reading, pattern-based automation
+- Honorbuddy - Behavior trees, profile system, plugin architecture
+- Demonbuddy, Buddywing - Multi-game frameworks
+- Diablo 3 bots - DemonHunter, Ros-Bot
+- OSRS bots - Powerbot, Dreambot, Tribot
+- Minecraft bots - Baritone, Mineflayer
+
+**Key Research Questions:**
+1. How did these systems achieve human-like behavior?
+2. What made them effective at complex tasks?
+3. How did they handle state management and decision making?
+4. What anti-detection techniques were used?
+5. How can we apply these insights legally and ethically?
+
+**Phase 2: Compare & Analyze**
+Map techniques to our Script DSL system
+
+**Phase 3: Design & Implement**
+Enhance our scripting system with proven patterns
+
+**Phase 4: Debug & Push**
+Polish and ship improvements
 
 ### Progress Tracking (Updated 2026-03-01)
 | Priority | Status | Completion |
@@ -26,6 +47,7 @@ Working through remaining priorities with parallel agents:
 | Priority 2: Testing | ✅ DONE | 100% |
 | Priority 3: Features | ✅ DONE | 100% |
 | Priority 4: Dissertation | 🔄 IN PROGRESS | 60% |
+| Priority 5: Bot Research | 🔄 IN PROGRESS | 10% |
 
 ### Recent Completions (2026-03-01)
 - ✅ **CI/CD Pipeline**: Full GitHub Actions workflows (ci.yml, release.yml, codeql.yml, dependency-review.yml)

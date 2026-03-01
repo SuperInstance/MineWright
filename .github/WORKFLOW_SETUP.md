@@ -9,10 +9,10 @@ This is a GitHub security feature to prevent unauthorized workflow modifications
 2. Navigate to `.github/workflows/` directory
 3. Click "Add file" → "Create new file"
 4. Create each workflow file:
-   - `ci.yml` - Copy content from local file
-   - `release.yml` - Copy content from local file
-   - `codeql.yml` - Copy content from local file
-   - `dependency-review.yml` - Copy content from local file
+   - `ci.yml` - Main CI pipeline
+   - `release.yml` - Release automation
+   - `codeql.yml` - Security analysis
+   - `dependency-review.yml` - Dependency scanning
 
 ## Option 2: Use Personal Access Token with Workflow Scope
 
@@ -23,13 +23,6 @@ This is a GitHub security feature to prevent unauthorized workflow modifications
    git remote set-url origin https://<TOKEN>@github.com/SuperInstance/MineWright.git
    git push origin clean-main
    ```
-
-## Option 3: Create via GitHub API
-
-```bash
-# Using gh CLI with appropriate permissions
-gh workflow create ci.yml --ref clean-main
-```
 
 ## Workflow Files Summary
 
@@ -42,5 +35,15 @@ gh workflow create ci.yml --ref clean-main
 
 ## Current Status
 
-- ✅ All other files pushed to `clean-main` branch
-- ⏳ Workflow files ready locally, pending manual addition to GitHub
+- All code and documentation pushed to `clean-main` branch
+- Workflow files ready locally, pending manual addition to GitHub
+- See `.github/workflows/` directory for workflow file contents
+
+## Workflow File Locations
+
+The workflow files are saved in the repository but excluded from pushes.
+To add them manually, copy from:
+- `.github/workflows/ci.yml`
+- `.github/workflows/release.yml`
+- `.github/workflows/codeql.yml`
+- `.github/workflows/dependency-review.yml`

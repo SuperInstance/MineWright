@@ -3,11 +3,37 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Last Updated:** 2026-03-01
-**Version:** 1.2
+**Version:** 1.3
 
 ---
 
 ## ⚡ LATEST UPDATE (2026-03-01)
+
+### New Initiative: Game Bot Architecture Research
+
+**Goal:** Study successful game automation systems (WoW Glider, Honorbuddy, etc.) and apply insights to our Script DSL system.
+
+**Research Targets:**
+| Bot/System | Key Features to Study |
+|------------|----------------------|
+| WoW Glider | Memory reading, pattern automation, humanization |
+| Honorbuddy | Behavior trees, profiles, plugins, combat routines |
+| Demonbuddy | Multi-game framework architecture |
+| Baritone | Minecraft pathfinding, goal system |
+| Mineflayer | JavaScript bot API, scripting patterns |
+| OSRS Bots | Color/object detection, random handling |
+| Diablo Bots | Item management, route optimization |
+
+**Expected Outcomes:**
+- Enhanced human-like behavior patterns
+- Better state machine and decision systems
+- Improved anti-stuck and recovery mechanisms
+- More sophisticated task profiles
+- Plugin/module architecture improvements
+
+---
+
+## ⚡ PREVIOUS UPDATE (2026-03-01)
 
 ### Major Completions This Session:
 - ✅ **Script DSL System** (13 classes): Full implementation for automation script generation

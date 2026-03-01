@@ -85,7 +85,7 @@ This dissertation builds upon these foundations while contributing novel insight
 - **Minecraft-Specific Architectural Guidance:** First comprehensive mapping of AI architectures to Minecraft-specific challenges (voxel worlds, crafting dependencies, multi-modal interactions)
 - **Architecture Evaluation Framework:** Quantitative comparison method using weighted quality attributes and ATAM-style scenarios
 
-This research positions itself at the intersection of software architecture (Bass et al., 2012; Shaw & Clements, 2006), game AI (Isla, 2005; Orkin, 2004), and modern LLM agents Wang et al., "Voyager: An open-ended embodied agent with large language models" (2023), contributing both theoretical frameworks and practical implementation patterns for the emerging field of neuro-symbolic game AI.
+This research positions itself at the intersection of software architecture (Bass et al., 2012; Shaw & Clements, 2006), game AI (Isla, 2005; Orkin, 2004), and modern LLM agents (Wang et al., 2023), contributing both theoretical frameworks and practical implementation patterns for the emerging field of neuro-symbolic game AI.
 
 ---
 
@@ -3191,7 +3191,7 @@ Result: Agents B and C collide, both try to place blocks
    Risk: Suboptimal resource allocation
    ```
 
-**Research Question:** How do you maintain coherent multi-agent behavior with 100-200ms network latency? Traditional multi-agent systems Stone & Veloso, "Multiagent Systems: A Survey from a Machine Learning Perspective" (2000) assume <10ms latency for coordination.
+**Research Question:** How do you maintain coherent multi-agent behavior with 100-200ms network latency? Traditional multi-agent systems (Stone & Veloso, 2000) assume <10ms latency for coordination.
 
 #### Debugging Complexity in Distributed Systems
 
@@ -3385,11 +3385,11 @@ Agent 2: Claims "Furnace" → Needs "Iron Ore"
 
 This section has documented significant limitations and gaps in the current Steve AI architecture. The primary limitations are:
 
-1. **Scalability Challenges**: The system has only been tested with 10 concurrent agents; scaling to 100+ agents requires decentralized coordination Durfee, "Distributed Problem Solving and Multi-Agent Learning" (2001), partitioned event buses (Varela, 2003), and relationship summarization to prevent O(n²) growth (Wasserman & Faust, 1994).
+1. **Scalability Challenges**: The system has only been tested with 10 concurrent agents; scaling to 100+ agents requires decentralized coordination (Durfee, 2001), partitioned event buses (Varela, 2003), and relationship summarization to prevent O(n²) growth (Wasserman & Faust, 1994).
 
 2. **Real-Time Performance Constraints**: LLM planning latency (3-30 seconds) exceeds Minecraft's tick budget (50ms) by 60-600x, creating a "reactivity gap" Isla, "Handling Complexity in the Halo 2 AI" (2005). Pathfinding complexity grows exponentially with world size without hierarchical abstraction Botea et al., "Path-Finding versus Goal-Based Navigation for Game AI" (2004).
 
-3. **LLM Reliability Issues**: Current LLMs exhibit 10-20% hallucination rates Ji et al., "Survey of Hallucination in Natural Language Generation" (2023), non-deterministic behavior, and API dependency risks. Response times >1 second cause user attention to wander (Nielsen, 1993), degrading player experience.
+3. **LLM Reliability Issues**: Current LLMs exhibit 10-20% hallucination rates (Ji et al., 2023), non-deterministic behavior, and API dependency risks. Response times >1 second cause user attention to wander (Nielsen, 1993), degrading player experience.
 
 4. **Memory Persistence Challenges**: Unbounded memory growth causes context window overflow, retrieval latency issues Lewis et al., "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" (2020), and memory incoherence. The emotional AI system's relationship models create O(n²) storage requirements (Section 15.3.4).
 
