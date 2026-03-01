@@ -1,0 +1,76 @@
+[
+  {
+    "name": "Keep valuable ores",
+    "conditions": [
+      {"field": "item_type", "operator": "contains", "value": "diamond"}
+    ],
+    "action": "KEEP",
+    "priority": 100
+  },
+  {
+    "name": "Keep emeralds",
+    "conditions": [
+      {"field": "item_type", "operator": "contains", "value": "emerald"}
+    ],
+    "action": "KEEP",
+    "priority": 100
+  },
+  {
+    "name": "Keep all ore items",
+    "conditions": [
+      {"field": "item_type", "operator": "contains", "value": "ore"}
+    ],
+    "action": "KEEP",
+    "priority": 90
+  },
+  {
+    "name": "Keep raw metals",
+    "conditions": [
+      {"field": "item_type", "operator": "contains", "value": "raw"}
+    ],
+    "action": "KEEP",
+    "priority": 85
+  },
+  {
+    "name": "Discard excess cobblestone",
+    "conditions": [
+      {"field": "item_type", "operator": "==", "value": "cobblestone"},
+      {"field": "quantity", "operator": ">", "value": 64}
+    ],
+    "action": "DISCARD",
+    "priority": 50
+  },
+  {
+    "name": "Keep tools with good durability",
+    "conditions": [
+      {"field": "item_type", "operator": "contains", "value": "pickaxe"},
+      {"field": "durability", "operator": ">=", "value": 50}
+    ],
+    "action": "KEEP",
+    "priority": 80
+  },
+  {
+    "name": "Keep enchanted items",
+    "conditions": [
+      {"field": "rarity", "operator": "==", "value": "uncommon"}
+    ],
+    "action": "KEEP",
+    "priority": 95
+  },
+  {
+    "name": "Keep rare items",
+    "conditions": [
+      {"field": "rarity", "operator": "==", "value": "rare"}
+    ],
+    "action": "KEEP",
+    "priority": 95
+  },
+  {
+    "name": "Keep epic items",
+    "conditions": [
+      {"field": "rarity", "operator": "==", "value": "epic"}
+    ],
+    "action": "KEEP",
+    "priority": 95
+  }
+]

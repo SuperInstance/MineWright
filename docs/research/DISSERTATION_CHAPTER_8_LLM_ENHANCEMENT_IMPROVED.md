@@ -2752,7 +2752,7 @@ The `strict: true` parameter enables constrained decoding that guarantees the ou
 
 Function calling underwent significant evolution in 2024, with major providers transitioning from "functions" to "tools" terminology and introducing enhanced capabilities:
 
-**OpenAI's API Transition** (August 2024):
+**OpenAI's API Transition** (August 2024 - OpenAI Platform Update):
 - Deprecated: `functions` parameter → Use: `tools`
 - Deprecated: `function_call` parameter → Use: `tool_choice`
 - New: `parallel_tool_calls` parameter for concurrent tool execution
