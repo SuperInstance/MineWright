@@ -3,6 +3,7 @@ package com.minewright.action.actions;
 import com.minewright.testutil.TestLogger;
 import org.slf4j.Logger;
 import com.minewright.action.ActionResult;
+import com.minewright.action.ActionResult.ErrorCode;
 import com.minewright.action.Task;
 import com.minewright.entity.ForemanEntity;
 import com.minewright.exception.ActionException;
@@ -22,14 +23,16 @@ import com.minewright.exception.ActionException;
  * <ul>
  *   <li>Exceptions during tick are caught and converted to ActionResult</li>
  *   <li>ActionException provides detailed error context and recovery suggestions</li>
+ *   <li>Errors are categorized with error codes for appropriate recovery strategies</li>
  *   <li>Errors never crash the game - graceful degradation</li>
+ *   <li>State cleanup is guaranteed via finally blocks</li>
  * </ul>
  *
  * <p><b>Thread Safety:</b> Actions are ticked on the main game thread.
  * Do not block in onTick() - all long-running operations must be async.</p>
  */
 public abstract class BaseAction {
-    private static final Logger LOGGER = TestLogger.getLogger(BaseAction.class);
+    protected static final Logger LOGGER = TestLogger.getLogger(BaseAction.class);
 
     protected final ForemanEntity foreman;
     protected final Task task;
@@ -37,6 +40,7 @@ public abstract class BaseAction {
     protected boolean started = false;
     protected boolean cancelled = false;
     protected String errorContext;
+    protected int retryCount = 0;
 
     public BaseAction(ForemanEntity foreman, Task task) {
         this.foreman = foreman;
@@ -81,6 +85,7 @@ public abstract class BaseAction {
 
     /**
      * Cancels the action. Stops execution and marks as failed.
+     * Ensures proper cleanup of resources.
      */
     public void cancel() {
         if (cancelled) {
@@ -95,6 +100,9 @@ public abstract class BaseAction {
         } catch (Exception e) {
             LOGGER.warn("[{}] Error during action cancellation: {}",
                 foreman.getEntityName(), getDescription(), e);
+        } finally {
+            // Always perform cleanup
+            cleanup();
         }
     }
 
@@ -122,6 +130,15 @@ public abstract class BaseAction {
     }
 
     /**
+     * Gets the current retry count.
+     *
+     * @return Number of retry attempts
+     */
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    /**
      * Handles an ActionException by converting it to an ActionResult.
      *
      * @param e The exception to handle
@@ -132,6 +149,9 @@ public abstract class BaseAction {
 
         this.result = ActionResult.fromException(e);
         this.errorContext = e.getContext();
+
+        // Perform cleanup on error
+        cleanup();
 
         // Notify entity of the failure
         if (foreman != null) {
@@ -157,6 +177,9 @@ public abstract class BaseAction {
         );
 
         this.result = ActionResult.fromException(wrapped);
+
+        // Perform cleanup on error
+        cleanup();
     }
 
     /**
@@ -168,6 +191,7 @@ public abstract class BaseAction {
         LOGGER.info("[{}] Action cancelled: {}", foreman.getEntityName(), reason);
         this.result = ActionResult.failure(reason, false);
         this.cancelled = true;
+        cleanup();
     }
 
     /**
@@ -190,6 +214,17 @@ public abstract class BaseAction {
     }
 
     /**
+     * Sets a failed result with specific error code.
+     *
+     * @param errorCode          The error code
+     * @param message            Failure message
+     * @param requiresReplanning Whether replanning is needed
+     */
+    protected void fail(ErrorCode errorCode, String message, boolean requiresReplanning) {
+        this.result = ActionResult.failure(errorCode, message, requiresReplanning);
+    }
+
+    /**
      * Sets a failed result with recovery suggestion.
      *
      * @param message            Failure message
@@ -198,6 +233,36 @@ public abstract class BaseAction {
      */
     protected void failWithRecovery(String message, boolean requiresReplanning, String recoverySuggestion) {
         this.result = ActionResult.failureWithRecovery(message, requiresReplanning, recoverySuggestion);
+    }
+
+    /**
+     * Sets a timeout failure result.
+     *
+     * @param duration The timeout duration
+     */
+    protected void failTimeout(String duration) {
+        String actionType = task != null ? task.getAction() : "unknown";
+        this.result = ActionResult.timeout(actionType, duration);
+    }
+
+    /**
+     * Sets a blocked failure result.
+     *
+     * @param reason Why it's blocked
+     */
+    protected void failBlocked(String reason) {
+        String actionType = task != null ? task.getAction() : "unknown";
+        this.result = ActionResult.blocked(actionType, reason);
+    }
+
+    /**
+     * Cleans up resources used by the action.
+     * Called automatically on cancel, error, or completion.
+     * Subclasses should override to perform specific cleanup.
+     */
+    protected void cleanup() {
+        // Default implementation - subclasses override
+        LOGGER.debug("[{}] Cleaning up action: {}", foreman.getEntityName(), getDescription());
     }
 
     /**
@@ -218,12 +283,43 @@ public abstract class BaseAction {
     }
 
     /**
+     * Validates the Foreman entity and level are available.
+     *
+     * @throws ActionException if validation fails
+     */
+    protected void validateState() throws ActionException {
+        if (foreman == null) {
+            throw ActionException.executionFailed(
+                getActionType(),
+                "Foreman entity is null",
+                null
+            );
+        }
+        if (foreman.level() == null) {
+            throw ActionException.executionFailed(
+                getActionType(),
+                "Foreman level is null",
+                null
+            );
+        }
+    }
+
+    /**
      * Gets the action type for error reporting.
      *
      * @return Action type string
      */
     protected String getActionType() {
         return task != null ? task.getAction() : "unknown";
+    }
+
+    /**
+     * Gets the task associated with this action.
+     *
+     * @return The task, or null if not set
+     */
+    public Task getTask() {
+        return task;
     }
 
     protected abstract void onStart();

@@ -13,7 +13,6 @@ import com.minewright.structure.StructureTemplateLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -21,10 +20,35 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Action that builds structures in the Minecraft world.
+ *
+ * <p><b>Features:</b></p>
+ * <ul>
+ *   <li><b>Template Loading:</b> Loads structures from NBT template files if available</li>
+ *   <li><b>Procedural Generation:</b> Falls back to procedural generation if no template exists</li>
+ *   <li><b>Collaborative Building:</b> Multiple foremen can work together on the same structure</li>
+ *   <li><b>Smart Site Selection:</b> Finds suitable building sites near the player's view direction</li>
+ *   <li><b>Flying Mode:</b> Foremen fly during collaborative builds for better access</li>
+ * </ul>
+ *
+ * <p><b>Parameters:</b></p>
+ * <ul>
+ *   <li><code>structure</code> - Type of structure to build (house, tower, wall, etc.)</li>
+ *   <li><code>material</code> - Block type to use (defaults to oak_planks)</li>
+ *   <li><code>width</code> - Structure width (default 9)</li>
+ *   <li><code>height</code> - Structure height (default 6)</li>
+ *   <li><code>depth</code> - Structure depth (default 9)</li>
+ *   <li><code>blocks</code> - List of block types for multi-material builds</li>
+ * </ul>
+ *
+ * @since 1.0.0
+ */
 public class BuildStructureAction extends BaseAction {
     private static final Logger LOGGER = TestLogger.getLogger(BuildStructureAction.class);
 
@@ -291,7 +315,7 @@ public class BuildStructureAction extends BaseAction {
             blockName = "minecraft:" + blockName;
         }
         ResourceLocation resourceLocation = new ResourceLocation(blockName);
-        Block block = BuiltInRegistries.BLOCK.get(resourceLocation);
+        Block block = ForgeRegistries.BLOCKS.getValue(resourceLocation);
         return block != null ? block : Blocks.AIR;
     }
     
@@ -346,7 +370,7 @@ public class BuildStructureAction extends BaseAction {
             return false;
         }
 
-        return blockState.isSolid();
+        return blockState.isSolidRender(foreman.level(), pos);
     }
     
     /**

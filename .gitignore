@@ -23,6 +23,10 @@ run/config/minewright-common.toml
 logs/
 test-output.log
 
+# JaCoCo coverage reports
+build/reports/jacoco/
+*.exec
+
 # Media files (large binaries)
 *.mp4
 *.mov

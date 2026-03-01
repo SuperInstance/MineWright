@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,28 +65,31 @@ public class StructureTemplateLoader {
 
         for (String fileName : possibleNames) {
             String resourcePath = "structures/" + fileName;
-            InputStream resourceStream = StructureTemplateLoader.class.getClassLoader().getResourceAsStream(resourcePath);
-
-            if (resourceStream != null) {
-                LOGGER.info("Found structure in resources: {}", resourcePath);
-                try {
+            // SECURITY FIX: Use try-with-resources to ensure stream is closed even on exception
+            try (InputStream resourceStream = StructureTemplateLoader.class.getClassLoader().getResourceAsStream(resourcePath)) {
+                if (resourceStream != null) {
+                    LOGGER.info("Found structure in resources: {}", resourcePath);
                     CompoundTag nbt = NbtIo.readCompressed(resourceStream);
-                    resourceStream.close();
                     return parseNBTStructure(nbt, structureName);
-                } catch (IOException e) {
-                    LOGGER.error("Failed to load structure from resources: {}", resourcePath, e);
                 }
+            } catch (IOException e) {
+                LOGGER.error("Failed to load structure from resources: {}", resourcePath, e);
             }
         }
         
+        // SECURITY FIX: Added proper exception logging with stack trace
         try {
             ResourceLocation resourceLocation = new ResourceLocation("steve", structureName);
             var templateManager = level.getStructureManager();
             var template = templateManager.get(resourceLocation);
-            
-            if (template.isPresent()) {                return loadFromMinecraftTemplate(template.get(), structureName);
+
+            if (template.isPresent()) {
+                return loadFromMinecraftTemplate(template.get(), structureName);
             }
-        } catch (Exception e) {        }
+        } catch (Exception e) {
+            // SECURITY FIX: Log full exception with stack trace instead of just message
+            LOGGER.debug("Could not load structure from Minecraft template system", e);
+        }
         
         LOGGER.warn("Structure '{}' not found. Available structures: {}", 
             structureName, getAvailableStructures());
@@ -140,11 +144,11 @@ public class StructureTemplateLoader {
         for (int i = 0; i < paletteList.size(); i++) {
             CompoundTag blockTag = paletteList.getCompound(i);
             String blockName = blockTag.getString("Name");
-            
+
             try {
                 ResourceLocation blockLocation = new ResourceLocation(blockName);
-                Block block = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(blockLocation);
-                palette.add(block.defaultBlockState());
+                Block block = ForgeRegistries.BLOCKS.getValue(blockLocation);
+                palette.add(block != null ? block.defaultBlockState() : Blocks.AIR.defaultBlockState());
             } catch (Exception e) {
                 LOGGER.warn("Unknown block in structure: {}", blockName);
                 palette.add(Blocks.AIR.defaultBlockState());

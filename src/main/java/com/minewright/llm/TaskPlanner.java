@@ -9,6 +9,7 @@ import com.minewright.llm.async.*;
 import com.minewright.llm.batch.*;
 import com.minewright.llm.cascade.*;
 import com.minewright.memory.WorldKnowledge;
+import com.minewright.security.InputSanitizer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -332,6 +333,14 @@ public class TaskPlanner {
         // Check API key before making request
         if (!MineWrightConfig.hasValidApiKey()) {
             LOGGER.error("Cannot plan tasks: API key not configured. Please check config/minewright-common.toml");
+            return null;
+        }
+
+        // SECURITY: Validate command for suspicious patterns before processing
+        if (InputSanitizer.containsSuspiciousPatterns(command)) {
+            String reason = InputSanitizer.getSuspiciousPatternDescription(command);
+            LOGGER.warn("Command contains suspicious patterns and was rejected: {}. Command: {}",
+                reason, command);
             return null;
         }
 

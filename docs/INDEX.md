@@ -1,101 +1,138 @@
-# MineWright API Documentation
+# MineWright Documentation Index
 
-Complete API documentation for MineWright - "Cursor for Minecraft". This documentation covers actions, events, configuration, and integration.
+Complete documentation for MineWright - "Cursor for Minecraft". This is your starting point for all documentation.
+
+---
 
 ## Quick Links
 
-| Document | Description |
-|----------|-------------|
-| [Action API](ACTION_API.md) | All available actions and how to use them |
-| [Event API](EVENT_API.md) | Event system and event handling |
-| [Configuration](CONFIGURATION.md) | All configuration options |
-| [Integration Guide](INTEGRATION_GUIDE.md) | How to extend MineWright |
-| [Documentation Template](API_DOCUMENTATION_TEMPLATE.md) | Format for API docs |
+### For Players
+
+- [Installation Guide](INSTALLATION.md) - Get MineWright installed and running
+- [Configuration Guide](CONFIGURATION.md) - Set up your API key and configure options
+- [Performance Guide](PERFORMANCE_GUIDE.md) - Optimize for your hardware
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Fix common issues
+- [Main README](../README.md) - Project overview and features
+
+### For Developers
+
+- [Onboarding Guide](ONBOARDING.md) - Quick start for developers
+- [Architecture Overview](ARCHITECTURE_OVERVIEW.md) - System design and patterns
+- [Development Guide](DEVELOPMENT_GUIDE.md) - Build, test, and contribute
+- [API Documentation](#api-documentation) - Complete API reference
+- [Research Guide](RESEARCH_GUIDE.md) - Dissertations and research
+
+---
 
 ## Getting Started
 
 ### What is MineWright?
 
-MineWright is an AI-powered mod for Minecraft that allows autonomous agents (called "Foremen") to execute natural language commands. Users type commands like "Build a house" or "Mine 64 iron ore" and AI-controlled agents plan and execute the tasks.
+MineWright is an AI-powered mod for Minecraft that adds autonomous AI companions (called "Foremen") who can:
+
+- Understand natural language commands
+- Plan and execute complex tasks
+- Coordinate with multiple agents
+- Build relationships with players
+- Learn and improve over time
+
+**Example Commands:**
+```
+build a stone house with a roof
+mine 64 iron ore and smelt it
+follow me and kill any zombies nearby
+clear a 10x10 area and build a wheat farm
+```
 
 ### Key Concepts
 
-**Actions** - Units of work that agents can perform (mine, build, craft, etc.)
+**Actions** - Units of work agents can perform (mine, build, craft, etc.)
 
-**Events** - Notifications published when things happen (action started, state changed, etc.)
+**Events** - Notifications when things happen (action started, state changed, etc.)
 
 **Plugins** - Extensions that add new actions or modify behavior
 
 **Configuration** - Settings that control AI provider, behavior, and features
 
-### Basic Usage
-
-```json
-// Command format
-{
-  "action": "mine",
-  "parameters": {
-    "block": "iron_ore",
-    "quantity": 32
-  }
-}
-```
-
 ### Quick Reference
 
-#### Available Actions
+#### In-Game Commands
 
-| Action | Description | Parameters |
-|--------|-------------|------------|
-| `pathfind` | Navigate to coordinates | x, y, z |
-| `follow` | Follow a player | playerName, distance |
-| `mine` | Mine blocks | block, quantity |
-| `gather` | Gather resources | resource, quantity |
-| `place` | Place a block | block, x, y, z |
-| `build` | Build a structure | structure, blocks, dimensions |
-| `craft` | Craft an item | item, quantity |
-| `attack` | Attack an entity | target, distance |
-
-#### Main Events
-
-| Event | When Published |
-|-------|----------------|
-| `ActionStartedEvent` | Action begins execution |
-| `ActionCompletedEvent` | Action finishes (success/fail) |
-| `StateTransitionEvent` | Agent state changes |
+| Command | Description |
+|---------|-------------|
+| `/minewright spawn <name>` | Spawn a new AI agent |
+| `/minewright list` | List all active agents |
+| `/minewright remove <name>` | Remove an agent |
+| `/minewright order <name> <cmd>` | Give a command |
+| Press **K** | Open command GUI |
 
 #### Key Configuration
 
 ```toml
 [ai]
-provider = "groq"  # AI provider: groq, openai, gemini
+provider = "openai"  # AI provider: openai, groq, gemini
+
+[openai]
+apiKey = "${MINEWRIGHT_API_KEY}"  # Your API key
+model = "glm-5"  # Model to use
 
 [behavior]
+maxActiveCrewMembers = 10  # Max concurrent agents
 actionTickDelay = 20  # Ticks between checks
-enableChatResponses = true  # Agents can chat
-
-[voice]
-enabled = false  # Voice features
-mode = "logging"  # disabled, logging, real
 ```
 
-## Documentation Structure
+---
 
-```
-docs/
-├── INDEX.md                      # This file
-├── API_DOCUMENTATION_TEMPLATE.md # Template for API docs
-├── ACTION_API.md                 # All actions
-├── EVENT_API.md                  # All events
-├── CONFIGURATION.md              # All config options
-└── INTEGRATION_GUIDE.md          # Extension guide
-```
+## User Documentation
 
-## Version Information
+### Installation & Setup
 
-- **MineWright Version**: 1.3.0
-- **Documentation Version**: 1.3.0
-- **Last Updated**: 2026-02-27
+| Document | Description |
+|----------|-------------|
+| [Installation Guide](INSTALLATION.md) | Step-by-step installation for players and developers |
+| [Configuration Guide](CONFIGURATION.md) | Complete configuration reference |
+| [First-Time Setup](INSTALLATION.md#first-time-setup) | Setting your API key and choosing a provider |
+
+### Optimization & Troubleshooting
+
+| Document | Description |
+|----------|-------------|
+| [Performance Guide](PERFORMANCE_GUIDE.md) | Optimize for your hardware |
+| [Performance Analysis](PERFORMANCE.md) | Technical performance analysis (developers) |
+| [Troubleshooting Guide](TROUBLESHOOTING.md) | Common issues and solutions |
+
+---
+
+## Developer Documentation
+
+### Getting Started
+
+| Document | Description |
+|----------|-------------|
+| [Onboarding Guide](ONBOARDING.md) | Quick start for new developers |
+| [Architecture Overview](ARCHITECTURE_OVERVIEW.md) | System design and diagrams |
+| [Development Guide](DEVELOPMENT_GUIDE.md) | Build, test, and debug |
+| [Project Structure](#project-structure) | Code organization |
+| [Contributing](../CONTRIBUTING.md) | How to contribute |
+
+### API Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Action API](ACTION_API.md) | All available actions and how to use them |
+| [Event API](EVENT_API.md) | Event system and event handling |
+| [API Template](API_DOCUMENTATION_TEMPLATE.md) | Format for API docs |
+| [Integration Guide](INTEGRATION_GUIDE.md) | How to extend MineWright |
+
+### Research & Architecture
+
+| Document | Description |
+|----------|-------------|
+| [Research Guide](RESEARCH_GUIDE.md) | Dissertations and research docs |
+| [Roadmap](FUTURE_ROADMAP.md) | Prioritized future work |
+| [Script Layer Learning](SCRIPT_LAYER_LEARNING_SYSTEM.md) | Learning system architecture |
+
+---
 
 ## Project Structure
 
@@ -105,28 +142,43 @@ docs/
 |---------|---------|
 | `action` | Action execution and task management |
 | `action.actions` | Built-in action implementations |
-| `event` | Event bus and event definitions |
-| `plugin` | Plugin system and action registry |
-| `execution` | State machine, interceptors, code execution |
-| `entity` | Foreman entity definition and lifecycle |
-| `llm` | LLM clients, prompt building, async support |
-| `memory` | Conversation history and world knowledge |
-| `structure` | Procedural generation and NBT templates |
+| `behavior` | Behavior tree runtime |
+| `blackboard` | Shared knowledge system |
 | `client` | GUI, key bindings, client-side features |
+| `communication` | Inter-agent messaging |
 | `config` | Configuration management |
-| `di` | Dependency injection container |
+| `coordination` | Multi-agent coordination |
+| `decision` | Utility AI |
+| `di` | Dependency injection |
+| `entity` | Foreman entity definition |
+| `evaluation` | Benchmarking |
+| `event` | Event bus and events |
+| `execution` | State machine, interceptors |
+| `htn` | Hierarchical task network |
+| `llm` | LLM clients, prompts |
+| `memory` | Persistence, retrieval |
+| `orchestration` | Multi-agent orchestration |
+| `pathfinding` | Navigation |
+| `personality` | AI personality system |
+| `plugin` | Plugin system |
+| `script` | Script layer |
+| `skill` | Skill library |
+| `structure` | Procedural generation |
+| `util` | Utilities |
+| `voice` | Voice integration |
 
 ### Architecture Patterns
 
 | Pattern | Usage |
 |---------|-------|
-| **Plugin Pattern** | Extensible action system via SPI |
-| **Observer Pattern** | Event bus for decoupled communication |
+| **Plugin Pattern** | Extensible action system |
+| **Observer Pattern** | Event bus for communication |
 | **State Pattern** | Agent state machine |
 | **Interceptor Pattern** | Action execution pipeline |
-| **Factory Pattern** | Action creation via ActionFactory |
-| **Registry Pattern** | Dynamic action lookup |
+| **Factory Pattern** | Action creation |
 | **Strategy Pattern** | Pluggable LLM providers |
+
+---
 
 ## Common Tasks
 
@@ -155,50 +207,46 @@ See [Event API > EventBus API](EVENT_API.md#eventbus-api)
 
 ```toml
 [ai]
-provider = "openai"  # or "groq" or "gemini"
+provider = "openai"
 
 [openai]
-apiKey = "sk-..."
-model = "gpt-4"
+apiKey = "${MINEWRIGHT_API_KEY}"
+model = "glm-5"
 ```
 
 See [Configuration > AI Configuration](CONFIGURATION.md#ai-configuration)
 
-## Support
+---
 
-### Documentation
+## Version Information
 
-- Use the navigation in each document to find specific topics
-- Check the template for documentation format
-- See examples in the Integration Guide
-
-### Code Examples
-
-- Integration Guide contains complete examples
-- API docs include usage examples for each component
-- Template shows expected documentation format
-
-### Troubleshooting
-
-Each document has a troubleshooting section:
-- [Action API Troubleshooting](ACTION_API.md#troubleshooting)
-- [Event API Debugging](EVENT_API.md#debugging-events)
-- [Configuration Troubleshooting](CONFIGURATION.md#troubleshooting)
-- [Integration Troubleshooting](INTEGRATION_GUIDE.md#troubleshooting)
-
-## Contributing
-
-When adding new features:
-
-1. Document following the [template](API_DOCUMENTATION_TEMPLATE.md)
-2. Add examples to relevant docs
-3. Update this index if adding new documents
-4. Include version information (since X.Y.Z)
-
-## License
-
-This documentation is part of MineWright. See main project LICENSE file.
+- **MineWright Version**: 1.0.0
+- **Documentation Version**: 1.0
+- **Last Updated**: 2026-03-01
 
 ---
 
-**Generated for MineWright 1.3.0**
+## Support
+
+### Getting Help
+
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and fixes
+- [GitHub Issues](https://github.com/SuperInstance/MineWright/issues) - Report bugs
+- [GitHub Discussions](https://github.com/SuperInstance/MineWright/discussions) - Ask questions
+
+### Contributing
+
+See [Contributing Guide](../CONTRIBUTING.md) for:
+- Code standards
+- Pull request guidelines
+- Development workflow
+
+---
+
+## License
+
+This documentation is part of MineWright. See main project [LICENSE](../LICENSE) file.
+
+---
+
+**Generated for MineWright 1.0.0**

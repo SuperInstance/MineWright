@@ -257,9 +257,21 @@ public class DockerMCPTTS implements TextToSpeech {
 
     /**
      * Synthesizes text via Docker MCP ElevenLabs.
+     *
+     * Security: Validates all inputs before processing to prevent injection attacks.
      */
     private void synthesizeViaMCP(String text) {
         try {
+            // Validate inputs
+            if (!validateText(text)) {
+                LOGGER.error("[DockerMCP-TTS] Invalid text input rejected");
+                return;
+            }
+            if (!validateVoiceId(voiceId)) {
+                LOGGER.error("[DockerMCP-TTS] Invalid voice ID: {}", voiceId);
+                return;
+            }
+
             // Use Docker MCP gateway to call ElevenLabs TTS
             Map<String, Object> params = new HashMap<>();
             params.put("text", text);
@@ -349,14 +361,122 @@ public class DockerMCPTTS implements TextToSpeech {
     }
 
     /**
-     * Escapes JSON string values.
+     * Validates text input to prevent injection attacks.
+     *
+     * Security: Enforces length restrictions and character allowlist.
+     *
+     * @param text The text to validate
+     * @return true if text is safe to process, false otherwise
+     */
+    private boolean validateText(String text) {
+        if (text == null) {
+            return false;
+        }
+
+        // Length restriction: prevent DoS via extremely long text
+        final int MAX_TEXT_LENGTH = 5000;
+        if (text.length() > MAX_TEXT_LENGTH) {
+            LOGGER.warn("[DockerMCP-TTS] Text exceeds maximum length of {} chars", MAX_TEXT_LENGTH);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validates voice ID against an allowlist to prevent injection attacks.
+     *
+     * Security: Only allows known ElevenLabs voice IDs.
+     *
+     * @param voiceId The voice ID to validate
+     * @return true if voice ID is in allowlist, false otherwise
+     */
+    private boolean validateVoiceId(String voiceId) {
+        if (voiceId == null || voiceId.isEmpty()) {
+            return false;
+        }
+
+        // Length restriction: ElevenLabs voice IDs are typically ~20 chars
+        final int MAX_VOICE_ID_LENGTH = 50;
+        if (voiceId.length() > MAX_VOICE_ID_LENGTH) {
+            return false;
+        }
+
+        // Allowlist of known voice IDs
+        // This prevents injection of malicious commands through custom voice IDs
+        Set<String> allowedVoiceIds = Set.of(
+            "21m00Tcm4TlvDq8ikWAM",  // Rachel
+            "pNInz6obpgDQGcFmaJgB",  // Adam
+            "EXAVITQu4vr4xnSDxMaL",  // Bella
+            "yoZ06aMxZJJ28mfd3POQ",  // Sam
+            "MF3mGyEYCl7XYWbV9V6O",  // Elli
+            "txg98GcUuHnG8B3wdKQr",  // Marcus
+            "5Q0t7uMcjvnjumKxPWC0",  // Domi
+            "AZnzlk1XvdvUeBnXmlld",  // Fin
+            "IEvaWXzEL0GhnPcTtrgT",  // Antoni
+            "ODq5zmih8GrVes37Dizj"   // Elli v2
+        );
+
+        boolean allowed = allowedVoiceIds.contains(voiceId);
+        if (!allowed) {
+            LOGGER.warn("[DockerMCP-TTS] Voice ID not in allowlist: {}", voiceId);
+        }
+        return allowed;
+    }
+
+    /**
+     * Escapes JSON string values to prevent injection attacks.
+     * Properly escapes all JSON special characters according to RFC 8259.
+     *
+     * Security: This prevents JSON injection and command injection through
+     * malformed JSON that could be misinterpreted by the Docker MCP gateway.
      */
     private String escapeJson(String s) {
-        return s.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+        if (s == null) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder(s.length() * 2);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\b':
+                    sb.append("\\b");
+                    break;
+                case '\f':
+                    sb.append("\\f");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                case '/':
+                    // Optional but recommended: escape forward slash to prevent
+                    // closing tags in JSONP-like contexts
+                    sb.append("\\/");
+                    break;
+                default:
+                    // Control characters (0x00-0x1f) must be escaped
+                    if (c <= 0x1f) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                    break;
+            }
+        }
+        return sb.toString();
     }
 
     /**

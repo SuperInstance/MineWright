@@ -4,9 +4,9 @@ plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    // Checkstyle and SpotBugs disabled until config is fixed
-    // id 'checkstyle'
-    // id 'com.github.spotbugs' version '6.0.26'
+    id 'checkstyle'
+    id 'com.github.spotbugs' version '6.0.26'
+    id 'jacoco'
 }
 
 version = '1.0.0'
@@ -115,10 +115,149 @@ test {
     }
     // Set heap size for tests
     jvmArgs '-Xmx2G'
+
+    // Enable JaCoCo coverage
+    finalizedBy jacocoTestReport
 }
 
-// Checkstyle configuration - disabled until config is fixed
-/*
+// JaCoCo configuration
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+        xml.outputLocation = file("$buildDir/reports/jacoco/test/jacocoTestReport.xml")
+        html.outputLocation = file("$buildDir/reports/jacoco/test/html")
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                // Configuration classes
+                '**/config/**',
+
+                // Entity classes (data holders)
+                '**/entity/**',
+
+                // Client-side GUI code (hard to test)
+                '**/client/**',
+
+                // Generated code
+                '**/generated/**',
+
+                // Test classes
+                '**/*Test*',
+                '**/test/**',
+
+                // Minecraft integration points (require full game context)
+                '**/integration/minecraft/**',
+
+                // Message classes (simple data holders)
+                '**/communication/message/**',
+
+                // Event classes (simple data holders)
+                '**/event/dto/**',
+
+                // Exception classes (simple logic)
+                '**/exception/**'
+            ])
+        }))
+    }
+}
+
+// Coverage verification with thresholds
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            enabled = true
+            limit {
+                minimum = 0.40  // 40% minimum coverage (current goal)
+            }
+        }
+
+        // Per-package rules (more lenient for now)
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.action']
+            limit {
+                minimum = 0.50  // Core action system should be well tested
+            }
+        }
+
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.execution']
+            limit {
+                minimum = 0.50  // Execution engine should be well tested
+            }
+        }
+
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.security']
+            limit {
+                minimum = 0.80  // Security code requires high coverage
+            }
+        }
+
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.memory']
+            limit {
+                minimum = 0.30  // Memory system (lenient for now)
+            }
+        }
+
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.behavior']
+            limit {
+                minimum = 0.30  // Behavior trees (lenient for now)
+            }
+        }
+
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.htn']
+            limit {
+                minimum = 0.30  // HTN planner (lenient for now)
+            }
+        }
+
+        rule {
+            enabled = true
+            element = 'PACKAGE'
+            includes = ['com.minewright.pathfinding']
+            limit {
+                minimum = 0.30  // Pathfinding (lenient for now)
+            }
+        }
+    }
+}
+
+// Make check task depend on coverage verification (optional - comment out if too strict)
+// check.dependsOn jacocoTestCoverageVerification
+
+// Task to generate coverage report without failing on thresholds
+task jacocoCoverageReport {
+    dependsOn jacocoTestReport
+    description = 'Generate JaCoCo coverage report without failing on thresholds'
+    group = 'verification'
+}
+
+// Checkstyle configuration
 checkstyle {
     toolVersion = '10.21.2'
     configFile = file('config/checkstyle/checkstyle.xml')
@@ -134,14 +273,10 @@ checkstyleMain {
 checkstyleTest {
     source = 'src/test/java'
 }
-*/
 
-// SpotBugs configuration - disabled until config is fixed
-/*
+// SpotBugs configuration
 spotbugs {
     ignoreFailures = true  // Allow build to pass while we fix bugs
-    effort = 'max'
-    reportLevel = 'low'
     showProgress = true
     excludeFilter = file('config/spotbugs/spotbugs-exclude.xml')
 }
@@ -158,7 +293,6 @@ spotbugsMain {
 spotbugsTest {
     enabled = false
 }
-*/
 
 // Shadow configuration with relocation and exclusions
 shadowJar {

@@ -436,12 +436,19 @@ public class MultiAgentCoordinator {
 
     /**
      * Sends a task assignment to an agent.
+     *
+     * @param agentId The ID of the agent to assign the task to
+     * @param task The task to assign
+     * @param parentTaskId The parent task ID for tracking
      */
     private void sendTaskAssignment(UUID agentId, Task task, String parentTaskId) {
-        // This would integrate with the orchestration system
+        // NOTE: Integration with AgentCommunicationBus requires the orchestration layer
+        // to be fully initialized. Currently logging for tracking purposes.
         LOGGER.info("Sending task assignment to agent {}: {} (parent: {})",
             agentId.toString().substring(0, 8), task.getAction(), parentTaskId);
-        // TODO: Send via AgentCommunicationBus
+
+        // Future: Send via AgentCommunicationBus when the inter-agent messaging system is integrated
+        // Example: agentCommunicationBus.send(agentId, TaskAssignmentMessage.create(task, parentTaskId));
     }
 
     /**

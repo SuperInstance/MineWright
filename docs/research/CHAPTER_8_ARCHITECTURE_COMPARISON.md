@@ -1,5 +1,7 @@
 # LLM Agent Architecture Comparison: Visual Diagrams
 
+> **Comprehensive Diagram Collection:** This document contains architecture comparison diagrams. For additional detailed diagrams including state machines, event bus, plugin system, and multi-agent coordination, see [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md).
+
 ## Traditional LLM Agent Architecture (ReAct, AutoGPT, BabyAGI)
 
 ```
@@ -307,6 +309,7 @@
 ---
 
 **Related Documents:**
+- [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) - Comprehensive ASCII diagrams for all architectures
 - [CHAPTER_8_LLM_FRAMEWORK_COMPARISON.md](CHAPTER_8_LLM_FRAMEWORK_COMPARISON.md) - Detailed comparison
 - [CHAPTER_8_COMPARISON_SUMMARY.md](CHAPTER_8_COMPARISON_SUMMARY.md) - Quick reference
 - [TaskComplexity.java](../../src/main/java/com/minewright/llm/cascade/TaskComplexity.java) - Implementation

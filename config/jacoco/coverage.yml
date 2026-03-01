@@ -1,0 +1,197 @@
+# JaCoCo Coverage Configuration
+# This file defines coverage thresholds and exclusion rules for the MineWright project
+
+# Overall coverage targets
+overall:
+  instruction: 0.40      # 40% instruction coverage (current minimum)
+  branch: 0.35           # 35% branch coverage
+  line: 0.40             # 40% line coverage
+  complexity: 0.35       # 35% complexity coverage
+  method: 0.40           # 40% method coverage
+  class: 0.50            # 50% class coverage
+
+# Future targets (long-term goals)
+future_targets:
+  instruction: 0.60      # Target: 60% instruction coverage
+  branch: 0.55           # Target: 55% branch coverage
+  line: 0.60             # Target: 60% line coverage
+  complexity: 0.55       # Target: 55% complexity coverage
+  method: 0.60           # Target: 60% method coverage
+  class: 0.70            # Target: 70% class coverage
+
+# Per-package coverage thresholds
+packages:
+  # Core systems (require higher coverage)
+  com.minewright.action:
+    instruction: 0.50
+    branch: 0.45
+    line: 0.50
+    method: 0.50
+
+  com.minewright.execution:
+    instruction: 0.50
+    branch: 0.45
+    line: 0.50
+    method: 0.50
+
+  com.minewright.security:
+    instruction: 0.80
+    branch: 0.75
+    line: 0.80
+    method: 0.80
+
+  # Supporting systems (moderate coverage)
+  com.minewright.memory:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.behavior:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.htn:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.pathfinding:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.llm:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.coordination:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.decision:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+  com.minewright.evaluation:
+    instruction: 0.30
+    branch: 0.25
+    line: 0.30
+    method: 0.30
+
+# Exclusion rules
+exclusions:
+  # Configuration classes
+  - pattern: "**/config/**"
+    reason: "Configuration classes are simple data holders"
+
+  # Entity classes
+  - pattern: "**/entity/**"
+    reason: "Entity classes are Minecraft integration points"
+
+  # Client-side GUI code
+  - pattern: "**/client/**"
+    reason: "Client GUI code requires full game context for testing"
+
+  # Generated code
+  - pattern: "**/generated/**"
+    reason: "Auto-generated code should not be tested"
+
+  # Test classes
+  - pattern: "**/*Test*"
+    reason: "Test classes should not cover themselves"
+
+  # Message/DTO classes
+  - pattern: "**/communication/message/**"
+    reason: "Message classes are simple data holders"
+
+  # Event DTOs
+  - pattern: "**/event/dto/**"
+    reason: "Event DTOs are simple data holders"
+
+  # Exception classes
+  - pattern: "**/exception/**"
+    reason: "Exception classes contain minimal logic"
+
+# Report formats
+reports:
+  xml:
+    enabled: true
+    output: "build/reports/jacoco/test/jacocoTestReport.xml"
+    usage: "CI/CD integration, tooling"
+
+  html:
+    enabled: true
+    output: "build/reports/jacoco/test/html"
+    usage: "Human-readable reports"
+
+  csv:
+    enabled: false
+    reason: "Not needed for current workflow"
+
+# Coverage improvement strategy
+improvement_strategy:
+  priority_order:
+    - priority: 1
+      package: "com.minewright.security"
+      reason: "Security code must be thoroughly tested"
+      target: "80% coverage"
+
+    - priority: 2
+      package: "com.minewright.action"
+      reason: "Core action execution system"
+      target: "50% coverage"
+
+    - priority: 3
+      package: "com.minewright.execution"
+      reason: "State machine and execution engine"
+      target: "50% coverage"
+
+    - priority: 4
+      package: "com.minewright.memory"
+      reason: "Memory and conversation tracking"
+      target: "40% coverage"
+
+    - priority: 5
+      package: "com.minewright.behavior"
+      reason: "Behavior tree runtime"
+      target: "40% coverage"
+
+    - priority: 6
+      package: "com.minewright.htn"
+      reason: "HTN planner"
+      target: "40% coverage"
+
+    - priority: 7
+      package: "com.minewright.pathfinding"
+      reason: "Pathfinding system"
+      target: "40% coverage"
+
+# Testing guidelines
+guidelines:
+  unit_tests:
+    description: "Test individual classes in isolation"
+    target: "Fast, focused tests for business logic"
+
+  integration_tests:
+    description: "Test component interactions"
+    target: "Slower tests for integration points"
+
+  coverage_quality:
+    description: "Focus on meaningful coverage, not just numbers"
+    principles:
+      - "Test edge cases and error conditions"
+      - "Test public API thoroughly"
+      - "Don't test trivial getters/setters"
+      - "Don't test generated code"
+      - "Mock external dependencies appropriately"

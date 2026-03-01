@@ -488,7 +488,7 @@ public class MovementValidator {
         BlockState belowState = level.getBlockState(below);
 
         // Check if the block below is solid
-        if (belowState.isSolid()) {
+        if (belowState.isSolidRender(level, below)) {
             return true;
         }
 

@@ -59,6 +59,13 @@
 - **[RYZEN_AI_NPU.md](RYZEN_AI_NPU.md)** - AMD Ryzen AI NPU overview
 - **[WHATIF_MULTIPLAYER_FOREMAN.md](WHATIF_MULTIPLAYER_FOREMAN.md)** - Multiplayer foreman mode
 
+### 📊 Evaluation Framework (NEW)
+- **[EVALUATION_FRAMEWORK.md](EVALUATION_FRAMEWORK.md)** - Comprehensive evaluation methodology for academic publication
+- **[EVALUATION_QUICK_REFERENCE.md](EVALUATION_QUICK_REFERENCE.md)** - Quick start guide for running benchmarks
+- **[run_benchmarks.sh](run_benchmarks.sh)** - Automated benchmark execution script
+- **[analyze_benchmarks.R](analyze_benchmarks.R)** - Statistical analysis script for benchmark results
+- **Code:** `src/main/java/com/minewright/evaluation/` - Metrics collection and benchmark scenarios
+
 ### 🔼 Upstream Research (NEW)
 - **[UPSTREAM_ANALYSIS.md](UPSTREAM_ANALYSIS.md)** - Comprehensive analysis of YuvDwi/Steve upstream repository
 - **[UPSTREAM_DIFF_SUMMARY.md](UPSTREAM_DIFF_SUMMARY.md)** - Quick reference for upstream differences

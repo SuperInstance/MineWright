@@ -610,6 +610,16 @@ public class MilestoneTracker {
     }
 
     /**
+     * Package-private method to directly record a milestone.
+     * Used by auto-detection system in CompanionMemory.
+     */
+    void recordMilestone(Milestone milestone) {
+        // Don't add to pending list for auto-milestones (avoid spam)
+        achievedMilestones.put(milestone.id, milestone);
+        LOGGER.info("Auto-milestone achieved: {} - {}", milestone.id, milestone.title);
+    }
+
+    /**
      * Checks if a specific milestone has been achieved.
      *
      * @param milestoneId The milestone ID to check

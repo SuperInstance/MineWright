@@ -12,6 +12,24 @@ import org.slf4j.Logger;
 
 import java.util.List;
 
+/**
+ * Action that engages in combat against hostile entities.
+ *
+ * <p><b>Features:</b></p>
+ * <ul>
+ *   <li><b>Target Detection:</b> Automatically finds and locks onto hostile mobs</li>
+ *   <li><b>Sprinting:</b> Moves faster when chasing targets</li>
+ *   <li><b>Invulnerability:</b> Foreman is invulnerable during combat to prevent death</li>
+ *   <li><b>Stuck Detection:</b> Teleports closer if movement is blocked</li>
+ * </ul>
+ *
+ * <p><b>Parameters:</b></p>
+ * <ul>
+ *   <li><code>target</code> - Entity type to attack (default: hostile mobs)</li>
+ * </ul>
+ *
+ * @since 1.0.0
+ */
 public class CombatAction extends BaseAction {
     private static final Logger LOGGER = TestLogger.getLogger(CombatAction.class);
     private String targetType;

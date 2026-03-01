@@ -1,0 +1,233 @@
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                    MULTI-AGENT COORDINATION SYSTEM ARCHITECTURE                       │
+│                              MineWright AI - Dissertation 2                           │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            HIERARCHICAL COORDINATION FLOW
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    HUMAN PLAYER
+          │
+          │ "Build a castle with towers at corners"
+          ▼
+    ┌──────────────┐
+    │   FOREMAN    │
+    │  (Orchestrator)│
+    └──────┬───────┘
+           │
+           ├─► LLM Task Planning (AsyncLLMClient)
+           │      └─► Parse: "build castle" → subtasks
+           │
+           ├─► Task Decomposition (TaskDecomposer)
+           │      ├─► gather_resources (1000 stone, 500 wood)
+           │      ├─► prepare_site (clear 20x20 area)
+           │      ├─► build_foundation (place corners, fill walls)
+           │      ├─► build_walls (4 sections, parallelizable)
+           │      └─► add_features (towers, battlements, entrance)
+           │
+           └─► Contract Net Protocol
+                  └─► Announce each subtask for bidding
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            CONTRACT NET PROTOCOL FLOW
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    FOREMAN                          WORKERS
+      │                                │
+      │  ① ANNOUNCE                    │
+      ├───────────────────────────────>│
+      │  TaskAnnouncement:             │
+      │  - task: build_north_wall      │  Worker 1 evaluates:
+      │  - required_skills: [building] │    - Has building skill? ✓
+      │  - max_distance: 200 blocks    │    - Distance to wall? 50 blocks
+      │  - min_proficiency: 0.5        │    - Current load? 0.3
+      │  - deadline: +30 seconds       │    - Calculate bid score...
+      │                                │
+      │                                │  Worker 2 evaluates:
+      │  ② BIDDING (parallel)           │    - Has building skill? ✓
+      │<───────────────────────────────┤    - Distance to wall? 150 blocks
+      │  TaskBid from Worker 1:         │    - Current load? 0.0
+      │  - score: 0.85                  │    - Calculate bid score...
+      │  - estimated_time: 12000ms      │
+      │  - confidence: 0.9              │  Worker 3 evaluates:
+      │<───────────────────────────────┤    - Has building skill? ✗
+      │  TaskBid from Worker 2:         │    - Skip bidding
+      │  - score: 0.65                  │
+      │  - estimated_time: 18000ms      │
+      │  - confidence: 0.8              │
+      │                                │
+      │  ③ EVALUATION                   │
+      │  Compare bids:                  │
+      │  Worker 1: (0.85 * 0.9) / 12   │
+      │           = 0.0638              │
+      │  Worker 2: (0.65 * 0.8) / 18   │
+      │           = 0.0289              │
+      │  Winner: Worker 1               │
+      │                                │
+      │  ④ AWARD                        │
+      ├───────────────────────────────>│
+      │  Contract awarded to Worker 1   │
+      │                                │
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            BLACKBOARD KNOWLEDGE SHARING
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    ┌────────────────────────────────────────────────────────────────┐
+    │                    BLACKBOARD WORLD STATE                       │
+    ├────────────────────────────────────────────────────────────────┤
+    │                                                                  │
+    │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+    │  │ Pending Tasks   │  │ Task Progress   │  │ Resource State  │ │
+    │  │                 │  │                 │  │                 │ │
+    │  │ • build_south   │  │ north_wall: 75% │  │ stone: 2450     │ │
+    │  │   _wall         │  │ south_wall: 30% │  │ wood: 120       │ │
+    │  │ • place_torches │  │ east_wall: 0%   │  │ diamond_pick: 3 │ │
+    │  │ • craft_doors   │  │ west_wall: 0%   │  │ iron_pick: 2    │ │
+    │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+    │                                                                  │
+    │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+    │  │ Spatial Locks   │  │ Agent States    │  │ Chunk Status    │ │
+    │  │                 │  │                 │  │                 │ │
+    │  │ [10,64,10]→W1   │  │ W1: building    │  │ Chunk (0,0): ✓ │
+    │  │ [15,64,15]→W2   │  │ W2: mining      │  │ Chunk (1,0): ✓ │
+    │  │ [20,64,20]→W3   │  │ W3: idle        │  │ Chunk (2,0): ✗ │
+    │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+    │                                                                  │
+    └────────────────────────────────────────────────────────────────┘
+           ▲                ▲                ▲
+           │                │                │
+      READ/WRITE       READ/WRITE       READ/WRITE
+           │                │                │
+    ┌──────┴─────┐  ┌──────┴─────┐  ┌──────┴─────┐
+    │   FOREMAN   │  │  WORKER 1  │  │  WORKER 2  │
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            MARKET-BASED RESOURCE ALLOCATION
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    RESOURCE AUCTION: Diamond Pickaxe x 3
+    ┌──────────────────────────────────────────────────────────────┐
+    │ Seller: Foreman                                              │
+    │ Duration: 30 seconds                                         │
+    │                                                               │
+    │ BIDS:                                                        │
+    │  ┌──────────────────────────────────────────────────────┐   │
+    │  │ Worker 1: 75 credits (needs for mining task)          │   │
+    │  │ Worker 2: 60 credits (moderate need)                 │   │
+    │  │ Worker 3: 90 credits (high priority mining)           │   │
+    │  │ Worker 4: 45 credits (low priority)                  │   │
+    │  └──────────────────────────────────────────────────────┘   │
+    │                                                               │
+    │ WINNER: Worker 3 (highest bid)                               │
+    │                                                               │
+    │ ALTERNATIVE DISTRIBUTION:                                    │
+    │  • Workers 1 & 2 get iron pickaxes                          │
+    │  • Worker 4 gets stone pickaxe                              │
+    └──────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            CHUNK-AWARE TASK DISTRIBUTION
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    ORE DEPOSITS: (20 locations across 4 chunks)
+
+    Chunk (0,0): ████████ (8 ores)  → Task 1 → Worker 1 (closest)
+    Chunk (1,0): ████ (4 ores)      → Task 2 → Worker 2 (closest)
+    Chunk (0,1): ██████ (6 ores)    → Task 3 → Worker 3 (closest)
+    Chunk (1,1): ██ (2 ores)        → Task 4 → Worker 1 (reassigned)
+
+    BENEFITS:
+    • Minimizes chunk loading overhead
+    • Workers stay within loaded chunks
+    • Parallel execution across chunks
+    • Reduces entity pathfinding across chunk borders
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            SPATIAL LOCKING FOR CONFLICT PREVENTION
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    BUILDING SITE: 20x20 Castle
+
+    Worker 1:                          Worker 2:
+    Lock region:                       Lock region:
+    ┌──────────┐                       ┌──────────┐
+    │  (0,0)   │                       │  (10,0)  │
+    │  10x10   │                       │  10x10   │
+    │  NO CONFLICT                    │  NO CONFLICT
+    └──────────┘                       └──────────┘
+
+    ATTEMPTED CONFLICT:
+    Worker 3 tries to lock (5,5) region → BLOCKED (overlaps Worker 1)
+    → Worker 3 must wait or choose different region
+
+    LOCK EXPIRY:
+    • Worker 1 completes section → Lock released
+    • Worker 3 can now acquire (5,5) region
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+                            DYNAMIC REBALANCING
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+    INITIAL ASSIGNMENT:
+    Worker 1: build_north_wall (est. 2000 ticks)
+    Worker 2: build_south_wall (est. 2000 ticks)
+    Worker 3: build_east_wall (est. 2000 ticks)
+    Worker 4: IDLE
+
+    T+1000 TICKS:
+    Worker 1: north_wall at 50%
+    Worker 2: south_wall at 40%
+    Worker 3: east_wall COMPLETE (early finish!)
+    Worker 4: IDLE
+
+    REBALANCING TRIGGERED:
+    • Worker 3 becomes idle
+    • Incomplete tasks detected: west_wall (not started)
+    • New announcement: build_west_wall
+    • Quick bidding (5 second window)
+    • Worker 3 wins bid (lowest load, available)
+
+    NEW ASSIGNMENT:
+    Worker 1: build_north_wall (continuing)
+    Worker 2: build_south_wall (continuing)
+    Worker 3: build_west_wall (reassigned)
+    Worker 4: IDLE
+
+    RESULT: All workers utilized, no idle time
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+INTEGRATION WITH EXISTING MINEWRIGHT ARCHITECTURE:
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                         EXISTING COMPONENTS                                          │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│ • OrchestratorService (round-robin task distribution)                               │
+│ • AgentCommunicationBus (message passing)                                           │
+│ • AgentStateMachine (state management)                                              │
+│ • CollaborativeBuildManager (spatial partitioning)                                  │
+│ • ContractNetManager (CNP implementation - NEW)                                     │
+│ • CapabilityRegistry (agent profiles - NEW)                                         │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+NEW COORDINATION LAYER:
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                         MULTIAGENTCOORDINATOR (NEW)                                  │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  • ContractNetManager: Task bidding and awarding                                    │
+│  • CapabilityRegistry: Worker skill/load tracking                                   │
+│  • BlackboardWorldState: Shared knowledge                                           │
+│  • ResourceMarket: Tool/material auctions                                           │
+│  • SpatialLockManager: Conflict prevention                                          │
+│  • ChunkAwareCoordinator: Chunk-optimized distribution                              │
+│  • LLMBasedTaskDecomposer: Intelligent task breakdown                               │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+TICK-BASED EXECUTION:
+• All operations respect 20 ticks/second Minecraft clock
+• Async operations use CompletableFuture (non-blocking)
+• LLM calls scheduled off-thread, results polled in tick()
+• Message batching to prevent bandwidth saturation

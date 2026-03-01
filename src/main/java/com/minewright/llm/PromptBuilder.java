@@ -2,6 +2,7 @@ package com.minewright.llm;
 
 import com.minewright.entity.ForemanEntity;
 import com.minewright.memory.WorldKnowledge;
+import com.minewright.security.InputSanitizer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 
@@ -70,6 +71,9 @@ public class PromptBuilder {
     }
 
     public static String buildUserPrompt(ForemanEntity foreman, String command, WorldKnowledge worldKnowledge) {
+        // SECURITY: Sanitize user command to prevent prompt injection attacks
+        String sanitizedCommand = InputSanitizer.forCommand(command);
+
         // Phase 2 optimization: Increased capacity to reduce allocations
         StringBuilder prompt = new StringBuilder(384);
 
@@ -96,7 +100,7 @@ public class PromptBuilder {
         }
 
         prompt.append(" | BIOME:").append(worldKnowledge.getBiomeName());
-        prompt.append("\nCMD:\"").append(command).append("\"");
+        prompt.append("\nCMD:\"").append(sanitizedCommand).append("\"");
 
         return prompt.toString();
     }

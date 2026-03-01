@@ -1,0 +1,219 @@
+# MineWright Configuration Template
+# Copy this file to: config/minewright-common.toml
+#
+# IMPORTANT: Never commit your actual config with API keys!
+# Use environment variables for security.
+
+#########################################################################################################
+# AI API Configuration
+#########################################################################################################
+
+[ai]
+    # AI provider to use: 'openai' (z.ai GLM-5, RECOMMENDED), 'groq', or 'gemini'
+    provider = "openai"
+
+#########################################################################################################
+# z.ai/OpenAI API Configuration
+#########################################################################################################
+
+[openai]
+    # Your API key - use environment variable for security!
+    # Format: "${ENV_VAR_NAME}" to read from environment, or direct value (not recommended)
+    #
+    # SECURE: apiKey = "${MINEWRIGHT_API_KEY}"
+    # INSECURE: apiKey = "your-key-here" (never commit this!)
+    apiKey = "${MINEWRIGHT_API_KEY}"
+
+    # LLM model: 'glm-5' (recommended), 'glm-4-flash' (faster), or 'gpt-4' (OpenAI)
+    model = "glm-5"
+
+    # Maximum tokens per API request
+    maxTokens = 8000
+
+    # Temperature for AI responses (0.0-2.0, lower is more deterministic)
+    temperature = 0.7
+
+#########################################################################################################
+# MineWright Behavior Configuration
+#########################################################################################################
+
+[behavior]
+    # Ticks between action checks (20 ticks = 1 second)
+    actionTickDelay = 20
+
+    # Allow crew members to respond in chat
+    enableChatResponses = true
+
+    # Maximum number of crew members that can be active simultaneously
+    maxActiveCrewMembers = 10
+
+#########################################################################################################
+# Voice Integration Configuration
+#########################################################################################################
+
+[voice]
+    # Enable voice input/output features
+    enabled = false
+
+    # Voice system mode: 'disabled', 'logging' (logs what would be heard/said), or 'real'
+    mode = "logging"
+
+    # Speech-to-text language (e.g., 'en-US', 'en-GB', 'es-ES')
+    sttLanguage = "en-US"
+
+    # Text-to-speech voice name
+    ttsVoice = "default"
+
+    # TTS volume level (0.0 to 1.0)
+    ttsVolume = 0.8
+
+    # TTS speech rate (0.5 to 2.0, 1.0 = normal)
+    ttsRate = 1.0
+
+    # TTS pitch adjustment (0.5 to 2.0, 1.0 = normal)
+    ttsPitch = 1.0
+
+    # STT sensitivity for speech detection (0.0 to 1.0, higher = more sensitive)
+    sttSensitivity = 0.5
+
+    # Require push-to-talk key for voice input (vs continuous listening)
+    pushToTalk = true
+
+    # Auto-stop listening after N seconds of silence (0 = no timeout)
+    listeningTimeout = 10
+
+    # Enable verbose logging for voice system operations
+    debugLogging = true
+
+#########################################################################################################
+# Hive Mind Configuration (Cloudflare Edge for tactical decisions)
+#########################################################################################################
+
+[hivemind]
+    # Enable Hive Mind - distributed AI with Cloudflare edge for tactical reflexes
+    enabled = false
+
+    # Cloudflare Worker URL
+    workerUrl = "https://minecraft-agent-reflex.workers.dev"
+
+    # Connection timeout in milliseconds
+    connectTimeoutMs = 2000
+
+    # Tactical decision timeout in milliseconds (target: sub-20ms)
+    tacticalTimeoutMs = 50
+
+    # State sync timeout in milliseconds
+    syncTimeoutMs = 1000
+
+    # How often to check for tactical situations (in ticks)
+    tacticalCheckInterval = 20
+
+    # How often to sync state with edge (in ticks)
+    syncInterval = 100
+
+    # When edge is unavailable, fall back to local decision-making
+    fallbackToLocal = true
+
+#########################################################################################################
+# Skill Library Configuration (Learning and pattern storage)
+#########################################################################################################
+
+[skill_library]
+    # Enable skill library for learning and storing successful action patterns
+    enabled = true
+
+    # Maximum number of skills to store in the library
+    max_skills = 100
+
+    # Success threshold for considering a skill as learned (0.0 to 1.0)
+    success_threshold = 0.7
+
+#########################################################################################################
+# Cascade Router Configuration (Intelligent LLM selection)
+#########################################################################################################
+
+[cascade_router]
+    # Enable cascade router for intelligent LLM selection
+    enabled = true
+
+    # Semantic similarity threshold for cascade routing decisions (0.0 to 1.0)
+    similarity_threshold = 0.85
+
+    # Use local LLM for cascade router fallback
+    use_local_llm = false
+
+#########################################################################################################
+# Utility AI Configuration (Decision-making weights)
+#########################################################################################################
+
+[utility_ai]
+    # Enable utility AI for decision-making
+    enabled = true
+
+    # Weight for urgency in utility calculations (0.0 to 2.0)
+    urgency_weight = 1.0
+
+    # Weight for proximity in utility calculations (0.0 to 2.0)
+    proximity_weight = 0.8
+
+    # Weight for safety in utility calculations (0.0 to 2.0)
+    safety_weight = 1.2
+
+#########################################################################################################
+# Multi-Agent Configuration (Coordination features)
+#########################################################################################################
+
+[multi_agent]
+    # Enable multi-agent coordination features
+    enabled = true
+
+    # Maximum time to wait for agent bids in milliseconds
+    max_bid_wait_ms = 1000
+
+    # Time-to-live for blackboard entries in seconds
+    blackboard_ttl_seconds = 300
+
+#########################################################################################################
+# Pathfinding Configuration (Navigation algorithms)
+#########################################################################################################
+
+[pathfinding]
+    # Enable enhanced pathfinding algorithms
+    enhanced = true
+
+    # Maximum nodes to search in pathfinding algorithms
+    max_search_nodes = 10000
+
+#########################################################################################################
+# Performance Configuration (Tick budget and enforcement)
+#########################################################################################################
+
+[performance]
+    # AI tick budget in milliseconds (must complete within this time)
+    aiTickBudgetMs = 5
+
+    # Warning threshold as percentage of budget (50 to 95)
+    budgetWarningThreshold = 80
+
+    # Enable strict budget enforcement
+    strictBudgetEnforcement = true
+
+#########################################################################################################
+# Semantic Cache Configuration (Intelligent LLM response caching)
+#########################################################################################################
+
+[semantic_cache]
+    # Enable semantic caching for LLM responses
+    enabled = true
+
+    # Minimum similarity threshold for semantic cache hits (0.5 to 1.0)
+    similarity_threshold = 0.85
+
+    # Maximum number of entries in the semantic cache
+    max_size = 500
+
+    # Time-to-live for semantic cache entries in minutes
+    ttl_minutes = 5
+
+    # Embedding method to use for semantic similarity ('tfidf' or 'ngram')
+    embedding_method = "tfidf"

@@ -111,47 +111,175 @@ Speech-to-text and text-to-speech support:
 ## Quick Start
 
 ### Requirements
-- Minecraft 1.20.1
-- Forge 47.x
-- Java 17+
-- API key (Groq is free!)
+- **Minecraft 1.20.1** with Forge 47.x
+- **Java 17+** (Java 21 recommended)
+- **API Key** - Groq (free!), z.ai/GLM, OpenAI, or Gemini
 
 ### Installation
 
-1. Download from [Releases](https://github.com/SuperInstance/MineWright/releases)
-2. Place JAR in `mods` folder
-3. Launch Minecraft
-4. Configure API key
+#### Option 1: Download Pre-built JAR (Recommended for Players)
+
+1. **Download the latest release** from [Releases](https://github.com/SuperInstance/MineWright/releases)
+2. **Install Minecraft Forge 1.20.1** - Download from [files.minecraftforge.net](https://files.minecraftforge.net/)
+3. **Place the JAR** in your Minecraft `mods` folder:
+   - Windows: `%appdata%\.minecraft\mods\`
+   - Mac: `~/Library/Application Support/minecraft/mods/`
+   - Linux: `~/.minecraft/mods/`
+4. **Launch Minecraft** with the Forge profile
+5. **Configure your API key** (see [Configuration](#configuration) below)
+
+#### Option 2: Build from Source (For Developers)
+
+```bash
+# Clone the repository
+git clone https://github.com/SuperInstance/MineWright.git
+cd MineWright
+
+# Build the mod
+./gradlew build
+
+# The JAR will be in build/libs/minewright-1.0.0.jar
+# Copy this to your mods folder
+```
+
+See [Building from Source](#building-from-source) for detailed build instructions.
 
 ### Your First Crew
 
-```
-/minewright spawn Mace
-```
+Once in-game:
 
-Press **K** to open the command panel, then type:
+1. **Spawn your first Foreman:**
+   ```
+   /minewright spawn Mace
+   ```
 
-```
-build me a small house nearby
-```
+2. **Open the command panel** by pressing **K**
+
+3. **Issue your first command:**
+   ```
+   build me a small house nearby
+   ```
+
+Mace will acknowledge the command and begin planning and execution!
 
 ---
 
 ## Configuration
 
+### Quick Setup
+
+After launching Minecraft with the mod, a configuration file will be created at:
+```
+config/minewright-common.toml
+```
+
+### Setting Your API Key
+
+**SECURITY BEST PRACTICE:** Use environment variables instead of hardcoding API keys.
+
+#### Option 1: Environment Variable (Recommended)
+
 Edit `config/minewright-common.toml`:
+```toml
+[openai]
+apiKey = "${MINEWRIGHT_API_KEY}"
+```
+
+Then set the environment variable before launching Minecraft:
+
+**Linux/macOS:**
+```bash
+export MINEWRIGHT_API_KEY="your-api-key-here"
+# Then launch Minecraft from the same terminal
+```
+
+**Windows PowerShell:**
+```powershell
+$env:MINEWRIGHT_API_KEY="your-api-key-here"
+# Then launch Minecraft from the same PowerShell session
+```
+
+**Windows Command Prompt:**
+```cmd
+set MINEWRIGHT_API_KEY=your-api-key-here
+# Then launch Minecraft from the same command prompt
+```
+
+**Minecraft Launcher (Java Arguments):**
+Add to JVM Arguments:
+```
+-DMINEWRIGHT_API_KEY=your-api-key-here
+```
+
+#### Option 2: Direct Entry (Less Secure)
+
+Edit `config/minewright-common.toml`:
+```toml
+[openai]
+apiKey = "your-api-key-here"
+```
+
+**WARNING:** Never commit your config file to version control with a real API key!
+
+### Choosing an AI Provider
 
 ```toml
 [ai]
-provider = "groq"  # Free and fast!
+provider = "openai"  # Options: openai (z.ai GLM), groq, gemini
+```
+
+| Provider | Models | Cost | Speed | Best For |
+|----------|--------|------|-------|----------|
+| **z.ai GLM** | glm-5, glm-4-flash | Free tier available | Fast | Best overall, recommended |
+| **Groq** | llama3-70b-8192 | Free | Very Fast | Quick testing |
+| **OpenAI** | gpt-4, gpt-3.5-turbo | Paid | Moderate | Complex tasks |
+| **Gemini** | gemini-pro | Free tier | Moderate | Alternative option |
+
+### Basic Configuration Example
+
+```toml
+[ai]
+provider = "openai"  # z.ai GLM recommended
 
 [openai]
-apiKey = "your-key-here"
-model = "llama-3.1-70b-versatile"
+apiKey = "${MINEWRIGHT_API_KEY}"
+model = "glm-5"
+maxTokens = 8000
+temperature = 0.7
 
 [behavior]
+actionTickDelay = 20
+enableChatResponses = true
 maxActiveCrewMembers = 10
 ```
+
+### Full Configuration Reference
+
+See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for complete configuration options including:
+- Performance tuning
+- Voice system setup
+- Multi-agent coordination
+- Pathfinding options
+- Debug logging
+
+For performance optimization tips, see [docs/PERFORMANCE_GUIDE.md](docs/PERFORMANCE_GUIDE.md).
+
+### Testing Your Configuration
+
+1. **Launch Minecraft** with the mod loaded
+2. **Check the logs** (`logs/latest.log`) for:
+   - `MineWright: Loaded successfully`
+   - `API key configured: sk-***...` (shows preview, not full key)
+3. **Spawn a test agent:**
+   ```
+   /minewright spawn TestAgent
+   ```
+4. **Issue a simple command:**
+   ```
+   /minewright order TestAgent "Say hello"
+   ```
+
+If the agent responds, your configuration is working!
 
 ---
 
@@ -170,12 +298,96 @@ maxActiveCrewMembers = 10
 
 ## Documentation
 
+### User Documentation
+
 | Resource | Description |
 |----------|-------------|
-| [Architecture](docs/architecture/) | System design and patterns |
-| [Guides](docs/guides/) | How-to guides and tutorials |
-| [Research](docs/research/) | AI research and analysis |
-| [Reports](docs/reports/) | Audit and review reports |
+| [Installation Guide](docs/INSTALLATION.md) | Detailed installation instructions |
+| [Configuration](docs/CONFIGURATION.md) | Complete configuration reference |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and solutions |
+| [Performance Guide](docs/PERFORMANCE_GUIDE.md) | Optimization tips and tuning |
+
+### Developer Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [Onboarding](docs/ONBOARDING.md) | Quick start for new developers |
+| [Architecture](docs/ARCHITECTURE_OVERVIEW.md) | System design and diagrams |
+| [Development Guide](docs/DEVELOPMENT_GUIDE.md) | Build, test, and debug |
+| [API Documentation](docs/INDEX.md) | Complete API reference |
+| [Research Guide](docs/RESEARCH_GUIDE.md) | Dissertation and research docs |
+| [Roadmap](docs/FUTURE_ROADMAP.md) | Prioritized future work |
+| [Contributing](CONTRIBUTING.md) | How to contribute |
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### "API Key Not Configured" Error
+
+**Symptom:** Agent doesn't respond, logs show missing API key
+
+**Solutions:**
+1. Check that `config/minewright-common.toml` exists
+2. Verify your API key is set correctly
+3. If using environment variables, ensure they're set before launching Minecraft
+4. Check logs for the full error message
+
+#### Agent Stuck or Not Moving
+
+**Symptom:** Agent spawns but doesn't move or execute tasks
+
+**Solutions:**
+1. Check if the agent is in a valid location (not inside blocks)
+2. Ensure pathfinding can find a route (try open terrain)
+3. Increase tick delay in config if server is lagging
+4. Check logs for pathfinding errors
+
+#### Out of Memory Crash
+
+**Symptom:** Minecraft crashes with OutOfMemoryError
+
+**Solutions:**
+1. Reduce `maxActiveCrewMembers` in config
+2. Increase JVM heap size: `-Xmx4G` in Minecraft launcher
+3. Close other applications to free memory
+
+#### LLM API Timeout
+
+**Symptom:** Commands hang without response
+
+**Solutions:**
+1. Switch to faster provider (Groq is very fast)
+2. Check your internet connection
+3. Verify API key is valid
+4. Check if API quota is exhausted
+
+#### Mod Won't Load
+
+**Symptom:** Minecraft crashes on startup with MineWright error
+
+**Solutions:**
+1. Verify you're using Minecraft 1.20.1 with Forge 47.x
+2. Check for mod conflicts (try with only MineWright)
+3. Ensure Java 17+ is installed
+4. Check the crash report for specific errors
+
+### Getting Help
+
+If you're still having trouble:
+
+1. **Check the logs:** `logs/latest.log` in your Minecraft directory
+2. **Search existing issues:** [GitHub Issues](https://github.com/SuperInstance/MineWright/issues)
+3. **Create a new issue:** Include:
+   - Minecraft version
+   - Forge version
+   - MineWright version
+   - Relevant logs
+   - Steps to reproduce
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for more detailed troubleshooting.
 
 ---
 
@@ -260,14 +472,117 @@ com.minewright/
 
 ## Building from Source
 
+### Prerequisites for Building
+
+- **Java 17+** (Java 21 recommended)
+- **Git** for cloning the repository
+- **Gradle** (included via wrapper, no separate installation needed)
+
+### Build Commands
+
 ```bash
-./gradlew build        # Build the mod
-./gradlew runClient    # Test client
-./gradlew runServer    # Test server
-./gradlew test         # Run tests
+# Clone the repository
+git clone https://github.com/SuperInstance/MineWright.git
+cd MineWright
+
+# Build the mod (creates JAR in build/libs/)
+./gradlew build
+
+# Run client for testing
+./gradlew runClient
+
+# Run server for testing
+./gradlew runServer
+
+# Run tests
+./gradlew test
+
+# Build distribution JAR with dependencies
+./gradlew shadowJar
+
+# Clean build artifacts
+./gradlew clean
 ```
 
-Output: `build/libs/minewright-1.0.0.jar`
+### Build Output
+
+**Development JAR:** `build/libs/minewright-1.0.0.jar`
+**Distribution JAR:** `build/libs/minewright-1.0.0-all.jar` (use this for distribution)
+
+### IDE Setup
+
+**IntelliJ IDEA:**
+1. Open the project directory
+2. IntelliJ will automatically detect the Gradle project
+3. Wait for dependency indexing to complete
+4. Run/debug configurations are auto-generated from build.gradle
+
+**VS Code:**
+1. Install the "Java Extension Pack"
+2. Open the project directory
+3. Trust the Gradle project when prompted
+
+**Eclipse:**
+```bash
+./gradlew eclipse
+# Then import as "Existing Projects into Workspace"
+```
+
+---
+
+## Performance Tips
+
+### Recommended Settings
+
+**For Low-End PCs (4GB RAM or less):**
+```toml
+[behavior]
+maxActiveCrewMembers = 3
+actionTickDelay = 40
+
+[performance]
+aiTickBudgetMs = 3
+strictBudgetEnforcement = true
+```
+
+**For Mid-Range PCs (8GB RAM):**
+```toml
+[behavior]
+maxActiveCrewMembers = 5
+actionTickDelay = 20
+
+[performance]
+aiTickBudgetMs = 5
+strictBudgetEnforcement = true
+```
+
+**For High-End PCs (16GB+ RAM):**
+```toml
+[behavior]
+maxActiveCrewMembers = 10
+actionTickDelay = 10
+
+[performance]
+aiTickBudgetMs = 10
+strictBudgetEnforcement = false
+```
+
+### Optimization Tips
+
+1. **Use Groq for fastest responses** - Reduces command lag
+2. **Enable semantic caching** - Reduces API calls for similar commands
+3. **Limit concurrent agents** - Each agent uses CPU for pathfinding
+4. **Increase action tick delay** - Reduces CPU usage (at cost of responsiveness)
+5. **Use Java 21** - Better GC performance than Java 17
+
+### JVM Arguments
+
+Add to Minecraft Launcher JVM Settings:
+```
+-Xmx4G -Xms2G -XX:+UseG1GC -XX:+ParallelRefProcEnabled
+```
+
+See [docs/PERFORMANCE_GUIDE.md](docs/PERFORMANCE_GUIDE.md) for detailed performance tuning.
 
 ---
 
@@ -319,11 +634,80 @@ The goal isn't automation — it's **companionship**. The crew should feel like 
 
 ## Contributing
 
-1. Fork the repo
-2. Create a feature branch
-3. Write code (follow existing patterns)
-4. Run `./gradlew test`
-5. Submit a pull request
+We welcome contributions! MineWright is a community project and we value all contributions.
+
+### Quick Start for Contributors
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/MineWright.git
+   cd MineWright
+   ```
+3. **Create a feature branch:**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. **Make your changes** following existing patterns
+5. **Test your changes:**
+   ```bash
+   ./gradlew test
+   ./gradlew runClient
+   ```
+6. **Commit your changes:**
+   ```bash
+   git commit -m "Add: Your feature description"
+   ```
+7. **Push to your fork:**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+8. **Create a Pull Request** on GitHub
+
+### What We're Looking For
+
+**High Priority:**
+- Bug fixes
+- Performance improvements
+- Additional test coverage
+- Documentation improvements
+- New action implementations
+
+**Medium Priority:**
+- New AI provider integrations
+- Voice system enhancements
+- Multi-agent coordination features
+- UI/UX improvements
+
+**Low Priority:**
+- New personality types
+- Cosmetic changes
+- Nice-to-have features
+
+### Coding Standards
+
+- **Java 17+** features are allowed
+- **4-space indentation**
+- **120 character line limit**
+- **JavaDoc** for public APIs
+- **Follow existing patterns** (see [ONBOARDING.md](docs/ONBOARDING.md))
+
+### Testing
+
+All contributions should include tests where applicable:
+- Unit tests for new functionality
+- Integration tests for complex features
+- Manual testing for gameplay changes
+
+### Pull Request Guidelines
+
+- **Describe your changes** in the PR description
+- **Reference related issues** (e.g., "Fixes #123")
+- **Add tests** for new functionality
+- **Update documentation** if needed
+- **Ensure all tests pass** before submitting
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 
 ---
 

@@ -1,0 +1,314 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ============================================
+  # VALIDATION JOB
+  # ============================================
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run full test suite
+        run: ./gradlew test --no-daemon --stacktrace
+
+      - name: Run static analysis
+        run: ./gradlew check checkstyleMain spotbugsMain --no-daemon
+
+      - name: Generate coverage report
+        run: ./gradlew jacocoTestReport --no-daemon
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(./gradlew jacocoTestCoverageVerification --no-daemon -q || echo "0")
+          echo "Coverage verification: $COVERAGE"
+
+  # ============================================
+  # BUILD RELEASE JOB
+  # ============================================
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ github.event.inputs.version }}
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Build distribution JAR
+        run: ./gradlew shadowJar --no-daemon --stacktrace
+
+      - name: Obfuscate JAR
+        run: ./gradlew reobfShadowJar --no-daemon
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          NOTES="## MineWright Mod Release $VERSION\n\n"
+          NOTES+="### Changes\n\n"
+          NOTES+="$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD)\n\n"
+          NOTES+="### Installation\n\n"
+          NOTES+="1. Download \`minewright-${{ steps.version.outputs.version_number }}-all.jar\`\n"
+          NOTES+="2. Place in \`mods\` folder\n"
+          NOTES+="3. Launch Minecraft Forge 1.20.1\n\n"
+          NOTES+="### Configuration\n\n"
+          NOTES+="See [README.md](README.md) for configuration options.\n"
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          cp build/libs/minewright-*-all.jar release/
+          cp build/libs/minewright-*-all.jar "release/minewright-${{ steps.version.outputs.version_number }}-all.jar"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+          retention-days: 90
+
+      - name: Create checksums
+        working-directory: release
+        run: |
+          sha256sum *.jar > SHA256SUMS
+          md5sum *.jar > MD5SUMS
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: release/*SUMS
+          retention-days: 90
+
+  # ============================================
+  # CREATE GITHUB RELEASE JOB
+  # ============================================
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ github.event.inputs.version }}
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+
+      - name: Download checksums
+        uses: actions/download-artifact@v4
+        with:
+          name: checksums
+          path: checksums/
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          NOTES="## MineWright Mod Release $VERSION\n\n"
+          NOTES+="### What's Changed\n\n"
+          NOTES+=$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD | head -20)
+          NOTES+="\n\n### Installation\n\n"
+          NOTES+="1. Download the JAR file below\n"
+          NOTES+="2. Place in \`mods\` folder\n"
+          NOTES+="3. Launch Minecraft Forge 1.20.1\n\n"
+          NOTES+="### Documentation\n\n"
+          NOTES+="- [Configuration Guide](README.md)\n"
+          NOTES+="- [Development Guide](docs/DEVELOPMENT_GUIDE.md)\n"
+          NOTES+="- [Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)\n"
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: MineWright ${{ steps.version.outputs.version }}
+          body: ${{ steps.notes.outputs.notes }}
+          draft: false
+          prerelease: false
+          files: |
+            release/*.jar
+            checksums/*SUMS
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # PUBLISH TO MAVEN (OPTIONAL)
+  # ============================================
+  publish:
+    name: Publish to Maven
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # NOTIFICATION JOB
+  # ============================================
+  notify:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [validate, build, release]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ github.event.inputs.version }}
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "MineWright ${{ steps.version.outputs.version }} released!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*MineWright ${{ steps.version.outputs.version }}* has been released! :rocket:\n\n<${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}|View Release>"
+                  }
+                }
+              ]
+            }
+
+      - name: Generate release summary
+        run: |
+          echo "# Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Jobs" >> $GITHUB_STEP_SUMMARY
+          echo "- Validation: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Release: ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Distribution JAR: [Download](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/minewringht-${{ steps.version.outputs.version }}-all.jar)" >> $GITHUB_STEP_SUMMARY

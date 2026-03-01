@@ -332,7 +332,9 @@ public class SteveOrchestrator {
         params.put("block", "oak_planks");
         params.put("size", 5);
 
-        // TODO: Extract actual parameters from command using NLP
+        // NOTE: NLP-based parameter extraction from natural language commands is a planned enhancement.
+        // The LLM task planner currently handles parameter extraction through the prompt-response cycle.
+        // This method provides default values for fallback parameter resolution.
 
         return params;
     }

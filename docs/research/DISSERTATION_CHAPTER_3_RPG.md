@@ -521,7 +521,7 @@ Need-based systems model AI behavior through internal drives that must be satisf
 
 ### 4.1 The Sims: Autonomous Behavior Through Needs (2000-Present)
 
-The Sims series pioneered sophisticated need-based AI that creates compelling emergent behavior without complex scripting.
+The Sims series pioneered sophisticated need-based AI that creates compelling emergent behavior without complex scripting [Wright, 2000; Forshaw, 2014].
 
 #### Core Needs System
 
@@ -913,7 +913,7 @@ class NPCMovement {
 
 ### 5.1 Conditional Programming Systems
 
-Two groundbreaking systems pioneered player-programmable AI: Final Fantasy XII's Gambit System (2006) and Dragon Age's Tactics System (2009).
+Two groundbreaking systems pioneered player-programmable AI: Final Fantasy XII's Gambit System (2006) [Katano, 2006] and Dragon Age's Tactics System (2009) [BioWare, 2009].
 
 #### Final Fantasy XII: Gambit System (2006)
 
@@ -1083,7 +1083,7 @@ TacticsList[] Healer = [
 
 ### 5.3 F.E.A.R.: GOAP System (2005)
 
-While not an RPG, F.E.A.R.'s Goal-Oriented Action Planning system heavily influenced RPG companion AI development.
+While not an RPG, F.E.A.R.'s Goal-Oriented Action Planning system heavily influenced RPG companion AI development [Orkin, 2006].
 
 **Core Innovation**:
 - Planning-based AI instead of finite state machines

@@ -515,6 +515,42 @@ public class MineWrightConfig {
     // Semantic Cache Configuration
     // ------------------------------------------------------------------------
 
+    // ------------------------------------------------------------------------
+    // Performance Configuration
+    // ------------------------------------------------------------------------
+
+    /**
+     * AI tick budget in milliseconds.
+     * <p>AI operations must complete within this time to prevent server lag.</p>
+     * <p><b>Range:</b> 1 to 20 (default: 5)</p>
+     * <p><b>Default:</b> {@code 5}</p>
+     * <p><b>Config key:</b> {@code performance.aiTickBudgetMs}</p>
+     *
+     * @since 2.1.0
+     */
+    public static final ForgeConfigSpec.IntValue AI_TICK_BUDGET_MS;
+
+    /**
+     * Warning threshold as percentage of budget.
+     * <p>Warnings are logged when AI operations exceed this percentage of budget.</p>
+     * <p><b>Range:</b> 50 to 95 (default: 80)</p>
+     * <p><b>Default:</b> {@code 80}</p>
+     * <p><b>Config key:</b> {@code performance.budgetWarningThreshold}</p>
+     *
+     * @since 2.1.0
+     */
+    public static final ForgeConfigSpec.IntValue BUDGET_WARNING_THRESHOLD;
+
+    /**
+     * Enable strict budget enforcement.
+     * <p>When enabled, operations defer work when budget is exceeded.</p>
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code performance.strictBudgetEnforcement}</p>
+     *
+     * @since 2.1.0
+     */
+    public static final ForgeConfigSpec.BooleanValue STRICT_BUDGET_ENFORCEMENT;
+
     /**
      * Enable semantic caching for LLM responses.
      * <p>When enabled, caches similar prompts using text similarity matching.</p>
@@ -819,6 +855,32 @@ public class MineWrightConfig {
                      "Higher = can find longer paths but uses more CPU",
                      "Recommended: 10000 for balanced performance")
             .defineInRange("max_search_nodes", 10000, 1000, 50000);
+
+        builder.pop();
+
+        // Performance Configuration
+        builder.comment("Performance Configuration (Tick budget and enforcement)").push("performance");
+
+        AI_TICK_BUDGET_MS = builder
+            .comment("AI tick budget in milliseconds (must complete within this time)",
+                     "Minecraft ticks are 50ms total, AI should use significantly less",
+                     "Lower = more frequent operation yielding but smoother server performance",
+                     "Recommended: 5ms for balanced performance (10% of tick budget)")
+            .defineInRange("aiTickBudgetMs", 5, 1, 20);
+
+        BUDGET_WARNING_THRESHOLD = builder
+            .comment("Warning threshold as percentage of budget (50 to 95)",
+                     "Warnings logged when AI operations exceed this percentage of budget",
+                     "Lower = earlier warnings, more conservative operation",
+                     "Recommended: 80 (warn when using 80%+ of budget)")
+            .defineInRange("budgetWarningThreshold", 80, 50, 95);
+
+        STRICT_BUDGET_ENFORCEMENT = builder
+            .comment("Enable strict budget enforcement",
+                     "When true, operations defer work when budget is exceeded",
+                     "When false, budget is tracked but operations continue (not recommended)",
+                     "Recommended: true for production servers")
+            .define("strictBudgetEnforcement", true);
 
         builder.pop();
 
@@ -1158,8 +1220,56 @@ public class MineWrightConfig {
      * @return true if API key is present
      */
     public static boolean hasValidApiKey() {
-        String key = OPENAI_API_KEY.get();
+        String key = getResolvedApiKey();
         return key != null && !key.trim().isEmpty();
+    }
+
+    /**
+     * Gets the API key with environment variable resolution.
+     *
+     * <p>If the config value is in format {@code ${ENV_VAR_NAME}}, it will be
+     * resolved from the environment. Otherwise returns the value as-is.</p>
+     *
+     * <p>Example config values:</p>
+     * <ul>
+     *   <li>{@code apiKey = "${OPENAI_API_KEY}"} - Resolved from env var</li>
+     *   <li>{@code apiKey = "sk-abc123"} - Used directly (NOT recommended for commits)</li>
+     * </ul>
+     *
+     * @return The resolved API key, or empty string if not set
+     * @since 2.2.0
+     */
+    public static String getResolvedApiKey() {
+        String key = OPENAI_API_KEY.get();
+        return resolveEnvVar(key);
+    }
+
+    /**
+     * Resolves a configuration value that may contain an environment variable reference.
+     *
+     * <p>Supports the format: {@code ${ENV_VAR_NAME}}</p>
+     *
+     * @param value The config value, possibly containing ${ENV_VAR} syntax
+     * @return The resolved value, or the original if not an env var reference
+     * @since 2.2.0
+     */
+    public static String resolveEnvVar(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+
+        // Check for ${ENV_VAR} syntax
+        if (value.startsWith("${") && value.endsWith("}")) {
+            String envVarName = value.substring(2, value.length() - 1);
+            String envValue = System.getenv(envVarName);
+            if (envValue != null && !envValue.isEmpty()) {
+                return envValue;
+            }
+            LOGGER.warn("Environment variable '{}' is not set or empty", envVarName);
+            return "";
+        }
+
+        return value;
     }
 
     /**

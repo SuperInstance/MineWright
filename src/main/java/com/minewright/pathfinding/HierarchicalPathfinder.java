@@ -342,7 +342,7 @@ public class HierarchicalPathfinder {
     private boolean isPositionTraversable(BlockPos pos, PathfindingContext context) {
         // Simple check: is there solid ground to stand on?
         BlockPos below = pos.below();
-        return context.getLevel().getBlockState(below).isSolid();
+        return context.getLevel().getBlockState(below).isSolidRender(context.getLevel(), below);
     }
 
     /**

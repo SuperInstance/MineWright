@@ -1,11 +1,11 @@
 package com.minewright.util;
 
 import com.minewright.entity.ForemanEntity;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class ActionUtils {
         }
 
         ResourceLocation resourceLocation = new ResourceLocation(blockName);
-        Block block = BuiltInRegistries.BLOCK.get(resourceLocation);
+        Block block = ForgeRegistries.BLOCKS.getValue(resourceLocation);
         return block != null ? block : Blocks.AIR;
     }
 }

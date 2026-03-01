@@ -3362,6 +3362,287 @@ public class NeedScheduler {
 }
 ```
 
+### 9.6 Spatial Reasoning with Chunk Awareness
+
+**From**: Cities: Skylines pathfinding, Factorio layout optimization
+**To**: Steve AI chunk-aware base planning
+
+**The Chunk Loading Constraint:**
+
+Minecraft worlds are divided into 16×16×320 block chunks. AI agents can only interact with **loaded chunks**, which fundamentally changes how base planning and spatial reasoning must work:
+
+```java
+/**
+ * Chunk-aware spatial planning for Minecraft AI
+ * Accounts for chunk loading boundaries and unloaded areas
+ */
+public class ChunkAwarePlanner {
+
+    private static final int CHUNK_SIZE = 16;
+    private final ServerLevel world;
+
+    /**
+     * Find optimal base location considering chunk boundaries
+     */
+    public BlockPos findOptimalBaseSite(BlockPos preferredCenter, int searchRadius, int baseSize) {
+        double bestScore = Double.NEGATIVE_INFINITY;
+        BlockPos bestSite = null;
+
+        // Align search to chunk boundaries for efficiency
+        ChunkPos centerChunk = new ChunkPos(preferredCenter);
+        int chunksToSearch = (searchRadius / CHUNK_SIZE) + 1;
+
+        for (int cx = -chunksToSearch; cx <= chunksToSearch; cx++) {
+            for (int cz = -chunksToSearch; cz <= chunksToSearch; cz++) {
+                ChunkPos chunkPos = centerChunk.offset(cx, cz);
+
+                // Check if chunk is loaded
+                if (!world.hasChunk(chunkPos.x, chunkPos.z)) {
+                    continue; // Skip unloaded chunks
+                }
+
+                // Check if entire base can fit in loaded chunks
+                if (!canFitInLoadedChunks(chunkPos, baseSize)) {
+                    continue; // Base would cross into unloaded chunks
+                }
+
+                // Score this site
+                BlockPos candidate = chunkPos.getWorldPosition().offset(baseSize / 2, 0, baseSize / 2);
+                double score = scoreBaseSite(candidate, baseSize);
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestSite = candidate;
+                }
+            }
+        }
+
+        return bestSite;
+    }
+
+    /**
+     * Check if structure fits entirely within loaded chunks
+     */
+    private boolean canFitInLoadedChunks(ChunkPos baseChunk, int size) {
+        int requiredChunksX = (size / CHUNK_SIZE) + 1;
+        int requiredChunksZ = (size / CHUNK_SIZE) + 1;
+
+        for (int cx = 0; cx < requiredChunksX; cx++) {
+            for (int cz = 0; cz < requiredChunksZ; cz++) {
+                ChunkPos checkChunk = baseChunk.offset(cx, cz);
+
+                if (!world.hasChunk(checkChunk.x, checkChunk.z)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Score base site considering chunk-aligned factors
+     */
+    private double scoreBaseSite(BlockPos pos, int size) {
+        double score = 0;
+
+        // Factor 1: Chunk alignment (bonus for aligned structures)
+        if (pos.getX() % CHUNK_SIZE == 0 && pos.getZ() % CHUNK_SIZE == 0) {
+            score += 10;
+        }
+
+        // Factor 2: Resource availability within loaded chunks
+        score += scoreLocalResources(pos, size);
+
+        // Factor 3: Defensibility (natural barriers)
+        score += scoreDefensibility(pos, size);
+
+        // Factor 4: Expansion potential (nearby unloaded chunks = future space)
+        int nearbyLoadedChunks = countNearbyLoadedChunks(pos, 64);
+        score += nearbyLoadedChunks * 2;
+
+        return score;
+    }
+
+    /**
+     * Count loaded chunks in radius (expansion potential)
+     */
+    private int countNearbyLoadedChunks(BlockPos center, int radius) {
+        ChunkPos centerChunk = new ChunkPos(center);
+        int chunkRadius = radius / CHUNK_SIZE;
+        int loadedCount = 0;
+
+        for (int cx = -chunkRadius; cx <= chunkRadius; cx++) {
+            for (int cz = -chunkRadius; cz <= chunkRadius; cz++) {
+                ChunkPos chunkPos = centerChunk.offset(cx, cz);
+
+                if (world.hasChunk(chunkPos.x, chunkPos.z)) {
+                    loadedCount++;
+                }
+            }
+        }
+
+        return loadedCount;
+    }
+}
+```
+
+**Path Planning with Chunk Awareness:**
+
+```java
+/**
+ * Path planning that accounts for chunk loading
+ * Avoids paths through unloaded chunks
+ */
+public class ChunkAwarePathfinder {
+
+    private final ServerLevel world;
+
+    /**
+     * Find path that stays within loaded chunks
+     */
+    public List<BlockPos> findPath(BlockPos start, BlockPos goal) {
+        // Validate goal is in loaded chunk
+        ChunkPos goalChunk = new ChunkPos(goal);
+        if (!world.hasChunk(goalChunk.x, goalChunk.z)) {
+            // Goal in unloaded chunk - cannot reach
+            return Collections.emptyList();
+        }
+
+        // A* search with chunk validation
+        PriorityQueue<PathNode> openSet = new PriorityQueue<>();
+        Map<BlockPos, Double> gScore = new HashMap<>();
+
+        gScore.put(start, 0.0);
+        openSet.add(new PathNode(start, heuristic(start, goal)));
+
+        while (!openSet.isEmpty()) {
+            PathNode current = openSet.poll();
+
+            if (current.pos.equals(goal)) {
+                return reconstructPath(cameFrom, current.pos);
+            }
+
+            for (BlockPos neighbor : getNeighbors(current.pos)) {
+                // Chunk validation: skip neighbors in unloaded chunks
+                if (!isChunkLoaded(neighbor)) {
+                    continue;
+                }
+
+                double tentativeGScore = gScore.get(current.pos) + distance(current.pos, neighbor);
+
+                if (tentativeGScore < gScore.getOrDefault(neighbor, Double.MAX_VALUE)) {
+                    cameFrom.put(neighbor, current.pos);
+                    gScore.put(neighbor, tentativeGScore);
+                    double fScore = tentativeGScore + heuristic(neighbor, goal);
+
+                    openSet.add(new PathNode(neighbor, fScore));
+                }
+            }
+        }
+
+        return Collections.emptyList(); // No path found
+    }
+
+    /**
+     * Check if position is in loaded chunk
+     */
+    private boolean isChunkLoaded(BlockPos pos) {
+        ChunkPos chunkPos = new ChunkPos(pos);
+        return world.hasChunk(chunkPos.x, chunkPos.z);
+    }
+}
+```
+
+**Chunk-Based Resource Allocation:**
+
+```java
+/**
+ * Allocate work to agents based on chunk-loaded resources
+ * Prevents agents from being assigned to unloaded areas
+ */
+public class ChunkBasedResourceAllocator {
+
+    private final ServerLevel world;
+    private final Map<ChunkPos, List<Resource>> chunkResources = new HashMap<>();
+
+    /**
+     * Scan loaded chunks for resources
+     */
+    public void scanLoadedResources() {
+        chunkResources.clear();
+
+        // Iterate through loaded chunks
+        for (ChunkAccess chunk : world.getChunkSource().getLoadedChunks()) {
+            ChunkPos chunkPos = chunk.getPos();
+            List<Resource> resources = new ArrayList<>();
+
+            // Scan chunk for valuable blocks
+            for (BlockPos pos : iterateChunkBlocks(chunkPos)) {
+                BlockState state = world.getBlockState(pos);
+
+                if (isValuableResource(state)) {
+                    resources.add(new Resource(state.getBlock(), pos));
+                }
+            }
+
+            if (!resources.isEmpty()) {
+                chunkResources.put(chunkPos, resources);
+            }
+        }
+    }
+
+    /**
+     * Assign resource gathering task to nearest agent
+     * Only assigns resources in loaded chunks
+     */
+    public Optional<Task> assignResourceTask(SteveEntity agent) {
+        BlockPos agentPos = agent.blockPosition();
+        ChunkPos agentChunk = new ChunkPos(agentPos);
+
+        // Find nearest chunk with resources
+        ChunkPos nearestChunk = null;
+        double nearestDistance = Double.MAX_VALUE;
+
+        for (ChunkPos chunkPos : chunkResources.keySet()) {
+            double distance = chunkDistance(agentChunk, chunkPos);
+
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestChunk = chunkPos;
+            }
+        }
+
+        if (nearestChunk == null) {
+            return Optional.empty(); // No resources found in loaded chunks
+        }
+
+        // Get specific resource from chunk
+        List<Resource> resources = chunkResources.get(nearestChunk);
+        Resource target = resources.get(0); // Simple: take first
+
+        return Optional.of(new GatherResourceTask(target.pos(), target.block()));
+    }
+
+    /**
+     * Calculate distance between chunks
+     */
+    private double chunkDistance(ChunkPos a, ChunkPos b) {
+        int dx = (a.x - b.x) * CHUNK_SIZE;
+        int dz = (a.z - b.z) * CHUNK_SIZE;
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+}
+```
+
+**Key Insights for Chunk-Aware Planning:**
+
+1. **Alignment Bonus**: Structures aligned to chunk boundaries optimize memory access and chunk loading
+2. **Expansion Planning**: Consider nearby loaded chunks as future expansion potential
+3. **Path Constraints**: Paths must avoid unloaded chunks or wait for chunk loading
+4. **Resource Visibility**: Resources only exist in loaded chunks - planning must handle dynamic discovery
+5. **Fallback Strategies**: Always have backup plans when chunks fail to load
+
 ---
 
 ## 10. Case Studies

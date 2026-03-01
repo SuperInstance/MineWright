@@ -10,15 +10,35 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Action that mines blocks in a directed tunnel pattern.
+ *
+ * <p><b>Features:</b></p>
+ * <ul>
+ *   <li><b>Directional Mining:</b> Mines in the player's look direction (straight tunnel)</li>
+ *   <li><b>Ore Detection:</b> Scans ahead for target ore blocks</li>
+ *   <li><b>Torch Placement:</b> Automatically places torches when light level is low</li>
+ *   <li><b>Flying Mode:</b> Foreman flies for better access to ore veins</li>
+ *   <li><b>Depth-Aware:</b> Knows optimal Y-levels for different ores</li>
+ * </ul>
+ *
+ * <p><b>Parameters:</b></p>
+ * <ul>
+ *   <li><code>block</code> - Block/ore type to mine (e.g., iron_ore, diamond_ore)</li>
+ *   <li><code>quantity</code> - Target quantity to mine (default 8)</li>
+ * </ul>
+ *
+ * @since 1.0.0
+ */
 public class MineBlockAction extends BaseAction {
     private static final Logger LOGGER = TestLogger.getLogger(MineBlockAction.class);
     private Block targetBlock;
@@ -105,7 +125,7 @@ public class MineBlockAction extends BaseAction {
             miningStartPos = lookTarget;
             for (int y = lookTarget.getY(); y > lookTarget.getY() - 20 && y > -64; y--) {
                 BlockPos groundCheck = new BlockPos(lookTarget.getX(), y, lookTarget.getZ());
-                if (foreman.level().getBlockState(groundCheck).isSolid()) {
+                if (foreman.level().getBlockState(groundCheck).isSolidRender(foreman.level(), groundCheck)) {
                     miningStartPos = groundCheck.above(); // Stand on top of solid block
                     break;
                 }
@@ -238,22 +258,22 @@ public class MineBlockAction extends BaseAction {
      */
     private BlockPos findTorchPosition(BlockPos center) {
         BlockPos floorPos = center.below();
-        if (foreman.level().getBlockState(floorPos).isSolid() && 
+        if (foreman.level().getBlockState(floorPos).isSolidRender(foreman.level(), floorPos) &&
             foreman.level().getBlockState(center).isAir()) {
             return center;
         }
-        
+
         BlockPos[] wallPositions = {
             center.north(), center.south(), center.east(), center.west()
         };
-        
+
         for (BlockPos wallPos : wallPositions) {
-            if (foreman.level().getBlockState(wallPos).isSolid() && 
+            if (foreman.level().getBlockState(wallPos).isSolidRender(foreman.level(), wallPos) &&
                 foreman.level().getBlockState(center).isAir()) {
                 return center;
             }
         }
-        
+
         return null;
     }
 
@@ -371,7 +391,7 @@ public class MineBlockAction extends BaseAction {
         }
 
         ResourceLocation resourceLocation = new ResourceLocation(normalizedBlockName);
-        return BuiltInRegistries.BLOCK.get(resourceLocation);
+        return ForgeRegistries.BLOCKS.getValue(resourceLocation);
     }
 }
 

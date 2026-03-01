@@ -15,6 +15,8 @@ import com.minewright.entity.ForemanEntity;
 import com.minewright.plugin.ActionRegistry;
 import com.minewright.plugin.PluginManager;
 import com.minewright.voice.VoiceManager;
+import com.minewright.util.TickProfiler;
+import com.minewright.skill.ExecutionTracker;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -44,64 +46,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   <li><b>Interceptor Chain:</b> Cross-cutting concerns (logging, metrics, events)
  *       handled via {@link InterceptorChain}</li>
  *   <li><b>Event Bus:</b> Action lifecycle events published for monitoring and coordination</li>
+ *   <li><b>Tick Budget Enforcement:</b> AI operations are profiled and must complete
+ *       within configured budget (default 5ms) to prevent server lag</li>
+ *   <li><b>Error Recovery:</b> Automatic retry and recovery strategies for transient failures</li>
  * </ul>
  *
- * <p><b>Async Planning Flow:</b></p>
- * <pre>
- * User Input → processNaturalLanguageCommand()
- *             │
- *             ├─► Immediate return (non-blocking)
- *             │
- *             └─► Async LLM call on separate thread
- *                     │
- *                     └─► CompletableFuture completes later
- *                             │
- *                             └─► tick() checks isDone()
- *                                     │
- *                                     └─► Tasks queued and execution begins
- * </pre>
- *
- * <p><b>Tick Execution Flow:</b></p>
- * <pre>
- * tick() called every game tick
- *   │
- *   ├─► Check if async planning complete
- *   │   └─► If yes, process results and queue tasks
- *   │
- *   ├─► If current action running
- *   │   ├─► Call action.tick()
- *   │   └─► If action.isComplete(), handle result
- *   │
- *   ├─► If no current action and tasks queued
- *   │   └─► Start next task from queue
- *   │
- *   └─► If completely idle, follow nearest player
- * </pre>
- *
- * <p><b>Thread Safety:</b></p>
+ * <p><b>Error Handling:</b>
  * <ul>
- *   <li>{@link BlockingQueue} for thread-safe task queuing from orchestration</li>
- *   <li>{@code volatile} fields for visibility between game thread and LLM callbacks</li>
- *   <li>All tick operations run on the Minecraft server thread (single-threaded)</li>
- *   <li>LLM calls execute on separate thread pools managed by async infrastructure</li>
+ *   <li><b>Structured Error Codes:</b> All errors categorized with specific error codes</li>
+ *   <li><b>Recovery Strategies:</b> Automatic recovery based on error category</li>
+ *   <li><b>State Cleanup:</b> Guaranteed cleanup via finally blocks</li>
+ *   <li><b>Structured Logging:</b> Detailed logging for debugging and monitoring</li>
  * </ul>
- *
- * <p><b>Plugin Architecture:</b></p>
- * <p>Actions are registered via {@link com.minewright.plugin.ActionRegistry} using
- * {@link com.minewright.plugin.ActionFactory} instances. The executor attempts to
- * create actions via the registry first, falling back to a legacy switch statement
- * for backward compatibility during migration.</p>
  *
  * @see BaseAction
  * @see Task
  * @see com.minewright.plugin.ActionRegistry
  * @see com.minewright.execution.AgentStateMachine
  * @see com.minewright.execution.InterceptorChain
+ * @see ErrorRecoveryStrategy
  *
  * @since 1.0.0
  */
 public class ActionExecutor {
     private static final Logger LOGGER = TestLogger.getLogger(ActionExecutor.class);
+
     /**
      * The foreman entity this executor is managing actions for.
      * Used for context, world access, and state updates.
@@ -188,6 +157,23 @@ public class ActionExecutor {
      */
     private final EventBus eventBus;
 
+    /**
+     * Tick profiler for enforcing AI operation budget constraints.
+     * Tracks time spent in AI operations to prevent server lag.
+     * AI operations must complete within configured budget (default 5ms).
+     */
+    private final TickProfiler tickProfiler;
+
+    /**
+     * Retry policy for failed actions.
+     */
+    private final RetryPolicy retryPolicy = RetryPolicy.STANDARD;
+
+    /**
+     * Execution tracker for recording action sequences for skill learning.
+     */
+    private final ExecutionTracker executionTracker;
+
     public ActionExecutor(ForemanEntity foreman) {
         this.foreman = foreman;
         this.taskPlanner = null;  // Will be initialized when first needed
@@ -215,6 +201,12 @@ public class ActionExecutor {
             .stateMachine(stateMachine)
             .interceptorChain(interceptorChain)
             .build();
+
+        // Initialize tick profiler for budget enforcement
+        this.tickProfiler = new TickProfiler();
+
+        // Initialize execution tracker for skill learning
+        this.executionTracker = ExecutionTracker.getInstance();
 
         LOGGER.debug("ActionExecutor initialized with plugin architecture for Foreman '{}'",
             foreman.getEntityName());
@@ -389,8 +381,14 @@ public class ActionExecutor {
      *
      * <p><b>Thread Safety:</b> Called on the Minecraft server thread only.
      * Interacts with volatile/atomic fields for visibility across threads.</p>
+     *
+     * <p><b>Tick Budget Enforcement:</b></p>
+     * <p>Uses {@link TickProfiler} to ensure AI operations complete within budget.
+     * If budget is exceeded, operations defer to next tick to prevent server lag.</p>
      */
     public void tick() {
+        // Start tick profiling for budget enforcement
+        tickProfiler.startTick();
         ticksSinceLastAction++;
 
         // Check if async planning is complete (non-blocking check!)
@@ -405,6 +403,9 @@ public class ActionExecutor {
 
                     taskQueue.clear();
                     taskQueue.addAll(response.getTasks());
+
+                    // Start tracking execution sequence for skill learning
+                    executionTracker.startTracking(foreman.getEntityName(), currentGoal);
 
                     if (MineWrightConfig.ENABLE_CHAT_RESPONSES.get()) {
                         sendToGUI(foreman.getEntityName(), "You got it! " + currentGoal);
@@ -439,24 +440,25 @@ public class ActionExecutor {
             }
         }
 
+        // Check budget after planning processing
+        if (tickProfiler.isOverBudget()) {
+            tickProfiler.logWarningIfExceeded();
+            return; // Defer remaining work to next tick
+        }
+
         if (currentAction != null) {
             if (currentAction.isComplete()) {
                 ActionResult result = currentAction.getResult();
-                LOGGER.info("Foreman '{}' - Action completed: {} (Success: {})",
-                    foreman.getEntityName(), result.getMessage(), result.isSuccess());
 
-                foreman.getMemory().addAction(currentAction.getDescription());
+                LOGGER.info("[{}] Action completed: {} (Success: {}, Error: {})",
+                    foreman.getEntityName(), result.getMessage(),
+                    result.isSuccess(), result.getErrorCode());
 
-                if (!result.isSuccess()) {
-                    // Action failed - always notify player via chat
-                    foreman.sendChatMessage("Job hit a snag: " + result.getMessage());
-                    if (result.requiresReplanning()) {
-                        // Also show in GUI if enabled
-                        if (MineWrightConfig.ENABLE_CHAT_RESPONSES.get()) {
-                            sendToGUI(foreman.getEntityName(), "Problem on the job site: " + result.getMessage());
-                        }
-                    }
-                }
+                // Record action execution for skill learning
+                executionTracker.recordAction(foreman.getEntityName(), currentAction, result);
+
+                // Handle action result with error recovery
+                handleActionResult(result, currentAction.getTask());
 
                 currentAction = null;
             } else {
@@ -464,9 +466,25 @@ public class ActionExecutor {
                     LOGGER.info("Foreman '{}' - Ticking action: {}",
                         foreman.getEntityName(), currentAction.getDescription());
                 }
+
+                // Check budget before calling action.tick()
+                if (tickProfiler.isOverBudget()) {
+                    tickProfiler.logWarningIfExceeded();
+                    return; // Defer action tick to next tick
+                }
+
                 currentAction.tick();
+
+                // Log warning if budget exceeded after action tick
+                tickProfiler.logWarningIfExceeded();
                 return;
             }
+        }
+
+        // Check budget before processing task queue
+        if (tickProfiler.isOverBudget()) {
+            tickProfiler.logWarningIfExceeded();
+            return; // Defer task queue processing to next tick
         }
 
         if (ticksSinceLastAction >= MineWrightConfig.ACTION_TICK_DELAY.get()) {
@@ -478,8 +496,21 @@ public class ActionExecutor {
             }
         }
 
+        // Check budget before idle processing
+        if (tickProfiler.isOverBudget()) {
+            tickProfiler.logWarningIfExceeded();
+            return; // Defer idle processing to next tick
+        }
+
         // When completely idle (no tasks, no goal), follow nearest player
         if (taskQueue.isEmpty() && currentAction == null && currentGoal == null) {
+            // End tracking if we were tracking a sequence
+            if (executionTracker.isTracking(foreman.getEntityName())) {
+                executionTracker.endTracking(foreman.getEntityName(), true);
+                LOGGER.debug("Ended execution tracking for agent '{}' (sequence complete)",
+                    foreman.getEntityName());
+            }
+
             if (idleFollowAction == null) {
                 idleFollowAction = new IdleFollowAction(foreman);
                 idleFollowAction.start();
@@ -495,24 +526,120 @@ public class ActionExecutor {
             idleFollowAction.cancel();
             idleFollowAction = null;
         }
+
+        // Log budget status at end of tick (only if over threshold to reduce log spam)
+        tickProfiler.logWarningIfExceeded();
     }
 
     private void executeTask(Task task) {
-        LOGGER.info("Foreman '{}' executing task: {} (action type: {})",
+        LOGGER.info("[{}] Executing task: {} (action type: {})",
             foreman.getEntityName(), task, task.getAction());
 
-        currentAction = createAction(task);
+        try {
+            currentAction = createAction(task);
 
-        if (currentAction == null) {
-            String errorMsg = "Unknown action type: " + task.getAction();
-            LOGGER.error("FAILED to create action for task: {}", task);
-            foreman.sendChatMessage("Error: " + errorMsg);
+            if (currentAction == null) {
+                handleTaskCreationError(task);
+                return;
+            }
+
+            LOGGER.info("[{}] Created action: {} - starting now...",
+                foreman.getEntityName(), currentAction.getClass().getSimpleName());
+            currentAction.start();
+
+            LOGGER.debug("[{}] Action started! Is complete: {}",
+                foreman.getEntityName(), currentAction.isComplete());
+
+        } catch (Exception e) {
+            LOGGER.error("[{}] Failed to execute task: {}",
+                foreman.getEntityName(), task, e);
+            handleExecutionError(task, e);
+        }
+    }
+
+    /**
+     * Handles action creation errors.
+     *
+     * @param task The task that failed
+     */
+    private void handleTaskCreationError(Task task) {
+        String errorMsg = "Unknown action type: " + task.getAction();
+        LOGGER.error("[{}] FAILED to create action for task: {}",
+            foreman.getEntityName(), task);
+
+        ActionResult result = ActionResult.failure(
+            ActionResult.ErrorCode.INVALID_ACTION_TYPE,
+            errorMsg,
+            true
+        );
+
+        handleActionResult(result, task);
+    }
+
+    /**
+     * Handles unexpected execution errors.
+     *
+     * @param task The task being executed
+     * @param e   The exception
+     */
+    private void handleExecutionError(Task task, Exception e) {
+        LOGGER.error("[{}] Execution error for task {}: {}",
+            foreman.getEntityName(), task.getAction(), e.getMessage(), e);
+
+        ActionResult result = ActionResult.failure(
+            ActionResult.ErrorCode.EXECUTION_ERROR,
+            "Execution error: " + e.getClass().getSimpleName() + ": " + e.getMessage(),
+            true
+        );
+
+        handleActionResult(result, task);
+    }
+
+    /**
+     * Handles action results with error recovery.
+     *
+     * @param result The action result
+     * @param task   The task that was executed
+     */
+    private void handleActionResult(ActionResult result, Task task) {
+        if (result.isSuccess()) {
+            LOGGER.info("[{}] Action completed successfully: {}",
+                foreman.getEntityName(), result.getMessage());
+            String description = (currentAction != null) ? currentAction.getDescription() :
+                (task != null ? task.getAction() : "unknown");
+            foreman.getMemory().addAction(description);
             return;
         }
 
-        LOGGER.info("Created action: {} - starting now...", currentAction.getClass().getSimpleName());
-        currentAction.start();
-        LOGGER.info("Action started! Is complete: {}", currentAction.isComplete());
+        // Handle failure with error recovery strategy
+        ErrorRecoveryStrategy recoveryStrategy = ErrorRecoveryStrategy.fromResult(result);
+
+        LOGGER.warn("[{}] Action failed [{}]: {}",
+            foreman.getEntityName(), result.getErrorCode(), result.getMessage());
+
+        // Attempt recovery
+        boolean canRecover = recoveryStrategy.attemptRecovery(foreman, result);
+
+        // Notify player via chat
+        foreman.sendChatMessage("Job hit a snag: " + result.getMessage());
+
+        // Show in GUI if enabled
+        if (MineWrightConfig.ENABLE_CHAT_RESPONSES.get()) {
+            sendToGUI(foreman.getEntityName(), "Problem: " + result.getMessage());
+        }
+
+        // Log recovery suggestion if available
+        if (result.getRecoverySuggestion() != null) {
+            LOGGER.info("[{}] Recovery suggestion: {}",
+                foreman.getEntityName(), result.getRecoverySuggestion());
+        }
+
+        // Check if replanning is needed
+        if (result.requiresReplanning() && result.getErrorCode().getRecoveryCategory() !=
+            ErrorRecoveryStrategy.RecoveryCategory.PERMANENT) {
+            LOGGER.info("[{}] Task requires replanning due to recoverable error",
+                foreman.getEntityName());
+        }
     }
 
     /**
@@ -574,6 +701,13 @@ public class ActionExecutor {
     }
 
     public void stopCurrentAction() {
+        // End tracking if we were tracking a sequence
+        if (executionTracker.isTracking(foreman.getEntityName())) {
+            executionTracker.endTracking(foreman.getEntityName(), false);
+            LOGGER.debug("Ended execution tracking for agent '{}' (action stopped)",
+                foreman.getEntityName());
+        }
+
         if (currentAction != null) {
             currentAction.cancel();
             currentAction = null;

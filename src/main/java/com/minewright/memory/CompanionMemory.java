@@ -222,14 +222,9 @@ public class CompanionMemory {
         // Add to vector store for semantic search
         addMemoryToVectorStore(memory);
 
-        // Trim if over limit
+        // Trim if over limit using smart eviction
         while (episodicMemories.size() > MAX_EPISODIC_MEMORIES) {
-            EpisodicMemory removed = episodicMemories.removeLast();
-            // Remove from vector store
-            Integer vectorId = memoryToVectorId.remove(removed);
-            if (vectorId != null) {
-                memoryVectorStore.remove(vectorId);
-            }
+            evictLowestScoringMemory();
         }
 
         // High emotional weight events also go to emotional memory
@@ -357,6 +352,85 @@ public class CompanionMemory {
     }
 
     /**
+     * Computes a dynamic memory score based on time decay, importance, and access frequency.
+     * This combines multiple signals to determine which memories are most valuable.
+     *
+     * @param memory The memory to score
+     * @return A score from 0.0 (least important) to 1.0 (most important)
+     */
+    public float computeMemoryScore(EpisodicMemory memory) {
+        Instant now = Instant.now();
+
+        // Time decay with 7-day half-life
+        long daysSinceCreation = ChronoUnit.DAYS.between(memory.timestamp, now);
+        float ageScore = (float) Math.exp(-daysSinceCreation / 7.0);
+
+        // Emotional importance (normalize -10 to +10 range to 0-1)
+        float importanceScore = Math.min(1.0f, Math.abs(memory.emotionalWeight) / 10.0f);
+
+        // Access frequency (cap at 10 accesses for max score)
+        float accessScore = Math.min(1.0f, memory.getAccessCount() / 10.0f);
+
+        // Recent access bonus (if accessed in last 24 hours)
+        long hoursSinceAccess = ChronoUnit.HOURS.between(memory.getLastAccessed(), now);
+        float recentAccessBonus = hoursSinceAccess < 24 ? 0.2f : 0.0f;
+
+        // Combined weighted score
+        return ageScore * 0.4f + importanceScore * 0.4f + accessScore * 0.2f + recentAccessBonus;
+    }
+
+    /**
+     * Evicts the lowest-scoring memory that is not protected.
+     * Implements smart eviction based on memory importance rather than FIFO.
+     */
+    private void evictLowestScoringMemory() {
+        EpisodicMemory lowestScoring = null;
+        float lowestScore = Float.MAX_VALUE;
+
+        for (EpisodicMemory memory : episodicMemories) {
+            // Skip protected memories
+            if (memory.isProtected()) {
+                continue;
+            }
+
+            float score = computeMemoryScore(memory);
+            if (score < lowestScore) {
+                lowestScore = score;
+                lowestScoring = memory;
+            }
+        }
+
+        // If we found a candidate to evict, remove it
+        if (lowestScoring != null) {
+            episodicMemories.remove(lowestScoring);
+            Integer vectorId = memoryToVectorId.remove(lowestScoring);
+            if (vectorId != null) {
+                memoryVectorStore.remove(vectorId);
+            }
+            LOGGER.debug("Evicted low-scoring memory: {} (score={})",
+                lowestScoring.eventType, lowestScore);
+        } else {
+            // All memories are protected, force remove oldest non-milestone
+            EpisodicMemory oldest = null;
+            Instant oldestTime = Instant.now();
+            for (EpisodicMemory memory : episodicMemories) {
+                if (!memory.isMilestone && memory.timestamp.isBefore(oldestTime)) {
+                    oldestTime = memory.timestamp;
+                    oldest = memory;
+                }
+            }
+            if (oldest != null) {
+                episodicMemories.remove(oldest);
+                Integer vectorId = memoryToVectorId.remove(oldest);
+                if (vectorId != null) {
+                    memoryVectorStore.remove(vectorId);
+                }
+                LOGGER.debug("Force evicted oldest non-milestone memory: {}", oldest.eventType);
+            }
+        }
+    }
+
+    /**
      * Retrieves memories similar to the given context using semantic search.
      * Uses vector embeddings to find conceptually similar memories.
      *
@@ -378,9 +452,10 @@ public class CompanionMemory {
             List<VectorSearchResult<EpisodicMemory>> results =
                     memoryVectorStore.search(queryEmbedding, k);
 
-            // Extract memories from results
+            // Extract memories from results and record access
             List<EpisodicMemory> memories = results.stream()
                     .map(VectorSearchResult::getData)
+                    .peek(EpisodicMemory::recordAccess)
                     .collect(Collectors.toList());
 
             LOGGER.debug("Semantic search for '{}' returned {} memories", query, memories.size());
@@ -525,6 +600,176 @@ public class CompanionMemory {
     }
 
     /**
+     * Builds an optimized context string for LLM prompting with memory prioritization.
+     * Uses dynamic scoring to include the most relevant memories within token limits.
+     *
+     * @param query The current query/task to provide context for
+     * @param maxTokens Maximum tokens to use for context (approximately)
+     * @return Optimized context string
+     */
+    public String buildOptimizedContext(String query, int maxTokens) {
+        List<ScoredMemory> scored = new ArrayList<>();
+
+        // 1. Always include first meeting memory if exists (high priority)
+        episodicMemories.stream()
+            .filter(m -> "first_meeting".equals(m.eventType))
+            .findFirst()
+            .ifPresent(m -> {
+                m.recordAccess();
+                scored.add(new ScoredMemory(m, 1000.0f));
+            });
+
+        // 2. Recent working memory (high priority)
+        workingMemory.stream()
+            .limit(5)
+            .forEach(entry -> {
+                // Convert working memory to a synthetic episodic memory for scoring
+                EpisodicMemory synthetic = new EpisodicMemory(
+                    entry.type,
+                    entry.content,
+                    3, // Moderate weight
+                    entry.timestamp
+                );
+                scored.add(new ScoredMemory(synthetic, 500.0f));
+            });
+
+        // 3. High-emotional and protected memories
+        episodicMemories.stream()
+            .filter(m -> Math.abs(m.emotionalWeight) >= 7 || m.isProtected())
+            .forEach(m -> {
+                m.recordAccess();
+                float score = computeMemoryScore(m) * 2.0f; // Boost high-emotion memories
+                scored.add(new ScoredMemory(m, score));
+            });
+
+        // 4. Semantically relevant memories (from vector search)
+        List<EpisodicMemory> relevant = findRelevantMemories(query, 10);
+        relevant.forEach(m -> {
+            m.recordAccess();
+            float score = computeMemoryScore(m);
+            scored.add(new ScoredMemory(m, score));
+        });
+
+        // Sort by combined score
+        scored.sort((a, b) -> Float.compare(b.score, a.score));
+
+        // Build context, respecting token limit
+        StringBuilder context = new StringBuilder();
+        int tokens = 0;
+
+        // Add relationship context first
+        String relationshipCtx = getRelationshipContext();
+        int relationshipTokens = relationshipCtx.length() / 4;
+        context.append(relationshipCtx).append("\n\n");
+        tokens += relationshipTokens;
+
+        // Add scored memories
+        for (ScoredMemory sm : scored) {
+            String text = sm.memory.toContextString();
+            int estimatedTokens = text.length() / 4;
+
+            if (tokens + estimatedTokens > maxTokens) {
+                break;
+            }
+
+            context.append(text).append("\n");
+            tokens += estimatedTokens;
+        }
+
+        LOGGER.debug("Built optimized context: {} memories, ~{} tokens",
+            scored.size(), tokens);
+
+        return context.toString();
+    }
+
+    /**
+     * Helper class for tracking scored memories.
+     */
+    private static class ScoredMemory {
+        final EpisodicMemory memory;
+        final float score;
+
+        ScoredMemory(EpisodicMemory memory, float score) {
+            this.memory = memory;
+            this.score = score;
+        }
+    }
+
+    // === Memory Consolidation Support ===
+
+    /**
+     * Gets memories that are eligible for consolidation.
+     * Excludes protected memories and recent memories.
+     *
+     * @param minAgeDays Minimum age in days for a memory to be consolidatable
+     * @return List of consolidatable memories
+     */
+    public List<EpisodicMemory> getConsolidatableMemories(int minAgeDays) {
+        Instant cutoff = Instant.now().minus(minAgeDays, ChronoUnit.DAYS);
+
+        return episodicMemories.stream()
+            .filter(m -> !m.isProtected()) // Exclude protected memories
+            .filter(m -> m.timestamp.isBefore(cutoff)) // Only old memories
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Removes a list of memories from storage.
+     * Used by consolidation service after summarization.
+     *
+     * @param memoriesToRemove Memories to remove
+     * @return Number of memories removed
+     */
+    public int removeMemories(List<EpisodicMemory> memoriesToRemove) {
+        int removed = 0;
+
+        for (EpisodicMemory memory : memoriesToRemove) {
+            if (episodicMemories.remove(memory)) {
+                // Remove from vector store
+                Integer vectorId = memoryToVectorId.remove(memory);
+                if (vectorId != null) {
+                    memoryVectorStore.remove(vectorId);
+                }
+                removed++;
+            }
+        }
+
+        LOGGER.info("Removed {} consolidated memories", removed);
+        return removed;
+    }
+
+    /**
+     * Validates memory state and logs any inconsistencies.
+     * Useful for debugging and ensuring data integrity.
+     *
+     * @return true if memory state is valid
+     */
+    public boolean validateMemoryState() {
+        boolean valid = true;
+
+        // Check vector store mapping consistency
+        int vectorStoreSize = memoryVectorStore.size();
+        int mappingSize = memoryToVectorId.size();
+
+        if (vectorStoreSize != mappingSize) {
+            LOGGER.warn("Memory state inconsistency: vector store has {} entries, " +
+                "but mapping has {} entries", vectorStoreSize, mappingSize);
+            valid = false;
+        }
+
+        // Check for protected memories in working memory
+        long protectedInDeque = episodicMemories.stream()
+            .filter(EpisodicMemory::isProtected)
+            .count();
+
+        if (protectedInDeque > 0) {
+            LOGGER.debug("Found {} protected memories in episodic store", protectedInDeque);
+        }
+
+        return valid;
+    }
+
+    /**
      * Gets the personality profile for prompting.
      */
     public PersonalityProfile getPersonality() {
@@ -569,8 +814,17 @@ public class CompanionMemory {
             this.sessionStart = Instant.now();
 
             learnPlayerFact("identity", "name", playerName);
-            recordExperience("first_meeting",
-                "First time meeting " + playerName, 7);
+
+            // Create and mark as milestone
+            EpisodicMemory firstMeetingMemory = new EpisodicMemory(
+                "first_meeting",
+                "First time meeting " + playerName,
+                7,
+                Instant.now()
+            );
+            firstMeetingMemory.setMilestone(true);
+            episodicMemories.addFirst(firstMeetingMemory);
+            addMemoryToVectorStore(firstMeetingMemory);
 
             LOGGER.info("Relationship initialized with {}", playerName);
         }
@@ -603,6 +857,7 @@ public class CompanionMemory {
         recordExperience("success", taskDescription, 5);
         adjustRapport(2);
         adjustTrust(3);
+        checkAutoMilestones();
     }
 
     /**
@@ -611,6 +866,101 @@ public class CompanionMemory {
     public void recordSharedFailure(String taskDescription, String reason) {
         recordExperience("failure", taskDescription + " - " + reason, -3);
         // Don't reduce rapport for failures - we're in this together
+    }
+
+    /**
+     * Automatically detects and records relationship milestones based on current state.
+     * Called after significant events to check for milestone conditions.
+     */
+    public void checkAutoMilestones() {
+        int interactions = interactionCount.get();
+        int rapport = rapportLevel.get();
+
+        // Check for interaction-based milestones
+        if (interactions == 10 && !hasMilestone("auto_getting_to_know")) {
+            milestoneTracker.recordMilestone(
+                new MilestoneTracker.Milestone(
+                    "auto_getting_to_know",
+                    MilestoneTracker.MilestoneType.COUNT,
+                    "Getting to Know You",
+                    "We've had 10 interactions now! I feel like we're starting to understand each other.",
+                    5,
+                    Instant.now()
+                )
+            );
+            adjustRapport(2);
+        }
+
+        if (interactions == 50 && !hasMilestone("auto_frequent_companion")) {
+            milestoneTracker.recordMilestone(
+                new MilestoneTracker.Milestone(
+                    "auto_frequent_companion",
+                    MilestoneTracker.MilestoneType.COUNT,
+                    "Frequent Companions",
+                    "50 interactions together! You've become a regular part of my routine.",
+                    7,
+                    Instant.now()
+                )
+            );
+            adjustRapport(3);
+        }
+
+        // Check for rapport-based milestones
+        if (rapport >= 50 && !hasMilestone("auto_friends")) {
+            milestoneTracker.recordMilestone(
+                new MilestoneTracker.Milestone(
+                    "auto_friends",
+                    MilestoneTracker.MilestoneType.ACHIEVEMENT,
+                    "Friends",
+                    "I feel like we've really become friends. I trust you and enjoy our time together.",
+                    8,
+                    Instant.now()
+                )
+            );
+            adjustRapport(5);
+        }
+
+        if (rapport >= 80 && !hasMilestone("auto_best_friends")) {
+            milestoneTracker.recordMilestone(
+                new MilestoneTracker.Milestone(
+                    "auto_best_friends",
+                    MilestoneTracker.MilestoneType.ACHIEVEMENT,
+                    "Best Friends",
+                    "You're not just a companion anymore - you're my best friend! We've been through so much together.",
+                    10,
+                    Instant.now()
+                )
+            );
+            adjustRapport(5);
+        }
+
+        // Check for time-based milestones
+        if (firstMeeting != null) {
+            long days = ChronoUnit.DAYS.between(firstMeeting, Instant.now());
+            if (days >= 7 && !hasMilestone("auto_week_together")) {
+                milestoneTracker.recordMilestone(
+                    new MilestoneTracker.Milestone(
+                        "auto_week_together",
+                        MilestoneTracker.MilestoneType.ANNIVERSARY,
+                        "One Week Together",
+                        "It's been a whole week since we met! Here's to many more adventures.",
+                        6,
+                        Instant.now()
+                    )
+                );
+                adjustRapport(3);
+            }
+        }
+    }
+
+    /**
+     * Internal method to record a milestone directly.
+     * Used by auto-detection system.
+     */
+    private void recordMilestone(MilestoneTracker.Milestone milestone) {
+        milestoneTracker.recordMilestone(milestone);
+        // Also record as episodic memory for the milestone
+        recordExperience("milestone", milestone.title + ": " + milestone.description, milestone.importance);
     }
 
     // === Getters ===
@@ -723,6 +1073,9 @@ public class CompanionMemory {
             memoryTag.putString("Description", memory.description);
             memoryTag.putInt("EmotionalWeight", memory.emotionalWeight);
             memoryTag.putLong("Timestamp", memory.timestamp.toEpochMilli());
+            memoryTag.putInt("AccessCount", memory.getAccessCount());
+            memoryTag.putLong("LastAccessed", memory.getLastAccessed().toEpochMilli());
+            memoryTag.putBoolean("IsMilestone", memory.isMilestone);
             episodicList.add(memoryTag);
         }
         tag.put("EpisodicMemories", episodicList);
@@ -885,7 +1238,24 @@ public class CompanionMemory {
                     memoryTag.getInt("EmotionalWeight"),
                     Instant.ofEpochMilli(memoryTag.getLong("Timestamp"))
                 );
+
+                // Load access tracking fields
+                if (memoryTag.contains("AccessCount")) {
+                    for (int j = 0; j < memoryTag.getInt("AccessCount"); j++) {
+                        memory.recordAccess();
+                    }
+                }
+                if (memoryTag.contains("LastAccessed")) {
+                    // This is internal, we'll set it through recordAccess above
+                }
+                if (memoryTag.contains("IsMilestone")) {
+                    memory.setMilestone(memoryTag.getBoolean("IsMilestone"));
+                }
+
                 episodicMemories.add(memory);
+
+                // Rebuild vector store mapping for semantic search
+                addMemoryToVectorStore(memory);
             }
         }
 
@@ -1081,16 +1451,59 @@ public class CompanionMemory {
         public final int emotionalWeight;
         public final Instant timestamp;
 
+        // Memory access tracking for importance evolution
+        private int accessCount = 0;
+        private Instant lastAccessed;
+        private boolean isMilestone = false;
+
         public EpisodicMemory(String eventType, String description, int emotionalWeight, Instant timestamp) {
             this.eventType = eventType;
             this.description = description;
             this.emotionalWeight = emotionalWeight;
             this.timestamp = timestamp;
+            this.lastAccessed = timestamp;
+        }
+
+        /**
+         * Records an access to this memory, increasing its importance.
+         */
+        public void recordAccess() {
+            this.accessCount++;
+            this.lastAccessed = Instant.now();
+        }
+
+        /**
+         * Marks this memory as a milestone that should never be evicted.
+         */
+        public void setMilestone(boolean milestone) {
+            this.isMilestone = milestone;
+        }
+
+        /**
+         * Checks if this memory is protected from eviction.
+         */
+        public boolean isProtected() {
+            return isMilestone || Math.abs(emotionalWeight) >= 8;
+        }
+
+        public int getAccessCount() {
+            return accessCount;
+        }
+
+        public Instant getLastAccessed() {
+            return lastAccessed;
         }
 
         @Override
         public String toString() {
             return String.format("[%s] %s: %s", eventType, timestamp, description);
+        }
+
+        /**
+         * Converts this memory to a context string for LLM prompting.
+         */
+        public String toContextString() {
+            return String.format("[%s] %s", eventType, description);
         }
     }
 

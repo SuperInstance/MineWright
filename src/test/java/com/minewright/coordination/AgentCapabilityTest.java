@@ -137,7 +137,12 @@ class AgentCapabilityTest {
         @Test
         @DisplayName("Add skills filters null and blank")
         void addSkillsFiltersNullAndBlank() {
-            capability.addSkills(Set.of("mining", null, "", "building", "   "));
+            // Test adding individual skills including null/blank values
+            capability.addSkill("mining");
+            capability.addSkill(null);  // Should be filtered out
+            capability.addSkill("");     // Should be filtered out
+            capability.addSkill("building");
+            capability.addSkill("   ");  // Should be filtered out
 
             assertEquals(2, capability.getSkills().size(),
                     "Should only add valid skills");
@@ -535,7 +540,7 @@ class AgentCapabilityTest {
             // Test various distances
             assertEquals(10.0, capability.distanceTo(new BlockPos(10, 0, 0)), 0.001);
             assertEquals(17.3205, capability.distanceTo(new BlockPos(10, 10, 10)), 0.001);
-            assertEquals(387.298, capability.distanceTo(new BlockPos(100, 200, 300)), 0.001);
+            assertEquals(374.166, capability.distanceTo(new BlockPos(100, 200, 300)), 0.001);
         }
     }
 

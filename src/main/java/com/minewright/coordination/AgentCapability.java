@@ -483,7 +483,9 @@ public class AgentCapability {
      */
     private double calculateDistanceScore(TaskAnnouncement announcement) {
         double maxDistance = announcement.getMaxDistance();
-        double distance = 0.0; // TODO: Extract task position from announcement
+        // NOTE: Task position extraction requires TaskAnnouncement to include target position
+        // Currently defaults to 0.0 (no distance penalty)
+        double distance = 0.0;
 
         if (maxDistance == Double.MAX_VALUE) {
             return 1.0; // No distance constraint
@@ -537,7 +539,9 @@ public class AgentCapability {
         Map<String, Object> capabilities = new HashMap<>();
         capabilities.put("proficiencies", new HashMap<>(proficiencies));
         capabilities.put("tools", new HashSet<>(availableTools));
-        capabilities.put("distance", 0.0); // TODO: Calculate actual distance
+        // NOTE: Distance calculation requires agent position vs task position
+        // Currently set to 0.0 as distance is handled in calculateDistanceScore()
+        capabilities.put("distance", 0.0);
         capabilities.put("currentLoad", currentLoad);
 
         return TaskBid.builder()

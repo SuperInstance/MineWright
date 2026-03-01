@@ -9,6 +9,23 @@ import org.slf4j.Logger;
 
 import java.util.List;
 
+/**
+ * Action that causes the foreman to follow a player.
+ *
+ * <p><b>Features:</b></p>
+ * <ul>
+ *   <li><b>Target Selection:</b> Can follow specific player by name or nearest player</li>
+ *   <li><b>Distance Management:</b> Maintains 2-3 block distance from target</li>
+ *   <li><b>Auto-Recovery:</b> Re-finds player if lost</li>
+ * </ul>
+ *
+ * <p><b>Parameters:</b></p>
+ * <ul>
+ *   <li><code>player</code> - Player name to follow (optional, defaults to nearest player)</li>
+ * </ul>
+ *
+ * @since 1.0.0
+ */
 public class FollowPlayerAction extends BaseAction {
     private static final Logger LOGGER = TestLogger.getLogger(FollowPlayerAction.class);
     private String playerName;

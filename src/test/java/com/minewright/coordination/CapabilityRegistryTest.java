@@ -498,7 +498,7 @@ class CapabilityRegistryTest {
         @Test
         @DisplayName("Find capable agents with skill map")
         void findCapableAgentsWithSkillMap() {
-            Map<String, Double> required = Map.of("mining", 0.8, "building", 0.5);
+            Map<String, Double> required = Map.of("mining", 0.7, "building", 0.5);
 
             List<AgentCapability> agents = registry.findCapableAgents(required);
 
@@ -733,10 +733,20 @@ class CapabilityRegistryTest {
             // Agent2 has medium skill and is somewhat close
             // Agent1 has highest skill but is far away
             // The algorithm weights: skill 50%, load 30%, distance 20%
+            //
+            // Calculated scores:
+            // Agent1: skill=0.9/0.5=1.8, load=0.8, dist=1/(1+141.4/100)=0.414
+            //         score = 1.8*0.5 + 0.8*0.3 + 0.414*0.2 = 1.223
+            // Agent2: skill=0.7/0.5=1.4, load=0.5, dist=1/(1+14.1/100)=0.876
+            //         score = 1.4*0.5 + 0.5*0.3 + 0.876*0.2 = 1.025
+            // Agent3: skill=0.6/0.5=1.2, load=0.9, dist=1/(1+7.07/100)=0.934
+            //         score = 1.2*0.5 + 0.9*0.3 + 0.934*0.2 = 1.057
+            //
+            // Agent1 wins because skill is weighted 50% and its 1.8 score dominates
             UUID bestId = best.get().getAgentId();
 
-            assertTrue(bestId.equals(agent2) || bestId.equals(agent3),
-                    "Best agent should be agent2 or agent3 (better balance of factors)");
+            assertEquals(agent1, bestId,
+                    "Best agent should be agent1 (highest skill despite distance)");
         }
 
         @Test

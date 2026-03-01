@@ -1,0 +1,24 @@
+# Code Owners for MineWright Project
+
+# Project maintainers
+* @casey
+
+# Core components
+/src/main/java/com/minewright/action/ @casey
+/src/main/java/com/minewright/execution/ @casey
+/src/main/java/com/minewright/llm/ @casey
+
+# Security
+/src/main/java/com/minewright/security/ @casey
+
+# Build and CI
+/build.gradle @casey
+/settings.gradle @casey
+/.github/ @casey
+
+# Documentation
+/docs/ @casey
+*.md @casey
+
+# Tests
+/src/test/ @casey
