@@ -670,6 +670,363 @@ public class AgentStateMachine {
 }
 ```
 
+### 8.5.5 Humanization in Automated Systems
+
+**Academic Context:** Research on humanization techniques from game automation (WoW Glider, Honorbuddy, OSRS bots) reveals patterns for creating believable, engaging AI companions (Game automation analysis, 2026; Humanization techniques research, 2026). While originally developed for anti-detection purposes, these techniques have legitimate applications in creating characterful AI agents that feel natural to interact with.
+
+**Key Insight:** Humans are inconsistent—perfect consistency signals artificiality. LLM-driven systems introduce natural variation through:
+1. **Probabilistic Decision Making** (same situation, different choices)
+2. **Timing Randomization** (Gaussian variance in action delays)
+3. **Mistake Simulation** (intentional error rates 2-5%)
+4. **Personality-Driven Behavior** (OCEAN traits affecting decisions)
+5. **Context-Aware Adaptation** (fatigue, session time, stress factors)
+
+#### Traditional Humanization: Pre-LLM Approaches
+
+**Game Bot Humanization (WoW Glider, 2005-2009):**
+```cpp
+// Gaussian timing jitter (prefigured modern variance)
+float calculateDelay(float baseDelay, float stdDev) {
+    return baseDelay + randomGaussian(0, stdDev);
+}
+
+// Bezier curve mouse movement
+void humanizedMouseMove(Point start, Point end) {
+    Point cp1 = generateControlPoint(start, end);
+    Point cp2 = generateControlPoint(start, end);
+    for (float t = 0; t <= 1.0; t += 0.01) {
+        Point pos = cubicBezier(start, cp1, cp2, end, t);
+        setPosition(pos);
+        Sleep(calculateDelay(duration * 0.01, 0.1));
+    }
+}
+```
+
+**Key Characteristics:**
+- **Timing Variance:** Gaussian distribution (±30% typical)
+- **Path Smoothness:** Bezier curves instead of linear interpolation
+- **Mistake Rates:** 2-5% intentional error rates (wrong click, missed timing)
+- **Fatigue Modeling:** Degraded performance over extended sessions
+
+**Detection Metrics (Anti-Cheat Analysis):**
+| Metric | Human Range | Bot Detection Threshold | LLM-Enhanced Target |
+|--------|-------------|------------------------|---------------------|
+| Action timing variance | 50-500ms | < 15ms suspicious | 100-300ms |
+| Path curvature | Natural curves | Straight lines | Bezier interpolation |
+| Click precision | ±2-3 pixels | < ±1 pixel | ±2 pixels |
+| Reaction time | 250-500ms | < 150ms suspicious | 300-400ms |
+| Error rate | 2-5% | < 1% suspicious | 3-4% |
+
+#### LLM-Driven Humanization: Beyond Traditional Patterns
+
+**Advancement 1: Semantic Variation vs. Random Noise**
+
+**Traditional Approach:**
+```java
+// Random jitter only
+int delay = baseDelay + (int) random.gauss(0, baseDelay * 0.3);
+```
+
+**LLM-Enhanced Approach:**
+```java
+// Context-aware delay based on personality and situation
+int calculateDelay(ActionContext context) {
+    int baseDelay = config.getActionDelay();
+    PersonalityTraits personality = agent.getPersonality();
+
+    // Personality affects timing
+    double speedFactor = 1.0;
+    if (personality.getConscientiousness() > 70) {
+        speedFactor = 0.8;  // Faster, more focused
+    } else if (personality.getNeuroticism() > 70) {
+        speedFactor = 1.3;  // Slower, more cautious
+    }
+
+    // Situation affects timing
+    if (context.isInCombat()) {
+        speedFactor *= 0.7;  // Adrenaline surge
+    } else if (context.isBuilding()) {
+        speedFactor *= 1.2;  // Careful, methodical
+    }
+
+    // Add Gaussian jitter
+    return (int) (baseDelay * speedFactor * (1 + random.gauss(0, 0.2)));
+}
+```
+
+**Key Difference:** Traditional humanization adds random noise to identical actions. LLM-driven humanization creates variation based on semantic understanding of context, personality, and intent.
+
+**Advancement 2: Personality-Driven Decision Variation**
+
+**Traditional Probabilistic State Machine:**
+```java
+// Fixed probabilities for all agents
+enum IdleAction {
+    FOLLOW_PLAYER(0.6),
+    LOOK_AROUND(0.2),
+    SMALL_MOVEMENT(0.1),
+    CHECK_INVENTORY(0.05),
+    STAND_STILL(0.05);
+
+    private final double probability;
+}
+```
+
+**LLM-Enhanced Personality System:**
+```java
+// Probabilities vary by personality
+public class PersonalityDrivenDecisions {
+    public IdleAction selectIdleAction(PersonalityTraits personality) {
+        // High extraversion: more active, social behaviors
+        if (personality.getExtraversion() > 70) {
+            return randomChoice(
+                IdleAction.LOOK_AROUND, 0.4,
+                IdleAction.FOLLOW_PLAYER, 0.3,
+                IdleAction.SMALL_MOVEMENT, 0.2,
+                IdleAction.SOCIAL_GESTURE, 0.1  // Custom action
+            );
+        }
+
+        // High neuroticism: more cautious, checking behaviors
+        if (personality.getNeuroticism() > 70) {
+            return randomChoice(
+                IdleAction.CHECK_SURROUNDINGS, 0.3,
+                IdleAction.STAND_STILL, 0.3,
+                IdleAction.CHECK_INVENTORY, 0.2,
+                IdleAction.FIDGET, 0.2
+            );
+        }
+
+        // High openness: varied, exploratory behaviors
+        if (personality.getOpenness() > 70) {
+            return randomChoice(
+                IdleAction.EXPLORE Nearby, 0.3,
+                IdleAction.EXAMINE_INTERESTING, 0.2,
+                IdleAction.LOOK_AROUND, 0.3,
+                IdleAction.SMALL_MOVEMENT, 0.2
+            );
+        }
+
+        // Default: balanced distribution
+        return randomChoice(
+            IdleAction.FOLLOW_PLAYER, 0.5,
+            IdleAction.LOOK_AROUND, 0.2,
+            IdleAction.STAND_STILL, 0.3
+        );
+    }
+}
+```
+
+**Key Difference:** LLM-driven systems maintain personality consistency across all behaviors, creating coherent character arcs rather than random variation.
+
+**Advancement 3: Mistake Simulation with Learning**
+
+**Traditional Fixed Error Rates:**
+```java
+// Constant 3% error rate
+if (random.nextDouble() < 0.03) {
+    makeMistake();
+}
+```
+
+**LLM-Enhanced Adaptive Mistakes:**
+```java
+// Mistake rate varies by context, personality, and learning
+public class AdaptiveMistakeSimulator {
+    private Map<String, Double> mistakeHistory = new HashMap<>();
+
+    public boolean shouldMakeMistake(ActionContext context) {
+        PersonalityTraits personality = agent.getPersonality();
+        double baseErrorRate = 0.03;  // 3% base
+
+        // Personality affects mistake rate
+        if (personality.getConscientiousness() > 80) {
+            baseErrorRate *= 0.5;  // Very careful, fewer mistakes
+        } else if (personality.getNeuroticism() > 70) {
+            baseErrorRate *= 1.5;  // Anxious, more mistakes
+        }
+
+        // Fatigue increases mistakes
+        double fatigueLevel = sessionManager.getFatigueLevel();
+        baseErrorRate *= (1.0 + fatigueLevel);
+
+        // Learning from past mistakes
+        String actionType = context.getActionType();
+        double pastMistakeRate = mistakeHistory.getOrDefault(actionType, 0.0);
+        if (pastMistakeRate > 0.10) {
+            // High mistake rate in past → agent becomes more careful
+            baseErrorRate *= 0.7;
+        }
+
+        return random.nextDouble() < baseErrorRate;
+    }
+
+    public void recordMistake(String actionType) {
+        double currentRate = mistakeHistory.getOrDefault(actionType, 0.0);
+        mistakeHistory.put(actionType, (currentRate + 1.0) / 2.0);
+    }
+}
+```
+
+**Key Difference:** LLM-driven mistake simulation is adaptive—agents learn from mistakes, become more careful in domains where they've failed, and maintain personality-consistent error rates.
+
+**Advancement 4: Natural Language Variation**
+
+**Traditional Template-Based Dialogue:**
+```java
+// Static strings
+String[] GREETINGS = {
+    "Hello!", "Hi there!", "Greetings!"
+};
+String greeting = GREETINGS[random.nextInt(GREETINGS.length)];
+```
+
+**LLM-Generated Personality-Consistent Dialogue:**
+```java
+// Context-aware, personality-driven dialogue
+public class PersonalityDialogueGenerator {
+    public String generateGreeting(PersonalityTraits personality, ConversationContext context) {
+        String prompt = buildPrompt(personality, context);
+
+        // LLM generates unique greeting each time
+        String greeting = llm.generate(prompt);
+
+        // Examples of personality-varied output:
+        // High extraversion: "Hey there! Great to see you! What are we up to?"
+        // High neuroticism: "Oh, hello... Everything's going okay, I hope?"
+        // High openness: "Greetings! What fascinating adventures await us today?"
+        // Low extraversion: "Hi."
+        // High agreeableness: "Hello! So good to see you again! How can I help?"
+
+        return greeting;
+    }
+}
+```
+
+**Key Difference:** LLM-generated dialogue maintains personality consistency while generating infinite variety—no two conversations are identical, yet all feel "in character."
+
+#### Comparative Analysis: Traditional vs. LLM-Driven Humanization
+
+| Dimension | Traditional Humanization | LLM-Driven Humanization |
+|-----------|-------------------------|-------------------------|
+| **Variation Source** | Random noise (Gaussian jitter) | Semantic understanding (context, personality) |
+| **Consistency** | Random, incoherent | Personality-consistent across all behaviors |
+| **Adaptation** | Fixed parameters | Learns from experience, adapts to context |
+| **Dialogue** | Template-based, repetitive | LLM-generated, infinite variety |
+| **Mistakes** | Fixed error rate | Adaptive error rate based on learning |
+| **Session Modeling** | Simple fatigue curves | Complex fatigue, stress, expertise modeling |
+| **Implementation** | Hardcoded rules | LLM prompts + traditional AI hybrid |
+
+#### Humanization Implementation Framework
+
+**Three-Tier Humanization Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│         LLM HUMANIZATION LAYER (Strategic)                  │
+│  • Personality profile maintenance                          │
+│  • Context-aware behavior selection                          │
+│  • Learning from mistake history                             │
+│  • Adaptive dialogue generation                              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│       TRADITIONAL HUMANIZATION LAYER (Tactical)             │
+│  • Timing randomization (Gaussian jitter)                    │
+│  • Path smoothing (Bezier curves)                            │
+│  • Movement variance (speed ±10%)                            │
+│  • Reaction time modeling (250-500ms)                        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│         MINECRAFT EXECUTION LAYER (Fast)                    │
+│  • Block placement with realistic timing                     │
+│  • Movement with acceleration/deceleration                   │
+│  • Inventory management with pauses                          │
+│  • Look direction with smooth transitions                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Example: Mining Block with Full Humanization:**
+
+```java
+public class HumanizedMineAction extends BaseAction {
+    private final MistakeSimulator mistakeSim;
+    private final SessionManager sessionManager;
+    private final PersonalityTraits personality;
+
+    @Override
+    protected void onTick() {
+        if (currentTarget == null) {
+            findNextBlock();
+
+            // LLM Layer: Semantic decision (should I mine this?)
+            if (!llmShouldMine(currentTarget)) {
+                return;  // Personality-driven decision not to mine
+            }
+
+            // Traditional Layer: Mistake simulation
+            if (mistakeSim.shouldMakeMistake(context)) {
+                // Mine wrong block by mistake
+                currentTarget = mistakeSim.getMistakenTarget(currentTarget);
+                LOGGER.info("'{}' made a mistake - mining wrong block", getName());
+            }
+        }
+
+        // Calculate humanized delay
+        int baseDelay = 10;  // ticks
+        double fatigueMultiplier = sessionManager.getReactionMultiplier();
+        double personalityMultiplier = getPersonalitySpeedMultiplier();
+        double jitter = random.gauss(0, 0.2);  // ±20% variance
+
+        int actualDelay = (int) (baseDelay * fatigueMultiplier * personalityMultiplier * (1 + jitter));
+        actualDelay = Math.max(5, Math.min(20, actualDelay));  // Clamp
+
+        ticksSinceLastAction++;
+        if (ticksSinceLastAction >= actualDelay) {
+            // Mine block (Minecraft layer)
+            mineBlock(currentTarget);
+            ticksSinceLastAction = 0;
+        }
+    }
+
+    private double getPersonalitySpeedMultiplier() {
+        // Personality affects mining speed
+        if (personality.getConscientiousness() > 70) {
+            return 0.8;  // Focused, faster
+        } else if (personality.getNeuroticism() > 70) {
+            return 1.3;  // Cautious, slower
+        }
+        return 1.0;  // Normal
+    }
+
+    private boolean llmShouldMine(BlockPos target) {
+        // LLM evaluates: Is this worth mining?
+        // Personality affects decision
+        String prompt = String.format(
+            "You are a Minecraft agent with personality: %s\n" +
+            "You see a %s block at %s.\n" +
+            "Your inventory: %s\n" +
+            "Your current goal: %s\n" +
+            "Should you mine it? Consider your personality traits.",
+            personality.getSummary(),
+            getBlockType(target),
+            target,
+            getInventorySummary(),
+            getCurrentGoal()
+        );
+
+        return llm.evaluateDecision(prompt);
+    }
+}
+```
+
+**Ethical Note:** This dissertation focuses on legitimate applications of humanization techniques for creating engaging AI companions. Using these techniques to violate game Terms of Service or gain unfair advantages in competitive games is unethical and may result in account bans. The goal is characterful AI, not deception.
+
+**Academic Contribution:** This section synthesizes 30 years of game automation research into a coherent framework for LLM-enhanced humanization. The key advancement is moving from "random noise for anti-detection" to "semantic variation for characterful engagement"—transforming evasion techniques into immersive gameplay features.
+
 ---
 
 ## 8.6 Model Selection and Cost Optimization

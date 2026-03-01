@@ -1,0 +1,53 @@
+{
+  "name": "building_house",
+  "description": "Build a simple wooden house",
+  "author": "Steve AI",
+  "version": "1.0.0",
+  "tags": ["building", "wood", "construction"],
+  "settings": {
+    "repeat": false,
+    "stopOnError": true,
+    "maxRetries": 2
+  },
+  "tasks": [
+    {
+      "type": "GATHER",
+      "target": "oak_log",
+      "quantity": 128,
+      "parameters": {
+        "radius": 50
+      },
+      "description": "Gather oak logs for construction"
+    },
+    {
+      "type": "GATHER",
+      "target": "cobblestone",
+      "quantity": 64,
+      "parameters": {
+        "radius": 50
+      },
+      "description": "Gather cobblestone for foundation"
+    },
+    {
+      "type": "TRAVEL",
+      "target": "${player_spawn} + [5, 0, 5]",
+      "description": "Go to build location"
+    },
+    {
+      "type": "BUILD",
+      "target": "structures/simple_house.json",
+      "parameters": {
+        "location": "${player_spawn} + [5, 0, 5]"
+      },
+      "description": "Build the house structure"
+    },
+    {
+      "type": "PLACE",
+      "target": "torch",
+      "parameters": {
+        "locations": ["${house_corners}"]
+      },
+      "description": "Place torches for lighting"
+    }
+  ]
+}

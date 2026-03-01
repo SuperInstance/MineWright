@@ -1,0 +1,44 @@
+{
+  "name": "combat_training",
+  "description": "Basic combat training routine",
+  "author": "Steve AI",
+  "version": "1.0.0",
+  "tags": ["combat", "training", "equipment"],
+  "settings": {
+    "repeat": true,
+    "repeatCount": 5,
+    "stopOnError": false
+  },
+  "tasks": [
+    {
+      "type": "TRAVEL",
+      "target": "safe_spawn_point",
+      "description": "Go to safe spawn area"
+    },
+    {
+      "type": "EQUIP",
+      "target": "iron_sword",
+      "optional": true,
+      "description": "Equip best available weapon"
+    },
+    {
+      "type": "ATTACK",
+      "parameters": {
+        "radius": 16,
+        "target_type": "hostile"
+      },
+      "conditions": {
+        "health_above_50": true
+      },
+      "description": "Attack hostile mobs"
+    },
+    {
+      "type": "GATHER",
+      "target": "drop",
+      "parameters": {
+        "radius": 8
+      },
+      "description": "Collect dropped items"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "name": "farming_wheat",
+  "description": "Plant and harvest wheat automatically",
+  "author": "Steve AI",
+  "version": "1.0.0",
+  "tags": ["farming", "wheat", "food", "automation"],
+  "settings": {
+    "repeat": true,
+    "repeatCount": 0,
+    "stopOnError": false,
+    "maxRetries": 1
+  },
+  "tasks": [
+    {
+      "type": "TRAVEL",
+      "target": "farm_location",
+      "description": "Go to the farm"
+    },
+    {
+      "type": "PLACE",
+      "target": "wheat_seeds",
+      "parameters": {
+        "pattern": "farmland",
+        "radius": 8
+      },
+      "conditions": {
+        "has_seeds": true
+      },
+      "description": "Plant wheat seeds"
+    },
+    {
+      "type": "WAIT",
+      "parameters": {
+        "duration": 1200
+      },
+      "description": "Wait for crops to grow (60 seconds)"
+    },
+    {
+      "type": "GATHER",
+      "target": "wheat",
+      "quantity": 64,
+      "parameters": {
+        "radius": 16
+      },
+      "description": "Harvest wheat"
+    },
+    {
+      "type": "STORE",
+      "target": "nearest_chest",
+      "parameters": {
+        "items": ["wheat", "wheat_seeds"]
+      },
+      "description": "Store crops in chest"
+    }
+  ]
+}

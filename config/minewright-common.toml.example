@@ -217,3 +217,66 @@
 
     # Embedding method to use for semantic similarity ('tfidf' or 'ngram')
     embedding_method = "tfidf"
+
+#########################################################################################################
+# Humanization Configuration (Natural agent behavior)
+#########################################################################################################
+
+[humanization]
+    # Enable humanization features for more natural agent behavior
+    enabled = true
+
+    # Timing variance as fraction of base value (0.0 to 1.0)
+    # 30% variance means delays vary by ±30% from base
+    timing_variance = 0.3
+
+    # Minimum action delay in ticks (20 ticks = 1 second)
+    # Prevents unrealistically fast actions
+    min_action_delay_ticks = 2
+
+    # Maximum action delay in ticks (20 ticks = 1 second)
+    # Prevents excessively slow actions
+    max_action_delay_ticks = 20
+
+    # Movement speed variance as fraction of base speed (0.0 to 0.5)
+    # 10% variance means speed varies by ±10% from base
+    speed_variance = 0.1
+
+    # Chance per tick of micro-movement (0.0 to 0.2)
+    # Small fidgeting movements when idle or moving
+    micro_movement_chance = 0.05
+
+    # Enable smooth look transitions
+    # When true, agents gradually turn instead of snapping
+    smooth_look = true
+
+    # Base mistake rate for agent actions (0.0 to 0.2)
+    # 3% = 1 mistake per 33 actions (average human level)
+    mistake_rate = 0.03
+
+    # Idle action chance per tick (0.0 to 0.1)
+    # 2% = agent performs idle action ~2.4 times per second
+    idle_action_chance = 0.02
+
+    # Enable personality-driven idle behaviors
+    # When true, idle actions vary by personality traits
+    personality_affects_idle = true
+
+    # Enable session modeling (warm-up, fatigue, breaks)
+    session_modeling_enabled = true
+
+    # Warm-up duration in minutes
+    # Agents slower/more mistake-prone during warm-up
+    warmup_duration_minutes = 10
+
+    # Fatigue onset time in minutes
+    # Agents begin degrading after this time
+    fatigue_start_minutes = 60
+
+    # Minimum break interval in minutes
+    # Agents may take breaks after this interval
+    break_interval_minutes = 30
+
+    # Break duration in minutes
+    # Agents pause actions during breaks
+    break_duration_minutes = 2

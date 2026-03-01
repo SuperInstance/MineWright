@@ -1,0 +1,34 @@
+{
+  "name": "mining_iron",
+  "description": "Mine iron ore and smelt to ingots",
+  "author": "Steve AI",
+  "version": "1.0.0",
+  "tags": ["mining", "iron", "smelting"],
+  "settings": {
+    "repeat": false,
+    "stopOnError": true,
+    "maxRetries": 3
+  },
+  "tasks": [
+    {
+      "type": "MINE",
+      "target": "iron_ore",
+      "quantity": 64,
+      "parameters": {
+        "radius": 32
+      },
+      "description": "Mine 64 iron ore"
+    },
+    {
+      "type": "TRAVEL",
+      "target": "nearest_furnace",
+      "description": "Go to nearest furnace"
+    },
+    {
+      "type": "CRAFT",
+      "target": "iron_ingot",
+      "quantity": 64,
+      "description": "Smelt iron ore into ingots"
+    }
+  ]
+}
