@@ -62,17 +62,23 @@ No cases of completely swallowing exceptions found. However, some patterns could
 **Status: ✅ GOOD**
 
 Proper exception chaining is implemented throughout:
+```java
+// Good example from WhisperSTT.java:108
+throw new VoiceException("Failed to initialize microphone: " + e.getMessage(), e);
 
+// Good example from ProfileParser.java:95  
+throw new ProfileParseException("Invalid JSON syntax: " + e.getMessage(), e);
+```
 
 ### 5. Custom Exceptions vs Generic Exception
 **Status: ✅ WELL DESIGNED**
 
 The codebase has a well-structured exception hierarchy:
--  for voice system failures
--  for script-related errors
--  for configuration parsing
--  for embedding model issues
--  for LLM API failures
+- `VoiceException` for voice system failures
+- `ScriptExecutionException` for script-related errors
+- `ProfileParseException` for configuration parsing
+- `EmbeddingException` for embedding model issues
+- `LLMException` for LLM API failures
 
 ## Exception Handling Scorecard
 
