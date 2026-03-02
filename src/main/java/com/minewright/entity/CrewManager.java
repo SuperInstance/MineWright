@@ -42,7 +42,6 @@ public class CrewManager {
             LOGGER.error("Failed to create crew member entity", e);
             LOGGER.error("Exception class: {}", e.getClass().getName());
             LOGGER.error("Exception message: {}", e.getMessage());
-            e.printStackTrace();
             return null;
         }
 
@@ -62,7 +61,6 @@ public class CrewManager {
         } catch (Throwable e) {
             LOGGER.error("Exception during spawn setup", e);
             LOGGER.error("=== SPAWN ATTEMPT FAILED WITH EXCEPTION ===");
-            e.printStackTrace();
         }
 
         return null;
