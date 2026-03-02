@@ -14,11 +14,15 @@
 3. [Behavior Tree for Minecraft Agent](#3-behavior-tree-for-minecraft-agent)
 4. [Comparison: BT vs FSM](#4-comparison-bt-vs-fsm)
 5. [Academic Foundations](#5-academic-foundations)
-6. [References](#6-references)
+6. [Limitations and Challenges](#6-limitations-and-challenges)
+7. [References](#7-references)
+8. [Appendix: Quick Reference](#appendix-quick-reference)
 
 ---
 
 ## 1. Behavior Tree Fundamentals
+
+**Transition:** This chapter establishes the theoretical foundation of behavior trees, which serve as the reactive execution layer in the hybrid architecture described in **Chapter 8: LLM Enhancement**. Understanding behavior tree fundamentals is essential for appreciating how LLMs can generate and refine traditional AI systems.
 
 ### 1.1 Core Concept
 
@@ -1521,6 +1525,8 @@ BTNode enemyAI = new SelectorNode(
 
 ## 5. Academic Foundations
 
+This chapter's analysis of behavior trees builds upon foundational research in game AI and robotics. For comprehensive architectural patterns that integrate behavior trees with other AI systems, see **Chapter 6: AI Architecture Patterns**, particularly Sections 6.2-6.4 which compare behavior trees with FSMs, GOAP, and HTN systems.
+
 ### 5.1 Foundational Papers
 
 #### Isla (2008): "Handling Complexity in the Halo 2 AI"
@@ -1610,9 +1616,9 @@ Output:
 
 ---
 
-## Limitations
+## 6. Limitations and Challenges
 
-### Behavior Tree Trade-offs and Challenges
+### 6.1 Behavior Tree Trade-offs and Challenges
 
 While behavior trees have become the industry standard for game AI, they are not a panacea. This section critically examines the limitations of behavior trees, situations where alternative architectures may be more appropriate, and challenges in their implementation.
 
@@ -1870,7 +1876,7 @@ The recommended hybrid architecture (Chapter 6, Section 9) leverages behavior tr
 
 ---
 
-## 6. References
+## 7. References
 
 ### Academic Papers
 

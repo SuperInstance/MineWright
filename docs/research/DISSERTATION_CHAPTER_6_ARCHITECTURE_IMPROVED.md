@@ -33,11 +33,15 @@
 12. [Testing Strategies](#12-testing-strategies)
 13. [Visual Editing Tools](#13-visual-editing-tools)
 14. [Data-Driven Design Principles](#14-data-driven-design-principles)
-15. [Limitations and Future Work](#limitations-and-future-work)
+15. [Limitations and Future Work](#15-limitations-and-future-work)
+16. [Conclusion](#16-conclusion)
+17. [Bibliography](#17-bibliography)
 
 ---
 
 ## 0. Academic Grounding and Literature Review
+
+**Chapter Overview:** This chapter provides the comprehensive architectural framework that integrates all AI systems analyzed in previous chapters. While **Chapters 1-3** examined specific game genres (behavior trees in strategy games, GOAP in FPS, personality systems in RPGs), this chapter synthesizes those patterns into a unified architecture taxonomy. The "One Abstraction Away" hybrid model introduced here is realized in **Chapter 8: LLM Enhancement**, demonstrating how LLMs orchestrate traditional AI systems.
 
 ### 0.1 Foundational Software Architecture Literature
 
@@ -4019,13 +4023,16 @@ Addressing these limitations requires prioritized implementation of BT and HTN s
 
 ---
 
-## Conclusion
+## 16. Conclusion
 
-This chapter has provided a comprehensive analysis of AI architecture patterns for game agents, with specific focus on Minecraft applications. Key takeaways:
+**Chapter Synthesis:** This chapter has traversed the full spectrum of game AI architectures, from the finite state machines of the 1990s through the behavior tree revolution of the 2000s to the LLM-enhanced hybrids of today. We've established that no single architecture dominates—each excels in specific contexts.
 
-1. **Behavior Trees** are recommended for most Minecraft AI tasks due to their reactivity and modularity
+**Forward Integration:** The architectural patterns analyzed here provide the foundation for **Chapter 8: LLM Enhancement**, which demonstrates how LLMs serve as "meta-controllers" that orchestrate traditional AI systems. The hybrid architectures in Section 9 become the practical implementation of the "One Abstraction Away" philosophy realized in Steve AI.
+
+**Key Takeaways:**
+1. **Behavior Trees** are recommended for most Minecraft AI tasks due to their reactivity and modularity (see also Chapter 1 for detailed implementation)
 2. **HTN** excels at structured building/crafting tasks
-3. **Utility AI** is ideal for worker assignment and task prioritization
+3. **Utility AI** is ideal for worker assignment and task prioritization (see also Chapter 3 for need-based systems)
 4. **LLM systems** provide natural language understanding but require hybrid approaches
 5. **FSM** remains useful for simple mob AI and menu systems
 
@@ -4039,7 +4046,7 @@ This architecture has been proven to work well in Minecraft mods and provides a 
 
 ---
 
-## Bibliography
+## 17. Bibliography
 
 ### Foundational Software Architecture
 

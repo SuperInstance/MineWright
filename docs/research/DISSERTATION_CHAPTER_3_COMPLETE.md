@@ -29,6 +29,8 @@
 
 ## Introduction
 
+**Transition:** Having examined combat-focused AI in **Chapter 2**, we now turn to role-playing and adventure games, which pioneered personality-driven autonomous agents and emotional modeling systems. While FPS AI prioritizes tactical excellence, RPG AI excels at creating characterful companions that feel like genuine entities rather than utilitarian tools. This chapter's analysis of need-based systems, emotional modeling, and relationship mechanics provides the foundation for the Minecraft companion personalities described in **Chapter 8: LLM Enhancement** and the humanization techniques in **Chapter 6, Section 14**.
+
 Role-playing games (RPGs) and adventure games have pioneered some of the most sophisticated AI systems in gaming history. These systems must balance autonomous behavior with player agency, create believable personalities, and maintain long-term engagement across hundreds of hours of gameplay.
 
 This chapter examines the most influential RPG AI systems, analyzing their technical architectures and design philosophies. We then translate these insights into practical applications for Minecraft autonomous agents, creating companions that feel like genuine NPCs rather than utilitarian tools.
@@ -5774,6 +5776,10 @@ public class AdvancedDialogue {
 ---
 
 ## Conclusion
+
+**Transition Summary:** This chapter has surveyed the most influential RPG and adventure game AI systems, from Radiant AI's goal-oriented autonomy to The Sims' need-based decision making, from Mass Effect's dialogue relationships to The Last of Us Part II's companion ecosystem. Each system contributes unique patterns for creating characterful AI companions.
+
+**Forward References:** The personality systems analyzed here directly inform the agent archetype system implemented in Steve AI (see **Chapter 6, Section 11** for implementation patterns). The emotional modeling techniques from The OCC Model provide the theoretical foundation for the emotional AI layer described in **Chapter 8, Section 8.5**. Need-based systems like The Sims inspired the utility scoring mechanisms that balance agent autonomy with player commands (see **Chapter 6, Section 6**).
 
 RPG and adventure games have pioneered the most sophisticated AI companion systems in gaming history. By synthesizing the best elements from these systems, we can create Minecraft agents that are:
 

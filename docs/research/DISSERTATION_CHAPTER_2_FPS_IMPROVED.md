@@ -26,6 +26,8 @@
 
 ## 1. Introduction
 
+**Transition:** This chapter examines FPS game AI architectures that prioritize real-time combat decision-making and tactical coordination. While **Chapter 1** established behavior trees as the industry standard for reactive execution, FPS games pioneered goal-oriented planning (GOAP) and squad coordination patterns that directly inform modern companion AI design. The combat AI systems analyzed here provide the tactical foundation for Minecraft agent behaviors described in **Chapter 9: Minecraft Applications**.
+
 ### 1.1 The Evolution of FPS Game AI
 
 First-Person Shooter (FPS) games have driven innovation in game AI for three decades. From the simplistic enemies of Doom to the coordinated squads of modern tactical shooters, FPS AI has evolved through several distinct paradigms:
@@ -2471,6 +2473,8 @@ public class SpatialPerceptionGrid {
 ---
 
 ## 12. References and Further Reading
+
+**Related Chapters:** For GOAP architectural details, see **Chapter 6, Section 4**. For behavior tree combat implementations, see **Chapter 1, Section 3.3**. For squad coordination patterns applied to multi-agent systems, see **Chapter 6, Section 9**.
 
 ### Academic Papers
 
