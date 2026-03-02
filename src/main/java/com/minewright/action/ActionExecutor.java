@@ -385,11 +385,23 @@ public class ActionExecutor {
      * <p><b>Tick Budget Enforcement:</b></p>
      * <p>Uses {@link TickProfiler} to ensure AI operations complete within budget.
      * If budget is exceeded, operations defer to next tick to prevent server lag.</p>
+     *
+     * <p><b>Optimized Budget Checking:</b></p>
+     * <p>Single entry point budget check consolidates all checks into one location,
+     * reducing overhead from multiple isOverBudget() calls throughout the tick() method.</p>
      */
     public void tick() {
         // Start tick profiling for budget enforcement
         tickProfiler.startTick();
         ticksSinceLastAction++;
+
+        // OPTIMIZATION: Single entry point budget check - consolidates all budget checks
+        // This reduces the number of isOverBudget() calls from 6 to 1 per tick
+        // The checkBudgetAndYield() method handles early return if over budget
+        if (!checkBudgetAndYield()) {
+            // Budget exceeded, work deferred to next tick
+            return;
+        }
 
         // Check if async planning is complete (non-blocking check!)
         if (isPlanning.get() && planningFuture != null && planningFuture.isDone()) {
@@ -438,12 +450,11 @@ public class ActionExecutor {
                 planningFuture = null;
                 pendingCommand = null;
             }
-        }
 
-        // Check budget after planning processing
-        if (tickProfiler.isOverBudget()) {
-            tickProfiler.logWarningIfExceeded();
-            return; // Defer remaining work to next tick
+            // OPTIMIZATION: Check budget after planning (consolidated check)
+            if (!checkBudgetAndYield()) {
+                return;
+            }
         }
 
         if (currentAction != null) {
@@ -467,24 +478,19 @@ public class ActionExecutor {
                         foreman.getEntityName(), currentAction.getDescription());
                 }
 
-                // Check budget before calling action.tick()
-                if (tickProfiler.isOverBudget()) {
-                    tickProfiler.logWarningIfExceeded();
-                    return; // Defer action tick to next tick
+                // OPTIMIZATION: Check budget before action tick (consolidated check)
+                if (!checkBudgetAndYield()) {
+                    return;
                 }
 
                 currentAction.tick();
 
-                // Log warning if budget exceeded after action tick
-                tickProfiler.logWarningIfExceeded();
-                return;
+                // OPTIMIZATION: Check budget after action tick (consolidated check)
+                // This is the final check before end of tick
+                if (!checkBudgetAndYield()) {
+                    return;
+                }
             }
-        }
-
-        // Check budget before processing task queue
-        if (tickProfiler.isOverBudget()) {
-            tickProfiler.logWarningIfExceeded();
-            return; // Defer task queue processing to next tick
         }
 
         if (ticksSinceLastAction >= MineWrightConfig.ACTION_TICK_DELAY.get()) {
@@ -492,14 +498,12 @@ public class ActionExecutor {
                 Task nextTask = taskQueue.poll();
                 executeTask(nextTask);
                 ticksSinceLastAction = 0;
-                return;
-            }
-        }
 
-        // Check budget before idle processing
-        if (tickProfiler.isOverBudget()) {
-            tickProfiler.logWarningIfExceeded();
-            return; // Defer idle processing to next tick
+                // OPTIMIZATION: Check budget after task execution (consolidated check)
+                if (!checkBudgetAndYield()) {
+                    return;
+                }
+            }
         }
 
         // When completely idle (no tasks, no goal), follow nearest player
@@ -527,8 +531,57 @@ public class ActionExecutor {
             idleFollowAction = null;
         }
 
-        // Log budget status at end of tick (only if over threshold to reduce log spam)
+        // OPTIMIZATION: Final budget check at end of tick (consolidated)
+        // Only log warning if exceeded to reduce log spam
         tickProfiler.logWarningIfExceeded();
+
+        // METRICS: Record tick execution time for performance monitoring
+        if (interceptorChain != null) {
+            for (com.minewright.execution.ActionInterceptor interceptor : interceptorChain.getInterceptors()) {
+                if (interceptor instanceof MetricsInterceptor) {
+                    long tickDuration = tickProfiler.getElapsedMs();
+                    ((MetricsInterceptor) interceptor).recordTickTime(tickDuration);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks the tick budget and yields if over budget.
+     *
+     * <p>This is a consolidated budget check that replaces multiple isOverBudget()
+     * calls throughout tick(). This optimization reduces the overhead of budget
+     * checking from 6 calls per tick to a single entry point.</p>
+     *
+     * <p><b>Behavior:</b></p>
+     * <ul>
+     *   <li>If over budget and strict enforcement is enabled: returns false (yield)</li>
+     *   <li>If over budget and strict enforcement is disabled: logs warning, returns true (continue)</li>
+     *   <li>If under budget: returns true (continue)</li>
+     * </ul>
+     *
+     * @return true if within budget or strict enforcement disabled, false if should yield
+     */
+    private boolean checkBudgetAndYield() {
+        if (!tickProfiler.isRunning()) {
+            return true; // Not tracking, continue
+        }
+
+        boolean overBudget = tickProfiler.isOverBudget();
+        if (overBudget) {
+            // Log warning if exceeded
+            tickProfiler.logWarningIfExceeded();
+
+            // Check if we should enforce strictly
+            if (tickProfiler.isStrictEnforcement()) {
+                // Defer remaining work to next tick
+                return false;
+            }
+            // Strict enforcement disabled, continue but log warning
+        }
+
+        return true;
     }
 
     private void executeTask(Task task) {

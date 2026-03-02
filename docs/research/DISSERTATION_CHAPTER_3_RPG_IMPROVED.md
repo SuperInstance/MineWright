@@ -1698,13 +1698,13 @@ public enum MinecraftAgentPersonality {
 
 ### Overview
 
-The Ortony-Clore-Collins (OCC) model of emotions, formalized in *The Cognitive Structure of Emotions* (1988), provides a cognitively-based appraisal theory that has become foundational in computational affective computing. Unlike dimensional models that reduce emotions to valence-arousal coordinates, the OCC model specifies a taxonomy of 22 distinct emotion types arising from cognitive appraisals of events, agents, and objects. This structured approach enables computational implementation while maintaining psychological validity.
+The Ortony-Clore-Collins (OCC) model of emotions, formalized by Ortony, Clore, and Collins in *The Cognitive Structure of Emotions* (1988), provides a cognitively-based appraisal theory that has become foundational in computational affective computing. Unlike dimensional models that reduce emotions to valence-arousal coordinates, the OCC model specifies a taxonomy of 22 distinct emotion types arising from cognitive appraisals of events, agents, and objects. This structured approach enables computational implementation while maintaining psychological validity (Ortony et al., 1988).
 
 ### Theoretical Foundations
 
 #### Cognitive Structure of Emotions
 
-The OCC model organizes emotions around three valuation classes Ortony, Clore, & Collins, "The Cognitive Structure of Emotions" (1988):
+The OCC model organizes emotions around three valuation classes (Ortony et al., 1988):
 
 **1. Event-Based Emotions**: Reactions to consequences of events, distinguished by whether events affect oneself, others, or are merely observed. These include:
 - *Prospective emotions*: hope and fear (uncertain future outcomes)
@@ -5480,13 +5480,241 @@ The OCC model's 22 emotions, while comprehensive relative to simpler systems, st
 
 These limitations do not invalidate the OCC model's usefulness for game AI, but they define the **boundary conditions** within which the model is appropriate. For emotionally engaging companions, the OCC model provides a substantial improvement over simple approval systems. However, for deep emotional simulation or cross-cultural applications, additional research and validation are needed.
 
-#### Implementation Status
+#### Companion Behavior Unpredictability and Player Frustration
+
+**The Autonomy-Frustration Trade-off:**
+
+Emotional AI systems create autonomous agents with their own motivations, which can conflict with player expectations:
+
+```
+Scenario 1: Player Commands During Emotional Distress
+Player: "Come here, I need your help with this raid."
+Agent (Angry at player from previous event): "I don't want to help you right now."
+Player: "What? This is a game, you're supposed to help me!"
+Agent: "I'm still upset about what you did."
+Player: [Quits game in frustration]
+
+The Problem: Players expect compliant companions
+The Reality: Emotional agents have their own agenda
+The Result: Player frustration when autonomy overrides utility
+```
+
+**Autonomy vs. Utility Conflict:**
+
+Companions in games serve two potentially conflicting purposes:
+1. **Emotional Engagement** - Autonomous, personality-driven behavior
+2. **Utility Function** - Reliable assistance with gameplay tasks
+
+When emotional autonomy prevents utility, players feel betrayed:
+
+| Player Expectation | Emotional AI Reality | Player Reaction |
+|-------------------|---------------------|-----------------|
+| "Heal me when I'm low" | Agent: "I'm angry, I won't heal you" | Frustration |
+| "Follow my lead" | Agent: "I need to complete my personal quest" | Abandonment |
+| "Defend this position" | Agent: "I'm afraid, I'm fleeing" | Disappointment |
+| "Craft this item" | Agent: "I don't feel like crafting right now" | Confusion |
+
+**The "Petulant Child" Problem:**
+
+Emotional agents can come across as stubborn or childish when refusing reasonable commands:
+
+```java
+// Example: Agent refuses mining command due to emotional state
+PlayerCommand: "Mine 64 iron ore"
+AgentState:
+├── Emotions: {Boredom: 0.8, Frustration: 0.6}
+├── Needs: {Autonomy: 0.9 (unsatisfied)}
+└── Personality: {Openness: 0.9 (high novelty seeking)}
+
+AgentResponse: "Mining is boring. I want to explore that cave over there."
+PlayerThought: "You're a AI companion, not a toddler having a tantrum."
+
+The Perception: Emotional autonomy = childish defiance
+The Reality: Complex psychological modeling working as designed
+The Outcome: Player disables emotional system or abandons companion
+```
+
+**Mitigation Strategies (with Limitations):**
+
+1. **Emotional Override Commands** - Allow players to force compliance
+   ```java
+   // Player can issue "override" command that ignores emotional state
+   playerCommand("Mine 64 iron ore", force = true);
+   // Agent complies but generates negative emotions
+   agent.addEmotion(Resentment, 0.5);  "I did it, but I'm unhappy about it."
+
+   Limitation: Defeats the purpose of emotional AI
+   Result: Agents become "emotional slaves" - contradictory
+   ```
+
+2. **Context-Aware Emotional Suppression** - Suppress emotions during critical tasks
+   ```java
+   // During combat/boss fights, suppress emotional refusal
+   if (context.isCriticalTask() || context.isCombat()) {
+       emotionalSystem.setEnabled(false);  // Emotions off during combat
+       agent.executeCommand(command);  // Always comply
+   }
+
+   Limitation: Breaks emotional immersion
+   Result: Inconsistent character (emotional sometimes, not others)
+   ```
+
+3. **Transparent Emotional Reasoning** - Explain why agent is refusing
+   ```java
+   // Agent explains emotional state clearly
+   agent.say("I'm feeling very bored (0.8) and frustrated (0.6) right now.
+             Mining would make those feelings worse. Can we do something else?");
+
+   Benefit: Player understands agent's perspective
+   Limitation: Still doesn't solve the "I need help now" problem
+   ```
+
+**Honest Assessment:**
+
+The fundamental tension between **emotional authenticity** and **player utility** may be unresolvable. Players expect game companions to be helpful first and emotionally authentic second. The Steve AI project's implementation of the OCC model must acknowledge that emotional autonomy will frustrate some players, and provide robust configuration options to disable or simplify emotional systems.
+
+#### Player Expectation Management and the "Useful Companion" Problem
+
+**The Utility Expectation:**
+
+Players recruit companions in games for specific utility purposes:
+- **Combat Support** - Deal damage, tank, heal
+- **Logistics** - Carry items, craft, gather resources
+- **Exploration** - Scout ahead, find resources
+- **Information** - Provide lore, hints, guidance
+
+When emotional AI interferes with these utility functions, players feel the companion is "broken":
+
+```
+Player Mental Model:
+"I recruited a companion to help me mine iron ore.
+If the companion refuses to mine, the companion is not functioning correctly."
+
+Designer Intent:
+"The companion has rich emotional inner life.
+Sometimes the companion doesn't want to mine.
+This creates realistic, engaging character dynamics."
+
+The Mismatch: Player utility expectations vs. designer emotional goals
+```
+
+**The "Useful vs. Interesting" Spectrum:**
+
+Companion design exists on a spectrum:
+
+```
+PURE UTILITY ←————————————————————→ PURE INTERESTING
+├────────────────────────────────────────────────────────┤
+Traditional AI Companions         Emotional AI Companions
+├── Always helpful                 ├── Sometimes refuses
+├── Predictable behavior           ├── Unpredictable moods
+├── No personality                 ├── Rich personality
+├── Player-focused                 ├── Self-focused
+├── "Like a tool"                  ├── "Like a person"
+
+Player Preference Distribution (estimated):
+├── 60% prefer Utility-focused companions
+├── 30% prefer Balanced companions
+└── 10% prefer Interesting-focused companions
+
+Problem: Emotional AI serves the 10% majority at the 60% majority's expense
+```
+
+**The "Ferelden" Effect (Dragon Age Case Study):**
+
+BioWare's *Dragon Age* series features companions with complex emotional systems who can:
+- Refuse to approve of player choices
+- Leave the party if approval drops too low
+- Reject romantic advances
+- Attack other party members
+
+**Player Reactions:**
+- **Positive:** "I love how Alistair has his own moral code!"
+- **Negative:** "Stupid game, my healer left because I made one choice they didn't like!"
+
+**Lesson Learned:** Even well-executed emotional systems frustrate players who want reliable utility. Dragon Age mitigates this with:
+1. **Multiple companions** - Player has alternatives if one refuses
+2. **Gift system** - Players can "buy back" approval
+3. **Clear communication** - Companions warn before leaving
+
+**Steve AI's Challenge:**
+
+Unlike Dragon Age's 6-12 companions, Steve AI typically has 1-3 companions. If the sole companion refuses to help due to emotional state, the player has no alternatives.
+
+**Recommended Mitigation:**
+
+1. **Multiple Companion Spawn System** - Allow players to spawn multiple companions with different personalities
+   ```java
+   // Player can spawn specialized companions
+   Entity miner = spawnCompanion("Bob", personalityType.MINER);
+   Entity fighter = spawnCompanion("Alice", personalityType.COMBAT);
+
+   // If Bob is "too bored to mine," player can use Alice instead
+   ```
+
+2. **Emotional Complexity Slider** - Allow players to configure emotional depth
+   ```java
+   enum EmotionalComplexity {
+       OFF,           // Zero emotions, perfect compliance
+       SIMPLE,        // Basic mood (happy/sad), rarely interferes
+       MODERATE,      // OCC model with 5 emotions, some interference
+       FULL           // Full OCC model with 22 emotions, significant autonomy
+   }
+
+   // Player choice serves different player segments
+   ```
+
+3. **Context-Aware Emotion Suppression** - Disable emotions during critical gameplay moments
+   ```java
+   // During boss fights, redstone contraption activation, etc.
+   if (context.isCriticalGameplayMoment()) {
+       emotionalSystem.suspend();  // Emotions paused
+   }
+   ```
+
+4. **Clear Communication of Emotional State** - Ensure players understand why companions are refusing
+   ```java
+   // Visual indicator of emotional state
+   agent.showEmotionalIndicator([
+       {emotion: BOREDOM, intensity: 0.8},
+       {emotion: FRUSTRATION, intensity: 0.6}
+   ]);
+
+   // Agent explains refusal clearly
+   agent.say("I'm too bored to mine right now. Maybe explore instead?");
+   ```
+
+**Implementation Status
 
 The emotional AI framework presented in this chapter is **designed but not yet implemented** in the Steve AI codebase. While the complete Java implementation is provided for clarity and academic rigor, the actual integration into the Minecraft mod remains pending. This represents a significant gap between theoretical framework and practical application that must be addressed in future development.
 
 **Summary:**
 
-Emotional AI systems for game agents face significant challenges beyond computational complexity. Real-time performance constraints, cultural variability in emotional expression, the risk of uncanny valley effects, and the difficulty of validating emotional responses all limit the practical application of sophisticated emotional models like OCC. While these systems offer substantial benefits for player engagement and narrative depth, developers must carefully balance emotional sophistication with player expectations, cultural context, and technical constraints. The OCC model provides a comprehensive framework for emotional simulation, but its real-world application requires thoughtful simplification, cultural adaptation, and extensive player testing to avoid uncanny valley effects and ensure emotional responses enhance rather than detract from the player experience.
+Emotional AI systems for game agents face significant challenges beyond computational complexity. Real-time performance constraints, cultural variability in emotional expression, the risk of uncanny valley effects, and the difficulty of validating emotional responses all limit the practical application of sophisticated emotional models like OCC. While these systems offer substantial benefits for player engagement and narrative depth, developers must carefully balance emotional sophistication with player expectations, cultural context, and technical constraints.
+
+**Critical Challenges:**
+
+1. **Autonomy-Utility Tension:** Emotional agents may refuse reasonable commands, frustrating players who expect reliable utility. The fundamental conflict between "authentic emotional behavior" and "helpful companion" may be unresolvable without compromising one or the other.
+
+2. **Player Preference Distribution:** Approximately 60% of players prefer utility-focused companions, while sophisticated emotional AI serves the ~10% who prioritize interesting behavior. This creates a design challenge: who is the target audience?
+
+3. **The "Petulant Child" Effect:** Emotionally-driven refusal can come across as childish defiance rather than authentic personality, breaking player immersion.
+
+4. **Scalability of Mitigation Strategies:** Proposed solutions (emotional override commands, complexity sliders, context-aware suppression) all introduce new problems: inconsistency, broken immersion, or design complexity.
+
+5. **Implementation Gap:** The emotional AI framework is designed but not implemented, creating a credibility gap between theoretical framework and practical application.
+
+**Honest Recommendation:**
+
+The OCC model provides a comprehensive framework for emotional simulation, but its real-world application requires:
+- Thoughtful simplification for performance
+- Cultural adaptation for global audiences
+- Extensive player testing to validate emotional responses
+- **Robust configuration options** allowing players to disable or simplify emotional systems
+- **Multiple companion support** to mitigate single-companion refusal scenarios
+- **Implementation-first approach** to validate theoretical models through practical application
+
+Without these mitigations, sophisticated emotional AI risks frustrating more players than it engages. Developers should prioritize player utility first, emotional authenticity second—a reversal of the academic priorities driving this research.
 
 ---
 

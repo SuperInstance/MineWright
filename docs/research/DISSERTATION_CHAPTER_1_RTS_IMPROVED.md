@@ -1155,6 +1155,8 @@ build_castle (Compound Task)
 
 #### 6.2 HTN vs Traditional Planning
 
+Hierarchical Task Network (HTN) planning was first formalized by Erol, Hendler, and Nau (1994) as a hierarchical approach to automated planning that leverages domain knowledge through structured task decomposition. Unlike classical planning that searches through flat action spaces, HTN planning recursively decomposes high-level tasks into primitive actions using domain-specific methods, dramatically reducing search complexity (Erol et al., 1994). Nau et al. (2003) demonstrated with the SHOP2 system that HTN planners could outperform classical planners by orders of magnitude on problems with appropriate hierarchical structure.
+
 **Traditional (Flat) Planning:**
 ```
 Goal: Build a castle
@@ -3834,6 +3836,72 @@ Result: Immediate response when condition becomes true
 Benefit: Agent feels "responsive" and "alive"
 ```
 
+### Real-Time Performance Constraints in Game AI
+
+**The Tick Budget Challenge:**
+
+All game AI operates within strict time budgets determined by the game's target frame rate. For Minecraft operating at 20 ticks per second (TPS):
+
+```
+Tick Budget Analysis (20 TPS Minecraft):
+Total Tick Time: 50ms maximum
+├── World Update: 20ms (chunk loading, block updates, entities)
+├── Physics Simulation: 10ms (collision, gravity, fluids)
+├── AI Decision Making: 10ms (all agents combined)
+├── Pathfinding: 5ms (A*, navigation)
+├── Rendering: 5ms (client-side only)
+└── Network/Sync: Variable (multiplayer overhead)
+
+Per-Agent AI Budget: 10ms / 100 agents = 0.1ms maximum
+```
+
+**Computational Realities:**
+
+| AI Technique | Per-Agent Cost | Max Agents (10ms budget) | Practical Limit |
+|--------------|----------------|--------------------------|-----------------|
+| **FSM** | 0.01ms | 1,000 | 500-1,000 |
+| **Behavior Tree** | 0.05-0.2ms | 50-200 | 50-100 |
+| **Utility AI** | 0.1-0.3ms | 33-100 | 30-50 |
+| **HTN Planning** | 0.5-2ms | 5-20 | 5-10 |
+| **LLM Planning** | 3000-30000ms | 0 (asynchronous only) | N/A |
+
+**Critical Limitation:** Sophisticated AI techniques (HTN, Utility AI, Behavior Trees) scale poorly to large agent counts. The Steve AI project's target of 100+ concurrent agents is achievable only with FSMs or heavily optimized BTs. Complex decision systems require aggressive LOD (Level of Detail) systems where distant agents use simplified AI.
+
+**Implementation Gap in Steve AI:**
+
+The current codebase implements Behavior Trees and HTN planners, but lacks:
+1. **LOD AI System** - No distance-based AI simplification
+2. **Budget Monitoring** - No per-tick AI time tracking
+3. **Load Shedding** - No mechanism to skip AI work when over budget
+4. **Spatial Partitioning for AI** - AI queries are global, not spatially-indexed
+
+This creates a **fundamental scalability bottleneck**. While the theoretical architecture supports 100+ agents, the practical limit without optimization is likely 20-30 agents before server performance degrades.
+
+### Implementation Status and Honest Assessment
+
+**Claim vs. Reality:**
+
+This chapter presents RTS AI techniques as "proven, transferable patterns" for Minecraft automation. However, the honest assessment is:
+
+| Technique | Documentation Status | Implementation Status | Production Readiness |
+|-----------|---------------------|----------------------|---------------------|
+| **Finite State Machines** | Fully documented | Fully implemented | Production-ready |
+| **Build Order Scripts** | Fully documented | Partially implemented | Needs work |
+| **Influence Maps** | Fully documented | Not implemented | Not started |
+| **Utility AI** | Fully documented | Partially implemented | Prototype stage |
+| **Behavior Trees** | Fully documented | Fully implemented | Production-ready |
+| **HTN Planning** | Fully documented | Fully implemented | Needs testing |
+| **Worker Allocation** | Fully documented | Not implemented | Not applicable (1-10 agents) |
+
+**The "Documentation-First" Problem:**
+
+The Steve AI project has fallen into the academic trap of **documenting before implementing**. Chapters 1-8 describe sophisticated AI systems, but the actual codebase lags significantly behind:
+- Influence maps are described in detail but not coded
+- Worker allocation algorithms are specified but unnecessary for <10 agents
+- Multi-agent coordination protocols are designed but not integrated
+
+This creates a **credibility gap** between the dissertation's claims and the mod's actual capabilities. Future work should prioritize implementation over documentation to ensure architectural patterns are validated through practical application.
+
 ### Summary
 
 Behavior trees represent a significant advancement over finite state machines for game AI, particularly in real-time strategy contexts. However, they are not universally optimal:
@@ -3857,13 +3925,26 @@ Behavior trees represent a significant advancement over finite state machines fo
 - Multi-objective optimization
 - Context-heavy decision making
 
+**Real-World Performance Constraints:**
+- 20 TPS tick budget limits agent counts
+- LOD AI systems are essential for scale
+- Current implementation lacks budget monitoring
+- Practical limit: 20-30 agents without optimization
+
+**Honest Implementation Assessment:**
+- Documentation exceeds implementation
+- Several documented patterns are not coded
+- Production readiness varies widely
+- Credibility gap between claims and capabilities
+
 **Recommended Hybrid Approach:**
 - Use behavior trees for **hierarchical task structure**
 - Use utility scoring for **action selection within BT nodes**
 - Use HTN for **complex multi-step planning**
 - Use FSMs for **low-level animation control**
+- **Implement before documenting** to validate patterns empirically
 
-The choice of architecture should be guided by **specific problem constraints** rather than industry trends alone. For Minecraft AI specifically, a hybrid architecture combining behavior trees (for structure), utility AI (for context-aware selection), and LLM planning (for novel situations) provides the best balance of predictability, flexibility, and player experience.
+The choice of architecture should be guided by **specific problem constraints** rather than industry trends alone. For Minecraft AI specifically, a hybrid architecture combining behavior trees (for structure), utility AI (for context-aware selection), and LLM planning (for novel situations) provides the best balance of predictability, flexibility, and player experience. However, the **documentation-first approach** must be corrected to ensure architectural decisions are validated through working code before being committed to academic publications.
 
 ---
 

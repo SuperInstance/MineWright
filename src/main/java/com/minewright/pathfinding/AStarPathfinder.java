@@ -1,6 +1,7 @@
 package com.minewright.pathfinding;
 
 import com.minewright.MineWrightMod;
+import com.minewright.config.MineWrightConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
@@ -27,6 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li><b>Timeout Protection:</b> Aborts search if it takes too long</li>
  *   <li><b>Path Smoothing:</b> Removes unnecessary waypoints from final path</li>
  *   <li><b>Adaptive Heuristics:</b> Chooses best heuristic based on context</li>
+ *   <li><b>Path Caching:</b> Caches frequently traversed routes for performance</li>
+ *   <li><b>Dynamic Timeout:</b> Adjusts timeout based on path complexity</li>
  * </ul>
  *
  * <h3>Performance:</h3>
@@ -35,6 +38,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>Space: O(b^d) for storing explored nodes</li>
  *   <li>Typical: 100-500ms for paths up to 150 blocks</li>
  * </ul>
+ *
+ * <h3>Configuration:</h3>
+ * <p>Pathfinding behavior can be configured in <code>config/minewright-common.toml</code>:</p>
+ * <pre>
+ * [pathfinding]
+ * # Maximum nodes to explore (prevents infinite loops)
+ * max_nodes = 10000
+ * # Enable path caching for frequently traversed routes
+ * cache_enabled = true
+ * # Maximum number of cached paths
+ * cache_max_size = 100
+ * # Path cache TTL in minutes
+ * cache_ttl_minutes = 10
+ * </pre>
  *
  * <h3>Usage Example:</h3>
  * <pre>{@code
@@ -61,8 +78,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AStarPathfinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(AStarPathfinder.class);
 
-    /** Maximum nodes to explore before giving up (prevents infinite loops). */
-    private static final int MAX_NODES = 10000;
+    /**
+     * Default maximum nodes to explore before giving up (prevents infinite loops).
+     * Can be overridden via config: pathfinding.max_nodes
+     */
+    private static final int DEFAULT_MAX_NODES = 10000;
 
     /** Node pool for reusing PathNode objects (reduces GC pressure). */
     private static final PriorityBlockingQueue<PathNode> nodePool =
@@ -72,9 +92,20 @@ public class AStarPathfinder {
     private static final AtomicInteger nodesExplored = new AtomicInteger(0);
     private static final AtomicInteger pathsFound = new AtomicInteger(0);
     private static final AtomicInteger timeouts = new AtomicInteger(0);
+    private static final AtomicInteger cacheHits = new AtomicInteger(0);
+    private static final AtomicInteger cacheMisses = new AtomicInteger(0);
 
     /** Movement validator for checking if moves are valid. */
     private final MovementValidator movementValidator;
+
+    /** Path cache for frequently traversed routes. */
+    private final PathCache pathCache;
+
+    /** Maximum nodes to explore (read from config). */
+    private final int maxNodes;
+
+    /** Whether path caching is enabled. */
+    private final boolean cachingEnabled;
 
     /** Whether to enable detailed logging. */
     private boolean debugLogging = false;
@@ -84,6 +115,9 @@ public class AStarPathfinder {
      */
     public AStarPathfinder() {
         this.movementValidator = new MovementValidator();
+        this.maxNodes = readMaxNodesFromConfig();
+        this.cachingEnabled = readCacheEnabledFromConfig();
+        this.pathCache = new PathCache(readCacheMaxSizeFromConfig(), readCacheTTLFromConfig());
     }
 
     /**
@@ -93,6 +127,9 @@ public class AStarPathfinder {
      */
     public AStarPathfinder(MovementValidator movementValidator) {
         this.movementValidator = movementValidator;
+        this.maxNodes = readMaxNodesFromConfig();
+        this.cachingEnabled = readCacheEnabledFromConfig();
+        this.pathCache = new PathCache(readCacheMaxSizeFromConfig(), readCacheTTLFromConfig());
     }
 
     /**
@@ -101,6 +138,13 @@ public class AStarPathfinder {
      * <p>This is the main entry point for pathfinding. It handles all the
      * bookkeeping of open/closed sets, node expansion, and path reconstruction.</p>
      *
+     * <p><b>Optimizations:</b></p>
+     * <ul>
+     *   <li>Path caching for frequently traversed routes</li>
+     *   <li>Dynamic timeout based on path complexity</li>
+     *   <li>Early termination when cache hit occurs</li>
+     * </ul>
+     *
      * @param start   Starting position
      * @param goal    Goal position
      * @param context Pathfinding context with constraints
@@ -108,7 +152,9 @@ public class AStarPathfinder {
      */
     public Optional<List<PathNode>> findPath(BlockPos start, BlockPos goal, PathfindingContext context) {
         long startTime = System.currentTimeMillis();
-        long timeout = context.getTimeoutMs();
+
+        // OPTIMIZATION: Calculate dynamic timeout based on path complexity
+        long timeout = calculateDynamicTimeout(start, goal, context);
 
         // Validate inputs
         if (start == null || goal == null || context == null) {
@@ -131,6 +177,20 @@ public class AStarPathfinder {
             return Optional.empty();
         }
 
+        // OPTIMIZATION: Check path cache before computing
+        if (cachingEnabled) {
+            Optional<List<PathNode>> cachedPath = pathCache.get(start, goal, context);
+            if (cachedPath.isPresent()) {
+                cacheHits.incrementAndGet();
+                if (debugLogging) {
+                    LOGGER.debug("[A*] Cache hit for path {} -> {} ({} nodes)",
+                        start, goal, cachedPath.get().size());
+                }
+                return cachedPath;
+            }
+            cacheMisses.incrementAndGet();
+        }
+
         // Initialize A* data structures
         PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         Map<BlockPos, PathNode> openMap = new HashMap<>(); // For faster lookup
@@ -151,7 +211,7 @@ public class AStarPathfinder {
 
         // Main A* loop
         try {
-            while (!openSet.isEmpty() && explored < MAX_NODES) {
+            while (!openSet.isEmpty() && explored < maxNodes) {
                 // Check timeout
                 if (System.currentTimeMillis() - startTime > timeout) {
                     timeouts.incrementAndGet();
@@ -181,6 +241,11 @@ public class AStarPathfinder {
                     // Apply smoothing if enabled
                     if (context.shouldSmoothPath()) {
                         path = PathSmoother.smooth(path, context);
+                    }
+
+                    // OPTIMIZATION: Cache successful path
+                    if (cachingEnabled && !path.isEmpty()) {
+                        pathCache.put(start, goal, context, path);
                     }
 
                     // Return nodes to pool
@@ -213,6 +278,60 @@ public class AStarPathfinder {
             returnNodesToPool(closedSet);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Calculates dynamic timeout based on path complexity.
+     *
+     * <p>Longer paths and more complex terrain get longer timeouts.</p>
+     *
+     * <p><b>Formula:</b></p>
+     * <pre>
+     * base_timeout = config value (default 2000ms)
+     * distance_factor = min(distance / 100, 5.0)
+     * dynamic_timeout = base_timeout * (1 + distance_factor)
+     * </pre>
+     *
+     * @param start   Starting position
+     * @param goal    Goal position
+     * @param context Pathfinding context
+     * @return Dynamic timeout in milliseconds
+     */
+    private long calculateDynamicTimeout(BlockPos start, BlockPos goal, PathfindingContext context) {
+        long baseTimeout = context.getTimeoutMs();
+
+        // Calculate distance factor (longer paths get more time)
+        double distance = Math.sqrt(start.distSqr(goal));
+        double distanceFactor = Math.min(distance / 100.0, 5.0);
+
+        // Calculate dynamic timeout
+        long dynamicTimeout = (long) (baseTimeout * (1.0 + distanceFactor));
+
+        // Apply config-specified pathfinding timeout as upper bound
+        long maxTimeout = MineWrightConfig.PATHFINDING_TIMEOUT_MS.get();
+        dynamicTimeout = Math.min(dynamicTimeout, maxTimeout);
+
+        return dynamicTimeout;
+    }
+
+    /**
+     * Clears the path cache.
+     * <p>Useful for testing or when world changes significantly.</p>
+     */
+    public void clearCache() {
+        pathCache.clear();
+    }
+
+    /**
+     * Gets path cache statistics.
+     *
+     * @return Array of [cacheSize, cacheHits, cacheMisses, hitRate]
+     */
+    public static double[] getCacheStatistics() {
+        int hits = cacheHits.get();
+        int misses = cacheMisses.get();
+        double hitRate = (hits + misses) > 0 ? (double) hits / (hits + misses) : 0.0;
+        return new double[]{hits, misses, hitRate};
     }
 
     /**
@@ -532,5 +651,175 @@ public class AStarPathfinder {
         nodesExplored.set(0);
         pathsFound.set(0);
         timeouts.set(0);
+        cacheHits.set(0);
+        cacheMisses.set(0);
+    }
+
+    // ========== Configuration Helpers ==========
+
+    /**
+     * Reads the maximum nodes from configuration.
+     * Defaults to 10000 if configuration is not available.
+     *
+     * @return Maximum nodes to explore
+     */
+    private static int readMaxNodesFromConfig() {
+        try {
+            return MineWrightConfig.PATHFINDING_MAX_NODES.get();
+        } catch (Exception e) {
+            LOGGER.debug("Could not read max nodes from config, using default: {}",
+                DEFAULT_MAX_NODES);
+            return DEFAULT_MAX_NODES;
+        }
+    }
+
+    /**
+     * Reads whether path caching is enabled from configuration.
+     * Defaults to true if configuration is not available.
+     *
+     * @return true if path caching is enabled
+     */
+    private static boolean readCacheEnabledFromConfig() {
+        try {
+            return MineWrightConfig.PATHFINDING_CACHE_ENABLED.get();
+        } catch (Exception e) {
+            LOGGER.debug("Could not read cache enabled from config, using default: true");
+            return true;
+        }
+    }
+
+    /**
+     * Reads the cache max size from configuration.
+     * Defaults to 100 if configuration is not available.
+     *
+     * @return Maximum number of cached paths
+     */
+    private static int readCacheMaxSizeFromConfig() {
+        try {
+            return MineWrightConfig.PATHFINDING_CACHE_MAX_SIZE.get();
+        } catch (Exception e) {
+            LOGGER.debug("Could not read cache max size from config, using default: 100");
+            return 100;
+        }
+    }
+
+    /**
+     * Reads the cache TTL from configuration.
+     * Defaults to 10 minutes if configuration is not available.
+     *
+     * @return Cache TTL in minutes
+     */
+    private static int readCacheTTLFromConfig() {
+        try {
+            return MineWrightConfig.PATHFINDING_CACHE_TTL_MINUTES.get();
+        } catch (Exception e) {
+            LOGGER.debug("Could not read cache TTL from config, using default: 10 minutes");
+            return 10;
+        }
+    }
+
+    // ========== Path Cache Implementation ==========
+
+    /**
+     * Path cache for storing frequently traversed routes.
+     *
+     * <p>Uses LRU eviction policy and TTL-based expiration.</p>
+     */
+    private static class PathCache {
+        private final int maxSize;
+        private final long ttlMillis;
+        private final java.util.LinkedHashMap<CacheKey, CachedPath> cache;
+
+        PathCache(int maxSize, int ttlMinutes) {
+            this.maxSize = maxSize;
+            this.ttlMillis = ttlMinutes * 60 * 1000L;
+            this.cache = new java.util.LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<CacheKey, CachedPath> eldest) {
+                    return size() > maxSize;
+                }
+            };
+        }
+
+        Optional<List<PathNode>> get(BlockPos start, BlockPos goal, PathfindingContext context) {
+            CacheKey key = new CacheKey(start, goal, context);
+            CachedPath cached = cache.get(key);
+
+            if (cached != null && !cached.isExpired(ttlMillis)) {
+                return Optional.of(new ArrayList<>(cached.path));
+            }
+
+            // Remove expired entry
+            cache.remove(key);
+            return Optional.empty();
+        }
+
+        void put(BlockPos start, BlockPos goal, PathfindingContext context, List<PathNode> path) {
+            CacheKey key = new CacheKey(start, goal, context);
+            cache.put(key, new CachedPath(path));
+        }
+
+        void clear() {
+            cache.clear();
+        }
+
+        int size() {
+            return cache.size();
+        }
+    }
+
+    /**
+     * Cache key combining start, goal, and context.
+     */
+    private static class CacheKey {
+        private final BlockPos start;
+        private final BlockPos goal;
+        private final int capabilitiesHash;
+
+        CacheKey(BlockPos start, BlockPos goal, PathfindingContext context) {
+            this.start = start;
+            this.goal = goal;
+            // Hash relevant context parameters
+            this.capabilitiesHash = Objects.hash(
+                context.canSwim(),
+                context.canClimb(),
+                context.canFly(),
+                context.canParkour(),
+                context.getJumpHeight(),
+                context.shouldAvoidMobs()
+            );
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof CacheKey)) return false;
+            CacheKey cacheKey = (CacheKey) o;
+            return start.equals(cacheKey.start) &&
+                goal.equals(cacheKey.goal) &&
+                capabilitiesHash == cacheKey.capabilitiesHash;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(start, goal, capabilitiesHash);
+        }
+    }
+
+    /**
+     * Cached path with timestamp for TTL expiration.
+     */
+    private static class CachedPath {
+        private final List<PathNode> path;
+        private final long timestamp;
+
+        CachedPath(List<PathNode> path) {
+            this.path = new ArrayList<>(path);
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        boolean isExpired(long ttlMillis) {
+            return System.currentTimeMillis() - timestamp > ttlMillis;
+        }
     }
 }

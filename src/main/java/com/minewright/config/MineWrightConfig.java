@@ -511,6 +511,50 @@ public class MineWrightConfig {
      */
     public static final ForgeConfigSpec.IntValue MAX_PATH_SEARCH_NODES;
 
+    /**
+     * Maximum nodes to explore before giving up (prevents infinite loops).
+     * <p><b>Range:</b> 1000 to 50000</p>
+     * <p><b>Default:</b> 10000</p>
+     * <p><b>Config key:</b> {@code pathfinding.max_nodes}</p>
+     *
+     * <p>This is the A* pathfinder's maximum node exploration limit.
+     * Higher values allow finding longer paths but use more CPU.</p>
+     *
+     * @since 2.3.0
+     */
+    public static final ForgeConfigSpec.IntValue PATHFINDING_MAX_NODES;
+
+    /**
+     * Enable path caching for frequently traversed routes.
+     * <p><b>Default:</b> {@code true}</p>
+     * <p><b>Config key:</b> {@code pathfinding.cache_enabled}</p>
+     *
+     * <p>When enabled, caches successful paths to reduce CPU overhead for repeated routes.</p>
+     *
+     * @since 2.3.0
+     */
+    public static final ForgeConfigSpec.BooleanValue PATHFINDING_CACHE_ENABLED;
+
+    /**
+     * Maximum number of cached paths.
+     * <p><b>Range:</b> 10 to 1000</p>
+     * <p><b>Default:</b> 100</p>
+     * <p><b>Config key:</b> {@code pathfinding.cache_max_size}</p>
+     *
+     * @since 2.3.0
+     */
+    public static final ForgeConfigSpec.IntValue PATHFINDING_CACHE_MAX_SIZE;
+
+    /**
+     * Path cache TTL in minutes.
+     * <p><b>Range:</b> 1 to 60</p>
+     * <p><b>Default:</b> 10</p>
+     * <p><b>Config key:</b> {@code pathfinding.cache_ttl_minutes}</p>
+     *
+     * @since 2.3.0
+     */
+    public static final ForgeConfigSpec.IntValue PATHFINDING_CACHE_TTL_MINUTES;
+
     // ------------------------------------------------------------------------
     // Semantic Cache Configuration
     // ------------------------------------------------------------------------
@@ -1038,6 +1082,35 @@ public class MineWrightConfig {
                      "Higher = can find longer paths but uses more CPU",
                      "Recommended: 10000 for balanced performance")
             .defineInRange("max_search_nodes", 10000, 1000, 50000);
+
+        PATHFINDING_MAX_NODES = builder
+            .comment("A* pathfinder maximum node exploration limit",
+                     "Higher = can find longer paths but uses more CPU",
+                     "Recommended: 10000 for balanced performance",
+                     "Lower = faster pathfinding but may fail to find long paths")
+            .defineInRange("max_nodes", 10000, 1000, 50000);
+
+        PATHFINDING_CACHE_ENABLED = builder
+            .comment("Enable path caching for frequently traversed routes",
+                     "When enabled, caches successful paths to reduce CPU overhead",
+                     "Significantly improves performance for repeated routes",
+                     "When disabled, computes all paths from scratch")
+            .define("cache_enabled", true);
+
+        PATHFINDING_CACHE_MAX_SIZE = builder
+            .comment("Maximum number of cached paths",
+                     "Higher = more cache hits but more memory usage",
+                     "Each cached path ~1-5KB depending on length",
+                     "Recommended: 100 for balanced performance")
+            .defineInRange("cache_max_size", 100, 10, 1000);
+
+        PATHFINDING_CACHE_TTL_MINUTES = builder
+            .comment("Path cache time-to-live in minutes",
+                     "Cached paths older than this are evicted",
+                     "Lower = fresher paths but more cache misses",
+                     "Higher = more cache hits but potentially stale routes",
+                     "Recommended: 10 minutes for typical gameplay")
+            .defineInRange("cache_ttl_minutes", 10, 1, 60);
 
         builder.pop();
 
