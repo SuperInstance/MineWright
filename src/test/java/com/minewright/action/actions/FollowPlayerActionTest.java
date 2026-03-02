@@ -71,7 +71,7 @@ class FollowPlayerActionTest {
         lenient().when(targetPlayer.isSpectator()).thenReturn(false);
         lenient().when(targetPlayer.getName()).thenReturn(mock(net.minecraft.network.chat.Component.class));
         lenient().when(targetPlayer.getName().getString()).thenReturn("TestPlayer");
-        lenient().when(foreman.distanceTo(any(Player.class))).thenReturn(5.0);
+        lenient().when(foreman.distanceTo(any(Player.class))).thenReturn(5.0f);
     }
 
     // ==================== Player Target Selection Tests ====================
@@ -101,7 +101,7 @@ class FollowPlayerActionTest {
         params.put("player", "TestPlayer");
         task = new Task("follow", params);
 
-        when(level.players()).thenReturn(new ArrayList<>());
+        when(level.players()).thenReturn((List) new ArrayList<>());
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -197,8 +197,8 @@ class FollowPlayerActionTest {
         when(level.players()).thenReturn((List) players);
         when(targetPlayer.getName().getString()).thenReturn("TestPlayer");
         when(secondPlayer.getName().getString()).thenReturn("SecondPlayer");
-        when(foreman.distanceTo(targetPlayer)).thenReturn(1.0); // Closer
-        when(foreman.distanceTo(secondPlayer)).thenReturn(10.0); // Farther
+        when(foreman.distanceTo(targetPlayer)).thenReturn(1.0f); // Closer
+        when(foreman.distanceTo(secondPlayer)).thenReturn(10.0f); // Farther
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -218,7 +218,7 @@ class FollowPlayerActionTest {
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
         when(level.players()).thenReturn((List) players);
-        when(foreman.distanceTo(targetPlayer)).thenReturn(5.0); // Too far
+        when(foreman.distanceTo(targetPlayer)).thenReturn(5.0f); // Too far
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -239,7 +239,7 @@ class FollowPlayerActionTest {
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
         when(level.players()).thenReturn((List) players);
-        when(foreman.distanceTo(targetPlayer)).thenReturn(1.5); // Close enough
+        when(foreman.distanceTo(targetPlayer)).thenReturn(1.5f); // Close enough
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -265,13 +265,13 @@ class FollowPlayerActionTest {
         action.start();
 
         // Test different distances
-        when(foreman.distanceTo(targetPlayer)).thenReturn(4.0); // Too far - should move
+        when(foreman.distanceTo(targetPlayer)).thenReturn(4.0f); // Too far - should move
         action.tick();
         verify(navigation, atLeastOnce()).moveTo(any(Player.class), anyDouble());
 
         reset(navigation);
 
-        when(foreman.distanceTo(targetPlayer)).thenReturn(2.5); // Good range - should not move
+        when(foreman.distanceTo(targetPlayer)).thenReturn(2.5f); // Good range - should not move
         action.tick();
         verify(navigation, never()).moveTo(any(Player.class), anyDouble());
     }
@@ -366,7 +366,7 @@ class FollowPlayerActionTest {
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
         when(level.players()).thenReturn((List) players);
-        when(foreman.distanceTo(targetPlayer)).thenReturn(2.5); // Good distance
+        when(foreman.distanceTo(targetPlayer)).thenReturn(2.5f); // Good distance
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -583,8 +583,8 @@ class FollowPlayerActionTest {
         players.add(targetPlayer);
         players.add(secondPlayer);
         when(level.players()).thenReturn((List) players);
-        when(foreman.distanceTo(targetPlayer)).thenReturn(10.0); // Far
-        when(foreman.distanceTo(secondPlayer)).thenReturn(3.0); // Near
+        when(foreman.distanceTo(targetPlayer)).thenReturn(10.0f); // Far
+        when(foreman.distanceTo(secondPlayer)).thenReturn(3.0f); // Near
         when(secondPlayer.isAlive()).thenReturn(true);
         when(secondPlayer.isRemoved()).thenReturn(false);
         when(secondPlayer.isSpectator()).thenReturn(false);
@@ -607,7 +607,7 @@ class FollowPlayerActionTest {
 
             List<Player> players = new ArrayList<>();
             players.add(targetPlayer);
-            when(level.players()).thenReturn(players);
+            when(level.players()).thenReturn((List) players);
 
             action = new FollowPlayerAction(foreman, task);
             action.start();

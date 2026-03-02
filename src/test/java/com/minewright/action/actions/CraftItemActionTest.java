@@ -181,7 +181,7 @@ class CraftItemActionTest {
         task = new Task("craft", params);
 
         lenient().when(recipeManager.getAllRecipesFor(RecipeType.CRAFTING))
-            .thenReturn(Stream.empty());
+            .thenReturn(Collections.emptyList());
 
         action = new CraftItemAction(foreman, task);
         action.start();
@@ -263,7 +263,7 @@ class CraftItemActionTest {
             task = new Task("craft", params);
 
             when(recipeManager.getAllRecipesFor(RecipeType.CRAFTING))
-                .thenReturn(Stream.empty());
+                .thenReturn(Collections.emptyList());
 
             action = new CraftItemAction(foreman, task);
             action.start();
@@ -367,7 +367,7 @@ class CraftItemActionTest {
             task = new Task("craft", params);
 
             when(recipeManager.getAllRecipesFor(RecipeType.CRAFTING))
-                .thenReturn(Stream.empty());
+                .thenReturn(Collections.emptyList());
 
             action = new CraftItemAction(foreman, task);
             action.start();
@@ -557,10 +557,10 @@ class CraftItemActionTest {
             Map<String, Object> params = new HashMap<>();
             params.put("item", variant);
             params.put("quantity", 1);
-            task = new Task("craft", variants);
+            task = new Task("craft", params);
 
             lenient().when(recipeManager.getAllRecipesFor(RecipeType.CRAFTING))
-                .thenReturn(Stream.empty());
+                .thenReturn(Collections.emptyList());
 
             action = new CraftItemAction(foreman, task);
             action.start();
@@ -578,7 +578,7 @@ class CraftItemActionTest {
         task = new Task("craft", params);
 
         lenient().when(recipeManager.getAllRecipesFor(RecipeType.CRAFTING))
-            .thenReturn(Stream.empty());
+            .thenReturn(Collections.emptyList());
 
         action = new CraftItemAction(foreman, task);
         action.start();
@@ -595,7 +595,7 @@ class CraftItemActionTest {
         task = new Task("craft", params);
 
         lenient().when(recipeManager.getAllRecipesFor(RecipeType.CRAFTING))
-            .thenReturn(Stream.empty());
+            .thenReturn(Collections.emptyList());
 
         action = new CraftItemAction(foreman, task);
         action.start();
