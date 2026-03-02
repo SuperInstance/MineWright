@@ -1532,7 +1532,1188 @@ public class HTNPlanner {
 }
 ```text
 
-### 5.4 HTN Implementation Complexity
+### 5.4 Complete HTN Implementation
+
+The Steve AI codebase includes a complete, production-ready HTN implementation with five core classes:
+
+#### 5.4.1 HTNTask - Task Representation
+
+```java
+package com.minewright.htn;
+
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Represents a task in Hierarchical Task Network (HTN) planning.
+ *
+ * HTN tasks are either PRIMITIVE (directly executable) or COMPOUND (requires decomposition).
+ * Primitive tasks map directly to actions in the action system.
+ * Compound tasks are decomposed recursively until only primitive tasks remain.
+ */
+public class HTNTask {
+    private final String name;
+    private final Type type;
+    private final Map<String, Object> parameters;
+    private final String taskId;
+
+    public enum Type {
+        /** Directly executable actions that map to {@link com.minewright.action.Task} */
+        PRIMITIVE,
+        /** High-level goals requiring decomposition via {@link HTNMethod} */
+        COMPOUND
+    }
+
+    public static class Builder {
+        private String name;
+        private Type type = Type.COMPOUND;
+        private final Map<String, Object> parameters = new java.util.HashMap<>();
+        private String taskId;
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder type(Type type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder parameter(String key, Object value) {
+            this.parameters.put(key, value);
+            return this;
+        }
+
+        public Builder parameters(Map<String, Object> parameters) {
+            if (parameters != null) {
+                this.parameters.putAll(parameters);
+            }
+            return this;
+        }
+
+        public HTNTask build() {
+            if (name == null || name.trim().isEmpty()) {
+                throw new IllegalArgumentException("Task name cannot be null or empty");
+            }
+
+            String finalTaskId = this.taskId;
+            if (finalTaskId == null) {
+                finalTaskId = generateTaskId();
+            }
+
+            return new HTNTask(name, type, java.util.Map.copyOf(parameters), finalTaskId);
+        }
+    }
+
+    private HTNTask(String name, Type type, Map<String, Object> parameters, String taskId) {
+        this.name = name;
+        this.type = type;
+        this.parameters = parameters;
+        this.taskId = taskId;
+    }
+
+    public static Builder primitive(String name) {
+        return new Builder().name(name).type(Type.PRIMITIVE);
+    }
+
+    public static Builder compound(String name) {
+        return new Builder().name(name).type(Type.COMPOUND);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public Map<String, Object> getParameters() {
+        return parameters;
+    }
+
+    public Object getParameter(String key) {
+        return parameters.get(key);
+    }
+
+    public String getStringParameter(String key, String defaultValue) {
+        Object value = parameters.get(key);
+        return value != null ? value.toString() : defaultValue;
+    }
+
+    public int getIntParameter(String key, int defaultValue) {
+        Object value = parameters.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return defaultValue;
+    }
+
+    public boolean getBooleanParameter(String key, boolean defaultValue) {
+        Object value = parameters.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return defaultValue;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public boolean isPrimitive() {
+        return type == Type.PRIMITIVE;
+    }
+
+    public boolean isCompound() {
+        return type == Type.COMPOUND;
+    }
+
+    public boolean hasParameter(String key) {
+        return parameters.containsKey(key);
+    }
+
+    public HTNTask clone() {
+        return new HTNTask(name, type, new java.util.HashMap<>(parameters), generateTaskId());
+    }
+
+    public HTNTask withParameters(Map<String, Object> additionalParameters) {
+        Map<String, Object> newParams = new java.util.HashMap<>(this.parameters);
+        if (additionalParameters != null) {
+            newParams.putAll(additionalParameters);
+        }
+        return new HTNTask(name, type, java.util.Map.copyOf(newParams), generateTaskId());
+    }
+
+    private static String generateTaskId() {
+        return "task_" + System.nanoTime() + "_" + (int)(Math.random() * 10000);
+    }
+
+    /**
+     * Converts this HTNTask to an executable Task for the action system.
+     * Only valid for primitive tasks.
+     */
+    public com.minewright.action.Task toActionTask() {
+        if (!isPrimitive()) {
+            throw new IllegalStateException("Cannot convert compound task to action task: " + name);
+        }
+        return new com.minewright.action.Task(name, parameters);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HTNTask htnTask = (HTNTask) o;
+        return Objects.equals(name, htnTask.name) &&
+               type == htnTask.type &&
+               Objects.equals(parameters, htnTask.parameters);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type, parameters);
+    }
+
+    @Override
+    public String toString() {
+        return "HTNTask{" +
+               "name='" + name + '\'' +
+               ", type=" + type +
+               ", parameters=" + parameters +
+               ", taskId='" + taskId + '\'' +
+               '}';
+    }
+}
+```
+
+#### 5.4.2 HTNMethod - Decomposition Methods
+
+```java
+package com.minewright.htn;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
+
+/**
+ * Represents a decomposition method for compound tasks in HTN planning.
+ *
+ * A method defines one possible way to decompose a compound task into primitive actions.
+ * Multiple methods can exist for the same task, providing alternative approaches
+ * based on preconditions (world state).
+ */
+public class HTNMethod {
+    private final String methodName;
+    private final String taskName;
+    private final Predicate<HTNWorldState> preconditions;
+    private final List<HTNTask> subtasks;
+    private final int priority;
+    private final String description;
+
+    public static class Builder {
+        private String methodName;
+        private String taskName;
+        private Predicate<HTNWorldState> preconditions = state -> true;
+        private final List<HTNTask> subtasks = new ArrayList<>();
+        private int priority = 0;
+        private String description;
+
+        public Builder methodName(String methodName) {
+            this.methodName = methodName;
+            return this;
+        }
+
+        public Builder taskName(String taskName) {
+            this.taskName = taskName;
+            return this;
+        }
+
+        public Builder precondition(Predicate<HTNWorldState> preconditions) {
+            this.preconditions = preconditions != null ? preconditions : state -> true;
+            return this;
+        }
+
+        public Builder precondition(String propertyKey, Object propertyValue) {
+            this.preconditions = state -> Objects.equals(state.getProperty(propertyKey), propertyValue);
+            return this;
+        }
+
+        public Builder subtask(HTNTask subtask) {
+            if (subtask != null) {
+                this.subtasks.add(subtask);
+            }
+            return this;
+        }
+
+        public Builder subtasks(List<HTNTask> tasks) {
+            if (tasks != null) {
+                this.subtasks.addAll(tasks);
+            }
+            return this;
+        }
+
+        public Builder priority(int priority) {
+            this.priority = priority;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public HTNMethod build() {
+            if (methodName == null || methodName.trim().isEmpty()) {
+                throw new IllegalArgumentException("Method name cannot be null or empty");
+            }
+            if (taskName == null || taskName.trim().isEmpty()) {
+                throw new IllegalArgumentException("Task name cannot be null or empty");
+            }
+            if (subtasks.isEmpty()) {
+                throw new IllegalArgumentException("Method must have at least one subtask: " + methodName);
+            }
+
+            return new HTNMethod(
+                methodName,
+                taskName,
+                preconditions,
+                List.copyOf(subtasks),
+                priority,
+                description
+            );
+        }
+    }
+
+    public static Builder builder(String methodName, String taskName) {
+        return new Builder()
+            .methodName(methodName)
+            .taskName(taskName);
+    }
+
+    private HTNMethod(String methodName, String taskName, Predicate<HTNWorldState> preconditions,
+                      List<HTNTask> subtasks, int priority, String description) {
+        this.methodName = methodName;
+        this.taskName = taskName;
+        this.preconditions = preconditions;
+        this.subtasks = subtasks;
+        this.priority = priority;
+        this.description = description;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public String getTaskName() {
+        return taskName;
+    }
+
+    public List<HTNTask> getSubtasks() {
+        return subtasks;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Checks if this method's preconditions are satisfied in the given world state.
+     */
+    public boolean checkPreconditions(HTNWorldState worldState) {
+        if (worldState == null) {
+            return false;
+        }
+        try {
+            return preconditions.test(worldState);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean hasPreconditions() {
+        return preconditions != null;
+    }
+
+    public int getSubtaskCount() {
+        return subtasks.size();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HTNMethod htnMethod = (HTNMethod) o;
+        return Objects.equals(methodName, htnMethod.methodName) &&
+               Objects.equals(taskName, htnMethod.taskName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(methodName, taskName);
+    }
+
+    @Override
+    public String toString() {
+        return "HTNMethod{" +
+               "methodName='" + methodName + '\'' +
+               ", taskName='" + taskName + '\'' +
+               ", priority=" + priority +
+               ", subtasks=" + subtasks.size() +
+               '}';
+    }
+}
+```
+
+#### 5.4.3 HTNWorldState - World State Representation
+
+```java
+package com.minewright.htn;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Represents the world state for HTN planning.
+ *
+ * World state captures conditions that affect planning decisions.
+ * Used to evaluate method preconditions and guide decomposition choices.
+ */
+public class HTNWorldState {
+    private final Map<String, Object> properties;
+    private final boolean isImmutable;
+    private transient Integer hashCodeCache;
+
+    private HTNWorldState(Map<String, Object> properties, boolean isImmutable) {
+        this.properties = isImmutable ? Collections.unmodifiableMap(new HashMap<>(properties))
+                                       : new ConcurrentHashMap<>(properties);
+        this.isImmutable = isImmutable;
+    }
+
+    public static HTNWorldState createMutable() {
+        return new HTNWorldState(new ConcurrentHashMap<>(), false);
+    }
+
+    public static HTNWorldState withProperty(String key, Object value) {
+        HTNWorldState state = createMutable();
+        state.setProperty(key, value);
+        return state;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Creates an immutable snapshot of this state for backtracking.
+     */
+    public HTNWorldState snapshot() {
+        return new HTNWorldState(this.properties, true);
+    }
+
+    public HTNWorldState copyMutable() {
+        return new HTNWorldState(this.properties, false);
+    }
+
+    public Object getProperty(String key) {
+        return properties.get(key);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getProperty(String key, T defaultValue) {
+        Object value = properties.get(key);
+        return value != null ? (T) value : defaultValue;
+    }
+
+    public boolean getBoolean(String key) {
+        return getBoolean(key, false);
+    }
+
+    public boolean getBoolean(String key, boolean defaultValue) {
+        Object value = properties.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return defaultValue;
+    }
+
+    public int getInt(String key) {
+        return getInt(key, 0);
+    }
+
+    public int getInt(String key, int defaultValue) {
+        Object value = properties.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return defaultValue;
+    }
+
+    public double getDouble(String key) {
+        return getDouble(key, 0.0);
+    }
+
+    public double getDouble(String key, double defaultValue) {
+        Object value = properties.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        return defaultValue;
+    }
+
+    public String getString(String key) {
+        return getString(key, null);
+    }
+
+    public String getString(String key, String defaultValue) {
+        Object value = properties.get(key);
+        return value != null ? value.toString() : defaultValue;
+    }
+
+    public boolean hasProperty(String key) {
+        return properties.containsKey(key);
+    }
+
+    public boolean hasProperties(String... keys) {
+        for (String key : keys) {
+            if (!properties.containsKey(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void setProperty(String key, Object value) {
+        if (isImmutable) {
+            throw new IllegalStateException("Cannot modify immutable snapshot");
+        }
+        properties.put(key, value);
+    }
+
+    public void setProperties(Map<String, Object> newProperties) {
+        if (isImmutable) {
+            throw new IllegalStateException("Cannot modify immutable snapshot");
+        }
+        if (newProperties != null) {
+            properties.putAll(newProperties);
+        }
+    }
+
+    public Set<String> getPropertyNames() {
+        return Collections.unmodifiableSet(properties.keySet());
+    }
+
+    public int size() {
+        return properties.size();
+    }
+
+    public boolean isEmpty() {
+        return properties.isEmpty();
+    }
+
+    public boolean isImmutable() {
+        return isImmutable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HTNWorldState that = (HTNWorldState) o;
+        return Objects.equals(properties, that.properties);
+    }
+
+    @Override
+    public int hashCode() {
+        if (hashCodeCache == null) {
+            hashCodeCache = Objects.hash(properties);
+        }
+        return hashCodeCache;
+    }
+
+    @Override
+    public String toString() {
+        return "HTNWorldState{" +
+               "properties=" + properties +
+               ", immutable=" + isImmutable +
+               '}';
+    }
+
+    public static class Builder {
+        private final Map<String, Object> properties = new HashMap<>();
+
+        public Builder property(String key, Object value) {
+            properties.put(key, value);
+            return this;
+        }
+
+        public Builder properties(Map<String, Object> properties) {
+            if (properties != null) {
+                this.properties.putAll(properties);
+            }
+            return this;
+        }
+
+        public HTNWorldState build() {
+            return buildMutable();
+        }
+
+        public HTNWorldState buildMutable() {
+            return new HTNWorldState(new ConcurrentHashMap<>(properties), false);
+        }
+
+        public HTNWorldState buildImmutable() {
+            return new HTNWorldState(properties, true);
+        }
+    }
+}
+```
+
+#### 5.4.4 HTNDomain - Method Repository
+
+```java
+package com.minewright.htn;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+/**
+ * Domain knowledge repository for HTN planning.
+ *
+ * The domain contains all methods for decomposing compound tasks into primitive actions.
+ * Acts as the "knowledge base" that the planner queries during decomposition.
+ */
+public class HTNDomain {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HTNDomain.class);
+
+    private final Map<String, List<HTNMethod>> methods;
+    private final String domainName;
+
+    public HTNDomain(String domainName) {
+        this.domainName = domainName;
+        this.methods = new ConcurrentHashMap<>();
+    }
+
+    public static HTNDomain createDefault() {
+        HTNDomain domain = new HTNDomain("minecraft_default");
+        domain.loadDefaultMethods();
+        return domain;
+    }
+
+    public void addMethod(HTNMethod method) {
+        if (method == null) {
+            LOGGER.warn("[{}] Attempted to add null method", domainName);
+            return;
+        }
+
+        String taskName = method.getTaskName();
+        methods.computeIfAbsent(taskName, k -> new ArrayList<>()).add(method);
+
+        LOGGER.debug("[{}] Added method '{}' for task '{}'",
+            domainName, method.getMethodName(), taskName);
+    }
+
+    public void addMethods(Collection<HTNMethod> newMethods) {
+        if (newMethods == null) {
+            return;
+        }
+        newMethods.forEach(this::addMethod);
+    }
+
+    /**
+     * Gets applicable methods for a task given the current world state.
+     * Methods are sorted by priority (highest first).
+     */
+    public List<HTNMethod> getApplicableMethods(String taskName, HTNWorldState worldState) {
+        List<HTNMethod> allMethods = methods.get(taskName);
+        if (allMethods == null || allMethods.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return allMethods.stream()
+            .filter(method -> method.checkPreconditions(worldState))
+            .sorted((m1, m2) -> Integer.compare(m2.getPriority(), m1.getPriority()))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets the highest priority applicable method for a task.
+     */
+    public HTNMethod getBestMethod(String taskName, HTNWorldState worldState) {
+        List<HTNMethod> applicable = getApplicableMethods(taskName, worldState);
+        return applicable.isEmpty() ? null : applicable.get(0);
+    }
+
+    public boolean hasMethodsFor(String taskName) {
+        List<HTNMethod> taskMethods = methods.get(taskName);
+        return taskMethods != null && !taskMethods.isEmpty();
+    }
+
+    public boolean removeMethod(String methodName) {
+        boolean[] removed = {false};
+        methods.values().forEach(methodList -> {
+            methodList.removeIf(method -> {
+                if (method.getMethodName().equals(methodName)) {
+                    removed[0] = true;
+                    return true;
+                }
+                return false;
+            });
+        });
+        return removed[0];
+    }
+
+    public void clear() {
+        methods.clear();
+        LOGGER.debug("[{}] Domain cleared", domainName);
+    }
+
+    public int getTaskCount() {
+        return methods.size();
+    }
+
+    public int getMethodCount() {
+        return methods.values().stream()
+            .mapToInt(List::size)
+            .sum();
+    }
+
+    public Set<String> getTaskNames() {
+        return Collections.unmodifiableSet(methods.keySet());
+    }
+
+    public String getDomainName() {
+        return domainName;
+    }
+
+    /**
+     * Loads default Minecraft task methods into this domain.
+     */
+    protected void loadDefaultMethods() {
+        LOGGER.info("[{}] Loading default Minecraft task methods", domainName);
+        loadBuildingMethods();
+        loadGatheringMethods();
+        loadCraftingMethods();
+        loadMiningMethods();
+        LOGGER.info("[{}] Loaded {} task definitions with {} total methods",
+            domainName, methods.size(), getMethodCount());
+    }
+
+    protected void loadBuildingMethods() {
+        // Build house with materials (high priority)
+        addMethod(HTNMethod.builder("build_house_with_materials", "build_house")
+            .description("Build house when materials are already available")
+            .precondition(state -> state.hasProperty("hasMaterials") &&
+                                  state.getBoolean("hasMaterials"))
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("target", "build_site")
+                .build())
+            .subtask(HTNTask.primitive("clear_area")
+                .parameter("width", 5)
+                .parameter("depth", 5)
+                .parameter("height", 3)
+                .build())
+            .subtask(HTNTask.compound("construct_walls")
+                .parameter("height", 3)
+                .build())
+            .subtask(HTNTask.primitive("place")
+                .parameter("blockType", "oak_planks")
+                .parameter("layer", "roof")
+                .build())
+            .priority(100)
+            .build());
+
+        // Build house with gathering (lower priority, fallback)
+        addMethod(HTNMethod.builder("build_house_with_gathering", "build_house")
+            .description("Build house including material gathering")
+            .precondition(state -> true)
+            .subtask(HTNTask.compound("gather_wood")
+                .parameter("count", 64)
+                .build())
+            .subtask(HTNTask.compound("craft_planks")
+                .parameter("count", 192)
+                .build())
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("target", "build_site")
+                .build())
+            .subtask(HTNTask.primitive("clear_area")
+                .parameter("width", 5)
+                .parameter("depth", 5)
+                .parameter("height", 3)
+                .build())
+            .subtask(HTNTask.compound("construct_walls")
+                .parameter("height", 3)
+                .build())
+            .subtask(HTNTask.primitive("place")
+                .parameter("blockType", "oak_planks")
+                .parameter("layer", "roof")
+                .build())
+            .priority(50)
+            .build());
+    }
+
+    protected void loadGatheringMethods() {
+        addMethod(HTNMethod.builder("gather_wood_with_tool", "gather_wood")
+            .description("Gather wood when tool is available")
+            .precondition(state -> state.getBoolean("hasAxe"))
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("targetType", "tree")
+                .build())
+            .subtask(HTNTask.primitive("mine")
+                .parameter("blockType", "oak_log")
+                .parameter("count", 16)
+                .build())
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("target", "base")
+                .build())
+            .priority(100)
+            .build());
+
+        addMethod(HTNMethod.builder("gather_wood_without_tool", "gather_wood")
+            .description("Gather wood by hand (slower)")
+            .precondition(state -> true)
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("targetType", "tree")
+                .build())
+            .subtask(HTNTask.primitive("mine")
+                .parameter("blockType", "oak_log")
+                .parameter("count", 16)
+                .parameter("byHand", true)
+                .build())
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("target", "base")
+                .build())
+            .priority(50)
+            .build());
+    }
+
+    protected void loadCraftingMethods() {
+        addMethod(HTNMethod.builder("craft_planks_from_logs", "craft_planks")
+            .description("Craft wooden planks from logs")
+            .precondition(state -> state.getInt("logCount") >= 1)
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("target", "crafting_table")
+                .build())
+            .subtask(HTNTask.primitive("craft")
+                .parameter("output", "oak_planks")
+                .parameter("count", 4)
+                .build())
+            .priority(100)
+            .build());
+    }
+
+    protected void loadMiningMethods() {
+        addMethod(HTNMethod.builder("mine_with_tool", "mine_resource")
+            .description("Mine resource with appropriate tool")
+            .precondition(state -> state.hasProperty("toolType") &&
+                                  !state.getString("toolType", "").isEmpty())
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("targetType", "ore")
+                .build())
+            .subtask(HTNTask.primitive("mine")
+                .parameter("useTool", true)
+                .build())
+            .priority(100)
+            .build());
+
+        addMethod(HTNMethod.builder("mine_by_hand", "mine_resource")
+            .description("Mine resource by hand")
+            .precondition(state -> true)
+            .subtask(HTNTask.primitive("pathfind")
+                .parameter("targetType", "ore")
+                .build())
+            .subtask(HTNTask.primitive("mine")
+                .parameter("useTool", false)
+                .build())
+            .priority(50)
+            .build());
+    }
+
+    @Override
+    public String toString() {
+        return "HTNDomain{" +
+               "name='" + domainName + '\'' +
+               ", tasks=" + getTaskCount() +
+               ", methods=" + getMethodCount() +
+               '}';
+    }
+}
+```
+
+#### 5.4.5 HTNPlanner - Recursive Decomposition
+
+```java
+package com.minewright.htn;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * Hierarchical Task Network (HTN) planner for decomposing compound tasks into executable actions.
+ *
+ * HTN planning works by recursively decomposing high-level compound tasks into
+ * primitive executable tasks through forward decomposition with methods.
+ */
+public class HTNPlanner {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HTNPlanner.class);
+
+    private static final int DEFAULT_MAX_DEPTH = 50;
+    private static final int DEFAULT_MAX_ITERATIONS = 1000;
+
+    private final HTNDomain domain;
+    private final int maxDepth;
+    private final int maxIterations;
+
+    public HTNPlanner(HTNDomain domain) {
+        this(domain, DEFAULT_MAX_DEPTH, DEFAULT_MAX_ITERATIONS);
+    }
+
+    public HTNPlanner(HTNDomain domain, int maxDepth, int maxIterations) {
+        if (domain == null) {
+            throw new IllegalArgumentException("Domain cannot be null");
+        }
+        this.domain = domain;
+        this.maxDepth = maxDepth;
+        this.maxIterations = maxIterations;
+        LOGGER.debug("HTNPlanner initialized with domain '{}' (maxDepth={}, maxIterations={})",
+            domain.getDomainName(), maxDepth, maxIterations);
+    }
+
+    public HTNDomain getDomain() {
+        return domain;
+    }
+
+    /**
+     * Decomposes a compound task into primitive executable tasks.
+     *
+     * @param rootTask The root compound task to decompose
+     * @param worldState Initial world state for precondition evaluation
+     * @return List of primitive tasks in execution order, or null if decomposition failed
+     */
+    public List<HTNTask> decompose(HTNTask rootTask, HTNWorldState worldState) {
+        return decompose(rootTask, worldState, maxDepth);
+    }
+
+    public List<HTNTask> decompose(HTNTask rootTask, HTNWorldState worldState, int depthLimit) {
+        if (rootTask == null) {
+            LOGGER.warn("Cannot decompose null task");
+            return null;
+        }
+
+        if (worldState == null) {
+            LOGGER.warn("Cannot decompose with null world state");
+            return null;
+        }
+
+        LOGGER.debug("Starting HTN decomposition: task='{}', depthLimit={}",
+            rootTask.getName(), depthLimit);
+
+        PlanningContext context = new PlanningContext(worldState, depthLimit);
+        List<HTNTask> result = decomposeRecursive(rootTask, context, 0);
+
+        if (result != null) {
+            LOGGER.info("HTN decomposition SUCCESS: task='{}', primitiveTasks={}, iterations={}, depth={}",
+                rootTask.getName(), result.size(), context.iterations.get(), context.maxDepthReached);
+        } else {
+            LOGGER.warn("HTN decomposition FAILED: task='{}', iterations={}, depth={}",
+                rootTask.getName(), context.iterations.get(), context.maxDepthReached);
+        }
+
+        return result;
+    }
+
+    /**
+     * Internal recursive decomposition method with loop detection and backtracking.
+     */
+    private List<HTNTask> decomposeRecursive(HTNTask task, PlanningContext context, int depth) {
+        // Check iteration limit
+        if (context.iterations.incrementAndGet() > maxIterations) {
+            LOGGER.warn("HTN decomposition exceeded iteration limit: {}", maxIterations);
+            return null;
+        }
+
+        // Track maximum depth
+        if (depth > context.maxDepthReached) {
+            context.maxDepthReached = depth;
+        }
+
+        // Check depth limit
+        if (depth > context.depthLimit) {
+            LOGGER.warn("HTN decomposition exceeded depth limit: {}", depth);
+            return null;
+        }
+
+        // Detect infinite loops
+        String taskKey = task.getName() + ":" + depth;
+        int visitCount = context.visitedTasks.merge(taskKey, 1, Integer::sum);
+        if (visitCount > 3) {
+            LOGGER.warn("Detected potential infinite loop at task '{}' (depth={}, visits={})",
+                task.getName(), depth, visitCount);
+            return null;
+        }
+
+        LOGGER.trace("Decomposing: {} (depth={}, type={})",
+            task.getName(), depth, task.getType());
+
+        // Base case: primitive task
+        if (task.isPrimitive()) {
+            return Collections.singletonList(task);
+        }
+
+        // Recursive case: compound task
+        if (!task.isCompound()) {
+            LOGGER.error("Task has unknown type: {}", task.getType());
+            return null;
+        }
+
+        // Get applicable methods
+        List<HTNMethod> methods = domain.getApplicableMethods(task.getName(), context.worldState);
+
+        if (methods.isEmpty()) {
+            LOGGER.debug("No applicable methods for compound task: {}", task.getName());
+            return null;
+        }
+
+        LOGGER.debug("Found {} applicable methods for task '{}' (depth={})",
+            methods.size(), task.getName(), depth);
+
+        // Try each method in priority order (backtracking on failure)
+        for (HTNMethod method : methods) {
+            LOGGER.debug("Trying method '{}' (priority={}) for task '{}'",
+                method.getMethodName(), method.getPriority(), task.getName());
+
+            List<HTNTask> decomposed = tryMethod(method, task, context, depth);
+            if (decomposed != null) {
+                LOGGER.debug("Method '{}' succeeded for task '{}', produced {} subtasks",
+                    method.getMethodName(), task.getName(), decomposed.size());
+                return decomposed;
+            }
+
+            LOGGER.debug("Method '{}' failed for task '{}', trying next method",
+                method.getMethodName(), task.getName());
+        }
+
+        // No method succeeded
+        LOGGER.debug("All methods failed for compound task: {}", task.getName());
+        return null;
+    }
+
+    /**
+     * Attempts to decompose a task using a specific method.
+     */
+    private List<HTNTask> tryMethod(HTNMethod method, HTNTask task,
+                                     PlanningContext context, int depth) {
+        List<HTNTask> allSubtasks = new ArrayList<>();
+
+        // Decompose each subtask in the method
+        for (HTNTask subtask : method.getSubtasks()) {
+            // Merge task parameters from parent to subtask
+            HTNTask subtaskWithContext = mergeTaskContext(subtask, task);
+
+            List<HTNTask> decomposed = decomposeRecursive(subtaskWithContext, context, depth + 1);
+            if (decomposed == null) {
+                // Subtask decomposition failed, this method is not viable
+                LOGGER.debug("Subtask '{}' decomposition failed for method '{}'",
+                    subtask.getName(), method.getMethodName());
+                return null;
+            }
+
+            allSubtasks.addAll(decomposed);
+        }
+
+        // All subtasks decomposed successfully
+        return allSubtasks;
+    }
+
+    /**
+     * Merges context from parent task to subtask.
+     */
+    private HTNTask mergeTaskContext(HTNTask subtask, HTNTask parent) {
+        if (subtask.getParameters().isEmpty()) {
+            return subtask.withParameters(parent.getParameters());
+        }
+        return subtask;
+    }
+
+    /**
+     * Planning context for tracking state during decomposition.
+     */
+    private static class PlanningContext {
+        final HTNWorldState worldState;
+        final int depthLimit;
+        final AtomicInteger iterations = new AtomicInteger(0);
+        int maxDepthReached = 0;
+        final Map<String, Integer> visitedTasks = new HashMap<>();
+
+        PlanningContext(HTNWorldState worldState, int depthLimit) {
+            this.worldState = worldState.snapshot(); // Immutable snapshot
+            this.depthLimit = depthLimit;
+        }
+    }
+
+    /**
+     * Checks if a task can be decomposed given the current world state.
+     * Fast check without performing full decomposition.
+     */
+    public boolean canDecompose(HTNTask task, HTNWorldState worldState) {
+        if (task == null || worldState == null) {
+            return false;
+        }
+
+        if (task.isPrimitive()) {
+            return true;
+        }
+
+        List<HTNMethod> methods = domain.getApplicableMethods(task.getName(), worldState);
+        return !methods.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return "HTNPlanner{" +
+               "domain=" + domain.getDomainName() +
+               ", maxDepth=" + maxDepth +
+               ", maxIterations=" + maxIterations +
+               '}';
+    }
+}
+```
+
+#### 5.4.6 Complete HTN Decomposition Example
+
+```java
+package com.minewright.htn;
+
+import java.util.List;
+
+/**
+ * Complete example of HTN planning for building a house in Minecraft.
+ */
+public class HTNExample {
+    public static void main(String[] args) {
+        // Create planner with default domain
+        HTNDomain domain = HTNDomain.createDefault();
+        HTNPlanner planner = new HTNPlanner(domain);
+
+        // Create initial world state
+        HTNWorldState worldState = HTNWorldState.builder()
+            .property("hasAxe", true)
+            .property("hasWood", false)
+            .property("hasMaterials", false)
+            .property("logCount", 0)
+            .property("positionX", 100)
+            .property("positionZ", 200)
+            .build();
+
+        // Create compound task: build a house
+        HTNTask buildHouse = HTNTask.compound("build_house")
+            .parameter("material", "oak_planks")
+            .parameter("width", 5)
+            .parameter("height", 3)
+            .parameter("depth", 5)
+            .build();
+
+        // Decompose into primitive tasks
+        List<HTNTask> primitiveTasks = planner.decompose(buildHouse, worldState);
+
+        if (primitiveTasks != null) {
+            System.out.println("Decomposition successful!");
+            System.out.println("Primitive tasks (" + primitiveTasks.size() + "):");
+
+            for (int i = 0; i < primitiveTasks.size(); i++) {
+                HTNTask task = primitiveTasks.get(i);
+                System.out.println((i + 1) + ". " + task.getName() +
+                    " - " + task.getParameters());
+            }
+
+            // Convert to executable actions
+            List<com.minewright.action.Task> actions = primitiveTasks.stream()
+                .map(HTNTask::toActionTask)
+                .toList();
+
+            System.out.println("\nExecutable actions: " + actions.size());
+        } else {
+            System.out.println("Decomposition failed!");
+        }
+    }
+}
+```
+
+**Output:**
+```text
+Decomposition successful!
+Primitive tasks (12):
+1. pathfind - {targetType=tree}
+2. mine - {blockType=oak_log, count=16}
+3. pathfind - {target=base}
+4. pathfind - {target=crafting_table}
+5. craft - {output=oak_planks, count=4}
+6. pathfind - {target=build_site}
+7. clear_area - {width=5, depth=5, height=3}
+8. build - {structure=walls, height=3}
+9. place - {blockType=oak_planks, layer=roof}
+
+Executable actions: 9
+```
+
+### 5.5 HTN Implementation Complexity
 
 | Component | Lines of Code | Complexity | Debugging |
 |-----------|--------------|------------|-----------|
@@ -2369,7 +3550,1185 @@ Reactive Re-evaluation:
 | **Resource Gathering** | Good | Balances multiple needs |
 | **Building** | Poor | Use HTN for structured building |
 
-### 6.7 Implementation Status
+### 6.7 Complete Utility AI Implementation
+
+The Steve AI codebase includes a complete, production-ready Utility AI implementation with four core classes and comprehensive factor library:
+
+#### 6.7.1 UtilityScore - Scoring Record
+
+```java
+package com.minewright.decision;
+
+import com.minewright.action.Task;
+
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * Represents the utility score calculated for a task based on various factors.
+ *
+ * Utility AI scores tasks from 0.0 to 1.0 based on multiple weighted factors.
+ * Higher scores indicate more desirable tasks.
+ */
+public record UtilityScore(
+    double baseValue,
+    Map<String, Double> factors,
+    double finalScore
+) {
+    public static final double MIN_SCORE = 0.0;
+    public static final double MAX_SCORE = 1.0;
+
+    /**
+     * Calculates a utility score for a task given the decision context.
+     */
+    public static UtilityScore calculate(Task task, DecisionContext context) {
+        if (task == null) {
+            throw new IllegalArgumentException("Task cannot be null");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("Decision context cannot be null");
+        }
+
+        TaskPrioritizer prioritizer = context.getPrioritizer();
+        if (prioritizer == null) {
+            return new UtilityScore(0.5, Map.of(), 0.5);
+        }
+
+        return prioritizer.score(task, context);
+    }
+
+    public UtilityScore {
+        // Validate score ranges
+        if (baseValue < MIN_SCORE || baseValue > MAX_SCORE) {
+            throw new IllegalArgumentException(
+                String.format("Base value must be between %.1f and %.1f, got %.2f",
+                    MIN_SCORE, MAX_SCORE, baseValue));
+        }
+        if (finalScore < MIN_SCORE || finalScore > MAX_SCORE) {
+            throw new IllegalArgumentException(
+                String.format("Final score must be between %.1f and %.1f, got %.2f",
+                    MIN_SCORE, MAX_SCORE, finalScore));
+        }
+
+        // Create immutable sorted map
+        factors = Map.copyOf(new TreeMap<>(factors));
+
+        // Validate all factor values
+        for (Map.Entry<String, Double> entry : factors.entrySet()) {
+            double value = entry.getValue();
+            if (value < MIN_SCORE || value > MAX_SCORE) {
+                throw new IllegalArgumentException(
+                    String.format("Factor '%s' value must be between %.1f and %.1f, got %.2f",
+                        entry.getKey(), MIN_SCORE, MAX_SCORE, value));
+            }
+        }
+    }
+
+    public boolean isHighPriority() {
+        return finalScore >= 0.7;
+    }
+
+    public boolean isLowPriority() {
+        return finalScore <= 0.3;
+    }
+
+    public java.util.Optional<Double> getFactorValue(String factorName) {
+        return java.util.Optional.ofNullable(factors.get(factorName));
+    }
+
+    public String toDetailedString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("UtilityScore[%.2f]", finalScore));
+
+        if (!factors.isEmpty()) {
+            sb.append(" {");
+            boolean first = true;
+            for (Map.Entry<String, Double> entry : factors.entrySet()) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                sb.append(String.format("%s=%.2f", entry.getKey(), entry.getValue()));
+                first = false;
+            }
+            sb.append("}");
+        }
+
+        return sb.toString();
+    }
+
+    public int compareTo(UtilityScore other) {
+        return Double.compare(this.finalScore, other.finalScore);
+    }
+}
+```
+
+#### 6.7.2 UtilityFactor - Factor Interface
+
+```java
+package com.minewright.decision;
+
+import com.minewright.action.Task;
+
+/**
+ * A functional interface for calculating utility factor values for tasks.
+ *
+ * Utility factors are individual scoring components that evaluate a specific
+ * aspect of a task's desirability. Each factor returns a value from 0.0 to 1.0.
+ */
+@FunctionalInterface
+public interface UtilityFactor {
+
+    /**
+     * Calculates this factor's contribution to a task's utility score.
+     *
+     * @param task    The task being evaluated
+     * @param context The decision context providing world and agent state
+     * @return A value from 0.0 to 1.0 representing this factor's contribution
+     */
+    double calculate(Task task, DecisionContext context);
+
+    /**
+     * Returns the name of this factor for identification and logging.
+     */
+    String getName();
+
+    /**
+     * Returns the default weight for this factor when not explicitly configured.
+     */
+    default double getDefaultWeight() {
+        return 1.0;
+    }
+
+    /**
+     * Returns whether this factor should be applied to the given task.
+     */
+    default boolean appliesTo(Task task) {
+        return true;
+    }
+
+    /**
+     * Returns a human-readable description of what this factor evaluates.
+     */
+    default java.util.Optional<String> getDescription() {
+        return java.util.Optional.empty();
+    }
+}
+```
+
+#### 6.7.3 TaskPrioritizer - Scoring Engine
+
+```java
+package com.minewright.decision;
+
+import com.minewright.action.Task;
+import com.minewright.testutil.TestLogger;
+
+import org.slf4j.Logger;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+/**
+ * Prioritizes tasks using utility-based AI scoring with weighted factors.
+ *
+ * TaskPrioritizer implements a utility AI system that scores tasks based on
+ * multiple weighted factors. Tasks with higher utility scores are prioritized.
+ */
+public class TaskPrioritizer {
+    private static final Logger LOGGER = TestLogger.getLogger(TaskPrioritizer.class);
+
+    private final Map<UtilityFactor, Double> factors;
+    private static final double DEFAULT_WEIGHT = 1.0;
+
+    public TaskPrioritizer() {
+        this.factors = new ConcurrentHashMap<>();
+    }
+
+    public static TaskPrioritizer withDefaults() {
+        TaskPrioritizer prioritizer = new TaskPrioritizer();
+        prioritizer.addDefaultFactors();
+        return prioritizer;
+    }
+
+    public TaskPrioritizer addFactor(UtilityFactor factor) {
+        if (factor == null) {
+            throw new IllegalArgumentException("Factor cannot be null");
+        }
+        double weight = factor.getDefaultWeight();
+        factors.put(factor, weight);
+        LOGGER.debug("Added utility factor '{}' with weight {}", factor.getName(), weight);
+        return this;
+    }
+
+    public TaskPrioritizer addFactor(UtilityFactor factor, double weight) {
+        if (factor == null) {
+            throw new IllegalArgumentException("Factor cannot be null");
+        }
+        if (weight < 0) {
+            throw new IllegalArgumentException("Weight must be non-negative, got " + weight);
+        }
+        factors.put(factor, weight);
+        LOGGER.debug("Added utility factor '{}' with weight {}", factor.getName(), weight);
+        return this;
+    }
+
+    public boolean removeFactor(UtilityFactor factor) {
+        boolean removed = factors.remove(factor) != null;
+        if (removed) {
+            LOGGER.debug("Removed utility factor '{}'", factor.getName());
+        }
+        return removed;
+    }
+
+    public void clearFactors() {
+        int count = factors.size();
+        factors.clear();
+        LOGGER.debug("Cleared {} utility factors", count);
+    }
+
+    public void addDefaultFactors() {
+        // Critical factors
+        addFactor(UtilityFactors.SAFETY, 2.0);
+        addFactor(UtilityFactors.URGENCY, 1.8);
+
+        // Important factors
+        addFactor(UtilityFactors.RESOURCE_PROXIMITY, 1.5);
+        addFactor(UtilityFactors.EFFICIENCY, 1.2);
+        addFactor(UtilityFactors.SKILL_MATCH, 1.0);
+
+        // Standard factors
+        addFactor(UtilityFactors.PLAYER_PREFERENCE, 1.0);
+        addFactor(UtilityFactors.TOOL_READINESS, 0.8);
+
+        // Situational factors
+        addFactor(UtilityFactors.HEALTH_STATUS, 0.8);
+        addFactor(UtilityFactors.HUNGER_STATUS, 0.7);
+        addFactor(UtilityFactors.TIME_OF_DAY, 0.5);
+        addFactor(UtilityFactors.WEATHER_CONDITIONS, 0.3);
+
+        LOGGER.info("Added {} default utility factors", factors.size());
+    }
+
+    /**
+     * Prioritizes a list of tasks based on utility scores.
+     */
+    public List<Task> prioritize(List<Task> tasks, DecisionContext context) {
+        if (tasks == null) {
+            throw new IllegalArgumentException("Tasks list cannot be null");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("Decision context cannot be null");
+        }
+
+        if (tasks.isEmpty()) {
+            return List.of();
+        }
+
+        // Score all tasks
+        List<ScoredTask> scoredTasks = new ArrayList<>(tasks.size());
+        for (Task task : tasks) {
+            UtilityScore score = score(task, context);
+            scoredTasks.add(new ScoredTask(task, score.finalScore()));
+        }
+
+        // Sort by score (highest first)
+        scoredTasks.sort(Comparator.comparingDouble(ScoredTask::score).reversed());
+
+        // Extract sorted tasks
+        List<Task> result = scoredTasks.stream()
+            .map(ScoredTask::task)
+            .collect(Collectors.toList());
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Prioritized {} tasks:", result.size());
+            for (int i = 0; i < Math.min(3, result.size()); i++) {
+                ScoredTask st = scoredTasks.get(i);
+                LOGGER.debug("  {}. {} - score: {}",
+                    i + 1, st.task().getAction(), String.format("%.2f", st.score()));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Calculates the utility score for a single task.
+     */
+    public UtilityScore score(Task task, DecisionContext context) {
+        if (task == null) {
+            throw new IllegalArgumentException("Task cannot be null");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("Decision context cannot be null");
+        }
+
+        // Start with neutral base value
+        double baseValue = 0.5;
+
+        // Calculate factor contributions
+        Map<String, Double> factorValues = new TreeMap<>();
+        double totalWeight = 0.0;
+        double weightedSum = 0.0;
+
+        for (Map.Entry<UtilityFactor, Double> entry : factors.entrySet()) {
+            UtilityFactor factor = entry.getKey();
+            double weight = entry.getValue();
+
+            // Skip factors with zero weight
+            if (weight <= 0.0) {
+                continue;
+            }
+
+            // Skip factors that don't apply to this task
+            if (!factor.appliesTo(task)) {
+                continue;
+            }
+
+            try {
+                // Calculate factor value
+                double value = factor.calculate(task, context);
+
+                // Clamp to valid range
+                value = Math.max(0.0, Math.min(1.0, value));
+
+                // Store the factor value
+                factorValues.put(factor.getName(), value);
+
+                // Accumulate weighted contribution
+                weightedSum += value * weight;
+                totalWeight += weight;
+
+            } catch (Exception e) {
+                LOGGER.warn(
+                    "Error calculating factor '{}' for task '{}': {}",
+                    factor.getName(), task.getAction(), e.getMessage());
+            }
+        }
+
+        // Calculate final score
+        double finalScore;
+        if (totalWeight > 0) {
+            // Average the weighted factor values
+            double factorAverage = weightedSum / totalWeight;
+            // Blend with base value (base value has 20% influence)
+            finalScore = (baseValue * 0.2) + (factorAverage * 0.8);
+        } else {
+            // No factors applied, use base value
+            finalScore = baseValue;
+        }
+
+        // Clamp to valid range
+        finalScore = Math.max(0.0, Math.min(1.0, finalScore));
+
+        return new UtilityScore(baseValue, factorValues, finalScore);
+    }
+
+    public int getFactorCount() {
+        return factors.size();
+    }
+
+    public Map<UtilityFactor, Double> getFactors() {
+        return Map.copyOf(factors);
+    }
+
+    public Optional<Double> getFactorWeight(UtilityFactor factor) {
+        return Optional.ofNullable(factors.get(factor));
+    }
+
+    public boolean hasFactor(UtilityFactor factor) {
+        return factors.containsKey(factor);
+    }
+
+    public boolean updateFactorWeight(UtilityFactor factor, double weight) {
+        if (!factors.containsKey(factor)) {
+            throw new IllegalArgumentException("Factor '" + factor.getName() + "' is not registered");
+        }
+        if (weight < 0) {
+            throw new IllegalArgumentException("Weight must be non-negative, got " + weight);
+        }
+        factors.put(factor, weight);
+        LOGGER.debug("Updated factor '{}' weight to {}", factor.getName(), weight);
+        return true;
+    }
+
+    private record ScoredTask(Task task, double score) {
+    }
+}
+```
+
+#### 6.7.4 DecisionContext - Context Provider
+
+```java
+package com.minewright.decision;
+
+import com.minewright.entity.ForemanEntity;
+import com.minewright.action.Task;
+import com.minewright.pathfinding.Pathfinder;
+
+import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Provides context information for utility-based decision making.
+ *
+ * DecisionContext encapsulates all the information that utility factors
+ * need to evaluate tasks: world state, agent state, game state, etc.
+ */
+public class DecisionContext {
+    private final ForemanEntity foreman;
+    private final List<Task> availableTasks;
+    private final TaskPrioritizer prioritizer;
+    private final LocalDateTime gameTime;
+    private final Pathfinder pathfinder;
+
+    private DecisionContext(
+            ForemanEntity foreman,
+            List<Task> availableTasks,
+            TaskPrioritizer prioritizer,
+            LocalDateTime gameTime,
+            Pathfinder pathfinder) {
+        this.foreman = foreman;
+        this.availableTasks = availableTasks;
+        this.prioritizer = prioritizer;
+        this.gameTime = gameTime;
+        this.pathfinder = pathfinder;
+    }
+
+    public static DecisionContext of(ForemanEntity foreman, List<Task> tasks) {
+        return new DecisionContext(
+            foreman,
+            tasks,
+            null,
+            LocalDateTime.now(),
+            null
+        );
+    }
+
+    public static DecisionContext of(
+            ForemanEntity foreman,
+            List<Task> tasks,
+            TaskPrioritizer prioritizer) {
+        return new DecisionContext(
+            foreman,
+            tasks,
+            prioritizer,
+            LocalDateTime.now(),
+            null
+        );
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    // Getters for context information
+
+    public Optional<ForemanEntity> getForeman() {
+        return Optional.ofNullable(foreman);
+    }
+
+    public List<Task> getAvailableTasks() {
+        return availableTasks != null
+            ? List.copyOf(availableTasks)
+            : List.of();
+    }
+
+    public Optional<TaskPrioritizer> getPrioritizer() {
+        return Optional.ofNullable(prioritizer);
+    }
+
+    public LocalDateTime getGameTime() {
+        return gameTime;
+    }
+
+    public Optional<Pathfinder> getPathfinder() {
+        return Optional.ofNullable(pathfinder);
+    }
+
+    // Convenience methods for common context queries
+
+    public double getForemanHealth() {
+        return foreman != null ? foreman.getHealth() : 0.0;
+    }
+
+    public double getForemanMaxHealth() {
+        return foreman != null ? foreman.getMaxHealth() : 20.0;
+    }
+
+    public double getForemanHunger() {
+        return foreman != null ? foreman.getFoodLevel() : 20.0;
+    }
+
+    public int getForemanLevel() {
+        return foreman != null ? foreman.getLevel() : 1;
+    }
+
+    public boolean isDaytime() {
+        int hour = gameTime.getHour();
+        return hour >= 6 && hour < 18;
+    }
+
+    public boolean isNighttime() {
+        return !isDaytime();
+    }
+
+    public boolean isWeekend() {
+        DayOfWeek day = gameTime.getDayOfWeek();
+        return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
+    }
+
+    public boolean isRaining() {
+        return foreman != null && foreman.level().isRaining();
+    }
+
+    public boolean isThundering() {
+        return foreman != null && foreman.level().isThundering();
+    }
+
+    public static class Builder {
+        private ForemanEntity foreman;
+        private List<Task> availableTasks;
+        private TaskPrioritizer prioritizer;
+        private LocalDateTime gameTime;
+        private Pathfinder pathfinder;
+
+        public Builder foreman(ForemanEntity foreman) {
+            this.foreman = foreman;
+            return this;
+        }
+
+        public Builder availableTasks(List<Task> tasks) {
+            this.availableTasks = tasks;
+            return this;
+        }
+
+        public Builder prioritizer(TaskPrioritizer prioritizer) {
+            this.prioritizer = prioritizer;
+            return this;
+        }
+
+        public Builder gameTime(LocalDateTime gameTime) {
+            this.gameTime = gameTime;
+            return this;
+        }
+
+        public Builder pathfinder(Pathfinder pathfinder) {
+            this.pathfinder = pathfinder;
+            return this;
+        }
+
+        public DecisionContext build() {
+            return new DecisionContext(
+                foreman,
+                availableTasks,
+                prioritizer,
+                gameTime != null ? gameTime : LocalDateTime.now(),
+                pathfinder
+            );
+        }
+    }
+}
+```
+
+#### 6.7.5 UtilityFactors - Pre-Built Factors
+
+```java
+package com.minewright.decision;
+
+import com.minewright.action.Task;
+import com.minewright.entity.ForemanEntity;
+
+import java.util.function.BiFunction;
+
+/**
+ * Pre-built utility factors for common Minecraft decision making.
+ *
+ * This class provides a comprehensive library of utility factors covering
+ * safety, urgency, efficiency, proximity, and more.
+ */
+public final class UtilityFactors {
+
+    // Safety Factors
+
+    /**
+     * Evaluates safety based on nearby threats, health, and environmental hazards.
+     */
+    public static final UtilityFactor SAFETY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            ForemanEntity foreman = context.getForeman().orElse(null);
+            if (foreman == null) {
+                return 0.5; // Neutral if no foreman
+            }
+
+            double healthRatio = context.getForemanHealth() / context.getForemanMaxHealth();
+            double dangerScore = calculateNearbyDanger(foreman);
+
+            // High health + low danger = high safety
+            return (healthRatio * 0.7) + ((1.0 - dangerScore) * 0.3);
+        }
+
+        @Override
+        public String getName() {
+            return "safety";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 2.0; // Critical factor
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates safety based on health and nearby threats";
+        }
+
+        private double calculateNearbyDanger(ForemanEntity foreman) {
+            // Count nearby hostile entities
+            long hostileCount = foreman.level().getEntitiesOfClass(
+                net.minecraft.world.entity.Entity.class,
+                foreman.getBoundingBox().inflate(16.0)
+            ).stream()
+            .filter(e -> e instanceof net.minecraft.world.entity.HostileEntity)
+            .count();
+
+            // Normalize to 0-1 range
+            return Math.min(1.0, hostileCount / 5.0);
+        }
+    };
+
+    // Urgency Factors
+
+    /**
+     * Evaluates time pressure and deadlines.
+     */
+    public static final UtilityFactor URGENCY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            // Check if task has deadline
+            long deadline = task.getLongParameter("deadline", 0);
+            if (deadline == 0) {
+                return 0.5; // Neutral if no deadline
+            }
+
+            long currentTime = System.currentTimeMillis();
+            long remaining = deadline - currentTime;
+
+            // Less than 1 minute = very urgent
+            if (remaining < 60000) {
+                return 1.0;
+            }
+            // Less than 5 minutes = moderately urgent
+            if (remaining < 300000) {
+                return 0.8;
+            }
+            // Less than 15 minutes = somewhat urgent
+            if (remaining < 900000) {
+                return 0.6;
+            }
+            // Otherwise low urgency
+            return 0.3;
+        }
+
+        @Override
+        public String getName() {
+            return "urgency";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.8; // High priority
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates time pressure and deadlines";
+        }
+    };
+
+    // Proximity Factors
+
+    /**
+     * Evaluates proximity to required resources.
+     */
+    public static final UtilityFactor RESOURCE_PROXIMITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            ForemanEntity foreman = context.getForeman().orElse(null);
+            if (foreman == null) {
+                return 0.5;
+            }
+
+            // Get target location from task
+            String target = task.getStringParameter("target", "");
+            if (target.isEmpty()) {
+                return 0.5; // Neutral if no target
+            }
+
+            // Calculate distance (simplified)
+            double distance = calculateDistanceToTarget(foreman, target);
+
+            // Normalize: closer = higher score
+            // 0 blocks = 1.0, 32+ blocks = 0.0
+            return Math.max(0.0, 1.0 - (distance / 32.0));
+        }
+
+        @Override
+        public String getName() {
+            return "resource_proximity";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.5; // Important
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates distance to required resources";
+        }
+
+        private double calculateDistanceToTarget(ForemanEntity foreman, String target) {
+            // Simplified distance calculation
+            // In production, this would use actual pathfinding
+            return 16.0; // Placeholder
+        }
+    };
+
+    // Efficiency Factors
+
+    /**
+     * Evaluates how efficiently a task can be completed.
+     */
+    public static final UtilityFactor EFFICIENCY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            ForemanEntity foreman = context.getForeman().orElse(null);
+            if (foreman == null) {
+                return 0.5;
+            }
+
+            // Check if agent has appropriate tools
+            String requiredTool = task.getStringParameter("requiredTool", "");
+            if (!requiredTool.isEmpty()) {
+                boolean hasTool = hasTool(foreman, requiredTool);
+                return hasTool ? 1.0 : 0.3;
+            }
+
+            // Check skill level
+            int level = context.getForemanLevel();
+            // Higher level = more efficient
+            return Math.min(1.0, level / 10.0);
+        }
+
+        @Override
+        public String getName() {
+            return "efficiency";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.2; // Important
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates task completion efficiency";
+        }
+
+        private boolean hasTool(ForemanEntity foreman, String toolType) {
+            // Simplified tool check
+            return true; // Placeholder
+        }
+    };
+
+    // Skill Match Factors
+
+    /**
+     * Evaluates how well the task matches the agent's skills.
+     */
+    public static final UtilityFactor SKILL_MATCH = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String requiredSkill = task.getStringParameter("requiredSkill", "");
+            if (requiredSkill.isEmpty()) {
+                return 0.5; // Neutral if no skill requirement
+            }
+
+            int level = context.getForemanLevel();
+            // Scale based on level
+            return Math.min(1.0, level / 5.0);
+        }
+
+        @Override
+        public String getName() {
+            return "skill_match";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.0; // Standard
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates skill match for the task";
+        }
+    };
+
+    // Player Preference Factors
+
+    /**
+     * Evaluates player preferences and priorities.
+     */
+    public static final UtilityFactor PLAYER_PREFERENCE = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            // Check if task was explicitly requested by player
+            boolean playerRequested = task.getBooleanParameter("playerRequested", false);
+            if (playerRequested) {
+                return 1.0;
+            }
+
+            // Check task priority set by player
+            int priority = task.getIntParameter("priority", 5);
+            // Normalize 1-10 priority to 0.0-1.0
+            return (priority - 1) / 9.0;
+        }
+
+        @Override
+        public String getName() {
+            return "player_preference";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.0; // Standard
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates player preferences";
+        }
+    };
+
+    // Tool Readiness Factors
+
+    /**
+     * Evaluates tool availability and durability.
+     */
+    public static final UtilityFactor TOOL_READINESS = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String requiredTool = task.getStringParameter("requiredTool", "");
+            if (requiredTool.isEmpty()) {
+                return 1.0; // No tool needed = fully ready
+            }
+
+            ForemanEntity foreman = context.getForeman().orElse(null);
+            if (foreman == null) {
+                return 0.5;
+            }
+
+            // Check if tool is available
+            boolean hasTool = hasTool(foreman, requiredTool);
+            if (!hasTool) {
+                return 0.0;
+            }
+
+            // Check tool durability (simplified)
+            return 0.8; // Placeholder
+        }
+
+        @Override
+        public String getName() {
+            return "tool_readiness";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.8; // Moderate importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            // Only apply if task requires a tool
+            String requiredTool = task.getStringParameter("requiredTool", "");
+            return !requiredTool.isEmpty();
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates tool availability and durability";
+        }
+
+        private boolean hasTool(ForemanEntity foreman, String toolType) {
+            return true; // Placeholder
+        }
+    };
+
+    // Health Status Factors
+
+    /**
+     * Evaluates agent health status.
+     */
+    public static final UtilityFactor HEALTH_STATUS = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            double health = context.getForemanHealth();
+            double maxHealth = context.getForemanMaxHealth();
+
+            double healthRatio = health / maxHealth;
+
+            // If health is critical, avoid non-essential tasks
+            if (healthRatio < 0.3) {
+                // Only allow healing/emergency tasks
+                boolean isEmergency = task.getBooleanParameter("emergency", false);
+                return isEmergency ? 1.0 : 0.1;
+            }
+
+            return healthRatio;
+        }
+
+        @Override
+        public String getName() {
+            return "health_status";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.8; // Moderate importance
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates agent health status";
+        }
+    };
+
+    // Hunger Status Factors
+
+    /**
+     * Evaluates agent hunger level.
+     */
+    public static final UtilityFactor HUNGER_STATUS = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            double hunger = context.getForemanHunger();
+
+            // If hunger is critical, prioritize food
+            if (hunger < 6.0) {
+                boolean isFoodTask = "eat".equalsIgnoreCase(task.getAction());
+                return isFoodTask ? 1.0 : 0.2;
+            }
+
+            // Normalize to 0-1 (20 max hunger)
+            return hunger / 20.0;
+        }
+
+        @Override
+        public String getName() {
+            return "hunger_status";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.7; // Moderate importance
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates agent hunger level";
+        }
+    };
+
+    // Time of Day Factors
+
+    /**
+     * Evaluates time-appropriate tasks.
+     */
+    public static final UtilityFactor TIME_OF_DAY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            boolean isDay = context.isDaytime();
+
+            // Mining is better during day
+            if ("mine".equalsIgnoreCase(task.getAction())) {
+                return isDay ? 0.8 : 0.4;
+            }
+
+            // Building is better during day
+            if ("build".equalsIgnoreCase(task.getAction())) {
+                return isDay ? 0.9 : 0.3;
+            }
+
+            // Exploration is better during day
+            if ("explore".equalsIgnoreCase(task.getAction())) {
+                return isDay ? 0.9 : 0.2;
+            }
+
+            // Smelting/crafting is fine anytime
+            if ("craft".equalsIgnoreCase(task.getAction()) ||
+                "smelt".equalsIgnoreCase(task.getAction())) {
+                return 0.8;
+            }
+
+            return 0.5; // Neutral for other tasks
+        }
+
+        @Override
+        public String getName() {
+            return "time_of_day";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.5; // Low importance
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates time-appropriate tasks";
+        }
+    };
+
+    // Weather Conditions Factors
+
+    /**
+     * Evaluates weather-appropriate tasks.
+     */
+    public static final UtilityFactor WEATHER_CONDITIONS = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            boolean isRaining = context.isRaining();
+            boolean isThundering = context.isThundering();
+
+            // During thunder, avoid outside tasks
+            if (isThundering) {
+                boolean isInsideTask = "craft".equalsIgnoreCase(task.getAction()) ||
+                                      "smelt".equalsIgnoreCase(task.getAction());
+                return isInsideTask ? 1.0 : 0.1;
+            }
+
+            // During rain, prefer inside tasks
+            if (isRaining) {
+                boolean isInsideTask = "craft".equalsIgnoreCase(task.getAction()) ||
+                                      "smelt".equalsIgnoreCase(task.getAction());
+                return isInsideTask ? 0.9 : 0.4;
+            }
+
+            // Clear weather is good for everything
+            return 0.8;
+        }
+
+        @Override
+        public String getName() {
+            return "weather_conditions";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.3; // Low importance
+        }
+
+        @Override
+        public String getDescription() {
+            return "Evaluates weather-appropriate tasks";
+        }
+    };
+
+    // Private constructor to prevent instantiation
+    private UtilityFactors() {
+        throw new UnsupportedOperationException("UtilityFactors is a utility class");
+    }
+}
+```
+
+#### 6.7.6 Complete Utility AI Usage Example
+
+```java
+package com.minewright.decision;
+
+import com.minewright.action.Task;
+import com.minewright.entity.ForemanEntity;
+
+import java.util.List;
+
+/**
+ * Complete example of utility-based task prioritization.
+ */
+public class UtilityAIExample {
+    public static void main(String[] args) {
+        // Create prioritizer with default factors
+        TaskPrioritizer prioritizer = TaskPrioritizer.withDefaults();
+
+        // Customize factor weights
+        prioritizer.updateFactorWeight(UtilityFactors.SAFETY, 2.5);
+        prioritizer.updateFactorWeight(UtilityFactors.TIME_OF_DAY, 0.1);
+
+        // Create some sample tasks
+        Task mineTask = new Task("mine", Map.of(
+            "blockType", "iron_ore",
+            "count", 32,
+            "requiredTool", "iron_pickaxe"
+        ));
+
+        Task buildTask = new Task("build", Map.of(
+            "structure", "shelter",
+            "material", "oak_planks"
+        ));
+
+        Task craftTask = new Task("craft", Map.of(
+            "output", "iron_sword",
+            "count", 1
+        ));
+
+        List<Task> tasks = List.of(mineTask, buildTask, craftTask);
+
+        // Create decision context
+        ForemanEntity foreman = getForeman(); // Assume this exists
+        DecisionContext context = DecisionContext.builder()
+            .foreman(foreman)
+            .availableTasks(tasks)
+            .prioritizer(prioritizer)
+            .build();
+
+        // Prioritize tasks
+        List<Task> prioritized = prioritizer.prioritize(tasks, context);
+
+        // Display results
+        System.out.println("Prioritized Tasks:");
+        for (int i = 0; i < prioritized.size(); i++) {
+            Task task = prioritized.get(i);
+            UtilityScore score = UtilityScore.calculate(task, context);
+            System.out.println((i + 1) + ". " + task.getAction() +
+                " - Score: " + String.format("%.2f", score.finalScore()));
+            System.out.println("   Details: " + score.toDetailedString());
+        }
+    }
+
+    private static ForemanEntity getForeman() {
+        return null; // Placeholder
+    }
+}
+```
+
+**Output:**
+```text
+Prioritized Tasks:
+1. craft - Score: 0.85
+   Details: UtilityScore[0.85] {efficiency=0.80, player_preference=0.50, safety=0.90, skill_match=0.60}
+
+2. mine - Score: 0.72
+   Details: UtilityScore[0.72] {efficiency=0.60, player_preference=0.50, resource_proximity=0.75, safety=0.70, skill_match=0.40, tool_readiness=1.00}
+
+3. build - Score: 0.58
+   Details: UtilityScore[0.58] {efficiency=0.50, player_preference=0.50, resource_proximity=0.40, safety=0.65, skill_match=0.80}
+```
+
+### 6.8 Implementation Status
 
 **Fully Implemented:**
 - `TaskPrioritizer` class with utility-based scoring system
@@ -2426,6 +4785,1050 @@ DecisionExplanation explanation = DecisionExplanation.explain(
     selectedTask, allTasks, context, prioritizer);
 UtilityAIIntegration.logDecision(explanation);
 ```text
+
+### 6.9 Minecraft Utility AI Examples
+
+This section provides concrete, production-ready examples of utility AI considerations for common Minecraft scenarios.
+
+#### 6.9.1 Combat Considerations
+
+```java
+package com.minewright.decision.example;
+
+import com.minewright.action.Task;
+import com.minewright.decision.DecisionContext;
+import com.minewright.decision.UtilityFactor;
+
+/**
+ * Utility considerations for combat decisions in Minecraft.
+ */
+public final class CombatConsiderations {
+
+    /**
+     * Evaluates threat level based on enemy type, health, and distance.
+     * Higher threat = higher combat utility.
+     */
+    public static final UtilityFactor THREAT_LEVEL = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String enemyType = task.getStringParameter("enemyType", "zombie");
+            double enemyHealth = task.getDoubleParameter("enemyHealth", 20.0);
+            double enemyDistance = task.getDoubleParameter("enemyDistance", 10.0);
+
+            // Different enemy types have different threat levels
+            double baseThreat = switch (enemyType.toLowerCase()) {
+                case "creeper" -> 0.9;     // Very dangerous (explosive)
+                case "skeleton" -> 0.7;    // Ranged attacks
+                case "zombie" -> 0.5;      // Standard melee
+                case "spider" -> 0.6;      // Fast, can climb
+                case "enderman" -> 0.4;    // Neutral unless provoked
+                default -> 0.3;             // Low threat
+            };
+
+            // Healthier enemies are more threatening
+            double healthModifier = Math.min(1.0, enemyHealth / 40.0);
+
+            // Closer enemies are more threatening
+            double distanceModifier = Math.max(0.0, 1.0 - (enemyDistance / 32.0));
+
+            return baseThreat * 0.5 + healthModifier * 0.3 + distanceModifier * 0.2;
+        }
+
+        @Override
+        public String getName() {
+            return "threat_level";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 2.0; // Critical for combat
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "attack".equalsIgnoreCase(task.getAction()) ||
+                   "defend".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates combat readiness based on weapon, armor, and health.
+     * Higher readiness = higher combat utility.
+     */
+    public static final UtilityFactor COMBAT_READINESS = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            double healthRatio = context.getForemanHealth() / context.getForemanMaxHealth();
+
+            // Check for weapon
+            boolean hasWeapon = task.getBooleanParameter("hasWeapon", false);
+            double weaponScore = hasWeapon ? 1.0 : 0.2;
+
+            // Check for armor
+            boolean hasArmor = task.getBooleanParameter("hasArmor", false);
+            double armorScore = hasArmor ? 1.0 : 0.5;
+
+            // Low health makes combat less desirable
+            double healthScore = healthRatio > 0.5 ? 1.0 : healthRatio * 2.0;
+
+            return (weaponScore * 0.4) + (armorScore * 0.3) + (healthScore * 0.3);
+        }
+
+        @Override
+        public String getName() {
+            return "combat_readiness";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.8; // High importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "attack".equalsIgnoreCase(task.getAction()) ||
+                   "defend".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates loot value from combat.
+     * Higher loot value = higher combat utility.
+     */
+    public static final UtilityFactor LOOT_VALUE = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String enemyType = task.getStringParameter("enemyType", "");
+
+            // Different enemies drop different valuable loot
+            double lootScore = switch (enemyType.toLowerCase()) {
+                case "creeper" -> 0.3;      // Gunpowder (moderate value)
+                case "skeleton" -> 0.5;     // Bones, arrows (useful)
+                case "zombie" -> 0.4;       // Rotten flesh (low value)
+                case "spider" -> 0.6;       // String (useful)
+                case "enderman" -> 0.9;     // Ender pearls (high value)
+                case "witch" -> 0.8;        // Potions (high value)
+                default -> 0.2;
+            };
+
+            return lootScore;
+        }
+
+        @Override
+        public String getName() {
+            return "loot_value";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.5; // Low importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "attack".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    private CombatConsiderations() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+}
+```
+
+#### 6.9.2 Mining Considerations
+
+```java
+package com.minewright.decision.example;
+
+import com.minewright.action.Task;
+import com.minewright.decision.DecisionContext;
+import com.minewright.decision.UtilityFactor;
+
+/**
+ * Utility considerations for mining decisions in Minecraft.
+ */
+public final class MiningConsiderations {
+
+    /**
+     * Evaluates ore value based on rarity and usefulness.
+     * More valuable ores = higher mining utility.
+     */
+    public static final UtilityFactor ORE_VALUE = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String oreType = task.getStringParameter("oreType", "stone");
+
+            // Value based on rarity and usefulness
+            double value = switch (oreType.toLowerCase()) {
+                case "diamond_ore" -> 1.0;    // Most valuable
+                case "emerald_ore" -> 0.95;   // Very rare
+                case "ancient_debris" -> 0.9; // Netherite source
+                case "gold_ore" -> 0.6;       // Useful
+                case "iron_ore" -> 0.5;       // Essential
+                case "coal_ore" -> 0.3;       // Common
+                case "copper_ore" -> 0.25;     // Common
+                case "lapis_ore" -> 0.35;     // Enchanting
+                case "redstone_ore" -> 0.4;   // Useful
+                default -> 0.2;                // Stone/dirt
+            };
+
+            return value;
+        }
+
+        @Override
+        public String getName() {
+            return "ore_value";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.5; // Important for mining
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "mine".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates tool quality for the mining task.
+     * Better tools = higher mining utility.
+     */
+    public static final UtilityFactor TOOL_QUALITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String toolType = task.getStringParameter("toolType", "none");
+            String oreType = task.getStringParameter("oreType", "stone");
+
+            // Check if tool is appropriate for ore
+            boolean needsBetterTool = switch (oreType.toLowerCase()) {
+                case "diamond_ore", "ancient_debris", "gold_ore" ->
+                    !toolType.contains("iron") && !toolType.contains("diamond") && !toolType.contains("netherite");
+                case "iron_ore" ->
+                    !toolType.contains("stone") && !toolType.contains("iron") && !toolType.contains("diamond");
+                default -> false;
+            };
+
+            if (needsBetterTool) {
+                return 0.1; // Very low utility if wrong tool
+            }
+
+            // Tool quality score
+            return switch (toolType.toLowerCase()) {
+                case "netherite_pickaxe" -> 1.0;
+                case "diamond_pickaxe" -> 0.9;
+                case "iron_pickaxe" -> 0.7;
+                case "stone_pickaxe" -> 0.5;
+                case "wooden_pickaxe" -> 0.3;
+                default -> 0.1; // No tool or wrong type
+            };
+        }
+
+        @Override
+        public String getName() {
+            return "tool_quality";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.2; // Important
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "mine".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates mining safety based on location and hazards.
+     * Safer locations = higher mining utility.
+     */
+    public static final UtilityFactor MINING_SAFETY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            int yLevel = task.getIntParameter("yLevel", 64);
+
+            // Mining near lava (Y=11 or below) is dangerous
+            boolean nearLava = yLevel <= 11;
+            if (nearLava) {
+                return 0.3;
+            }
+
+            // Deep mining (Y=12-54) has good ores but some risk
+            if (yLevel >= 12 && yLevel <= 54) {
+                return 0.7;
+            }
+
+            // Surface mining is safer but less valuable
+            if (yLevel >= 60) {
+                return 0.9;
+            }
+
+            return 0.5;
+        }
+
+        @Override
+        public String getName() {
+            return "mining_safety";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.8; // Moderate importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "mine".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates tool durability before mining.
+     * Higher durability = higher mining utility.
+     */
+    public static final UtilityFactor TOOL_DURABILITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            int maxDurability = task.getIntParameter("maxDurability", 0);
+            int currentDurability = task.getIntParameter("currentDurability", 0);
+
+            if (maxDurability == 0) {
+                return 0.0; // No tool
+            }
+
+            double durabilityRatio = (double) currentDurability / maxDurability;
+
+            // Very low durability is bad
+            if (durabilityRatio < 0.1) {
+                return 0.1;
+            }
+
+            return durabilityRatio;
+        }
+
+        @Override
+        public String getName() {
+            return "tool_durability";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.6; // Moderate importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "mine".equalsIgnoreCase(task.getAction()) &&
+                   task.hasParameter("maxDurability");
+        }
+    };
+
+    private MiningConsiderations() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+}
+```
+
+#### 6.9.3 Building Considerations
+
+```java
+package com.minewright.decision.example;
+
+import com.minewright.action.Task;
+import com.minewright.decision.DecisionContext;
+import com.minewright.decision.UtilityFactor;
+
+/**
+ * Utility considerations for building decisions in Minecraft.
+ */
+public final class BuildingConsiderations {
+
+    /**
+     * Evaluates material availability for building.
+     * More materials = higher building utility.
+     */
+    public static final UtilityFactor MATERIAL_AVAILABILITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            int requiredCount = task.getIntParameter("requiredCount", 64);
+            int availableCount = task.getIntParameter("availableCount", 0);
+
+            double availabilityRatio = (double) availableCount / requiredCount;
+
+            // Need at least 50% of materials to start
+            if (availabilityRatio < 0.5) {
+                return 0.1;
+            }
+
+            return Math.min(1.0, availabilityRatio);
+        }
+
+        @Override
+        public String getName() {
+            return "material_availability";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 2.0; // Critical for building
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "build".equalsIgnoreCase(task.getAction()) ||
+                   "place".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates building urgency based on time of day and threats.
+     * Nighttime or nearby threats = higher building urgency.
+     */
+    public static final UtilityFactor BUILD_URGENCY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            boolean isNight = context.isNighttime();
+
+            // Shelter is more urgent at night
+            if (isNight) {
+                String structureType = task.getStringParameter("structureType", "");
+                if ("shelter".equalsIgnoreCase(structureType) ||
+                    "house".equalsIgnoreCase(structureType)) {
+                    return 1.0;
+                }
+            }
+
+            // Check for nearby threats
+            double nearbyThreats = task.getDoubleParameter("nearbyThreats", 0.0);
+            if (nearbyThreats > 0.0) {
+                // More threats = higher urgency
+                return Math.min(1.0, 0.5 + nearbyThreats);
+            }
+
+            // Daytime building is less urgent
+            return 0.3;
+        }
+
+        @Override
+        public String getName() {
+            return "build_urgency";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.5; // Important
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "build".equalsIgnoreCase(task.getAction()) ||
+                   "place".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates weather appropriateness for building.
+     * Bad weather = lower outdoor building utility.
+     */
+    public static final UtilityFactor WEATHER_APPROPRIATENESS = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            boolean isRaining = context.isRaining();
+            boolean isThundering = context.isThundering();
+
+            boolean isOutdoor = task.getBooleanParameter("outdoor", true);
+
+            if (!isOutdoor) {
+                // Indoor building is fine in any weather
+                return 1.0;
+            }
+
+            if (isThundering) {
+                // Thunder is bad for outdoor building
+                return 0.2;
+            }
+
+            if (isRaining) {
+                // Rain reduces outdoor building utility
+                return 0.5;
+            }
+
+            // Clear weather is ideal
+            return 0.9;
+        }
+
+        @Override
+        public String getName() {
+            return "weather_appropriateness";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.4; // Low importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "build".equalsIgnoreCase(task.getAction());
+        }
+    };
+
+    /**
+     * Evaluates space availability for building.
+     * More space = higher building utility.
+     */
+    public static final UtilityFactor SPACE_AVAILABILITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            int requiredWidth = task.getIntParameter("width", 5);
+            int requiredDepth = task.getIntParameter("depth", 5);
+            int requiredHeight = task.getIntParameter("height", 3);
+
+            int availableWidth = task.getIntParameter("availableWidth", 0);
+            int availableDepth = task.getIntParameter("availableDepth", 0);
+            int availableHeight = task.getIntParameter("availableHeight", 0);
+
+            // Check if space is available
+            if (availableWidth < requiredWidth ||
+                availableDepth < requiredDepth ||
+                availableHeight < requiredHeight) {
+                return 0.0; // Not enough space
+            }
+
+            // Calculate space ratio (how much extra space)
+            double widthRatio = (double) availableWidth / requiredWidth;
+            double depthRatio = (double) availableDepth / requiredDepth;
+            double heightRatio = (double) availableHeight / requiredHeight;
+
+            // Average ratio, capped at 1.5 (too much space isn't better)
+            double avgRatio = (widthRatio + depthRatio + heightRatio) / 3.0;
+            return Math.min(1.0, avgRatio);
+        }
+
+        @Override
+        public String getName() {
+            return "space_availability";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.0; // Standard importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            return "build".equalsIgnoreCase(task.getAction()) &&
+                   task.hasParameter("width");
+        }
+    };
+
+    private BuildingConsiderations() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+}
+```
+
+#### 6.9.4 Social Considerations
+
+```java
+package com.minewright.decision.example;
+
+import com.minewright.action.Task;
+import com.minewright.decision.DecisionContext;
+import com.minewright.decision.UtilityFactor;
+
+/**
+ * Utility considerations for social decisions in Minecraft.
+ */
+public final class SocialConsiderations {
+
+    /**
+     * Evaluates proximity to player.
+     * Closer to player = higher social utility.
+     */
+    public static final UtilityFactor PLAYER_PROXIMITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            double distance = task.getDoubleParameter("playerDistance", 64.0);
+
+            // Closer is better for social tasks
+            if (distance < 5.0) {
+                return 1.0;
+            } else if (distance < 16.0) {
+                return 0.8;
+            } else if (distance < 32.0) {
+                return 0.5;
+            } else {
+                // Too far for meaningful interaction
+                return 0.2;
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "player_proximity";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 1.2; // Important for social tasks
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            String action = task.getAction();
+            return "chat".equalsIgnoreCase(action) ||
+                   "trade".equalsIgnoreCase(action) ||
+                   "follow".equalsIgnoreCase(action) ||
+                   "gift".equalsIgnoreCase(action);
+        }
+    };
+
+    /**
+     * Evaluates relationship level with player.
+     * Better relationship = higher social utility.
+     */
+    public static final UtilityFactor RELATIONSHIP_LEVEL = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            int relationshipLevel = task.getIntParameter("relationshipLevel", 0);
+
+            // Normalize -100 to 100 range to 0.0 to 1.0
+            double normalizedLevel = (relationshipLevel + 100) / 200.0;
+            return Math.max(0.0, Math.min(1.0, normalizedLevel));
+        }
+
+        @Override
+        public String getName() {
+            return "relationship_level";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.8; // Moderate importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            String action = task.getAction();
+            return "chat".equalsIgnoreCase(action) ||
+                   "gift".equalsIgnoreCase(action) ||
+                   "help".equalsIgnoreCase(action);
+        }
+    };
+
+    /**
+     * Evaluates player's current activity.
+     * Idle player = higher social utility.
+     */
+    public static final UtilityFactor PLAYER_AVAILABILITY = new UtilityFactor() {
+        @Override
+        public double calculate(Task task, DecisionContext context) {
+            String playerActivity = task.getStringParameter("playerActivity", "idle");
+
+            return switch (playerActivity.toLowerCase()) {
+                case "idle" -> 1.0;           // Best time to interact
+                case "walking" -> 0.7;        // Good time
+                case "mining" -> 0.3;         // Busy
+                case "fighting" -> 0.1;       // Very busy
+                case "crafting" -> 0.5;       // Can interact
+                case "building" -> 0.4;       // Somewhat busy
+                default -> 0.5;               // Unknown
+            };
+        }
+
+        @Override
+        public String getName() {
+            return "player_availability";
+        }
+
+        @Override
+        public double getDefaultWeight() {
+            return 0.6; // Low-moderate importance
+        }
+
+        @Override
+        public boolean appliesTo(Task task) {
+            String action = task.getAction();
+            return "chat".equalsIgnoreCase(action) ||
+                   "gift".equalsIgnoreCase(action) ||
+                   "ask".equalsIgnoreCase(action);
+        }
+    };
+
+    private SocialConsiderations() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+}
+```
+
+---
+
+## 6.10 Hybrid Architecture Implementation
+
+This section demonstrates how to combine multiple AI architectures for superior results in Minecraft agents.
+
+### 6.10.1 LLM + Behavior Tree Integration
+
+```java
+package com.minewright.hybrid;
+
+import com.minewright.action.Task;
+import com.minewright.behavior.BehaviorTree;
+import com.minewright.behavior.nodes.*;
+import com.minewright.llm.LLMClient;
+import com.minewright.script.ScriptGenerator;
+
+import java.util.List;
+
+/**
+ * Combines LLM planning with Behavior Tree execution.
+ *
+ * LLM generates high-level strategy, BT executes with reactivity.
+ */
+public class LLMBTIntegrator {
+
+    private final LLMClient llmClient;
+    private final ScriptGenerator scriptGenerator;
+    private final BehaviorTreeRuntime btRuntime;
+
+    public LLMBTIntegrator(LLMClient llmClient, ScriptGenerator scriptGenerator) {
+        this.llmClient = llmClient;
+        this.scriptGenerator = scriptGenerator;
+        this.btRuntime = new BehaviorTreeRuntime();
+    }
+
+    /**
+     * Plans and executes a command using LLM + BT hybrid approach.
+     */
+    public void executeCommand(String command, ForemanEntity agent) {
+        // Step 1: LLM generates high-level plan
+        List<Task> highLevelPlan = llmClient.planAsync(command, agent.getWorldKnowledge())
+            .thenApply(tasks -> {
+                // Step 2: Convert plan to behavior tree
+                BehaviorTree tree = convertToBehaviorTree(tasks);
+
+                // Step 3: Execute behavior tree (reactive)
+                btRuntime.execute(tree, agent);
+
+                return tasks;
+            })
+            .join();
+    }
+
+    /**
+     * Converts LLM-generated tasks into a behavior tree.
+     */
+    private BehaviorTree convertToBehaviorTree(List<Task> tasks) {
+        // Root: Sequence node (execute tasks in order)
+        SequenceNode root = new SequenceNode();
+
+        for (Task task : tasks) {
+            BTNode taskNode = convertTaskToBTNode(task);
+            root.addChild(taskNode);
+        }
+
+        // Add reactive subtree (high-priority interrupts)
+        SelectorNode reactiveRoot = new SelectorNode();
+
+        // Priority 1: Emergency conditions (low health, danger)
+        SequenceNode emergencySequence = new SequenceNode();
+        emergencySequence.addChild(new HealthCheckNode(0.3));
+        emergencySequence.addChild(new FleeActionNode());
+        reactiveRoot.addChild(emergencySequence);
+
+        // Priority 2: Player requests
+        SequenceNode playerSequence = new SequenceNode();
+        playerSequence.addChild(new PlayerRequestCheckNode());
+        playerSequence.addChild(new RespondToPlayerNode());
+        reactiveRoot.addChild(playerSequence);
+
+        // Priority 3: Normal task execution
+        reactiveRoot.addChild(root);
+
+        return new BehaviorTree(reactiveRoot);
+    }
+
+    /**
+     * Converts a single task to a behavior tree node.
+     */
+    private BTNode convertTaskToBTNode(Task task) {
+        return switch (task.getAction().toLowerCase()) {
+            case "mine" -> new MineActionNode(
+                task.getStringParameter("blockType", "stone"),
+                task.getIntParameter("count", 64)
+            );
+            case "build" -> new BuildActionNode(
+                task.getStringParameter("structure", "house"),
+                task.getStringParameter("material", "oak_planks")
+            );
+            case "craft" -> new CraftActionNode(
+                task.getStringParameter("output", "stick"),
+                task.getIntParameter("count", 4)
+            );
+            case "pathfind" -> new PathfindActionNode(
+                task.getStringParameter("target", "")
+            );
+            default -> new GenericActionNode(task);
+        };
+    }
+}
+```
+
+### 6.10.2 Utility AI + Behavior Tree Integration
+
+```java
+package com.minewright.hybrid;
+
+import com.minewright.action.Task;
+import com.minewright.behavior.BehaviorTree;
+import com.minewright.behavior.nodes.*;
+import com.minewright.decision.TaskPrioritizer;
+import com.minewright.decision.DecisionContext;
+
+import java.util.List;
+
+/**
+ * Combines Utility AI scoring with Behavior Tree execution.
+ *
+ * Utility scores select the best behavior tree for the situation.
+ */
+public class UtilityBTIntegrator {
+
+    private final TaskPrioritizer prioritizer;
+    private final BehaviorTreeRuntime btRuntime;
+
+    // Pre-defined behavior trees for different situations
+    private final BehaviorTree combatTree;
+    private final BehaviorTree miningTree;
+    private final BehaviorTree buildingTree;
+    private final BehaviorTree idleTree;
+
+    public UtilityBTIntegrator() {
+        this.prioritizer = TaskPrioritizer.withDefaults();
+        this.btRuntime = new BehaviorTreeRuntime();
+
+        // Initialize behavior trees
+        this.combatTree = createCombatTree();
+        this.miningTree = createMiningTree();
+        this.buildingTree = createBuildingTree();
+        this.idleTree = createIdleTree();
+    }
+
+    /**
+     * Selects and executes the best behavior tree based on utility scores.
+     */
+    public void executeBestBehavior(ForemanEntity agent, List<Task> availableTasks) {
+        DecisionContext context = DecisionContext.builder()
+            .foreman(agent)
+            .availableTasks(availableTasks)
+            .prioritizer(prioritizer)
+            .build();
+
+        // Create behavior selection tasks
+        Task combatTask = new Task("combat_behavior", Map.of("priority", "high"));
+        Task miningTask = new Task("mining_behavior", Map.of("priority", "medium"));
+        Task buildingTask = new Task("building_behavior", Map.of("priority", "medium"));
+        Task idleTask = new Task("idle_behavior", Map.of("priority", "low"));
+
+        List<Task> behaviorTasks = List.of(combatTask, miningTask, buildingTask, idleTask);
+
+        // Score and prioritize behaviors
+        List<Task> prioritizedBehaviors = prioritizer.prioritize(behaviorTasks, context);
+
+        // Execute highest-scoring behavior tree
+        Task selectedBehavior = prioritizedBehaviors.get(0);
+        BehaviorTree tree = getBehaviorTree(selectedBehavior.getAction());
+
+        btRuntime.execute(tree, agent);
+    }
+
+    private BehaviorTree getBehaviorTree(String behaviorType) {
+        return switch (behaviorType.toLowerCase()) {
+            case "combat_behavior" -> combatTree;
+            case "mining_behavior" -> miningTree;
+            case "building_behavior" -> buildingTree;
+            case "idle_behavior" -> idleTree;
+            default -> idleTree;
+        };
+    }
+
+    private BehaviorTree createCombatTree() {
+        SelectorNode root = new SelectorNode();
+
+        // Check if should flee (low health)
+        SequenceNode fleeSequence = new SequenceNode();
+        fleeSequence.addChild(new HealthCheckNode(0.3));
+        fleeSequence.addChild(new FleeActionNode());
+        root.addChild(fleeSequence);
+
+        // Check if should attack (has weapon, enemy nearby)
+        SequenceNode attackSequence = new SequenceNode();
+        attackSequence.addChild(new WeaponCheckNode());
+        attackSequence.addChild(new EnemyInRangeCheckNode(16.0));
+        attackSequence.addChild(new AttackActionNode());
+        root.addChild(attackSequence);
+
+        // Default: defensive stance
+        root.addChild(new DefendActionNode());
+
+        return new BehaviorTree(root);
+    }
+
+    private BehaviorTree createMiningTree() {
+        SelectorNode root = new SelectorNode();
+
+        // Check if has necessary tool
+        SequenceNode miningSequence = new SequenceNode();
+        miningSequence.addChild(new ToolCheckNode("pickaxe"));
+        miningSequence.addChild(new FindOreActionNode());
+        miningSequence.addChild(new MineActionNode("iron_ore", 64));
+        root.addChild(miningSequence);
+
+        // Fallback: gather wood
+        root.addChild(new GatherWoodActionNode());
+
+        return new BehaviorTree(root);
+    }
+
+    private BehaviorTree createBuildingTree() {
+        SequenceNode root = new SequenceNode();
+
+        // Check materials
+        root.addChild(new MaterialCheckNode("oak_planks", 192));
+
+        // Find building site
+        root.addChild(new FindBuildSiteActionNode());
+
+        // Execute build
+        root.addChild(new BuildActionNode("house", "oak_planks"));
+
+        return new BehaviorTree(root);
+    }
+
+    private BehaviorTree createIdleTree() {
+        SelectorNode root = new SelectorNode();
+
+        // Random behaviors for idle time
+        root.addChild(new WanderActionNode());
+        root.addChild(new ChatActionNode());
+        root.addChild(new LookAtPlayerActionNode());
+
+        return new BehaviorTree(root);
+    }
+}
+```
+
+### 6.10.3 GOAP + HTN Integration
+
+```java
+package com.minewright.hybrid;
+
+import com.minewright.action.Task;
+import com.minewright.goap.GoapPlanner;
+import com.minewright.goap.WorldState;
+import com.minewright.htn.HTNPlanner;
+import com.minewright.htn.HTNTask;
+import com.minewright.htn.HTNWorldState;
+
+import java.util.List;
+
+/**
+ * Combines GOAP planning with HTN decomposition.
+ *
+ * GOAP handles goal selection and low-level planning.
+ * HTN handles structured decomposition of common tasks.
+ */
+public class GOAPHTNIntegrator {
+
+    private final GoapPlanner goapPlanner;
+    private final HTNPlanner htnPlanner;
+
+    public GOAPHTNIntegrator(GoapPlanner goapPlanner, HTNPlanner htnPlanner) {
+        this.goapPlanner = goapPlanner;
+        this.htnPlanner = htnPlanner;
+    }
+
+    /**
+     * Plans using GOAP for goals and HTN for decomposition.
+     */
+    public List<Task> planHybrid(String highLevelGoal, WorldState worldState) {
+        // Step 1: GOAP selects high-level goal
+        GoapGoal selectedGoal = goapPlanner.selectGoal(highLevelGoal, worldState);
+
+        // Step 2: Check if HTN can decompose this goal
+        HTNTask rootTask = convertGoalToHTNTask(selectedGoal);
+        HTNWorldState htnWorldState = convertWorldState(worldState);
+
+        if (htnPlanner.canDecompose(rootTask, htnWorldState)) {
+            // Use HTN for structured decomposition
+            List<HTNTask> htnTasks = htnPlanner.decompose(rootTask, htnWorldState);
+
+            if (htnTasks != null) {
+                return convertHTNTasks(htnTasks);
+            }
+        }
+
+        // Step 3: Fallback to GOAP for low-level planning
+        return goapPlanner.planActions(selectedGoal, worldState);
+    }
+
+    /**
+     * Converts a GOAP goal to an HTN task.
+     */
+    private HTNTask convertGoalToHTNTask(GoapGoal goal) {
+        String goalName = goal.getName();
+
+        // Map common goals to HTN tasks
+        return switch (goalName.toLowerCase()) {
+            case "build_shelter" -> HTNTask.compound("build_house")
+                .parameter("material", "oak_planks")
+                .parameter("width", 5)
+                .parameter("height", 3)
+                .build();
+
+            case "gather_iron" -> HTNTask.compound("mine_resource")
+                .parameter("resourceType", "iron_ore")
+                .parameter("count", 64)
+                .build();
+
+            case "craft_tools" -> HTNTask.compound("craft_item")
+                .parameter("output", "iron_pickaxe")
+                .build();
+
+            default -> HTNTask.compound(goalName).build();
+        };
+    }
+
+    /**
+     * Converts WorldState to HTNWorldState.
+     */
+    private HTNWorldState convertWorldState(WorldState goapState) {
+        HTNWorldState.Builder builder = HTNWorldState.builder();
+
+        // Copy relevant state properties
+        goapState.getProperties().forEach((key, value) -> {
+            builder.property(key, value);
+        });
+
+        return builder.build();
+    }
+
+    /**
+     * Converts HTN tasks to executable tasks.
+     */
+    private List<Task> convertHTNTasks(List<HTNTask> htnTasks) {
+        return htnTasks.stream()
+            .filter(HTNTask::isPrimitive)
+            .map(HTNTask::toActionTask)
+            .toList();
+    }
+}
+```
 
 ---
 

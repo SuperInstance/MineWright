@@ -1938,6 +1938,1490 @@ int life = blackboard.get("life", Integer.class);  // 20
 int health = blackboard.get("health", Integer.class);  // 20
 ```
 
+### 3.6 Minecraft-Specific BT Nodes
+
+This section provides complete, production-ready behavior tree nodes specifically designed for Minecraft AI agents. These nodes integrate with Minecraft's block system, inventory, pathfinding, and combat mechanics.
+
+#### FindNearestBlock Node
+
+```java
+/**
+ * Action node that finds the nearest block of a specified type.
+ * Searches outward from the agent's position in expanding spheres.
+ */
+public class FindNearestBlockNode implements BTNode {
+    private final String id;
+    private final String name;
+    private final Block blockType;
+    private final int searchRadius;
+    private BlockPos foundBlock = null;
+    private boolean isComplete = false;
+
+    /**
+     * @param id Unique node identifier
+     * @param name Display name for debugging
+     * @param blockType The block type to search for (e.g., Blocks.DIAMOND_ORE)
+     * @param searchRadius Maximum search distance in blocks
+     */
+    public FindNearestBlockNode(String id, String name, Block blockType, int searchRadius) {
+        this.id = id;
+        this.name = name;
+        this.blockType = blockType;
+        this.searchRadius = searchRadius;
+    }
+
+    @Override
+    public NodeStatus tick(ForemanEntity foreman, Blackboard blackboard) {
+        if (isComplete) {
+            return foundBlock != null ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+        }
+
+        Level level = foreman.level();
+        BlockPos agentPos = foreman.blockPosition();
+        BlockPos nearestBlock = null;
+        double nearestDistance = Double.MAX_VALUE;
+
+        // Search in expanding spheres from agent position
+        for (int radius = 1; radius <= searchRadius; radius++) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        if (Math.abs(x) != radius && Math.abs(y) != radius && Math.abs(z) != radius) {
+                            continue; // Skip interior points (only check shell)
+                        }
+
+                        BlockPos checkPos = agentPos.offset(x, y, z);
+
+                        // Check if position is valid and in range
+                        if (!level.isInWorldBounds(checkPos)) {
+                            continue;
+                        }
+
+                        // Check block type
+                        BlockState blockState = level.getBlockState(checkPos);
+                        if (blockState.is(blockType)) {
+                            double distance = agentPos.distSqr(checkPos);
+                            if (distance < nearestDistance) {
+                                nearestDistance = distance;
+                                nearestBlock = checkPos;
+                            }
+                        }
+                    }
+                }
+
+                // Early exit if found block at this radius
+                if (nearestBlock != null) {
+                    break;
+                }
+            }
+
+            if (nearestBlock != null) {
+                break;
+            }
+        }
+
+        this.foundBlock = nearestBlock;
+        this.isComplete = true;
+
+        // Store result in blackboard for other nodes to use
+        if (foundBlock != null) {
+            blackboard.set("target_block", foundBlock);
+            LOGGER.debug("[{}] Found {} at {}",
+                foreman.getEntityName(), blockType, foundBlock);
+            return NodeStatus.SUCCESS;
+        }
+
+        LOGGER.debug("[{}] No {} found within {} blocks",
+            foreman.getEntityName(), blockType, searchRadius);
+        return NodeStatus.FAILURE;
+    }
+
+    @Override
+    public void reset() {
+        foundBlock = null;
+        isComplete = false;
+    }
+
+    @Override
+    public String getId() { return id; }
+
+    @Override
+    public String getName() { return name; }
+
+    /**
+     * Gets the block position that was found.
+     * @return Block position, or null if search hasn't completed or failed
+     */
+    public BlockPos getFoundBlock() {
+        return foundBlock;
+    }
+}
+```
+
+#### MoveToPosition Node
+
+```java
+/**
+ * Action node that moves the agent to a target position using A* pathfinding.
+ * Integrates with Minecraft's pathfinding navigation system.
+ */
+public class MoveToPositionNode implements BTNode {
+    private final String id;
+    private final String name;
+    private final String blackboardKey;
+    private final double reachDistance;
+    private final int timeoutTicks;
+
+    private Path currentPath = null;
+    private int ticksElapsed = 0;
+    private boolean isComplete = false;
+    private NodeStatus finalStatus = NodeStatus.FAILURE;
+
+    /**
+     * @param id Unique node identifier
+     * @param name Display name for debugging
+     * @param blackboardKey Blackboard key containing target BlockPos
+     * @param reachDistance Distance in blocks to consider "arrived" (default: 1.5)
+     * @param timeoutTicks Maximum ticks to attempt pathfinding (default: 600 = 30 seconds)
+     */
+    public MoveToPositionNode(String id, String name, String blackboardKey,
+                              double reachDistance, int timeoutTicks) {
+        this.id = id;
+        this.name = name;
+        this.blackboardKey = blackboardKey;
+        this.reachDistance = reachDistance;
+        this.timeoutTicks = timeoutTicks;
+    }
+
+    public MoveToPositionNode(String id, String name, String blackboardKey) {
+        this(id, name, blackboardKey, 1.5, 600);
+    }
+
+    @Override
+    public NodeStatus tick(ForemanEntity foreman, Blackboard blackboard) {
+        if (isComplete) {
+            return finalStatus;
+        }
+
+        // Get target position from blackboard
+        BlockPos targetPos = blackboard.get(blackboardKey, BlockPos.class);
+        if (targetPos == null) {
+            LOGGER.warn("[{}] MoveToPosition: Target position not found in blackboard key '{}'",
+                foreman.getEntityName(), blackboardKey);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        Vec3 agentPos = foreman.position();
+        Vec3 targetVec = new Vec3(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5);
+        double distanceToTarget = agentPos.distanceTo(targetVec);
+
+        // Check if already at target
+        if (distanceToTarget <= reachDistance) {
+            LOGGER.debug("[{}] Arrived at target {}", foreman.getEntityName(), targetPos);
+            finalStatus = NodeStatus.SUCCESS;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Check timeout
+        ticksElapsed++;
+        if (ticksElapsed > timeoutTicks) {
+            LOGGER.warn("[{}] MoveToPosition: Timeout after {} ticks, distance to target: {}",
+                foreman.getEntityName(), timeoutTicks, distanceToTarget);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Generate or update path if needed
+        if (currentPath == null || !isPathValid(currentPath, foreman)) {
+            currentPath = generatePath(foreman, targetPos);
+            if (currentPath == null) {
+                LOGGER.warn("[{}] Failed to generate path to {}",
+                    foreman.getEntityName(), targetPos);
+                finalStatus = NodeStatus.FAILURE;
+                isComplete = true;
+                return finalStatus;
+            }
+        }
+
+        // Follow path
+        PathNavigation navigation = foreman.getNavigation();
+        navigation.moveTo(currentPath, 1.0); // Speed multiplier
+
+        // Check if navigation has reached the target
+        if (navigation.isDone()) {
+            LOGGER.debug("[{}] Navigation complete to {}", foreman.getEntityName(), targetPos);
+            finalStatus = NodeStatus.SUCCESS;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        return NodeStatus.RUNNING;
+    }
+
+    private Path generatePath(ForemanEntity foreman, BlockPos target) {
+        PathNavigation navigation = foreman.getNavigation();
+        return navigation.createPath(target, 0); // 0 = no path distance limit
+    }
+
+    private boolean isPathValid(Path path, ForemanEntity foreman) {
+        if (path == null || path.isDone()) {
+            return false;
+        }
+
+        // Check if path endpoint matches current target
+        BlockPos target = foreman.level().getBlockState(
+            new BlockPos(path.getTarget().x, path.getTarget().y, path.getTarget().z)
+        ).getBlock() == null ? null :
+        new BlockPos(path.getTarget().x, path.getTarget().y, path.getTarget().z);
+
+        return target != null;
+    }
+
+    @Override
+    public void reset() {
+        currentPath = null;
+        ticksElapsed = 0;
+        isComplete = false;
+        finalStatus = NodeStatus.FAILURE;
+    }
+
+    @Override
+    public String getId() { return id; }
+
+    @Override
+    public String getName() { return name; }
+}
+```
+
+#### MineBlock Node
+
+```java
+/**
+ * Action node that mines a specific block.
+ * Handles tool selection, block breaking, and item collection.
+ */
+public class MineBlockNode implements BTNode {
+    private final String id;
+    private final String name;
+    private final String blackboardKey;
+
+    private boolean isComplete = false;
+    private NodeStatus finalStatus = NodeStatus.FAILURE;
+    private int breakProgress = 0;
+    private BlockPos targetBlock = null;
+
+    public MineBlockNode(String id, String name, String blackboardKey) {
+        this.id = id;
+        this.name = name;
+        this.blackboardKey = blackboardKey;
+    }
+
+    @Override
+    public NodeStatus tick(ForemanEntity foreman, Blackboard blackboard) {
+        if (isComplete) {
+            return finalStatus;
+        }
+
+        // Get target block from blackboard
+        if (targetBlock == null) {
+            targetBlock = blackboard.get(blackboardKey, BlockPos.class);
+        }
+
+        if (targetBlock == null) {
+            LOGGER.warn("[{}] MineBlock: Target block not found in blackboard key '{}'",
+                foreman.getEntityName(), blackboardKey);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        Level level = foreman.level();
+        BlockState blockState = level.getBlockState(targetBlock);
+
+        // Check if block still exists
+        if (blockState.isAir()) {
+            LOGGER.debug("[{}] Block at {} already broken",
+                foreman.getEntityName(), targetBlock);
+            finalStatus = NodeStatus.SUCCESS;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Check if agent is within range
+        double distance = foreman.position().distanceTo(
+            new Vec3(targetBlock.getX() + 0.5, targetBlock.getY(), targetBlock.getZ() + 0.5)
+        );
+
+        if (distance > 5.0) {
+            LOGGER.warn("[{}] Too far to mine block at {} (distance: {})",
+                foreman.getEntityName(), targetBlock, distance);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Select appropriate tool
+        ItemStack bestTool = selectBestTool(foreman, blockState);
+        if (bestTool != null) {
+            foreman.setItemInHand(InteractionHand.MAIN_HAND, bestTool);
+        }
+
+        // Calculate break speed
+        float breakSpeed = calculateBreakSpeed(foreman, blockState, bestTool);
+        breakProgress += breakSpeed;
+
+        // Check if block should break this tick
+        if (breakProgress >= 1.0f) {
+            // Break the block
+            level.destroyBlock(targetBlock, true); // true = spawn drops
+
+            // Damage tool
+            if (bestTool != null && !bestTool.isEmpty()) {
+                bestTool.hurtAndBreak(1, foreman, (entity) -> {
+                    entity.broadcastBreakEvent(InteractionHand.MAIN_HAND);
+                });
+            }
+
+            LOGGER.debug("[{}] Successfully mined block at {}",
+                foreman.getEntityName(), targetBlock);
+            finalStatus = NodeStatus.SUCCESS;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Send block break progress to clients (visual effect)
+        int progressStage = (int) (breakProgress * 10);
+        level.destroyBlockProgress(targetBlock, foreman.getId(), progressStage);
+
+        return NodeStatus.RUNNING;
+    }
+
+    private ItemStack selectBestTool(ForemanEntity foreman, BlockState blockState) {
+        ItemStack bestTool = null;
+        float bestSpeed = 1.0f;
+
+        // Check main hand
+        ItemStack mainHand = foreman.getMainHandItem();
+        float mainHandSpeed = mainHand.getDestroySpeed(blockState);
+        if (mainHandSpeed > bestSpeed) {
+            bestSpeed = mainHandSpeed;
+            bestTool = mainHand;
+        }
+
+        // Check inventory for better tool
+        for (int i = 0; i < foreman.getInventory().getContainerSize(); i++) {
+            ItemStack stack = foreman.getInventory().getItem(i);
+            float speed = stack.getDestroySpeed(blockState);
+            if (speed > bestSpeed) {
+                bestSpeed = speed;
+                bestTool = stack;
+            }
+        }
+
+        return bestTool;
+    }
+
+    private float calculateBreakSpeed(ForemanEntity foreman, BlockState blockState, ItemStack tool) {
+        if (tool == null || tool.isEmpty()) {
+            return 0.01f; // Very slow without tool
+        }
+
+        float baseSpeed = tool.getDestroySpeed(blockState);
+
+        // Check if tool can harvest this block
+        if (!tool.isCorrectToolForDrops(blockState)) {
+            return baseSpeed * 0.1f; // 10% speed with wrong tool
+        }
+
+        // Apply efficiency enchantment bonus
+        int efficiencyLevel = net.minecraft.world.item.enchantment.EnchantmentHelper
+            .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.BLOCK_EFFICIENCY, tool);
+
+        if (efficiencyLevel > 0) {
+            baseSpeed += efficiencyLevel * efficiencyLevel + 1;
+        }
+
+        // Base tick rate is 20 ticks per second
+        return baseSpeed / 30.0f; // Normalize to break progress per tick
+    }
+
+    @Override
+    public void reset() {
+        isComplete = false;
+        finalStatus = NodeStatus.FAILURE;
+        breakProgress = 0;
+        targetBlock = null;
+    }
+
+    @Override
+    public String getId() { return id; }
+
+    @Override
+    public String getName() { return name; }
+}
+```
+
+#### IsHungry Condition Node
+
+```java
+/**
+ * Condition node that checks if the agent is hungry.
+ * Can check for specific hunger thresholds or emergency starvation.
+ */
+public class IsHungryCondition implements BTNode {
+    private final String id;
+    private final String name;
+    private final float hungerThreshold; // 0-20 (Minecraft food level)
+    private final float saturationThreshold; // 0-20 (Minecraft saturation level)
+
+    /**
+     * Creates a hunger condition node.
+     *
+     * @param id Unique node identifier
+     * @param name Display name for debugging
+     * @param hungerThreshold Food level threshold (0-20, lower = hungrier)
+     * @param saturationThreshold Saturation threshold (0-20, lower = hungrier)
+     */
+    public IsHungryCondition(String id, String name, float hungerThreshold,
+                             float saturationThreshold) {
+        this.id = id;
+        this.name = name;
+        this.hungerThreshold = hungerThreshold;
+        this.saturationThreshold = saturationThreshold;
+    }
+
+    /**
+     * Creates a hunger condition with default thresholds.
+     * @param id Unique node identifier
+     * @param name Display name for debugging
+     * @param hungerLevel Food level threshold (0-20)
+     */
+    public IsHungryCondition(String id, String name, float hungerLevel) {
+        this(id, name, hungerLevel, 5.0f);
+    }
+
+    /**
+     * Creates a "starving" condition (emergency hunger).
+     * @param id Unique node identifier
+     * @param name Display name for debugging
+     */
+    public IsHungryCondition(String id, String name) {
+        this(id, name, 5.0f, 0.0f); // Less than 5 food bars = starving
+    }
+
+    @Override
+    public NodeStatus tick(ForemanEntity foreman, Blackboard blackboard) {
+        FoodData foodData = foreman.getFoodData();
+        int foodLevel = foodData.getFoodLevel();
+        float saturationLevel = foodData.getSaturationLevel();
+
+        boolean isHungry = foodLevel < hungerThreshold || saturationLevel < saturationThreshold;
+
+        if (isHungry) {
+            LOGGER.debug("[{}] Hunger check: {} food, {} saturation (thresholds: {}/{})",
+                foreman.getEntityName(), foodLevel, saturationLevel,
+                hungerThreshold, saturationThreshold);
+        }
+
+        return isHungry ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+    }
+
+    @Override
+    public void reset() {
+        // Conditions have no state to reset
+    }
+
+    @Override
+    public String getId() { return id; }
+
+    @Override
+    public String getName() { return name; }
+}
+```
+
+#### HasItem Condition Node
+
+```java
+/**
+ * Condition node that checks if the agent has a specific item in inventory.
+ * Supports checking by item type, count, and enchantments.
+ */
+public class HasItemCondition implements BTNode {
+    private final String id;
+    private final String name;
+    private final Item targetItem;
+    private final int minCount;
+    private final Map<Enchantment, Integer> requiredEnchantments;
+
+    /**
+     * Creates an item condition.
+     *
+     * @param id Unique node identifier
+     * @param name Display name for debugging
+     * @param targetItem The item to check for (e.g., Items.DIAMOND_PICKAXE)
+     * @param minCount Minimum quantity required (default: 1)
+     */
+    public HasItemCondition(String id, String name, Item targetItem, int minCount) {
+        this.id = id;
+        this.name = name;
+        this.targetItem = targetItem;
+        this.minCount = minCount;
+        this.requiredEnchantments = new HashMap<>();
+    }
+
+    public HasItemCondition(String id, String name, Item targetItem) {
+        this(id, name, targetItem, 1);
+    }
+
+    /**
+     * Adds a required enchantment check.
+     * @param enchantment The enchantment required
+     * @param minLevel Minimum enchantment level
+     * @return This node for chaining
+     */
+    public HasItemCondition withEnchantment(Enchantment enchantment, int minLevel) {
+        this.requiredEnchantments.put(enchantment, minLevel);
+        return this;
+    }
+
+    @Override
+    public NodeStatus tick(ForemanEntity foreman, Blackboard blackboard) {
+        Inventory inventory = foreman.getInventory();
+        int totalCount = 0;
+        boolean hasEnchantedItem = requiredEnchantments.isEmpty();
+
+        // Check all inventory slots
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+
+            if (stack.getItem() == targetItem) {
+                totalCount += stack.getCount();
+
+                // Check enchantments if required
+                if (!hasEnchantedItem && hasRequiredEnchantments(stack)) {
+                    hasEnchantedItem = true;
+                }
+            }
+        }
+
+        boolean hasEnoughItems = totalCount >= minCount &&
+            (requiredEnchantments.isEmpty() || hasEnchantedItem);
+
+        if (hasEnoughItems) {
+            LOGGER.debug("[{}] Has {}x {} (required: {})",
+                foreman.getEntityName(), totalCount, targetItem, minCount);
+        } else {
+            LOGGER.debug("[{}] Missing item: {} (has: {}, need: {})",
+                foreman.getEntityName(), targetItem, totalCount, minCount);
+        }
+
+        return hasEnoughItems ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+    }
+
+    private boolean hasRequiredEnchantments(ItemStack stack) {
+        if (requiredEnchantments.isEmpty()) {
+            return true;
+        }
+
+        Map<Enchantment, Integer> enchantments =
+            net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(stack);
+
+        for (Map.Entry<Enchantment, Integer> required : requiredEnchantments.entrySet()) {
+            Integer level = enchantments.get(required.getKey());
+            if (level == null || level < required.getValue()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public void reset() {
+        // Conditions have no state to reset
+    }
+
+    @Override
+    public String getId() { return id; }
+
+    @Override
+    public String getName() { return name; }
+}
+```
+
+#### AttackEntity Node
+
+```java
+/**
+ * Action node that attacks a target entity.
+ * Handles weapon selection, attack cooldown, and combat movement.
+ */
+public class AttackEntityNode implements BTNode {
+    private final String id;
+    private final String name;
+    private final String targetBlackboardKey;
+
+    private boolean isComplete = false;
+    private NodeStatus finalStatus = NodeStatus.FAILURE;
+    private int attackCooldownTicks = 0;
+
+    public AttackEntityNode(String id, String name, String targetBlackboardKey) {
+        this.id = id;
+        this.name = name;
+        this.targetBlackboardKey = targetBlackboardKey;
+    }
+
+    @Override
+    public NodeStatus tick(ForemanEntity foreman, Blackboard blackboard) {
+        if (isComplete) {
+            return finalStatus;
+        }
+
+        // Get target entity from blackboard
+        Entity target = blackboard.get(targetBlackboardKey, Entity.class);
+        if (target == null) {
+            LOGGER.warn("[{}] AttackEntity: Target not found in blackboard key '{}'",
+                foreman.getEntityName(), targetBlackboardKey);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Check if target is still valid
+        if (!target.isAlive() || foreman.level() != target.level()) {
+            LOGGER.debug("[{}] Target {} is no longer valid",
+                foreman.getEntityName(), target);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Check attack cooldown
+        if (attackCooldownTicks > 0) {
+            attackCooldownTicks--;
+            return NodeStatus.RUNNING;
+        }
+
+        // Check if in attack range
+        double distance = foreman.position().distanceTo(target.position());
+        double attackRange = foreman.getAttributeValue(Attributes.ATTACK_RANGE) + 2.0;
+
+        if (distance > attackRange) {
+            LOGGER.debug("[{}] Target out of range (distance: {}, range: {})",
+                foreman.getEntityName(), distance, attackRange);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+
+        // Perform attack
+        boolean attackSuccess = performAttack(foreman, target);
+
+        if (attackSuccess) {
+            // Set attack cooldown based on attack speed
+            double attackSpeed = foreman.getAttributeValue(Attributes.ATTACK_SPEED);
+            attackCooldownTicks = (int) (20.0 / attackSpeed);
+
+            // Check if target died
+            if (!target.isAlive()) {
+                LOGGER.debug("[{}] Successfully killed target {}",
+                    foreman.getEntityName(), target);
+                finalStatus = NodeStatus.SUCCESS;
+                isComplete = true;
+                return finalStatus;
+            }
+
+            return NodeStatus.RUNNING;
+        } else {
+            LOGGER.warn("[{}] Attack on {} failed", foreman.getEntityName(), target);
+            finalStatus = NodeStatus.FAILURE;
+            isComplete = true;
+            return finalStatus;
+        }
+    }
+
+    private boolean performAttack(ForemanEntity attacker, Entity target) {
+        // Select best weapon
+        ItemStack bestWeapon = selectBestWeapon(attacker, target);
+        if (bestWeapon != null) {
+            attacker.setItemInHand(InteractionHand.MAIN_HAND, bestWeapon);
+        }
+
+        // Calculate damage
+        float baseDamage = (float) attacker.getAttributeValue(Attributes.ATTACK_DAMAGE);
+
+        if (bestWeapon != null) {
+            // Apply weapon damage modifiers
+            Multimap<Attribute, AttributeModifier> modifiers =
+                bestWeapon.getAttributeModifiers(EquipmentSlot.MAINHAND);
+
+            for (AttributeModifier modifier : modifiers.get(Attributes.ATTACK_DAMAGE)) {
+                baseDamage += modifier.getAmount();
+            }
+        }
+
+        // Apply enchantment damage
+        if (bestWeapon != null) {
+            int sharpnessLevel = net.minecraft.world.item.enchantment.EnchantmentHelper
+                .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS, bestWeapon);
+            baseDamage += sharpnessLevel * 0.5f + 0.5f;
+        }
+
+        // Check critical hit
+        boolean isCritical = !attacker.isOnGround() && attacker.getDeltaMovement().y < 0;
+        if (isCritical) {
+            baseDamage *= 1.5f;
+        }
+
+        // Apply damage
+        target.hurt(attacker.level().damageSources().mobAttack(attacker), baseDamage);
+
+        // Apply knockback
+        double knockbackStrength = 0.4 + (baseDamage * 0.1);
+        Vec3 knockback = attacker.position().vectorTo(target.position())
+            .normalize()
+            .scale(knockbackStrength);
+        target.setDeltaMovement(target.getDeltaMovement().add(knockback));
+
+        // Damage weapon
+        if (bestWeapon != null && !bestWeapon.isEmpty()) {
+            bestWeapon.hurtAndBreak(1, attacker, (entity) -> {
+                entity.broadcastBreakEvent(InteractionHand.MAIN_HAND);
+            });
+        }
+
+        LOGGER.debug("[{}] Attacked {} for {} damage{}",
+            attacker.getEntityName(), target, String.format("%.1f", baseDamage),
+            isCritical ? " (CRITICAL!)" : "");
+
+        return true;
+    }
+
+    private ItemStack selectBestWeapon(ForemanEntity attacker, Entity target) {
+        ItemStack bestWeapon = null;
+        float bestDamage = 0;
+
+        // Check main hand
+        ItemStack mainHand = attacker.getMainHandItem();
+        float mainHandDamage = calculateWeaponDamage(mainHand);
+        if (mainHandDamage > bestDamage) {
+            bestDamage = mainHandDamage;
+            bestWeapon = mainHand;
+        }
+
+        // Check inventory for better weapon
+        for (int i = 0; i < attacker.getInventory().getContainerSize(); i++) {
+            ItemStack stack = attacker.getInventory().getItem(i);
+            float damage = calculateWeaponDamage(stack);
+            if (damage > bestDamage) {
+                bestDamage = damage;
+                bestWeapon = stack;
+            }
+        }
+
+        return bestWeapon;
+    }
+
+    private float calculateWeaponDamage(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0;
+        }
+
+        // Base damage from attribute modifiers
+        float damage = 0;
+        Multimap<Attribute, AttributeModifier> modifiers =
+            stack.getAttributeModifiers(EquipmentSlot.MAINHAND);
+
+        for (AttributeModifier modifier : modifiers.get(Attributes.ATTACK_DAMAGE)) {
+            damage += modifier.getAmount();
+        }
+
+        // Add enchantment damage
+        int sharpnessLevel = net.minecraft.world.item.enchantment.EnchantmentHelper
+            .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS, stack);
+        damage += sharpnessLevel * 0.5f + 0.5f;
+
+        return damage;
+    }
+
+    @Override
+    public void reset() {
+        isComplete = false;
+        finalStatus = NodeStatus.FAILURE;
+        attackCooldownTicks = 0;
+    }
+
+    @Override
+    public String getId() { return id; }
+
+    @Override
+    public String getName() { return name; }
+}
+```
+
+---
+
+### 3.7 BT Builder Pattern
+
+The Builder pattern provides a fluent API for constructing complex behavior trees programmatically. This approach is more readable and maintainable than direct constructor calls.
+
+#### Fluent BT Builder
+
+```java
+/**
+ * Fluent builder for constructing behavior trees.
+ * Provides a type-safe, readable API for BT construction.
+ */
+public class BehaviorTreeBuilder {
+    private String id;
+    private String name;
+    private Stack<CompositeNodeContext> compositeStack = new Stack<>();
+    private List<BTNode> rootChildren = new ArrayList<>();
+
+    /**
+     * Starts building a new behavior tree.
+     * @param id Unique tree identifier
+     * @param name Display name
+     * @return This builder for chaining
+     */
+    public static BehaviorTreeBuilder create(String id, String name) {
+        BehaviorTreeBuilder builder = new BehaviorTreeBuilder();
+        builder.id = id;
+        builder.name = name;
+        return builder;
+    }
+
+    // ==================== SEQUENCE NODE ====================
+
+    /**
+     * Begins a sequence node (AND logic).
+     * All children must succeed for sequence to succeed.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder sequence(String id, String name) {
+        SequenceNodeContext context = new SequenceNodeContext(id, name);
+        addNodeToCurrentContext(context);
+        compositeStack.push(context);
+        return this;
+    }
+
+    /**
+     * Ends the current sequence node.
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder endSequence() {
+        validateEndComposite("Sequence");
+        compositeStack.pop();
+        return this;
+    }
+
+    // ==================== SELECTOR NODE ====================
+
+    /**
+     * Begins a selector node (OR logic).
+     * Succeeds if any child succeeds.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder selector(String id, String name) {
+        SelectorNodeContext context = new SelectorNodeContext(id, name);
+        addNodeToCurrentContext(context);
+        compositeStack.push(context);
+        return this;
+    }
+
+    /**
+     * Ends the current selector node.
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder endSelector() {
+        validateEndComposite("Selector");
+        compositeStack.pop();
+        return this;
+    }
+
+    // ==================== PARALLEL NODE ====================
+
+    /**
+     * Begins a parallel node.
+     * Executes all children simultaneously.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @param policy Success policy (SEQUENCE, SELECTOR, or THRESHOLD)
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder parallel(String id, String name, ParallelNode.Policy policy) {
+        return parallel(id, name, policy, 0);
+    }
+
+    /**
+     * Begins a parallel node with threshold policy.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @param policy Success policy
+     * @param threshold Required success count for THRESHOLD policy
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder parallel(String id, String name,
+                                       ParallelNode.Policy policy, int threshold) {
+        ParallelNodeContext context = new ParallelNodeContext(id, name, policy, threshold);
+        addNodeToCurrentContext(context);
+        compositeStack.push(context);
+        return this;
+    }
+
+    /**
+     * Ends the current parallel node.
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder endParallel() {
+        validateEndComposite("Parallel");
+        compositeStack.pop();
+        return this;
+    }
+
+    // ==================== DECORATOR NODES ====================
+
+    /**
+     * Adds an inverter decorator (inverts child's result).
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder inverter(String id, String name) {
+        // Inverter is added when building, not as a context
+        throw new IllegalStateException("inverter() must be called within a composite node context. " +
+            "Use composite.inverter() instead.");
+    }
+
+    /**
+     * Adds a cooldown decorator.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @param cooldownSeconds Cooldown duration in seconds
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder cooldown(String id, String name, double cooldownSeconds) {
+        throw new IllegalStateException("cooldown() must be called within a composite node context. " +
+            "Use composite.cooldown() instead.");
+    }
+
+    /**
+     * Adds a repeater decorator.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @param repeatCount Number of repetitions (-1 for infinite)
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder repeater(String id, String name, int repeatCount) {
+        throw new IllegalStateException("repeater() must be called within a composite node context. " +
+            "Use composite.repeater() instead.");
+    }
+
+    // ==================== LEAF NODES ====================
+
+    /**
+     * Adds an action node.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @param action The BaseAction to wrap
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder action(String id, String name, BaseAction action) {
+        ActionNode node = new ActionNode(id, name, action);
+        addNodeToCurrentContext(node);
+        return this;
+    }
+
+    /**
+     * Adds a condition node.
+     *
+     * @param id Node identifier
+     * @param name Display name
+     * @param checker The condition checker lambda
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder condition(String id, String name,
+                                        ConditionNode.ConditionChecker checker) {
+        ConditionNode node = new ConditionNode(id, name, checker);
+        addNodeToCurrentContext(node);
+        return this;
+    }
+
+    /**
+     * Adds a custom leaf node.
+     *
+     * @param node The node to add
+     * @return This builder for chaining
+     */
+    public BehaviorTreeBuilder custom(BTNode node) {
+        addNodeToCurrentContext(node);
+        return this;
+    }
+
+    // ==================== BUILD ====================
+
+    /**
+     * Builds the behavior tree.
+     *
+     * @param foreman The agent entity
+     * @param eventBus The event bus
+     * @return A complete MinecraftBehaviorTree
+     */
+    public MinecraftBehaviorTree build(ForemanEntity foreman, EventBus eventBus) {
+        if (!compositeStack.isEmpty()) {
+            throw new IllegalStateException("Cannot build tree with unclosed composite nodes. " +
+                "Missing: end" + compositeStack.peek().getType());
+        }
+
+        if (rootChildren.size() != 1) {
+            throw new IllegalStateException("Behavior tree must have exactly one root node. " +
+                "Current: " + rootChildren.size() + " nodes");
+        }
+
+        BTNode rootNode = rootChildren.get(0);
+        return new MinecraftBehaviorTree(foreman, rootNode, eventBus);
+    }
+
+    // ==================== INTERNAL ====================
+
+    private void addNodeToCurrentContext(Object nodeOrContext) {
+        if (compositeStack.isEmpty()) {
+            // Add to root
+            if (nodeOrContext instanceof BTNode) {
+                rootChildren.add((BTNode) nodeOrContext);
+            } else {
+                throw new IllegalArgumentException("Root must be a BTNode, not a context");
+            }
+        } else {
+            // Add to current composite
+            compositeStack.peek().addChild(nodeOrContext);
+        }
+    }
+
+    private void validateEndComposite(String expectedType) {
+        if (compositeStack.isEmpty()) {
+            throw new IllegalStateException("No composite node to end. " +
+                "Called end" + expectedType + "() without matching " + expectedType.toLowerCase() + "()");
+        }
+
+        CompositeNodeContext context = compositeStack.peek();
+        if (!context.getType().equals(expectedType)) {
+            throw new IllegalStateException("Mismatched composite node end. " +
+                "Expected: end" + context.getType() + ", got: end" + expectedType);
+        }
+    }
+
+    // ==================== COMPOSITE CONTEXT CLASSES ====================
+
+    private abstract static class CompositeNodeContext {
+        protected final String id;
+        protected final String name;
+        protected final List<Object> children = new ArrayList<>();
+
+        protected CompositeNodeContext(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        abstract String getType();
+        abstract BTNode build();
+
+        void addChild(Object child) {
+            children.add(child);
+        }
+    }
+
+    private static class SequenceNodeContext extends CompositeNodeContext {
+        SequenceNodeContext(String id, String name) {
+            super(id, name);
+        }
+
+        @Override
+        String getType() { return "Sequence"; }
+
+        @Override
+        BTNode build() {
+            List<BTNode> builtChildren = new ArrayList<>();
+            for (Object child : children) {
+                if (child instanceof BTNode) {
+                    builtChildren.add((BTNode) child);
+                } else if (child instanceof CompositeNodeContext) {
+                    builtChildren.add(((CompositeNodeContext) child).build());
+                } else {
+                    throw new IllegalArgumentException("Unknown child type: " + child.getClass());
+                }
+            }
+            return new SequenceNode(id, name, builtChildren);
+        }
+    }
+
+    private static class SelectorNodeContext extends CompositeNodeContext {
+        SelectorNodeContext(String id, String name) {
+            super(id, name);
+        }
+
+        @Override
+        String getType() { return "Selector"; }
+
+        @Override
+        BTNode build() {
+            List<BTNode> builtChildren = new ArrayList<>();
+            for (Object child : children) {
+                if (child instanceof BTNode) {
+                    builtChildren.add((BTNode) child);
+                } else if (child instanceof CompositeNodeContext) {
+                    builtChildren.add(((CompositeNodeContext) child).build());
+                } else {
+                    throw new IllegalArgumentException("Unknown child type: " + child.getClass());
+                }
+            }
+            return new SelectorNode(id, name, builtChildren);
+        }
+    }
+
+    private static class ParallelNodeContext extends CompositeNodeContext {
+        private final ParallelNode.Policy policy;
+        private final int threshold;
+
+        ParallelNodeContext(String id, String name, ParallelNode.Policy policy, int threshold) {
+            super(id, name);
+            this.policy = policy;
+            this.threshold = threshold;
+        }
+
+        @Override
+        String getType() { return "Parallel"; }
+
+        @Override
+        BTNode build() {
+            List<BTNode> builtChildren = new ArrayList<>();
+            for (Object child : children) {
+                if (child instanceof BTNode) {
+                    builtChildren.add((BTNode) child);
+                } else if (child instanceof CompositeNodeContext) {
+                    builtChildren.add(((CompositeNodeContext) child).build());
+                } else {
+                    throw new IllegalArgumentException("Unknown child type: " + child.getClass());
+                }
+            }
+            return new ParallelNode(id, name, builtChildren, policy, threshold);
+        }
+    }
+}
+```
+
+#### Builder Usage Example: Mining BT
+
+```java
+/**
+ * Example: Building a mining behavior tree using the fluent builder.
+ */
+public class MiningTreeExample {
+    public static MinecraftBehaviorTree buildMiningTree(
+            ForemanEntity foreman,
+            EventBus eventBus,
+            String oreType) {
+
+        return BehaviorTreeBuilder
+            .create("mining_bot", "Automated Mining Bot")
+
+            // Root selector: Choose highest priority behavior
+            .selector("root", "Root Priority Selector")
+
+                // Combat response (highest priority)
+                .sequence("combat_response", "Combat Response")
+                    .condition("has_enemy", "Has Enemy Nearby",
+                        (f, bb) -> {
+                            List<Entity> enemies = bb.get("nearby_enemies", List.class);
+                            return enemies != null && !enemies.isEmpty();
+                        })
+                    .action("attack", "Attack Nearest Enemy",
+                        new CombatAction(foreman, new Task("combat",
+                            Map.of("target", "nearest_enemy"))))
+                .endSequence()
+
+                // Emergency return
+                .sequence("emergency_return", "Emergency Return to Base")
+                    .condition("low_health", "Health Below 20%",
+                        (f, bb) -> f.getHealth() < f.getMaxHealth() * 0.2)
+                    .condition("inventory_full", "Inventory Full",
+                        (f, bb) -> f.getInventory().getFreeSlotCount() < 3)
+                    .action("return_base", "Pathfind to Base",
+                        new PathfindAction(foreman, new Task("pathfind",
+                            Map.of("target", "base"))))
+                .endSequence()
+
+                // Mining operation
+                .sequence("mining_operation", "Mining Operation")
+                    .condition("has_pickaxe", "Has Pickaxe",
+                        (f, bb) -> f.getInventory().hasPickaxe())
+
+                    .action("find_ore", "Find Nearest Ore",
+                        new FindNearestBlockAction(foreman, new Task("find_ore",
+                            Map.of("block", oreType, "radius", 64))))
+
+                    .action("move_to_ore", "Move to Ore",
+                        new PathfindAction(foreman, new Task("pathfind",
+                            Map.of("target", "target_block"))))
+
+                    // Mine until inventory full or ore depleted
+                    .repeater("mine_loop", "Mine Until Full", -1)
+                        .sequence("mining_cycle", "Mining Cycle")
+                            .action("mine_block", "Mine Block",
+                                new MineBlockAction(foreman, new Task("mine",
+                                    Map.of("target", "target_block"))))
+                            .condition("has_space", "Inventory Has Space",
+                                (f, bb) -> f.getInventory().getFreeSlotCount() > 0)
+                        .endSequence()
+                    .endRepeater()
+
+                    .action("return_after_mining", "Return to Base After Mining",
+                        new PathfindAction(foreman, new Task("pathfind",
+                            Map.of("target", "base"))))
+                .endSequence()
+
+                // Default idle behavior
+                .action("idle", "Idle Wander",
+                    new IdleFollowAction(foreman, new Task("idle", Map.of())))
+
+            .endSelector()
+
+            .build(foreman, eventBus);
+    }
+}
+```
+
+#### JSON Serialization for Data-Driven Trees
+
+```java
+/**
+ * Serializes behavior trees to JSON for external editing.
+ */
+public class BehaviorTreeSerializer {
+    private final Gson gson;
+
+    public BehaviorTreeSerializer() {
+        this.gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(BTNode.class, new BTNodeAdapter())
+            .create();
+    }
+
+    /**
+     * Serializes a behavior tree to JSON.
+     *
+     * @param tree The tree to serialize
+     * @return JSON string
+     */
+    public String toJson(MinecraftBehaviorTree tree) {
+        BTNode rootNode = tree.getRootNode();
+        BTJsonModel jsonModel = convertToJsonModel(rootNode);
+        return gson.toJson(jsonModel);
+    }
+
+    /**
+     * Saves a behavior tree to a JSON file.
+     *
+     * @param tree The tree to save
+     * @param filePath Output file path
+     * @throws IOException if file cannot be written
+     */
+    public void saveToFile(MinecraftBehaviorTree tree, String filePath) throws IOException {
+        String json = toJson(tree);
+        Files.writeString(Paths.get(filePath), json);
+        LOGGER.info("Saved behavior tree to {}", filePath);
+    }
+
+    /**
+     * Loads a behavior tree from JSON.
+     *
+     * @param filePath Input file path
+     * @param foreman Agent entity
+     * @param eventBus Event bus
+     * @return Deserialized behavior tree
+     * @throws IOException if file cannot be read
+     */
+    public MinecraftBehaviorTree loadFromFile(String filePath, ForemanEntity foreman,
+                                              EventBus eventBus) throws IOException {
+        String json = Files.readString(Paths.get(filePath));
+        BTJsonModel jsonModel = gson.fromJson(json, BTJsonModel.class);
+        BTNode rootNode = convertFromJsonModel(jsonModel, foreman, eventBus);
+        return new MinecraftBehaviorTree(foreman, rootNode, eventBus);
+    }
+
+    private BTJsonModel convertToJsonModel(BTNode node) {
+        BTJsonModel model = new BTJsonModel();
+        model.id = node.getId();
+        model.name = node.getName();
+
+        if (node instanceof SequenceNode) {
+            model.type = "Sequence";
+            model.children = convertChildrenToJson(((SequenceNode) node).getChildren());
+        } else if (node instanceof SelectorNode) {
+            model.type = "Selector";
+            model.children = convertChildrenToJson(((SelectorNode) node).getChildren());
+        } else if (node instanceof ParallelNode) {
+            model.type = "Parallel";
+            ParallelNode parallelNode = (ParallelNode) node;
+            model.policy = parallelNode.getPolicy().name();
+            model.threshold = parallelNode.getThreshold();
+            model.children = convertChildrenToJson(parallelNode.getChildren());
+        } else if (node instanceof ActionNode) {
+            model.type = "Action";
+            model.actionType = ((ActionNode) node).getAction().getClass().getSimpleName();
+        } else if (node instanceof ConditionNode) {
+            model.type = "Condition";
+            // Condition checker cannot be easily serialized without reflection
+        } else if (node instanceof DecoratorNode) {
+            model.type = "Decorator";
+            model.decoratorType = node.getClass().getSimpleName();
+            model.child = convertToJsonModel(((DecoratorNode) node).getChild());
+        }
+
+        return model;
+    }
+
+    private List<BTJsonModel> convertChildrenToJson(List<BTNode> children) {
+        return children.stream()
+            .map(this::convertToJsonModel)
+            .collect(Collectors.toList());
+    }
+
+    private BTNode convertFromJsonModel(BTJsonModel model, ForemanEntity foreman,
+                                       EventBus eventBus) {
+        switch (model.type) {
+            case "Sequence":
+                return new SequenceNode(model.id, model.name,
+                    convertChildrenFromJson(model.children, foreman, eventBus));
+
+            case "Selector":
+                return new SelectorNode(model.id, model.name,
+                    convertChildrenFromJson(model.children, foreman, eventBus));
+
+            case "Parallel":
+                ParallelNode.Policy policy = ParallelNode.Policy.valueOf(model.policy);
+                return new ParallelNode(model.id, model.name,
+                    convertChildrenFromJson(model.children, foreman, eventBus),
+                    policy, model.threshold);
+
+            // Action and Condition nodes require factory pattern
+            // This is a simplified example
+            default:
+                throw new IllegalArgumentException("Unknown node type: " + model.type);
+        }
+    }
+
+    private List<BTNode> convertChildrenFromJson(List<BTJsonModel> children,
+                                                 ForemanEntity foreman, EventBus eventBus) {
+        return children.stream()
+            .map(child -> convertFromJsonModel(child, foreman, eventBus))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * JSON model for behavior tree serialization.
+     */
+    private static class BTJsonModel {
+        String type;
+        String id;
+        String name;
+        List<BTJsonModel> children;
+        String policy;
+        int threshold;
+        String decoratorType;
+        BTJsonModel child;
+        String actionType;
+    }
+
+    /**
+     * Custom Gson adapter for BT nodes.
+     */
+    private static class BTNodeAdapter implements JsonSerializer<BTNode>, JsonDeserializer<BTNode> {
+        @Override
+        public JsonElement serialize(BTNode node, Type type, JsonSerializationContext context) {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("type", node.getClass().getSimpleName());
+            jsonObject.addProperty("id", node.getId());
+            jsonObject.addProperty("name", node.getName());
+            return jsonObject;
+        }
+
+        @Override
+        public BTNode deserialize(JsonElement json, Type type, JsonDeserializationContext context)
+            throws JsonParseException {
+            // Implementation depends on factory pattern
+            throw new UnsupportedOperationException("Use convertFromJsonModel instead");
+        }
+    }
+}
+```
+
+**Example JSON Output:**
+
+```json
+{
+  "type": "SelectorNode",
+  "id": "root",
+  "name": "Root Priority Selector",
+  "children": [
+    {
+      "type": "SequenceNode",
+      "id": "combat_response",
+      "name": "Combat Response",
+      "children": [
+        {
+          "type": "ConditionNode",
+          "id": "has_enemy",
+          "name": "Has Enemy Nearby"
+        },
+        {
+          "type": "ActionNode",
+          "id": "attack",
+          "name": "Attack Nearest Enemy",
+          "actionType": "CombatAction"
+        }
+      ]
+    },
+    {
+      "type": "SequenceNode",
+      "id": "mining_operation",
+      "name": "Mining Operation",
+      "children": [
+        {
+          "type": "ConditionNode",
+          "id": "has_pickaxe",
+          "name": "Has Pickaxe"
+        },
+        {
+          "type": "ActionNode",
+          "id": "find_ore",
+          "name": "Find Nearest Ore",
+          "actionType": "FindNearestBlockAction"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
 ### 3.6 Advanced Composite Patterns
 
 #### Dynamic Selector
