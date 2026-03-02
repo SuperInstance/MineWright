@@ -275,7 +275,7 @@ class HierarchicalPathfinderTest {
         BlockPos goal = new BlockPos(100, 64, 100);
 
         // Mock some chunks as non-traversable (lava, void, etc.)
-        when(mockLevel.getBlockState(any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)))
             .thenReturn(Blocks.STONE.defaultBlockState());
 
         PathfindingContext traversableContext = new PathfindingContext(mockLevel, mockEntity)
@@ -467,7 +467,7 @@ class HierarchicalPathfinderTest {
     @DisplayName("Unreachable goal returns empty")
     void testUnreachableGoal() {
         // Setup level where all blocks are solid (cannot move)
-        when(mockLevel.getBlockState(any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)))
             .thenReturn(Blocks.BEDROCK.defaultBlockState());
 
         BlockPos start = new BlockPos(0, 64, 0);
@@ -502,7 +502,7 @@ class HierarchicalPathfinderTest {
     @DisplayName("Exception during pathfinding returns empty")
     void testExceptionDuringPathfinding() {
         // Setup level to throw exception
-        when(mockLevel.getBlockState(any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)))
             .thenThrow(new RuntimeException("Test exception"));
 
         BlockPos start = new BlockPos(0, 64, 0);
@@ -1104,7 +1104,7 @@ class HierarchicalPathfinderTest {
     @DisplayName("Pathfinding respects timeout")
     void testPathfindingRespectsTimeout() {
         // Setup a complex world that might take time to pathfind
-        when(mockLevel.getBlockState(any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)))
             .thenReturn(Blocks.STONE.defaultBlockState());
 
         BlockPos start = new BlockPos(0, 64, 0);
@@ -1162,7 +1162,7 @@ class HierarchicalPathfinderTest {
      */
     private void setupMockLevel() {
         // Default: solid ground at Y=63, air above
-        when(mockLevel.getBlockState(any(BlockPos))).thenAnswer(invocation -> {
+        when(mockLevel.getBlockState(any(BlockPos.class))).thenAnswer(invocation -> {
             BlockPos pos = invocation.getArgument(0);
             if (pos.getY() < 64) {
                 return Blocks.STONE.defaultBlockState();
@@ -1175,13 +1175,13 @@ class HierarchicalPathfinderTest {
         when(mockLevel.getMaxBuildHeight()).thenReturn(320);
 
         // Block state methods
-        when(mockLevel.getBlockState(any(BlockPos)).isSolidRender(any(), any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)).isSolidRender(any(), any(BlockPos.class)))
             .thenAnswer(invocation -> {
                 BlockPos pos = invocation.getArgument(1);
                 return pos.getY() < 64; // Solid below Y=64
             });
 
-        when(mockLevel.getBlockState(any(BlockPos)).isSuffocating(any(), any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)).isSuffocating(any(), any(BlockPos.class)))
             .thenReturn(false);
     }
 
@@ -1189,7 +1189,7 @@ class HierarchicalPathfinderTest {
      * Sets up a simple traversable world for integration tests.
      */
     private void setupSimpleTraversableWorld() {
-        when(mockLevel.getBlockState(any(BlockPos))).thenAnswer(invocation -> {
+        when(mockLevel.getBlockState(any(BlockPos.class))).thenAnswer(invocation -> {
             BlockPos pos = invocation.getArgument(0);
             if (pos.getY() == 63) {
                 return Blocks.STONE.defaultBlockState(); // Ground
@@ -1202,7 +1202,7 @@ class HierarchicalPathfinderTest {
             }
         });
 
-        when(mockLevel.getBlockState(any(BlockPos)).isSolidRender(any(), any(BlockPos)))
+        when(mockLevel.getBlockState(any(BlockPos.class)).isSolidRender(any(), any(BlockPos.class)))
             .thenAnswer(invocation -> {
                 BlockPos pos = invocation.getArgument(1);
                 return pos.getY() <= 63;
