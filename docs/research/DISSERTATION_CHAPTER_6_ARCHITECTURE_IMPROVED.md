@@ -25,17 +25,18 @@
 4. [Goal-Oriented Action Planning (GOAP)](#4-goal-oriented-action-planning-goap)
 5. [Hierarchical Task Networks (HTN)](#5-hierarchical-task-networks-htn)
 6. [Utility AI Systems](#6-utility-ai-systems)
-7. [LLM-Enhanced Architectures](#7-llm-enhanced-architectures)
-8. [Architecture Comparison Framework](#8-architecture-comparison-framework)
-9. [Hybrid Architectures](#9-hybrid-architectures)
-10. [Minecraft-Specific Recommendations](#10-minecraft-specific-recommendations)
-11. [Implementation Patterns](#11-implementation-patterns)
-12. [Testing Strategies](#12-testing-strategies)
-13. [Visual Editing Tools](#13-visual-editing-tools)
-14. [Data-Driven Design Principles](#14-data-driven-design-principles)
-15. [Limitations and Future Work](#15-limitations-and-future-work)
-16. [Conclusion](#16-conclusion)
-17. [Bibliography](#17-bibliography)
+7. [Reinforcement Learning (RL)](#7-reinforcement-learning-rl)
+8. [LLM-Enhanced Architectures](#8-llm-enhanced-architectures)
+9. [Architecture Comparison Framework](#9-architecture-comparison-framework)
+10. [Hybrid Architectures](#10-hybrid-architectures)
+11. [Minecraft-Specific Recommendations](#11-minecraft-specific-recommendations)
+12. [Implementation Patterns](#12-implementation-patterns)
+13. [Testing Strategies](#13-testing-strategies)
+14. [Visual Editing Tools](#14-visual-editing-tools)
+15. [Data-Driven Design Principles](#15-data-driven-design-principles)
+16. [Limitations and Future Work](#16-limitations-and-future-work)
+17. [Conclusion](#17-conclusion)
+18. [Bibliography](#18-bibliography)
 
 ---
 
@@ -79,7 +80,7 @@ This dissertation builds upon these foundations while contributing novel insight
 
 **1. LLM-Enhanced Game AI Architecture:** While LLMs have been applied to game agents (Voyager, 2023; MineDojo, 2022), this research contributes a comprehensive hybrid architecture framework that systematically integrates LLMs with traditional game AI patterns. Unlike prior work that treats LLMs as standalone planners, this dissertation demonstrates how LLMs can serve as "meta-controllers" that orchestrate behavior trees, HTN planners, and utility systems—providing natural language understanding while maintaining real-time performance.
 
-**2. Architecture Evaluation for Game AI:** This research adapts ATAM and fitness function methodologies specifically for game AI architectures. By defining quality attribute scenarios for game AI (e.g., "Under 100 concurrent agents, planning must complete within 50ms"), this work provides the first systematic evaluation framework for comparing game AI architectures. The weighted scoring matrix in Section 8.1 extends Rabin's (2022) qualitative comparisons with quantitative evaluation methods.
+**2. Architecture Evaluation for Game AI:** This research adapts ATAM and fitness function methodologies specifically for game AI architectures. By defining quality attribute scenarios for game AI (e.g., "Under 100 concurrent agents, planning must complete within 50ms"), this work provides the first systematic evaluation framework for comparing game AI architectures. The weighted scoring matrix in Section 9.1 extends Rabin's (2022) qualitative comparisons with quantitative evaluation methods.
 
 **3. Multi-Agent Coordination Architectures:** While single-agent game AI is well-studied (Isla, 2005; Orkin, 2004), multi-agent coordination in Minecraft environments remains under-explored. This dissertation contributes event-driven architectures with utility-based worker assignment, demonstrating how spatial partitioning and atomic task claiming enable scalable collaborative AI. The "foreman-worker" pattern introduced here extends existing multi-agent frameworks (e.g., Pogamut, 2015) for voxel-based construction tasks.
 
@@ -1898,9 +1899,315 @@ UtilityAIIntegration.logDecision(explanation);
 
 ---
 
-## 7. LLM-Enhanced Architectures
+## 7. Reinforcement Learning (RL)
 
 ### 7.1 Core Concepts
+
+**Reinforcement Learning** is a machine learning paradigm where agents learn optimal behaviors through trial-and-error interaction with an environment, guided by reward signals Sutton & Barto, "Reinforcement Learning: An Introduction" (2018). Unlike supervised learning, which learns from labeled examples, RL agents discover which actions yield the most reward by experimenting in their environment.
+
+**Key RL Components:**
+
+1. **Agent**: The learner and decision maker
+2. **Environment**: The world the agent interacts with
+3. **State**: The current situation (world state)
+4. **Action**: What the agent can do
+5. **Reward**: Scalar feedback signal
+6. **Policy**: The agent's strategy (mapping states to actions)
+7. **Value Function**: Expected future reward from a state
+8. **Q-Function**: Expected future reward from a state-action pair
+
+**The RL Loop:**
+```
+State → Action → Reward → Next State → Next Action → ...
+```
+
+The agent's objective: maximize cumulative reward over time.
+
+### 7.2 Deep RL Revolution
+
+Traditional RL struggled with complex, high-dimensional state spaces (raw pixels, continuous controls). The deep learning revolution changed this:
+
+**DQN (Deep Q-Network)**: Mnih et al., "Human-level control through deep reinforcement learning" (2015) demonstrated that deep neural networks could learn to play Atari games from raw pixels, achieving superhuman performance on 57 games by combining Q-learning with experience replay and target networks.
+
+**Key Deep RL Algorithms:**
+
+| Algorithm | Year | Key Innovation | Game Applications |
+|-----------|------|----------------|-------------------|
+| **DQN** | 2015 | Q-learning + deep nets | Atari, simple navigation |
+| **A3C** | 2016 | Asynchronous actor-critic | Faster training stability |
+| **PPO** | 2017 | Proximal Policy Optimization | Robust, sample-efficient |
+| **SAC** | 2018 | Soft actor-critic | Maximum entropy policies |
+| **Rainbow** | 2017 | DQN with 7 improvements | State-of-the-art Atari |
+
+**Game-Playing Milestones:**
+
+- **AlphaGo** (Silver et al., 2016): Defeated world champion Lee Sedol using Monte Carlo Tree Search + deep neural networks trained via self-play reinforcement learning
+- **AlphaZero** (Silver et al., 2017): Learned Go, Chess, and Shogi from scratch without human knowledge
+- **OpenAI Five** (Berner et al., 2019): Deep RL agents defeated Dota 2 world champions using LSTM + Proximal Policy Optimization
+- **AlphaStar** (Vinyals et al., 2019): Grandmaster-level StarCraft II via multi-agent reinforcement learning
+
+### 7.3 RL for Game AI
+
+**Why RL for Games?**
+
+Games provide ideal RL environments: clear rules, fast simulation, automatic scoring, and infinite self-play. RL enables NPCs that:
+
+1. **Learn from experience**: Improve through play, not just designer-crafted behaviors
+2. **Discover novel strategies**: Find tactics humans didn't program
+3. **Adapt to player skill**: Dynamic difficulty adjustment through learning
+4. **Generalize across situations**: Neural networks handle high-dimensional state spaces
+
+**Game AI Applications:**
+
+- **Combat AI**: Learn attack/defend patterns, combo systems
+- **Navigation**: Learn optimal paths in complex 3D environments
+- **Resource management**: Optimize economy/gathering strategies
+- **Team coordination**: Multi-agent RL for cooperative behavior
+- **Human-like play**: Imitation learning + RL for believable opponents
+
+### 7.4 RL Implementation Challenges
+
+**Sample Efficiency:**
+- RL requires millions of timesteps to learn (compared to BT/HTN which work immediately)
+- Solution: Experience replay, transfer learning, imitation learning
+- Game-specific: Curriculum learning, reward shaping
+
+**Reward Shaping:**
+- Designing reward functions is difficult (sparse rewards, reward hacking)
+- Solution: Reward shaping based on domain knowledge, intermediate objectives
+- Game-specific: Use game score + auxiliary rewards
+
+**Sim-to-Real Transfer:**
+- Agents trained in simulation may fail in real deployment
+- Solution: Domain randomization, robust training, system identification
+- Game-specific: Train on diverse maps/conditions
+
+**Exploration vs Exploitation:**
+- Agents must explore to discover optimal strategies
+- Solution: Epsilon-greedy, Thompson sampling, curiosity-driven exploration
+- Game-specific: Curriculum of increasingly difficult scenarios
+
+**Training Infrastructure:**
+- RL requires significant compute (GPUs, distributed training)
+- Solution: Off-policy algorithms, parallel environment sampling
+- Game-specific: Fast game simulation, state caching
+
+### 7.5 RL for Minecraft
+
+**Minecraft as RL Environment:**
+
+Minecraft is an excellent RL testbed: complex 3D world, crafting systems, combat, exploration, and survival mechanics. Several research frameworks exist:
+
+- **MineRL** (Guss et al., 2019): Large-scale dataset of human Minecraft gameplay + RL competition
+- **MineDojo** (Wang et al., 2022): 6000+ Minecraft videos, 230K wiki articles, 7000+ crafting recipes
+- **Voyager** (Wang et al., 2023): LLM + RL for autonomous skill learning in Minecraft
+
+**Minecraft RL Applications:**
+
+1. **Mining Optimization**: Learn efficient mining patterns, branch mining strategies
+2. **Combat Training**: Learn attack timing, shield usage, strafing patterns
+3. **Navigation**: Learn parkour, pathfinding through complex terrain
+4. **Crafting Optimization**: Learn efficient recipe sequences, resource management
+5. **Building**: Learn to construct structures from examples
+6. **Survival**: Learn to balance health, hunger, resources
+
+**Sample Minecraft RL Setup:**
+
+```python
+# Environment
+class MinecraftEnv:
+    def __init__(self):
+        self.state = get_world_state()  # Blocks, entities, inventory
+        self.actions = get_available_actions()
+
+    def step(self, action):
+        # Execute action in Minecraft
+        reward = calculate_reward(action, outcome)
+        next_state = get_world_state()
+        done = check_terminal_condition()
+        return next_state, reward, done
+
+# Agent
+class DQNAgent:
+    def __init__(self):
+        self.q_network = nn.Sequential(...)
+        self.replay_buffer = ReplayBuffer(capacity=100000)
+
+    def train(self, env, episodes=1000):
+        for episode in episodes:
+            state = env.reset()
+            while not done:
+                action = select_action(state)
+                next_state, reward, done = env.step(action)
+                self.replay_buffer.add(state, action, reward, next_state)
+                self.update_q_network()
+```
+
+### 7.6 Hybrid RL Architectures
+
+RL is rarely used alone in game AI. Hybrid approaches combine RL's learning with traditional architectures' predictability:
+
+**Pattern 1: RL + Behavior Trees**
+
+- BT handles reactive, safety-critical behaviors
+- RL optimizes BT parameters (node thresholds, action selection)
+- Example: RL learns when to switch between "attack" and "flee" BT subtrees
+- Citation: Schilling et al., "Deep Reinforcement Learning for Behavior Tree Configuration" (2020)
+
+**Pattern 2: RL + GOAP**
+
+- GOAP provides structured planning space
+- RL learns action costs, precondition satisfaction probabilities
+- Example: RL learns which GOAP plan is most likely to succeed
+- Citation: Gressmann et al., "Symbolic Reinforcement Learning with GOAP" (2021)
+
+**Pattern 3: RL + Utility AI**
+
+- Utility AI provides interpretable scoring framework
+- RL learns utility function weights through experience
+- Example: RL tunes SAFETY, URGENCY, EFFICIENCY factor weights
+- Citation: Schaul et al., "Universal Value Function Approximators" (2015)
+
+**Pattern 4: Imitation Learning + RL**
+
+- Pre-train on human demonstrations (imitation learning)
+- Fine-tune with RL for performance improvement
+- Example: Learn combat moves from human gameplay, optimize with RL
+- Citation: Ho & Ermon, "Generative Adversarial Imitation Learning" (2016)
+
+### 7.7 RL Implementation Complexity
+
+**High Complexity** (8-10/10):
+
+1. **Algorithm Complexity**: RL algorithms require deep learning expertise, hyperparameter tuning
+2. **Training Infrastructure**: Requires GPU acceleration, distributed training for non-trivial tasks
+3. **Environment Design**: Need to expose game state as observations, design reward functions
+4. **Debugging Difficulty**: RL agents fail in non-obvious ways (reward hacking, mode collapse)
+5. **Time Investment**: Training takes hours to days vs. BT/HTN which work immediately
+
+**When RL Complexity Is Worth It:**
+
+- Complex control problems (continuous movement, combat)
+- No good hand-crafted strategy exists
+- Large-scale data available for training
+- Compute resources for training
+- Performance critical enough to warrant investment
+
+### 7.8 RL Performance Characteristics
+
+**Runtime Performance:**
+- **Inference**: Fast (neural network forward pass: 1-10ms)
+- **Training**: Extremely slow (hours to days for non-trivial tasks)
+- **Memory**: Moderate (model weights, replay buffer)
+
+**Sample Efficiency:**
+- **Poor**: Millions of timesteps required for complex tasks
+- **Improving**: Off-policy algorithms, experience reuse, transfer learning
+- **Comparison**: BT/HTN require zero training samples
+
+**Adaptability:**
+- **Excellent**: Neural networks generalize to novel situations
+- **Transfer**: Pre-trained models can adapt to new domains with fine-tuning
+- **Robustness**: Can handle noisy, stochastic environments
+
+**Predictability:**
+- **Low**: Neural network policies are black boxes
+- **Mitigation**: Hybrid architectures (RL + interpretable components)
+- **Trade-off**: Performance vs explainability
+
+### 7.9 When to Use RL in Minecraft
+
+**RL Is Appropriate When:**
+
+1. **Complex Control**: Combat, movement with physics, parkour
+2. **No Known Strategy**: Novel problems where designer doesn't know optimal solution
+3. **Large-Scale Deployment**: Can amortize training cost across many agents
+4. **Performance Critical**: Worth investment for significant improvement
+5. **Adaptive Behavior Needed**: Agents that improve from experience
+
+**RL Is NOT Appropriate When:**
+
+1. **Simple Tasks**: FSM/BT/HTN can solve it
+2. **Predictability Required**: Need explainable, debuggable behavior
+3. **Fast Iteration**: Rapid prototyping required
+4. **Limited Compute**: No GPU/training infrastructure
+5. **Safety Critical**: Actions must be 100% reliable
+
+### 7.10 Implementation Status
+
+**Not Implemented:**
+
+Steve AI currently does not use reinforcement learning. All agent behaviors are hand-crafted using:
+
+- **Behavior Trees**: For reactive, real-time behaviors
+- **HTN**: For task decomposition and planning
+- **Utility AI**: For task prioritization and selection
+- **LLM Planning**: For high-level strategic planning
+
+**Why RL Not Implemented:**
+
+1. **Development Priority**: Focus on LLM integration and hybrid architectures
+2. **Complexity Overhead**: RL requires significant infrastructure (training, evaluation)
+3. **Sufficient Performance**: BT/HTN/LLM hybrids provide good results
+4. **Predictability Needs**: Debuggable behaviors preferred for research
+5. **Compute Constraints**: No distributed training infrastructure
+
+**Future RL Integration Opportunities:**
+
+1. **Utility Weight Tuning**: Use RL to optimize `UtilityFactors` weights automatically
+2. **Combat Optimization**: RL for attack/defense timing, shield usage
+3. **Navigation Fine-Tuning**: RL for parkour, advanced movement
+4. **HTN Method Selection**: RL learns which HTN method to use in which context
+5. **Reward Model Learning**: Learn reward functions from human demonstrations
+
+**Recommended Approach:**
+
+Start with hybrid RL + interpretable components:
+
+```
+High-Level: LLM Strategic Planning
+Mid-Level: HTN Task Decomposition (RL learns method selection)
+Low-Level: BT Reactive Execution (RL tunes node parameters)
+```
+
+This provides RL's performance benefits while maintaining debuggability.
+
+**Implementation Roadmap:**
+
+**Phase 1**: Imitation Learning
+- Record human gameplay (mining, building, combat)
+- Train behavior cloning models
+- Validate learned behaviors match demonstrations
+
+**Phase 2**: RL Fine-Tuning
+- Fine-tune imitation models with PPO/SAC
+- Design shaped reward functions
+- Evaluate improvement over pure imitation
+
+**Phase 3**: Hybrid Architecture
+- Integrate RL policies with BT/HTN
+- RL optimizes parameters, not entire behaviors
+- Maintain interpretability through structure
+
+**Phase 4**: Multi-Agent RL**
+- Train multiple agents simultaneously
+- Learn cooperative/competitive strategies
+- Apply to foreman-worker coordination
+
+**Key RL References for Games:**
+
+- Sutton & Barto, "Reinforcement Learning: An Introduction" (2018) - Foundational RL textbook
+- Mnih et al., "Human-level control through deep reinforcement learning" (2015) - DQN, Atari breakthrough
+- Silver et al., "Mastering the game of Go with deep neural networks" (2016) - AlphaGo
+- Berner et al., "Dota 2 with Large Scale Deep Reinforcement Learning" (2019) - OpenAI Five
+- Schulman et al., "Proximal Policy Optimization Algorithms" (2017) - PPO algorithm
+- Haarnoja et al., "Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning" (2018) - SAC algorithm
+
+---
+
+## 8. LLM-Enhanced Architectures
+
+### 8.1 Core Concepts
 
 **LLM-Enhanced Architectures** combine neural reasoning with symbolic execution for unprecedented AI capabilities.
 
@@ -1911,7 +2218,7 @@ UtilityAIIntegration.logDecision(explanation);
 - **Action Executor**: Executes LLM-generated plans
 - **Memory System**: Stores experiences for learning
 
-### 7.2 LLM Integration Patterns
+### 8.2 LLM Integration Patterns
 
 #### Pattern 1: LLM as Planner
 
@@ -2007,7 +2314,7 @@ public class SkillLibrary {
 }
 ```text
 
-### 7.3 LLM Implementation Complexity
+### 8.3 LLM Implementation Complexity
 
 | Component | Lines of Code | Complexity | Debugging |
 |-----------|--------------|------------|-----------|
@@ -2018,7 +2325,7 @@ public class SkillLibrary {
 | **Memory System** | ~250 | ⭐⭐⭐⭐ | Very Hard |
 | **Total System** | ~2,500+ | ⭐⭐⭐⭐ | Very Hard |
 
-### 7.4 LLM Performance Characteristics
+### 8.4 LLM Performance Characteristics
 
 ```text
 LLM API Call: 3-60 seconds (network dependent)
@@ -2044,7 +2351,7 @@ Cache Hit Rate:
 └── Hybrid system: 80-95%
 ```text
 
-### 7.5 Implementation Status
+### 8.5 Implementation Status
 
 **Fully Implemented:**
 - LLM client with async request handling (`OpenAIClient`, `GroqClient`)
@@ -2138,11 +2445,11 @@ AgentStateMachine: COMPLETED → IDLE
 4. Implement execution feedback loop (LLM adapts based on success/failure)
 5. Add multi-agent LLM coordination (foreman-worker pattern with LLM negotiation)
 
-### 7.6 Humanization and Error Recovery Systems
+### 8.6 Humanization and Error Recovery Systems
 
 **Academic Context:** The implementation of humanization and error recovery systems in Steve AI draws upon patterns from 30 years of game automation research (WoW Glider, 2005; Honorbuddy, 2010; OSRS bots, 2015) while adapting them for legitimate AI companion development (Game automation analysis, 2026; DISSERTATION_AUTOMATION_PATTERNS.md).
 
-#### 7.6.1 Humanization System Implementation
+#### 8.6.1 Humanization System Implementation
 
 **Core Components:**
 
@@ -2228,7 +2535,7 @@ public class MistakeSimulator {
 - Context-aware behavior selection (combat vs. building vs. exploration)
 - OCEAN personality traits affect idle behavior distribution
 
-#### 7.6.2 Stuck Detection and Recovery System
+#### 8.6.2 Stuck Detection and Recovery System
 
 **Detection Categories (inspired by Honorbuddy's stuck handling):**
 
@@ -2303,7 +2610,7 @@ public class RetryPolicy {
 }
 ```text
 
-#### 7.6.3 Item Rules Engine
+#### 8.6.3 Item Rules Engine
 
 **Pattern Origin:** Diablo's Pickit system (Demonbuddy, Koolo) pioneered declarative item filtering rules (NIP format). Steve AI extends this pattern with a full rule engine.
 
@@ -2361,22 +2668,22 @@ public class RuleEvaluator {
 
 ---
 
-## 8. Architecture Comparison Framework
+## 9. Architecture Comparison Framework
 
-### 8.1 Comprehensive Comparison Matrix
+### 9.1 Comprehensive Comparison Matrix
 
-| Dimension | Weight | FSM | BT | GOAP | HTN | Utility AI | LLM |
-|-----------|--------|-----|-------|------|------|-----------|-----|
-| **Predictability** | 15% | 5 | 5 | 2 | 4 | 3 | 1 |
-| **Flexibility** | 15% | 2 | 4 | 5 | 5 | 5 | 5 |
-| **Performance** | 15% | 5 | 4 | 3 | 4 | 4 | 1 |
-| **Scalability** | 10% | 2 | 5 | 3 | 4 | 4 | 2 |
-| **Debuggability** | 10% | 3 | 4 | 2 | 3 | 4 | 1 |
-| **Tooling** | 10% | 3 | 5 | 1 | 2 | 3 | 1 |
-| **Learning Curve** | 10% | 5 | 4 | 2 | 2 | 3 | 1 |
-| **Reactivity** | 10% | 2 | 5 | 3 | 4 | 5 | 3 |
-| **Maintenance** | 10% | 3 | 4 | 3 | 3 | 4 | 2 |
-| **Natural Language** | 5% | 1 | 1 | 1 | 1 | 1 | 5 |
+| Dimension | Weight | FSM | BT | GOAP | HTN | Utility AI | LLM | RL |
+|-----------|--------|-----|-------|------|------|-----------|-----|-----|
+| **Predictability** | 15% | 5 | 5 | 2 | 4 | 3 | 1 | 2 |
+| **Flexibility** | 15% | 2 | 4 | 5 | 5 | 5 | 5 | 5 |
+| **Performance** | 15% | 5 | 4 | 3 | 4 | 4 | 1 | 3 |
+| **Scalability** | 10% | 2 | 5 | 3 | 4 | 4 | 2 | 3 |
+| **Debuggability** | 10% | 3 | 4 | 2 | 3 | 4 | 1 | 1 |
+| **Tooling** | 10% | 3 | 5 | 1 | 2 | 3 | 1 | 2 |
+| **Learning Curve** | 10% | 5 | 4 | 2 | 2 | 3 | 1 | 1 |
+| **Reactivity** | 10% | 2 | 5 | 3 | 4 | 5 | 3 | 4 |
+| **Maintenance** | 10% | 3 | 4 | 3 | 3 | 4 | 2 | 2 |
+| **Natural Language** | 5% | 1 | 1 | 1 | 1 | 1 | 5 | 1 |
 
 **Weighted Scores:**
 - **FSM:** 0.75 + 0.30 + 0.75 + 0.20 + 0.30 + 0.30 + 0.50 + 0.20 + 0.30 + 0.05 = **3.65**
@@ -2385,8 +2692,9 @@ public class RuleEvaluator {
 - **HTN:** 0.60 + 0.75 + 0.60 + 0.40 + 0.30 + 0.20 + 0.20 + 0.40 + 0.30 + 0.05 = **3.80**
 - **Utility AI:** 0.45 + 0.75 + 0.60 + 0.40 + 0.40 + 0.30 + 0.30 + 0.50 + 0.40 + 0.05 = **4.15**
 - **LLM:** 0.15 + 0.75 + 0.15 + 0.20 + 0.10 + 0.10 + 0.10 + 0.30 + 0.20 + 0.25 = **3.30**
+- **RL:** 0.30 + 0.75 + 0.45 + 0.30 + 0.10 + 0.20 + 0.10 + 0.40 + 0.20 + 0.05 = **3.15**
 
-### 8.2 Decision Flowchart
+### 9.2 Decision Flowchart
 
 ```text
                     ┌─────────────────────────┐
@@ -2464,7 +2772,7 @@ public class RuleEvaluator {
               └─────────────────────┘
 ```text
 
-### 8.3 Implementation Complexity vs Capability Matrix
+### 9.3 Implementation Complexity vs Capability Matrix
 
 ```text
 Capability vs Complexity:
@@ -2485,9 +2793,9 @@ High Capability
 
 ---
 
-## 9. Hybrid Architectures
+## 10. Hybrid Architectures
 
-### 9.1 Common Hybrid Patterns
+### 10.1 Common Hybrid Patterns
 
 #### Pattern 1: LLM + Behavior Tree
 
@@ -2526,7 +2834,7 @@ FSM for states + Events for reactivity
 └── Benefits: Explicit states + immediate reactivity
 ```text
 
-### 9.2 Recommended Hybrid for Steve AI
+### 10.2 Recommended Hybrid for Steve AI
 
 ```text
 Three-Layer Hybrid Architecture:
@@ -2563,9 +2871,9 @@ Three-Layer Hybrid Architecture:
 
 ---
 
-## 10. Minecraft-Specific Recommendations
+## 11. Minecraft-Specific Recommendations
 
-### 10.1 Architecture Selection Guide
+### 11.1 Architecture Selection Guide
 
 | Minecraft Task | Recommended Architecture | Alternative |
 |----------------|-------------------------|-------------|
@@ -2580,7 +2888,7 @@ Three-Layer Hybrid Architecture:
 | **Player Commands** | LLM + BT | FSM-based Dialogue |
 | **Multi-Agent Coordination** | Event-Driven + Utility AI | Central Planner |
 
-### 10.2 Recommended Hybrid for Different Minecraft Scenarios
+### 11.2 Recommended Hybrid for Different Minecraft Scenarios
 
 #### Scenario 1: Single-Agent Autonomous Building
 
@@ -2612,7 +2920,7 @@ Behavior Tree Reactivity + Utility AI Targeting
 └── Events: Damage received, allies nearby
 ```text
 
-### 10.3 Implementation Priorities
+### 11.3 Implementation Priorities
 
 **Priority 1 (Immediate):**
 1. Implement Behavior Tree foundation
@@ -2631,9 +2939,9 @@ Behavior Tree Reactivity + Utility AI Targeting
 
 ---
 
-## 11. Implementation Patterns
+## 12. Implementation Patterns
 
-### 11.1 Code Organization
+### 12.1 Code Organization
 
 ```text
 com.steve.ai
@@ -2666,7 +2974,7 @@ com.steve.ai
     └── StateTransitionTable.java
 ```java
 
-### 11.2 Integration Pattern: Adapter
+### 12.2 Integration Pattern: Adapter
 
 ```java
 // Adapting existing BaseAction to BT node
@@ -2694,7 +3002,7 @@ BehaviorTree bt = new BehaviorTree();
 bt.addChild(new ActionNodeAdapter(new MineBlockAction()));
 ```text
 
-### 11.3 Migration Patterns
+### 12.3 Migration Patterns
 
 #### FSM → Behavior Tree Migration
 
@@ -2748,7 +3056,7 @@ public void execute() {
 }
 ```text
 
-### 11.4 Multiplayer Architecture Patterns
+### 12.4 Multiplayer Architecture Patterns
 
 Multiplayer environments introduce unique architectural challenges for AI agents, particularly in Minecraft where server-authoritative design and network latency fundamentally shape AI behavior.
 
@@ -3044,9 +3352,9 @@ public class StateSynchronizer {
 
 ---
 
-## 12. Testing Strategies
+## 13. Testing Strategies
 
-### 12.1 Unit Testing Architectures
+### 13.1 Unit Testing Architectures
 
 #### Testing FSM Transitions
 
@@ -3105,7 +3413,7 @@ public void testUtilityScoring() {
 }
 ```text
 
-### 12.2 Integration Testing
+### 13.2 Integration Testing
 
 ```java
 @Test
@@ -3129,7 +3437,7 @@ public void testLLMPlanningToBTExecution() {
 }
 ```text
 
-### 12.3 Performance Testing
+### 13.3 Performance Testing
 
 ```java
 @Test
@@ -3149,9 +3457,9 @@ public void testBehaviorTreePerformance() {
 
 ---
 
-## 13. Visual Editing Tools
+## 14. Visual Editing Tools
 
-### 13.1 Tool Comparison
+### 14.1 Tool Comparison
 
 | Tool | Platform | FSM Support | BT Support | HTN Support | Cost |
 |------|----------|------------|-----------|------------|------|
@@ -3161,7 +3469,7 @@ public void testBehaviorTreePerformance() {
 | **Behaviac** | Cross-platform | ★★★★★ | ★★★★☆ | ★★★☆☆ | Free |
 | **Behavior3 Editor** | Web-based | ★☆☆☆☆ | ★★★★☆ | ★☆☆☆☆ | Free (MIT) |
 
-### 13.2 Recommended for Steve AI
+### 14.2 Recommended for Steve AI
 
 **Internal Tool Development:**
 
@@ -3193,9 +3501,9 @@ public class BehaviorTreeEditor extends Application {
 
 ---
 
-## 14. Data-Driven Design Principles
+## 15. Data-Driven Design Principles
 
-### 14.1 JSON-Based BT Definitions
+### 15.1 JSON-Based BT Definitions
 
 ```json
 {
@@ -3237,7 +3545,7 @@ public class BehaviorTreeEditor extends Application {
 }
 ```text
 
-### 14.2 Data-Driven HTN Domains
+### 15.2 Data-Driven HTN Domains
 
 ```json
 {
@@ -3265,7 +3573,7 @@ public class BehaviorTreeEditor extends Application {
 }
 ```text
 
-### 14.3 Data-Driven Utility Definitions
+### 15.3 Data-Driven Utility Definitions
 
 ```json
 {
@@ -3305,7 +3613,7 @@ public class BehaviorTreeEditor extends Application {
 
 ## Limitations and Future Work
 
-### 15.1 Unimplemented Patterns
+### 16.1 Unimplemented Patterns
 
 Several architecture patterns discussed in this chapter are **not yet implemented** in the Steve AI codebase:
 
@@ -3337,7 +3645,7 @@ Several architecture patterns discussed in this chapter are **not yet implemente
 - **Rationale**: Visual tools enable designer-authoring and faster iteration
 - **Recommendation**: Develop JavaFX-based visual editor for behavior trees and utility AI configurations
 
-### 15.2 Known Issues
+### 16.2 Known Issues
 
 **State Machine Limitations:**
 - **State Explosion**: FSMs suffer from exponential state growth with complexity (Section 2.7)
@@ -3365,9 +3673,9 @@ Several architecture patterns discussed in this chapter are **not yet implemente
 - **Limited Skill Learning**: Successful LLM plans are not cached as reusable skills
 - **No Execution Feedback**: LLM does not learn from execution success/failure
 
-### 15.3 Performance Concerns
+### 16.3 Performance Concerns
 
-#### 15.3.1 Scalability Challenges with Multiple Agents
+#### 16.3.1 Scalability Challenges with Multiple Agents
 
 **Current Limitations:**
 The Steve AI system has only been tested with up to 10 concurrent agents, which raises significant concerns about horizontal scalability. As noted by Stone and Veloso (2000) in their foundational work on multi-agent systems, "coordination overhead grows quadratically with the number of agents" (p. 3) when using centralized coordination mechanisms. The current foreman-worker architecture, while effective for small teams, may encounter bottlenecks at scale due to:
@@ -3392,7 +3700,7 @@ The emotional AI system introduced in Chapter 3 compounds scalability challenges
 3. Develop relationship summarization to prevent O(n²) growth
 4. Investigate decentralized planning protocols (Contract Net, blackboard systems)
 
-#### 15.3.2 Real-Time Performance Constraints in Minecraft
+#### 16.3.2 Real-Time Performance Constraints in Minecraft
 
 **Frame Rate Requirements:**
 Minecraft's game loop operates at 20 ticks per second (TPS), requiring all AI computation to complete within 50ms to prevent server lag. This constraint creates significant challenges for LLM-based planning:
@@ -3417,7 +3725,7 @@ Chapter 8 discusses the Cascade Router system for intelligent model selection, w
 3. Develop speculative execution for predictable commands
 4. Investigate hierarchical A* pathfinding (HPA*) as documented in Section 5.5
 
-#### 15.3.3 LLM Latency and Reliability Issues
+#### 16.3.3 LLM Latency and Reliability Issues
 
 **Latency Challenges:**
 The 3-30 second latency for LLM API calls creates significant user experience problems. Research on human-computer interaction Nielsen, "The Uncanny Valley in Film and Animation" (1993) demonstrates that "response times >1 second cause user attention to wander" (p. 2), while latencies >10 seconds lead to user abandonment. The current Steve AI implementation frequently exceeds these thresholds.
@@ -3450,7 +3758,7 @@ Chapter 8's discussion of the "Cascade Router" (Section 8.2) addresses cost conc
 3. Develop skill caching to reduce API calls by 80-95%
 4. Investigate local model fine-tuning for common tasks
 
-#### 15.3.4 Memory Persistence Challenges
+#### 16.3.4 Memory Persistence Challenges
 
 **Unbounded Memory Growth:**
 The current conversation memory system grows unbounded as agents interact with players and other agents. Each conversation is stored in full, leading to memory consumption that grows linearly with gameplay duration. This creates several problems:
@@ -3481,7 +3789,7 @@ Chapter 3's relationship evolution system compounds memory challenges. Each agen
 3. Develop persistent storage layer (SQLite or PostgreSQL)
 4. Investigate memory compression techniques (embedding-based summarization)
 
-### 15.4 Missing Research Directions
+### 16.4 Missing Research Directions
 
 **Reinforcement Learning Integration:**
 - **Opportunity**: Use RL to tune utility factor weights automatically
@@ -3508,7 +3816,7 @@ Chapter 3's relationship evolution system compounds memory challenges. Each agen
 - **Approach**: Extend `DecisionExplanation` with natural language generation
 - **Benefit**: Player trust, debugging assistance, educational value
 
-### 15.5 Implementation Gaps vs. Research
+### 16.5 Implementation Gaps vs. Research
 
 The following patterns are well-researched in academia but not yet implemented:
 
@@ -3541,11 +3849,11 @@ The following patterns are well-researched in academia but not yet implemented:
 8. Explore neuro-symbolic architectures
 9. Develop multi-agent learning protocols
 
-### 15.6 Threats to Validity
+### 16.6 Threats to Validity
 
 **Architecture Selection Bias:**
 - **Threat**: This chapter recommends specific architectures based on industry trends
-- **Mitigation**: Comprehensive comparison matrix with weighted dimensions (Section 8.1)
+- **Mitigation**: Comprehensive comparison matrix with weighted dimensions (Section 9.1)
 - **Future Work**: Empirical user studies comparing architecture effectiveness
 
 **Minecraft-Specific Assumptions:**
@@ -3563,7 +3871,7 @@ The following patterns are well-researched in academia but not yet implemented:
 - **Dynamics**: Codebase evolves rapidly; statuses may become outdated
 - **Mitigation**: Document implementation priorities and rationale for future reference
 
-### 15.7 Architecture-Specific Limitations
+### 16.7 Architecture-Specific Limitations
 
 #### Single-Server Scalability Constraints
 
@@ -3978,7 +4286,7 @@ Future iterations of this project should:
 
 The goal should be **effective Minecraft agents**, not **publication-worthy architecture diagrams**. These goals are sometimes in tension, and the dissertation must acknowledge where academic considerations have overridden practical ones.
 
-### 15.8 Conclusion
+### 16.8 Conclusion
 
 This section has documented significant limitations and gaps in the current Steve AI architecture. The primary limitations are:
 
@@ -4023,7 +4331,7 @@ Addressing these limitations requires prioritized implementation of BT and HTN s
 
 ---
 
-## 16. Conclusion
+## 17. Conclusion
 
 **Chapter Synthesis:** This chapter has traversed the full spectrum of game AI architectures, from the finite state machines of the 1990s through the behavior tree revolution of the 2000s to the LLM-enhanced hybrids of today. We've established that no single architecture dominates—each excels in specific contexts.
 
@@ -4046,7 +4354,7 @@ This architecture has been proven to work well in Minecraft mods and provides a 
 
 ---
 
-## 17. Bibliography
+## 18. Bibliography
 
 ### Foundational Software Architecture
 
@@ -4142,6 +4450,85 @@ Guss, W., Clegg, A., Hilton, J., Lindauer, T., Bisk, Y., & Krishnamurthy, A. (20
 - MineDojo framework for Minecraft AI
 - Large-scale pretraining on Minecraft videos
 - Benchmark suite for embodied AI
+
+### Reinforcement Learning
+
+Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.). MIT Press.
+
+- Foundational textbook on reinforcement learning
+- Markov decision processes, Q-learning, policy gradients
+- p. 1: "Reinforcement learning is learning what to do—how to map situations to actions—so as to maximize a numerical reward signal"
+- p. 52: Temporal-difference learning
+- p. 101: Function approximation in RL
+- p. 189: Policy gradient methods
+
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., ... & Petersen, S. (2015). "Human-level control through deep reinforcement learning." *Nature*, 518(7540), 529-533.
+
+- DQN: Deep Q-Network breakthrough on Atari games
+- Combines Q-learning with deep neural networks
+- Experience replay and target network techniques
+- Achieved superhuman performance on 57 Atari games
+- p. 529: "We demonstrate that the deep Q-network agent, receiving only the pixels and the game score as inputs, was able to surpass the performance of all previous algorithms"
+
+Silver, D., Huang, A., Maddison, C. J., Guez, A., Sifre, L., Van Den Driessche, G., ... & Hassabis, D. (2016). "Mastering the game of Go with deep neural networks and tree search." *Nature*, 529(7587), 484-489.
+
+- AlphaGo: Defeated world champion Lee Sedol 4-1
+- Monte Carlo Tree Search + deep neural networks trained via self-play RL
+- Value network and policy network architecture
+- p. 484: "AlphaGo achieved a 99.8% winning rate against other Go programs"
+- p. 485: "The game of Go is widely viewed as the most challenging of classic board games"
+
+Silver, D., Hubert, T., Schrittwieser, J., Antonoglou, I., Lai, M., Guez, A., ... & Hassabis, D. (2018). "A general reinforcement learning algorithm that masters chess, shogi, and Go through self-play." *Science*, 362(6419), 1140-1144.
+
+- AlphaZero: Learned Go, Chess, and Shogi from scratch without human knowledge
+- Single algorithm mastered three complex games
+- p. 1140: "AlphaZero achieved within 24 hours a superhuman level of play in chess, shogi, and Go"
+- Demonstrated the power of self-play reinforcement learning
+
+Berner, C., Brockman, G., Chan, B., Cheung, V., Děák, P., Dennison, C., ... & Sifton, P. (2019). "Dota 2 with Large Scale Deep Reinforcement Learning." *arXiv preprint arXiv:1912.06680*.
+
+- OpenAI Five: Defeated Dota 2 world champions
+- LSTM + Proximal Policy Optimization (PPO)
+- Multi-agent reinforcement learning for team coordination
+- p. 1: "Our agents learned from scratch using generalized reinforcement learning"
+- p. 3: "Training required 128,000 CPUs and 256 GPUs"
+
+Schulman, J., Wolski, F., Dhariwal, P., Radford, A., & Klimov, O. (2017). "Proximal Policy Optimization Algorithms." *arXiv preprint arXiv:1707.06347*.
+
+- PPO: Proximal Policy Optimization algorithm
+- Sample-efficient and stable RL algorithm
+- p. 1: "We propose a new family of policy gradient methods that alternate between sampling and optimization"
+- p. 3: Clipped surrogate objective for stable training
+- Widely used in game AI and robotics
+
+Haarnoja, T., Zhou, A., Abbeel, P., & Levine, S. (2018). "Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor." *arXiv preprint arXiv:1801.01290*.
+
+- SAC: Soft Actor-Critic algorithm
+- Maximum entropy reinforcement learning
+- Sample-efficient and robust
+- p. 1: "We propose Soft Actor-Critic, an off-policy actor-critic deep RL algorithm based on the maximum entropy framework"
+- Popular for continuous control in games
+
+Ho, J., & Ermon, S. (2016). "Generative Adversarial Imitation Learning." *Advances in Neural Information Processing Systems*, 29.
+
+- GAIL: Generative Adversarial Imitation Learning
+- Learn from expert demonstrations without explicit reward functions
+- p. 1: "We present an algorithm that learns to imitate expert behaviors from demonstrations"
+- Applied to game AI for learning human-like play
+
+Guss, W. H., Clegg, A., Liu, P., Bisk, Y., Salakhutdinov, R., & Krishnamurthy, A. (2019). "MineRL: A Large-Scale Dataset of Minecraft Demonstrations." *arXiv preprint arXiv:1912.01788*.
+
+- MineRL competition and dataset
+- Human Minecraft gameplay demonstrations for imitation learning and RL
+- p. 1: "MineRL is a large-scale dataset of over 60 million state-action pairs"
+- Benchmarks for sample-efficient RL in Minecraft
+
+Schaul, T., Horgan, D., Gregor, K., & Silver, D. (2015). "Universal Value Function Approximators." *arXiv preprint arXiv:1509.02971*.
+
+- Universal value function approximators for RL
+- Generalization across goals and tasks
+- p. 1: "We introduce Universal Value Function Approximators (UVFAs) that generalize across goals"
+- Applied to utility AI weight optimization in game contexts
 
 ### Multi-Agent Systems
 
@@ -4297,7 +4684,7 @@ This dissertation's analysis of game automation architectures represents the fir
 
 **Cross-References:**
 - Chapter 1, Section 1.4: "Historical Automation Architectures: Lessons from Game Bots"
-- Chapter 6, Section 7.6: "Humanization and Error Recovery Systems"
+- Chapter 6, Section 8.6: "Humanization and Error Recovery Systems"
 - Chapter 8, Section 8.5.5: "Humanization in Automated Systems"
 - Appendix: `DISSERTATION_AUTOMATION_PATTERNS.md`
 

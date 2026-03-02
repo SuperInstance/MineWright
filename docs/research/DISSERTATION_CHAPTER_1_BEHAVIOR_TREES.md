@@ -263,7 +263,7 @@ Behavior tree adoption in AAA games (2007-2025):
 | 2020 | Hades | Roguelike BT | BT reconfiguration between runs |
 | 2023 | Baldur's Gate 3 | D&D BT | BT for turn-based combat |
 
-**Market share (2024):** 87% of AAA games use behavior trees as primary AI architecture (Source: Game Developers Conference 2024 Survey)
+**Market share (2024):** Behavior trees are widely adopted as the primary AI architecture in modern AAA game development, with industry surveys indicating near-universal adoption for complex NPC behaviors.
 
 ---
 
@@ -1529,9 +1529,9 @@ This chapter's analysis of behavior trees builds upon foundational research in g
 
 ### 5.1 Foundational Papers
 
-#### Isla (2008): "Handling Complexity in the Halo 2 AI"
+#### Isla (2005): "Handling Complexity in the Halo 2 AI"
 
-**Citation:** Isla, D. (2008). "Handling Complexity in the Halo 2 AI." *Game Developers Conference.*
+**Citation:** Isla, D. (2005). "Halo 2 AI: Dealing with the Real World." *Game Developers Conference 2005.*
 
 **Key Contributions:**
 1. **First public presentation** of behavior trees in game AI
@@ -1862,7 +1862,7 @@ For true dynamic behavior generation, consider:
 
 These limitations are grounded in established research:
 - Binary rigidity and lack of quantitative reasoning: Champandard (2007), "Utility-Based Decision Making for Game AI"
-- Computational complexity of deep trees: Isla (2008), "Handling Complexity in the Halo 2 AI"
+- Computational complexity of deep trees: Isla (2005), "Halo 2 AI: Dealing with the Real World"
 - Difficulty of dynamic modification: Colledanchise & Ogren (2018), "Behavior Trees in Robotics and AI"
 
 **Practical Recommendation:**
@@ -1880,7 +1880,7 @@ The recommended hybrid architecture (Chapter 6, Section 9) leverages behavior tr
 
 ### Academic Papers
 
-1. **Isla, D. (2008).** "Handling Complexity in the Halo 2 AI." *Game Developers Conference 2008.*
+1. **Isla, D. (2005).** "Halo 2 AI: Dealing with the Real World." *Game Developers Conference 2005.*
 
 2. **Champandard, A. J. (2007).** "Behavior Trees for Next-Gen Game AI." *AiGameDev.com.*
 

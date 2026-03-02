@@ -23,7 +23,8 @@
 13. [Comparative Analysis](#comparative-analysis)
 14. [Minecraft Applications](#minecraft-applications)
 15. [Implementation Guidelines](#implementation-guidelines)
-16. [Conclusion](#conclusion)
+16. [Limitations and Future Directions](#limitations-and-future-directions)
+17. [Conclusion](#conclusion)
 
 ---
 
@@ -5772,6 +5773,46 @@ public class AdvancedDialogue {
     }
 }
 ```
+
+---
+
+## Limitations and Future Directions
+
+While the RPG and adventure game AI systems analyzed in this chapter represent significant achievements in creating characterful companions, each approach carries inherent limitations that must be acknowledged. Understanding these constraints is essential for designing next-generation companion AI systems that address these shortcomings.
+
+### Limitations of Need-Based AI Systems
+
+The physiological need systems pioneered by *The Sims* and adapted by numerous RPGs suffer from predictability and mechanical feel. When agents are driven primarily by decay curves and urgency thresholds, their behavior can become formulaic and easily anticipated. This problem compounds in open-world games like Skyrim, where Radiant AI NPCs can be observed performing the same routine behaviors at the same times daily, shattering the illusion of life.
+
+As noted by Hudlicka, "Affective computing for game design" (2008), need systems require extensive tuning to prevent agents from oscillating between behaviors or prioritizing needs in ways that appear irrational to players. The computational cost of evaluating multiple needs against available actions every tick can also become prohibitive for large numbers of NPCs.
+
+### Emotional Modeling Challenges
+
+The OCC model's theoretical elegance faces practical obstacles in game implementation. The model's 22 emotion categories require extensive content for each emotion to feel distinct—a burden that many games cannot meet. More fundamentally, the model assumes universal cognitive appraisal processes that do not account for cultural variation in emotional expression.
+
+Reilly's dissertation, "Believable Social and Emotional Agents" (1996), identified a persistent challenge: emotional responses that are theoretically correct often feel wrong to players. An NPC who experiences "resentment" according to OCC appraisal rules may come across as simply angry or uncooperative, missing the nuanced distinction. Bridging the gap between formal emotion models and player perception remains an open research problem.
+
+### Declarative AI Constraints
+
+Gambit systems and other declarative AI approaches transfer complexity from developers to players. While this enables customization, it also creates a barrier to entry and can disrupt narrative immersion. Players who do not enjoy "programming" their companions may neglect the system entirely. These systems also struggle with contextual nuance—declarative rules that work well in one situation may prove disastrous in another.
+
+The static nature of declarative systems limits adaptability. A gambit configured for dungeon exploration may behave suboptimally in boss fights or social encounters, forcing players to either manage multiple configurations or accept subpar performance.
+
+### Relationship System Difficulties
+
+Companion relationships in RPGs frequently encounter the uncanny valley problem. As AI systems attempt more sophisticated emotional simulation, small imperfections become more glaring rather than less noticeable. This challenge manifests in dialogue systems that approach natural conversation only to falter on unexpected inputs, breaking player immersion.
+
+Memory systems for long-running companions face scaling challenges. Storing and indexing hundreds of hours of shared experiences requires significant memory resources. More critically, the narrative weight of memories diminishes over time—players struggle to remember why an NPC references an event from 50 hours prior.
+
+### Balancing Autonomy with Player Agency
+
+The tension between companion autonomy and player control remains unsolved. Highly autonomous agents may make decisions that frustrate player plans, while obedient agents feel like tools rather than companions. Dragon Age's hybrid approach—tactics for autonomy, manual override for control—represents the current best practice but still feels like two separate systems rather than an integrated solution.
+
+### Future Directions: LLM Enhancement Opportunities
+
+Large Language Models offer promising solutions to several of these limitations. Dynamic dialogue generation can address the repetitive conversation problem, with LLMs producing contextually appropriate responses that reference specific shared experiences rather than cycling through pre-written lines. However, LLM integration introduces new challenges: consistency across sessions, computational cost, and the difficulty of ensuring emotionally appropriate responses without explicit appraisal mechanisms.
+
+The most promising direction may be hybrid architectures that combine OCC's theoretical grounding with LLM expressiveness, using formal models to guide emotional responses while leveraging language models for natural expression. This hybrid approach, explored further in **Chapter 8, Section 8.5**, represents the most promising path toward companions that are both reliable and genuinely characterful.
 
 ---
 

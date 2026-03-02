@@ -674,7 +674,7 @@ public class AgentStateMachine {
 
 ### 8.5.5 Humanization in Automated Systems
 
-**Academic Context:** Research on humanization techniques from game automation (WoW Glider, Honorbuddy, OSRS bots) reveals patterns for creating believable, engaging AI companions (Game automation analysis, 2026; Humanization techniques research, 2026). While originally developed for anti-detection purposes, these techniques have legitimate applications in creating characterful AI agents that feel natural to interact with.
+**Academic Context:** Research on humanization techniques from game automation (WoW Glider, Honorbuddy, OSRS bots) reveals patterns for creating believable, engaging AI companions (Game Automation Analysis, "PRE_LLM_GAME_AUTOMATION.md" 2026; Humanization Techniques Research, "HUMANIZATION_PATTERNS.md" 2026). While originally developed for anti-detection purposes, these techniques have legitimate applications in creating characterful AI agents that feel natural to interact with.
 
 **Key Insight:** Humans are inconsistent—perfect consistency signals artificiality. LLM-driven systems introduce natural variation through:
 1. **Probabilistic Decision Making** (same situation, different choices)
@@ -1541,7 +1541,7 @@ Retrieval-Augmented Generation (RAG) represents a paradigm shift in how large la
 
 ### 8.8.2 RAG Components
 
-**Document Embeddings**: The foundation of RAG is vector embeddings—dense numerical representations that capture semantic meaning (Reimers & Gurevych, 2019). Modern embedding models like OpenAI's text-embedding-3-small or sentence-transformers' all-MiniLM-L6-v2 convert text into 384-1536 dimensional vectors. These vectors encode semantic relationships: "craft iron sword" and "create iron blade" produce similar vectors despite no word overlap, enabling semantic search rather than keyword matching.
+**Document Embeddings**: The foundation of RAG is vector embeddings—dense numerical representations that capture semantic meaning Reimers and Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" (2019). Modern embedding models like OpenAI's text-embedding-3-small or sentence-transformers' all-MiniLM-L6-v2 convert text into 384-1536 dimensional vectors. These vectors encode semantic relationships: "craft iron sword" and "create iron blade" produce similar vectors despite no word overlap, enabling semantic search rather than keyword matching.
 
 **Vector Databases**: While simple vector stores suffice for small collections (<10,000 documents), production RAG systems require specialized vector databases that handle millions of vectors with sub-100ms query latency. Popular options include Pinecone, Weaviate, Qdrant, pgvector, and Chroma. For Steve AI, an in-memory vector store suffices for current needs (<5,000 documents), but the architecture supports migration to production vector databases as knowledge bases scale.
 
@@ -1606,7 +1606,7 @@ Retrieval-Augmented Generation transforms how game AI agents access and utilize 
 
 ### 8.9.1 Evolution of Tool Calling (2022-2025)
 
-Tool calling has evolved significantly from simple JSON extraction to sophisticated multi-agent orchestration [OpenAI, 2024], [Anthropic, 2025]. Modern implementations support:
+Tool calling has evolved significantly from simple JSON extraction to sophisticated multi-agent orchestration OpenAI, "Function Calling" (2024); Anthropic, "Tool Use" (2025). Modern implementations support:
 
 **Provider-Specific Implementations:**
 
@@ -3314,7 +3314,7 @@ GraphRAG introduces a hierarchical indexing structure that dramatically improves
 
 **Community Detection**: GraphRAG applies Leiden community detection to group related entities into "communities" (e.g., "trading network", "quest chain", "guild members"). Each community generates a summary that the LLM can use for high-level reasoning before drilling into specific entities.
 
-**Performance Comparison** (Microsoft Research, 2024):
+**Performance Comparison** Microsoft Research, "GraphRAG: Knowledge Graph-Enhanced RAG" (2024):
 
 | Query Type | Standard RAG | GraphRAG | Improvement |
 |------------|--------------|----------|-------------|
