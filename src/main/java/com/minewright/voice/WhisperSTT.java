@@ -1,19 +1,33 @@
 package com.minewright.voice;
 
-import com.minewright.testutil.TestLogger;
-import com.minewright.config.MineWrightConfig;
-import org.slf4j.Logger;
-
-import javax.sound.sampled.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.TargetDataLine;
+
+import org.slf4j.Logger;
+
+import com.minewright.config.MineWrightConfig;
+import com.minewright.testutil.TestLogger;
 
 /**
  * Speech-to-text implementation using OpenAI's Whisper API.

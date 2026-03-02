@@ -1,8 +1,9 @@
 package com.minewright.util;
 
+import org.slf4j.Logger;
+
 import com.minewright.config.MineWrightConfig;
 import com.minewright.testutil.TestLogger;
-import org.slf4j.Logger;
 
 /**
  * Utility class for profiling and enforcing tick budget constraints for AI operations.

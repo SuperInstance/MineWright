@@ -1,13 +1,13 @@
 package com.minewright.util;
 
+import java.util.List;
+
 import com.minewright.entity.ForemanEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
-
-import java.util.List;
 
 /**
  * Common utility methods used across multiple action classes
