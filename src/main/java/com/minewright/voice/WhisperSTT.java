@@ -8,6 +8,7 @@ import javax.sound.sampled.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -306,7 +307,7 @@ public class WhisperSTT implements SpeechToText {
 
             // Build multipart body
             ByteArrayOutputStream bodyStream = new ByteArrayOutputStream();
-            PrintWriter writer = new PrintWriter(new OutputStreamWriter(bodyStream, "UTF-8"));
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(bodyStream, StandardCharsets.UTF_8));
 
             // Model parameter
             writer.append("--").append(boundary).append("\r\n");
@@ -369,12 +370,12 @@ public class WhisperSTT implements SpeechToText {
         int totalLength = 36 + audioLength;
 
         // RIFF header
-        out.write("RIFF".getBytes());
+        out.write("RIFF".getBytes(StandardCharsets.UTF_8));
         out.write(intToBytes(totalLength, 4));  // File size - 8
-        out.write("WAVE".getBytes());
+        out.write("WAVE".getBytes(StandardCharsets.UTF_8));
 
         // fmt chunk
-        out.write("fmt ".getBytes());
+        out.write("fmt ".getBytes(StandardCharsets.UTF_8));
         out.write(intToBytes(16, 4));           // Chunk size
         out.write(intToBytes(1, 2));            // Audio format (PCM)
         out.write(intToBytes(channels, 2));     // Channels
@@ -384,7 +385,7 @@ public class WhisperSTT implements SpeechToText {
         out.write(intToBytes(bitsPerSample, 2)); // Bits per sample
 
         // data chunk
-        out.write("data".getBytes());
+        out.write("data".getBytes(StandardCharsets.UTF_8));
         out.write(intToBytes(audioLength, 4));  // Data size
     }
 
@@ -404,7 +405,7 @@ public class WhisperSTT implements SpeechToText {
      */
     private String readStream(InputStream is) throws IOException {
         if (is == null) return "";
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) {

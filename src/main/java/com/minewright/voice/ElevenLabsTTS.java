@@ -8,6 +8,7 @@ import javax.sound.sampled.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -334,7 +335,7 @@ public class ElevenLabsTTS implements TextToSpeech {
 
             // Send request
             try (OutputStream os = connection.getOutputStream()) {
-                os.write(jsonBody.getBytes("UTF-8"));
+                os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
             }
 
             int responseCode = connection.getResponseCode();
@@ -514,7 +515,7 @@ public class ElevenLabsTTS implements TextToSpeech {
      * Reads an input stream to string.
      */
     private String readStream(InputStream is) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) {
