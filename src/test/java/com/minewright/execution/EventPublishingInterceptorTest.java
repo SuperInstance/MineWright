@@ -59,8 +59,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("beforeAction publishes ActionStartedEvent")
+    @SuppressWarnings("unchecked")
     void testBeforeActionPublishesEvent() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
 
         List<ActionStartedEvent> capturedEvents = new ArrayList<>();
@@ -77,8 +78,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("beforeAction returns true to allow execution")
+    @SuppressWarnings("unchecked")
     void testBeforeActionReturnsTrue() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
 
         boolean result = interceptor.beforeAction(mockAction, mockContext);
 
@@ -87,8 +89,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("beforeAction records start time for duration calculation")
+    @SuppressWarnings("unchecked")
     void testBeforeActionRecordsStartTime() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Test action");
         when(mockResult.isSuccess()).thenReturn(true);
 
@@ -111,8 +114,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("beforeAction handles null description gracefully")
+    @SuppressWarnings("unchecked")
     void testBeforeActionWithNullDescription() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn(null);
 
         List<ActionStartedEvent> capturedEvents = new ArrayList<>();
@@ -126,8 +130,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("beforeAction extracts action type correctly")
+    @SuppressWarnings("unchecked")
     void testBeforeActionExtractsActionType() {
-        when(mockAction.getClass()).thenReturn((Class) BuildStructureAction.class);
+        doReturn((Class) BuildStructureAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Building house");
 
         List<ActionStartedEvent> capturedEvents = new ArrayList<>();
@@ -143,8 +148,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("afterAction publishes ActionCompletedEvent")
+    @SuppressWarnings("unchecked")
     void testAfterActionPublishesEvent() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Successfully mined");
 
@@ -163,8 +169,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("afterAction includes correct duration")
+    @SuppressWarnings("unchecked")
     void testAfterActionIncludesDuration() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Done");
 
@@ -185,8 +192,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("afterAction handles failure result")
+    @SuppressWarnings("unchecked")
     void testAfterActionHandlesFailure() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(false);
         when(mockResult.getMessage()).thenReturn("Failed to mine");
 
@@ -203,8 +211,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("afterAction handles null message gracefully")
+    @SuppressWarnings("unchecked")
     void testAfterActionWithNullMessage() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn(null);
 
@@ -219,8 +228,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("afterAction cleans up start time")
+    @SuppressWarnings("unchecked")
     void testAfterActionCleansUpStartTime() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Done");
 
@@ -245,8 +255,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("onError publishes ActionCompletedEvent with failure")
+    @SuppressWarnings("unchecked")
     void testOnErrorPublishesFailureEvent() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         Exception testException = new RuntimeException("Something went wrong");
 
         List<ActionCompletedEvent> capturedEvents = new ArrayList<>();
@@ -265,8 +276,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("onError includes duration")
+    @SuppressWarnings("unchecked")
     void testOnErrorIncludesDuration() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         Exception testException = new RuntimeException("Error");
 
         List<ActionCompletedEvent> capturedEvents = new ArrayList<>();
@@ -283,8 +295,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("onError cleans up start time")
+    @SuppressWarnings("unchecked")
     void testOnErrorCleansUpStartTime() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         Exception testException = new RuntimeException("Error");
 
         List<ActionCompletedEvent> capturedEvents = new ArrayList<>();
@@ -318,12 +331,13 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("Events include correct agent ID")
+    @SuppressWarnings("unchecked")
     void testEventsIncludeCorrectAgentId() {
         String customAgentId = "custom-agent-456";
         EventPublishingInterceptor customInterceptor =
             new EventPublishingInterceptor(eventBus, customAgentId);
 
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Test");
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Done");
@@ -342,13 +356,14 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("Multiple interceptors can publish with different agent IDs")
+    @SuppressWarnings("unchecked")
     void testMultipleInterceptorsDifferentAgentIds() {
         EventPublishingInterceptor interceptor1 =
             new EventPublishingInterceptor(eventBus, "agent-1");
         EventPublishingInterceptor interceptor2 =
             new EventPublishingInterceptor(eventBus, "agent-2");
 
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Test");
 
         List<ActionStartedEvent> capturedEvents = new ArrayList<>();
@@ -370,8 +385,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("Complete lifecycle publishes start and complete events")
+    @SuppressWarnings("unchecked")
     void testCompleteLifecycle() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Mined 10 stone");
@@ -401,8 +417,9 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("Error lifecycle publishes start and error events")
+    @SuppressWarnings("unchecked")
     void testErrorLifecycle() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
         Exception testException = new RuntimeException("Mining failed");
 
@@ -443,6 +460,7 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("Interceptor handles null EventBus gracefully")
+    @SuppressWarnings("unchecked")
     void testNullEventBusHandling() {
         // Create interceptor with null EventBus - this is actually a design choice
         // The implementation expects EventBus to be non-null, so we test the behavior
@@ -451,7 +469,7 @@ class EventPublishingInterceptorTest {
                 new EventPublishingInterceptor(null, TEST_AGENT_ID);
             // This will throw NullPointerException when trying to publish
             // but that's expected behavior
-            when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+            doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
             assertThrows(NullPointerException.class,
                 () -> interceptorWithNull.beforeAction(mockAction, mockContext));
         });
@@ -461,18 +479,19 @@ class EventPublishingInterceptorTest {
 
     @Test
     @DisplayName("Events are published for different action types")
+    @SuppressWarnings("unchecked")
     void testEventsForDifferentActionTypes() {
         List<ActionStartedEvent> capturedEvents = new ArrayList<>();
         eventBus.subscribe(ActionStartedEvent.class, capturedEvents::add);
 
         // Mine action
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining");
         interceptor.beforeAction(mockAction, mockContext);
 
         // Build action
         BaseAction buildAction = mock(BaseAction.class);
-        when(buildAction.getClass()).thenReturn((Class) BuildStructureAction.class);
+        doReturn((Class) BuildStructureAction.class).when(buildAction).getClass();
         when(buildAction.getDescription()).thenReturn("Building");
         interceptor.beforeAction(buildAction, mockContext);
 

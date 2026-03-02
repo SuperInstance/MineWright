@@ -3410,6 +3410,255 @@ public class EmotionalSignalingSystem {
 }
 ```
 
+#### Companion-to-Companion Dynamics
+
+The companion ecosystem in *The Last of Us Part II* includes not only player-companion interactions but also rich companion-to-companion dynamics that create believable social relationships between AI characters.
+
+```java
+public class CompanionDynamicsSystem {
+    private final Map<CompanionPair, Relationship> relationships = new HashMap<>();
+    private final BanterSystem banter;
+    private final CoordinationSystem coordination;
+
+    public void updateCompanionDynamics(List<Companion> companions, WorldContext world) {
+        // Update each pair
+        for (int i = 0; i < companions.size(); i++) {
+            for (int j = i + 1; j < companions.size(); j++) {
+                Companion a = companions.get(i);
+                Companion b = companions.get(j);
+                CompanionPair pair = new CompanionPair(a, b);
+
+                Relationship relationship = relationships.get(pair);
+
+                // Check for banter opportunities
+                if (shouldTriggerBanter(relationship, world)) {
+                    triggerBanter(a, b, relationship, world);
+                }
+
+                // Check for coordination opportunities
+                if (shouldCoordinate(relationship, world)) {
+                    coordinateActions(a, b, relationship, world);
+                }
+
+                // Update relationship based on shared experiences
+                updateRelationship(relationship, world);
+            }
+        }
+    }
+
+    private boolean shouldTriggerBanter(Relationship relationship, WorldContext world) {
+        // Banter triggers:
+        // 1. Low stress situation
+        // 2. Good relationship
+        // 3. Enough time since last banter
+        // 4. Appropriate context
+
+        if (world.getStressLevel() > 0.5f) return false;
+        if (relationship.getAffection() < 0.3f) return false;
+        if (relationship.getTimeSinceLastBanter() < 60) return false;  // 1 minute
+
+        return world.isAppropriateForBanter();
+    }
+
+    private void triggerBanter(Companion a, Companion b, Relationship relationship, WorldContext world) {
+        // Select banter topic based on context
+        BanterTopic topic = selectBanterTopic(a, b, world);
+
+        // Generate banter lines
+        String lineA = generateBanterLine(a, b, topic, relationship);
+        String lineB = generateBanterLine(b, a, topic, relationship);
+
+        // Execute banter
+        a.say(lineA, BanterTiming.FIRST);
+        b.say(lineB, BanterTiming.RESPONSE);
+
+        // Update relationship
+        relationship.recordBanter(topic, Instant.now());
+    }
+
+    private BanterTopic selectBanterTopic(Companion a, Companion b, WorldContext world) {
+        // Context-sensitive banter topics
+        if (world.isInCombat()) {
+            return BanterTopic.COMBAT_COORDINATION;
+        }
+
+        if (world.isExploring()) {
+            return BanterTopic.EXPLORATION;
+        }
+
+        if (world.isInQuietMoment()) {
+            return BanterTopic.PERSONAL;
+        }
+
+        if (world.hasRecentEvent()) {
+            return BanterTopic.RECENT_EVENT;
+        }
+
+        return BanterTopic.GENERAL;
+    }
+
+    private String generateBanterLine(Companion speaker, Companion listener, BanterTopic topic, Relationship relationship) {
+        // Banter varies based on:
+        // 1. Personality
+        // 2. Relationship level
+        // 3. Current situation
+        // 4. Past shared experiences
+
+        Personality speakerPersonality = speaker.getPersonality();
+        float affectionLevel = relationship.getAffection();
+
+        return switch (topic) {
+            case COMBAT_COORDINATION -> {
+                if (speakerPersonality.isAggressive()) {
+                    yield "I'll take the left, you take the right.";
+                } else if (speakerPersonality.isCautious()) {
+                    yield "Let's be careful here.";
+                } else {
+                    yield "Watch my back.";
+                }
+            }
+
+            case EXPLORATION -> {
+                if (affectionLevel > 0.7f) {
+                    yield "Nice exploring with you, " + listener.getName() + ".";
+                } else {
+                    yield "Let's keep moving.";
+                }
+            }
+
+            case PERSONAL -> {
+                if (affectionLevel > 0.8f) {
+                    yield speakerPersonality.getPersonalDeepLine(listener);
+                } else if (affectionLevel > 0.5f) {
+                    yield speakerPersonality.getPersonalCasualLine(listener);
+                } else {
+                    yield speakerPersonality.getPersonalNeutralLine();
+                }
+            }
+
+            case RECENT_EVENT -> {
+                GameEvent event = relationship.getLastSharedEvent();
+                yield speakerPersonality.getReactionLine(event, listener);
+            }
+
+            default -> speakerPersonality.getDefaultLine();
+        };
+    }
+}
+```
+
+#### PTSD and Trauma Mechanics
+
+*The Last of Us Part II* features sophisticated trauma mechanics where companions can develop PTSD-like responses to extreme stress, creating long-term behavioral changes that reflect their experiences.
+
+```java
+public class TraumaSystem {
+    private final Map<Companion, TraumaState> traumaStates = new HashMap<>();
+    private final TriggerSystem triggers;
+    private final CopingMechanismSystem coping;
+
+    public void processTraumaticEvent(Companion companion, TraumaticEvent event) {
+        TraumaState state = traumaStates.get(companion);
+
+        // Record traumatic event
+        state.recordTrauma(event);
+
+        // Update trauma level
+        float traumaIncrease = calculateTraumaIncrease(event);
+        state.increaseTraumaLevel(traumaIncrease);
+
+        // Add trauma triggers
+        for (TraumaTrigger trigger : event.getTriggers()) {
+            state.addTrigger(trigger);
+        }
+
+        // Update coping mechanisms
+        coping.updateCopingMechanisms(companion, state);
+    }
+
+    public void updateTraumaResponse(Companion companion, WorldContext world) {
+        TraumaState state = traumaStates.get(companion);
+
+        // Check for trauma triggers
+        for (TraumaTrigger trigger : state.getActiveTriggers()) {
+            if (triggers.isTriggered(trigger, world)) {
+                triggerTraumaResponse(companion, trigger, state);
+            }
+        }
+
+        // Natural decay of trauma over time
+        state.decayTraumaLevel(world.getTimeSinceLastTrauma());
+
+        // Check for coping behavior
+        if (state.shouldCope()) {
+            coping.executeCopingBehavior(companion, state);
+        }
+    }
+
+    private void triggerTraumaResponse(Companion companion, TraumaTrigger trigger, TraumaState state) {
+        // Trauma responses vary by severity
+        float severity = state.getTraumaLevel();
+
+        if (severity > 0.8f) {
+            // Severe trauma response
+            companion.setMovementSpeed(0.5f);  // Sluggish
+            companion.setAccuracy(0.6f);       // Shaky aim
+            companion.setReactionTime(2.0f);   // Slower reactions
+            companion.setVocalizationStyle(VocalizationStyle.PANICKED);
+            companion.setFacialExpression(FacialExpression.TRAUMATIZED);
+        } else if (severity > 0.5f) {
+            // Moderate trauma response
+            companion.setMovementSpeed(0.8f);
+            companion.setAccuracy(0.85f);
+            companion.setVocalizationStyle(VocalizationStyle.TENSE);
+            companion.setFacialExpression(FacialExpression.STRESSED);
+        } else {
+            // Mild trauma response
+            companion.setVocalizationStyle(VocalizationStyle.QUIET);
+            companion.setBodyLanguage(BodyLanguage.TENSE);
+        }
+
+        // Trigger-specific responses
+        switch (trigger.getType()) {
+            case SPECIFIC_LOCATION -> {
+                companion.avoidLocation(trigger.getLocation());
+                companion.say("I... I can't go back there.", VocalizationStyle.TRAUMATIZED);
+            }
+
+            case SPECIFIC_ENEMY_TYPE -> {
+                companion.setAccuracyAgainst(trigger.getEnemyType(), 0.5f);
+                companion.say("Not again...", VocalizationStyle.TERRIFIED);
+            }
+
+            case SIMILAR_SITUATION -> {
+                companion.setHesitation(true);
+                companion.setReactionTime(1.5f);
+                companion.playAnimation(Animation.FLASHBACK);
+            }
+        }
+    }
+
+    private float calculateTraumaIncrease(TraumaticEvent event) {
+        float baseTrauma = event.getBaseSeverity();
+
+        // Modifiers
+        float proximityModifier = event.getProximityToCompanion();  // Closer = more traumatic
+        float helplessnessModifier = event.getHelplessnessLevel();  // More helpless = more traumatic
+        float betrayalModifier = event.getBetrayalLevel();         // Betrayal = more traumatic
+
+        return baseTrauma * proximityModifier * helplessnessModifier * (1.0f + betrayalModifier);
+    }
+}
+```
+
+These trauma mechanics create companion behavior that evolves based on experiences, where:
+- **Combat survivors** may develop anxiety in similar combat situations
+- **Witnesses to death** may become more protective or withdrawn
+- **Near-death experiences** can trigger flashbacks and hesitation
+- **Repeated exposure** can lead to desensitization or breakdown
+
+The system respects the narrative weight of trauma while maintaining gameplay viability, as companions develop coping mechanisms and can recover gradually over time Druckmann, "Trauma and Character Development in TLOU2" (2020).
+
 ### Key Innovations
 
 **1. Environmental Awareness**
@@ -3753,6 +4002,155 @@ public class TagCoordinationSystem {
     }
 }
 ```
+
+#### Tag-Based Relationship Dynamics
+
+Tags in *Divinity: Original Sin 2* not only determine dialogue options and interactions but also govern relationship dynamics between characters, creating emergent friendships, rivalries, and conflicts based on tag compatibility.
+
+```java
+public class TagRelationshipSystem {
+    private final Map<CharacterPair, TagRelationship> relationships = new HashMap<>();
+
+    public static class TagRelationship {
+        private final Map<Tag, Integer> tagAffinities = new HashMap<>();
+        private final Map<Tag, Integer> tagAversions = new HashMap<>();
+        private float baseRelationship = 0.5f;
+
+        public float calculateRelationshipModifier(Character a, Character b) {
+            Set<Tag> aTags = a.getTags();
+            Set<Tag> bTags = b.getTags();
+
+            float modifier = baseRelationship;
+
+            // Check for compatible tags
+            for (Tag aTag : aTags) {
+                for (Tag bTag : bTags) {
+                    modifier += getTagCompatibility(aTag, bTag);
+                }
+            }
+
+            // Check for conflicting tags
+            for (Tag aTag : aTags) {
+                for (Tag bTag : bTags) {
+                    modifier += getTagConflict(aTag, bTag);
+                }
+            }
+
+            return Math.max(-1.0f, Math.min(1.0f, modifier));
+        }
+
+        private float getTagCompatibility(Tag a, Tag b) {
+            // Complementary tags increase relationship
+            Map<Tag, Set<Tag>> compatibilities = Map.of(
+                Tag.COMPASSIONATE, Set.of(Tag.KIND, Tag.HEALER, Tag.PROTECTOR),
+                Tag.ROGUE, Set.of(Tag.JESTER, Tag.MYSTIC),
+                Tag.NOBLE, Set.of(Tag.SOLDIER, Tag.SCHOLAR),
+                Tag.BARBARIAN, Set.of(Tag.SOLDIER, Tag.HUNTER),
+                Tag.MYSTIC, Set.of(Tag.SCHOLAR, Tag.JESTER)
+            );
+
+            if (compatibilities.containsKey(a)) {
+                if (compatibilities.get(a).contains(b)) {
+                    return 0.2f;  // Compatible
+                }
+            }
+
+            return 0.0f;
+        }
+
+        private float getTagConflict(Tag a, Tag b) {
+            // Conflicting tags decrease relationship
+            Map<Tag, Set<Tag>> conflicts = Map.of(
+                Tag.COMPASSIONATE, Set.of(Tag.RUTHLESS, Tag.BANDIT),
+                Tag.NOBLE, Set.of(Tag.OUTLAW, Tag.ROGUE),
+                Tag.JUSTICE, Set.of(Tag.CRIMINAL, Tag.BANDIT),
+                Tag.SOLDIER, Set.of(Tag.PACIFIST),
+                Tag.MYSTIC, Set.of(Tag.SKEPTIC)
+            );
+
+            if (conflicts.containsKey(a)) {
+                if (conflicts.get(a).contains(b)) {
+                    return -0.3f;  // Conflicting
+                }
+            }
+
+            return 0.0f;
+        }
+    }
+
+    public void updateRelationships(List<Character> party) {
+        for (int i = 0; i < party.size(); i++) {
+            for (int j = i + 1; j < party.size(); j++) {
+                Character a = party.get(i);
+                Character b = party.get(j);
+
+                CharacterPair pair = new CharacterPair(a, b);
+                TagRelationship relationship = relationships.computeIfAbsent(
+                    pair, k -> new TagRelationship()
+                );
+
+                // Calculate relationship based on tags
+                float relationshipValue = relationship.calculateRelationshipModifier(a, b);
+
+                // Apply to actual relationship
+                a.setRelationshipWith(b, relationshipValue);
+                b.setRelationshipWith(a, relationshipValue);
+
+                // Generate dialogue based on relationship
+                if (Math.random() < 0.1f) {  // 10% chance per update
+                    generateRelationshipDialogue(a, b, relationshipValue);
+                }
+            }
+        }
+    }
+
+    private void generateRelationshipDialogue(Character a, Character b, float relationship) {
+        String dialogue;
+
+        if (relationship > 0.7f) {
+            // Strong positive relationship
+            dialogue = switch (a.getRandomTag()) {
+                case Tag.COMPASSIONATE -> "I'm glad we're traveling together, " + b.getName() + ".";
+                case Tag.JESTER -> "You're not so bad for a " + b.getRandomTag() + ", " + b.getName() + "!";
+                case Tag.NOBLE -> "Your companionship is most appreciated, " + b.getName() + ".";
+                default -> "I enjoy your company, " + b.getName() + ".";
+            };
+        } else if (relationship > 0.3f) {
+            // Mild positive relationship
+            dialogue = switch (a.getRandomTag()) {
+                case Tag.COMPASSIONATE -> "You're a good person to travel with.";
+                case Tag.JESTER -> "Hey " + b.getName() + ", not bad today!";
+                default -> "Working with you is fine.";
+            };
+        } else if (relationship > -0.3f) {
+            // Neutral relationship
+            dialogue = switch (a.getRandomTag()) {
+                case Tag.JESTER -> "So, " + b.getName() + ", got any jokes?";
+                default -> "Let's keep moving.";
+            };
+        } else {
+            // Negative relationship
+            dialogue = switch (a.getRandomTag()) {
+                case Tag.COMPASSIONATE -> "I... I'm not sure about you, " + b.getName() + ".";
+                case Tag.NOBLE -> "Your methods concern me, " + b.getName() + ".";
+                case Tag.BARBARIAN -> "I don't like your style, " + b.getName() + ".";
+                case Tag.JESTER -> "Try not to slow us down, " + b.getName() + ".";
+                default -> "I'd prefer if we kept our distance.";
+            };
+        }
+
+        a.sendChatMessage(dialogue);
+    }
+}
+```
+
+This tag-based relationship system creates emergent social dynamics where:
+- **Compassionate characters** naturally gravitate toward healers and protectors
+- **Noble characters** respect soldiers and scholars but conflict with outlaws
+- **Rogues** form unlikely alliances with jesters and mystics
+- **Mystics** bond with scholars over shared knowledge but clash with skeptics
+
+The relationship system operates autonomously, requiring no player intervention while creating believable companion interactions that evolve based on their inherent personality tags.
 
 ### Key Innovations
 

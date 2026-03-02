@@ -2,6 +2,11 @@ package com.minewright.behavior.processes;
 
 import com.minewright.behavior.BehaviorProcess;
 import com.minewright.entity.ForemanEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +76,16 @@ public class SurvivalProcess implements BehaviorProcess {
      * Ticks since process activation.
      */
     private int ticksActive = 0;
+
+    /**
+     * Threshold for falling velocity (negative Y indicates falling).
+     */
+    private static final double FALLING_VELOCITY_THRESHOLD = -0.5;
+
+    /**
+     * Search radius for detecting threats (blocks and entities).
+     */
+    private static final double THREAT_DETECTION_RADIUS = 16.0;
 
     /**
      * Types of survival threats the agent can face.
@@ -224,61 +239,102 @@ public class SurvivalProcess implements BehaviorProcess {
 
     /**
      * Handles low health condition.
+     *
+     * <p>Current behavior:</p>
+     * <ul>
+     *   <li>Flee from nearby hostile mobs</li>
+     *   <li>Find safe location</li>
+     * </ul>
+     *
+     * <p>Future enhancements:</p>
+     * <ul>
+     *   <li>Eat food if available in inventory</li>
+     *   <li>Call for help from other agents</li>
+     *   <li>Use healing potions</li>
+     * </ul>
      */
     private void handleLowHealth() {
-        // TODO: Eat food if available
-        // TODO: Flee to safe location
-        // TODO: Call for help
-
-        // For now, just flee from nearby hostile mobs
         fleeFromNearestThreat();
     }
 
     /**
      * Handles fire/lava condition.
+     *
+     * <p>Current behavior:</p>
+     * <ul>
+     *   <li>Flee from dangerous position to safe ground</li>
+     * </ul>
+     *
+     * <p>Future enhancements:</p>
+     * <ul>
+     *   <li>Use water bucket if available</li>
+     *   <li>Break blocks to escape enclosed spaces</li>
+     *   <li>Find water source to extinguish fire</li>
+     * </ul>
      */
     private void handleFireLava() {
-        // TODO: Find water or safe ground
-        // TODO: Use water bucket if available
-        // TODO: Break blocks to escape
-
-        // For now, just try to move away from current position
         fleeFromCurrentPosition();
     }
 
     /**
      * Handles drowning condition.
+     *
+     * <p>Current behavior:</p>
+     * <ul>
+     *   <li>Swim upward toward surface</li>
+     * </ul>
+     *
+     * <p>Future enhancements:</p>
+     * <ul>
+     *   <li>Place torch or block to create air pocket</li>
+     *   <li>Use water breathing potion if available</li>
+     *   <li>Dig upward to surface if blocked</li>
+     * </ul>
      */
     private void handleDrowning() {
-        // TODO: Swim upward to surface
-        // TODO: Place torch or block for air pocket
-        // TODO: Use water breathing potion if available
-
-        // For now, try to move upward
         swimUpward();
     }
 
     /**
      * Handles falling condition.
+     *
+     * <p>Current behavior:</p>
+     * <ul>
+     *   <li>Informational only - falling happens too fast for reaction</li>
+     * </ul>
+     *
+     * <p>Future enhancements:</p>
+     * <ul>
+     *   <li>Try to grab ledge on wall</li>
+     *   <li>Use water bucket if available (MLG water bucket)</li>
+     *   <li>Activate elytra if equipped</li>
+     *   <li>Use slow fall potion</li>
+     * </ul>
      */
     private void handleFalling() {
-        // TODO: Try to grab ledge
-        // TODO: Use water bucket if available
-        // TODO: Activate elytra if available
-
-        // For now, try to slow fall (if we have mechanics for it)
-        // This is mostly informational - falling happens fast
+        // Falling happens too fast for reaction-based survival
+        // This is primarily for detection and post-fall recovery
+        LOGGER.debug("[{}] Falling detected at {} with velocity {}",
+            foreman.getEntityName(), foreman.blockPosition(), String.format("%.2f", foreman.getDeltaMovement().y));
     }
 
     /**
      * Handles under attack condition.
+     *
+     * <p>Current behavior:</p>
+     * <ul>
+     *   <li>Flee from attacker</li>
+     * </ul>
+     *
+     * <p>Future enhancements:</p>
+     * <ul>
+     *   <li>Fight back with equipped weapon if odds are good</li>
+     *   <li>Use shield to block incoming damage</li>
+     *   <li>Assess threat level - flee if outnumbered</li>
+     *   <li>Call for help from nearby agents</li>
+     * </ul>
      */
     private void handleAttack() {
-        // TODO: Fight back with equipped weapon
-        // TODO: Use shield to block
-        // TODO: Flee if outnumbered or outmatched
-
-        // For now, just flee
         fleeFromNearestThreat();
     }
 
@@ -289,50 +345,230 @@ public class SurvivalProcess implements BehaviorProcess {
     }
 
     private boolean isInLava() {
-        // Check if entity is in lava block
-        // TODO: Implement actual lava detection
-        return false; // Placeholder
+        if (foreman.level() == null) {
+            return false;
+        }
+        BlockPos pos = foreman.blockPosition();
+        return foreman.level().getBlockState(pos).is(Blocks.LAVA);
     }
 
     private boolean isOnFire() {
-        // Check if entity is on fire
-        // TODO: Implement actual fire detection
-        return false; // Placeholder
+        return foreman.isOnFire() || foreman.getRemainingFireTicks() > 0;
     }
 
     private boolean isDrowning() {
         // Check if underwater and low on air
-        // TODO: Implement actual drowning detection
-        return false; // Placeholder
+        int currentAir = foreman.getAirSupply();
+        int maxAir = foreman.getMaxAirSupply();
+        boolean underwater = foreman.isUnderWater();
+        return underwater && currentAir < maxAir * 0.3; // Less than 30% air remaining
     }
 
     private boolean isFalling() {
         // Check if falling with significant downward velocity
-        // TODO: Implement actual falling detection
-        return false; // Placeholder
+        Vec3 deltaMovement = foreman.getDeltaMovement();
+        boolean fallingFast = deltaMovement.y < FALLING_VELOCITY_THRESHOLD;
+
+        // Also check if block below is air (indicating we're not on solid ground)
+        boolean blockBelowIsAir = false;
+        if (foreman.level() != null) {
+            BlockPos pos = foreman.blockPosition();
+            blockBelowIsAir = foreman.level().getBlockState(pos.below()).isAir();
+        }
+
+        return fallingFast && blockBelowIsAir;
     }
 
     private boolean isUnderAttack() {
         // Check if recently damaged by hostile mob
-        // TODO: Implement actual attack detection
-        return false; // Placeholder
+        LivingEntity attacker = foreman.getLastHurtByMob();
+        if (attacker != null && attacker.isAlive()) {
+            // Check if attacker is nearby and hostile
+            double distance = foreman.position().distanceTo(attacker.position());
+            return distance < THREAT_DETECTION_RADIUS;
+        }
+        return false;
     }
 
     // === Action Methods ===
 
     private void fleeFromNearestThreat() {
-        // TODO: Implement fleeing logic
-        // Find nearest threat, calculate opposite direction, move
+        LivingEntity attacker = foreman.getLastHurtByMob();
+        if (attacker != null && attacker.isAlive()) {
+            // Calculate flee direction (away from attacker)
+            BlockPos fleePos = calculateFleePosition(attacker.blockPosition());
+            if (fleePos != null) {
+                navigateTo(fleePos);
+                LOGGER.debug("[{}] Fleeing from attacker at {} to {}",
+                    foreman.getEntityName(), attacker.blockPosition(), fleePos);
+            }
+        } else {
+            // No specific threat - flee from current position to safety
+            fleeFromCurrentPosition();
+        }
     }
 
     private void fleeFromCurrentPosition() {
-        // TODO: Implement fleeing logic
-        // Move away from current position (e.g., away from lava)
+        BlockPos currentPos = foreman.blockPosition();
+
+        // Find a safe position away from current danger
+        BlockPos fleePos = findSafePosition(currentPos);
+
+        if (fleePos != null) {
+            navigateTo(fleePos);
+            LOGGER.debug("[{}] Fleeing from danger at {} to {}",
+                foreman.getEntityName(), currentPos, fleePos);
+        }
     }
 
     private void swimUpward() {
-        // TODO: Implement swimming logic
-        // Move upward toward surface
+        BlockPos currentPos = foreman.blockPosition();
+
+        // Try to swim upward - find water's surface or air above
+        BlockPos surfacePos = findWaterSurface(currentPos);
+
+        if (surfacePos != null) {
+            navigateTo(surfacePos);
+            LOGGER.debug("[{}] Swimming upward from {} to surface at {}",
+                foreman.getEntityName(), currentPos, surfacePos);
+        } else {
+            // No surface found - try moving up anyway
+            BlockPos upPos = currentPos.above(5);
+            navigateTo(upPos);
+        }
+    }
+
+    /**
+     * Calculates a flee position away from a threat.
+     *
+     * @param threatPos Position of the threat
+     * @return Position to flee to, or null if none found
+     */
+    private BlockPos calculateFleePosition(BlockPos threatPos) {
+        BlockPos currentPos = foreman.blockPosition();
+
+        // Calculate direction away from threat
+        int dx = currentPos.getX() - threatPos.getX();
+        int dz = currentPos.getZ() - threatPos.getZ();
+
+        // Normalize and scale to safe distance
+        double distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < 0.1) {
+            // On top of threat - pick random direction
+            dx = 1;
+            dz = 1;
+        } else {
+            dx = (int) (dx / distance * 10);
+            dz = (int) (dz / distance * 10);
+        }
+
+        BlockPos fleePos = currentPos.offset(dx, 0, dz);
+
+        // Ensure Y is safe (avoid falling)
+        fleePos = new BlockPos(fleePos.getX(), currentPos.getY(), fleePos.getZ());
+
+        return fleePos;
+    }
+
+    /**
+     * Finds a safe position away from danger.
+     *
+     * @param dangerPos Current dangerous position
+     * @return Safe position, or null if none found
+     */
+    private BlockPos findSafePosition(BlockPos dangerPos) {
+        // Check nearby positions for safety
+        int searchRadius = 8;
+
+        for (int radius = 2; radius <= searchRadius; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    for (int dy = -2; dy <= 2; dy++) {
+                        BlockPos candidate = dangerPos.offset(dx, dy, dz);
+
+                        if (isPositionSafe(candidate)) {
+                            return candidate;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks if a position is safe (not lava, not fire, solid ground).
+     *
+     * @param pos Position to check
+     * @return true if safe
+     */
+    private boolean isPositionSafe(BlockPos pos) {
+        if (foreman.level() == null) {
+            return false;
+        }
+
+        // Check for lava
+        if (foreman.level().getBlockState(pos).is(Blocks.LAVA)) {
+            return false;
+        }
+
+        // Check for fire
+        if (foreman.level().getBlockState(pos).is(Blocks.FIRE)) {
+            return false;
+        }
+
+        // Check for solid ground below
+        BlockPos below = pos.below();
+        if (!foreman.level().getBlockState(below).isSolidRender(foreman.level(), below)) {
+            return false; // No solid ground
+        }
+
+        // Check for safe space at head level
+        BlockPos head = pos.above();
+        if (foreman.level().getBlockState(head).isSuffocating(foreman.level(), head)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Finds the water surface position.
+     *
+     * @param currentPos Current underwater position
+     * @return Surface position, or null if not found
+     */
+    private BlockPos findWaterSurface(BlockPos currentPos) {
+        if (foreman.level() == null) {
+            return null;
+        }
+
+        // Search upward for air
+        int maxSearch = 20; // Search up to 20 blocks up
+        for (int y = currentPos.getY(); y < Math.min(currentPos.getY() + maxSearch, foreman.level().getMaxBuildHeight()); y++) {
+            BlockPos checkPos = new BlockPos(currentPos.getX(), y, currentPos.getZ());
+
+            if (!foreman.level().getBlockState(checkPos).is(Blocks.WATER)) {
+                // Found air - surface is one block below
+                return checkPos.below();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Navigates the entity to a target position.
+     *
+     * @param targetPos Target position
+     */
+    private void navigateTo(BlockPos targetPos) {
+        if (foreman.getNavigation() != null) {
+            // Use speed multiplier for urgency
+            double speed = 1.5; // Faster than normal movement
+            foreman.getNavigation().moveTo(targetPos.getX(), targetPos.getY(), targetPos.getZ(), speed);
+        }
     }
 
     private String getThreatMessage(SurvivalThreat threat) {

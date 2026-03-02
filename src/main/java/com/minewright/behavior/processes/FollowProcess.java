@@ -2,10 +2,15 @@ package com.minewright.behavior.processes;
 
 import com.minewright.behavior.BehaviorProcess;
 import com.minewright.entity.ForemanEntity;
+import com.minewright.goal.Goals;
+import com.minewright.goal.NavigationGoal;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 /**
  * Medium-low priority process for following the player or another entity.
@@ -63,6 +68,12 @@ public class FollowProcess implements BehaviorProcess {
     private Entity followTarget;
 
     /**
+     * The UUID of the owner (player who spawned this foreman).
+     * Used for owner tracking and prioritizing who to follow.
+     */
+    private UUID ownerUUID;
+
+    /**
      * Whether this process is currently active.
      */
     private boolean active = false;
@@ -85,6 +96,7 @@ public class FollowProcess implements BehaviorProcess {
     public FollowProcess(ForemanEntity foreman) {
         this.foreman = foreman;
         this.followTarget = null;
+        this.ownerUUID = null;
     }
 
     @Override
@@ -187,8 +199,8 @@ public class FollowProcess implements BehaviorProcess {
      *
      * <p>Priority order:
      * <ol>
+     *   <li>Owner (if set and within range)</li>
      *   <li>Nearest player</li>
-     *   <li>Entity that spawned this foreman</li>
      *   <li>Null if no valid target</li>
      * </ol>
      *
@@ -199,7 +211,15 @@ public class FollowProcess implements BehaviorProcess {
             return null;
         }
 
-        // Find nearest player
+        // Priority 1: Follow owner if set
+        if (ownerUUID != null) {
+            Player owner = findPlayerByUUID(ownerUUID);
+            if (owner != null && distanceTo(owner) <= MAX_TELEPORT_DISTANCE) {
+                return owner;
+            }
+        }
+
+        // Priority 2: Find nearest player
         Player nearestPlayer = foreman.level().getNearestPlayer(
             foreman,
             MAX_TELEPORT_DISTANCE
@@ -209,8 +229,26 @@ public class FollowProcess implements BehaviorProcess {
             return nearestPlayer;
         }
 
-        // Check if this foreman has an owner
-        // TODO: Implement owner tracking if needed
+        return null;
+    }
+
+    /**
+     * Finds a player by their UUID.
+     *
+     * @param playerUuid The UUID of the player to find
+     * @return The player entity, or null if not found
+     */
+    private Player findPlayerByUUID(UUID playerUuid) {
+        if (foreman.level() == null || playerUuid == null) {
+            return null;
+        }
+
+        // Search for player by UUID in the level
+        for (Player player : foreman.level().players()) {
+            if (player.getUUID().equals(playerUuid)) {
+                return player;
+            }
+        }
 
         return null;
     }
@@ -229,13 +267,34 @@ public class FollowProcess implements BehaviorProcess {
      * Moves toward the follow target.
      */
     private void moveTowardTarget() {
-        // TODO: Implement pathfinding toward target
-        // This would involve using the pathfinding system to navigate
-        // For now, this is a placeholder
+        if (followTarget == null || foreman.getNavigation() == null) {
+            return;
+        }
 
-        LOGGER.debug("[{}] Moving toward follow target {}",
+        // Check if already navigating
+        if (foreman.getNavigation().isInProgress()) {
+            // Check if we're navigating toward the right target
+            // If not, stop and restart navigation
+            BlockPos currentTarget = foreman.getNavigation().getTargetPos();
+            BlockPos targetPos = followTarget.blockPosition();
+
+            if (currentTarget != null && currentTarget.distSqr(targetPos) > 100) {
+                // Target moved significantly, re-path
+                foreman.getNavigation().stop();
+            } else {
+                // Still navigating correctly
+                return;
+            }
+        }
+
+        // Use Minecraft's built-in navigation to follow the entity
+        // Speed multiplier 1.0 for normal following speed
+        foreman.getNavigation().moveTo(followTarget, 1.0);
+
+        LOGGER.debug("[{}] Moving toward follow target {} (distance: {})",
             foreman.getEntityName(),
-            followTarget.getName().getString());
+            followTarget.getName().getString(),
+            String.format("%.1f", distanceTo(followTarget)));
     }
 
     /**
@@ -287,5 +346,64 @@ public class FollowProcess implements BehaviorProcess {
      */
     public int getTicksActive() {
         return ticksActive;
+    }
+
+    // ========== Owner Tracking ==========
+
+    /**
+     * Gets the owner's UUID.
+     *
+     * @return The owner's UUID, or null if no owner is set
+     */
+    public UUID getOwnerUUID() {
+        return ownerUUID;
+    }
+
+    /**
+     * Sets the owner's UUID.
+     *
+     * <p>The owner is prioritized when choosing who to follow.
+     * If the owner is within range, the foreman will follow them
+     * instead of other nearby players.</p>
+     *
+     * @param ownerUuid The UUID of the owner (usually the player who spawned the foreman)
+     */
+    public void setOwnerUUID(UUID ownerUuid) {
+        this.ownerUUID = ownerUuid;
+        LOGGER.info("[{}] Owner UUID set to: {}",
+            foreman.getEntityName(),
+            ownerUuid != null ? ownerUuid.toString() : "none");
+    }
+
+    /**
+     * Clears the owner UUID.
+     *
+     * <p>After clearing, the foreman will follow the nearest player
+     * instead of a specific owner.</p>
+     */
+    public void clearOwner() {
+        this.ownerUUID = null;
+        LOGGER.debug("[{}] Owner cleared", foreman.getEntityName());
+    }
+
+    /**
+     * Checks if the foreman has an owner set.
+     *
+     * @return true if an owner UUID is set
+     */
+    public boolean hasOwner() {
+        return ownerUUID != null;
+    }
+
+    /**
+     * Gets the owner entity if they are in the current level.
+     *
+     * @return The owner player entity, or null if not found/online
+     */
+    public Player getOwnerEntity() {
+        if (ownerUUID == null) {
+            return null;
+        }
+        return findPlayerByUUID(ownerUUID);
     }
 }

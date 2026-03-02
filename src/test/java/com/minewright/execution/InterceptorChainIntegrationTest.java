@@ -143,7 +143,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Full chain execution for successful action")
     void testFullChainSuccessExecution() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Mined 10 stone");
@@ -176,7 +176,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Full chain execution for failed action")
     void testFullChainFailureExecution() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
         when(mockResult.isSuccess()).thenReturn(false);
         when(mockResult.getMessage()).thenReturn("No stone found");
@@ -202,7 +202,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Full chain execution for error action")
     void testFullChainErrorExecution() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
         Exception testException = new RuntimeException("Mining failed");
 
@@ -223,7 +223,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Chain continues when all beforeAction interceptors return true")
     void testChainContinuesWhenAllBeforeApprove() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
 
         ActionInterceptor alwaysApprove = mock(ActionInterceptor.class);
         when(alwaysApprove.getName()).thenReturn("AlwaysApprove");
@@ -240,7 +240,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Chain terminates when beforeAction interceptor returns false")
     void testChainTerminatesOnBeforeRejection() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
 
         ActionInterceptor firstApprove = mock(ActionInterceptor.class);
         when(firstApprove.getName()).thenReturn("First");
@@ -274,7 +274,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Chain continues after exception in beforeAction")
     void testChainContinuesAfterBeforeActionException() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
 
         ActionInterceptor failingInterceptor = mock(ActionInterceptor.class);
         when(failingInterceptor.getName()).thenReturn("Failing");
@@ -300,7 +300,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Chain continues after exception in afterAction")
     void testChainContinuesAfterAfterActionException() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
 
         ActionInterceptor failingInterceptor = mock(ActionInterceptor.class);
         when(failingInterceptor.getName()).thenReturn("Failing");
@@ -338,7 +338,7 @@ class InterceptorChainIntegrationTest {
                 try {
                     for (int j = 0; j < ACTIONS_PER_THREAD; j++) {
                         BaseAction action = mock(BaseAction.class);
-                        when(action.getClass()).thenReturn((Class) MineBlockAction.class);
+                        doReturn((Class) MineBlockAction.class).when(action).getClass();
                         when(action.getDescription()).thenReturn("Action " + j);
 
                         ActionResult result = mock(ActionResult.class);
@@ -371,7 +371,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Metrics are accurately collected across chain execution")
     void testMetricsAccuracy() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Done");
 
@@ -396,10 +396,10 @@ class InterceptorChainIntegrationTest {
     @DisplayName("Metrics track different action types separately")
     void testMetricsSeparateTracking() {
         BaseAction mineAction = mock(BaseAction.class);
-        when(mineAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mineAction).getClass();
 
         BaseAction buildAction = mock(BaseAction.class);
-        when(buildAction.getClass()).thenReturn((Class) BuildStructureAction.class);
+        doReturn((Class) BuildStructureAction.class).when(buildAction).getClass();
 
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Done");
@@ -430,7 +430,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Events are published correctly across chain execution")
     void testEventPublishingIntegration() throws InterruptedException {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockAction.getDescription()).thenReturn("Mining stone");
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Mined 10 stone");
@@ -466,7 +466,7 @@ class InterceptorChainIntegrationTest {
     @Test
     @DisplayName("Chain can be dynamically modified")
     void testDynamicChainModification() {
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
         when(mockResult.isSuccess()).thenReturn(true);
         when(mockResult.getMessage()).thenReturn("Done");
 
@@ -499,7 +499,7 @@ class InterceptorChainIntegrationTest {
         assertEquals(0, chain.size());
 
         // Verify metrics are not collected when chain is empty
-        when(mockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mockAction).getClass();
 
         chain.executeBeforeAction(mockAction, mockContext);
 

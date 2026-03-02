@@ -39,10 +39,11 @@ class ActionUtilsTest {
 
     @Test
     @DisplayName("extractActionType removes 'Action' suffix and converts to lowercase")
+    @SuppressWarnings("unchecked")
     void testExtractActionTypeWithActionSuffix() {
         // Create a mock with specific class name
         BaseAction mineBlockAction = mock(BaseAction.class);
-        when(mineBlockAction.getClass()).thenReturn((Class) MineBlockAction.class);
+        doReturn((Class) MineBlockAction.class).when(mineBlockAction).getClass();
 
         String result = ActionUtils.extractActionType(mineBlockAction);
 
@@ -80,9 +81,10 @@ class ActionUtilsTest {
 
     @Test
     @DisplayName("extractActionType handles names without 'Action' suffix")
+    @SuppressWarnings("unchecked")
     void testExtractActionTypeWithoutActionSuffix() {
         BaseAction action = mock(BaseAction.class);
-        when(action.getClass()).thenReturn((Class) SomeClass.class);
+        doReturn((Class) SomeClass.class).when(action).getClass();
 
         String result = ActionUtils.extractActionType(action);
 
@@ -99,9 +101,10 @@ class ActionUtilsTest {
 
     @Test
     @DisplayName("extractActionType handles empty class name")
+    @SuppressWarnings("unchecked")
     void testExtractActionTypeWithEmptyClassName() {
         BaseAction action = mock(BaseAction.class);
-        when(action.getClass()).thenReturn((Class) EmptyNameAction.class);
+        doReturn((Class) EmptyNameAction.class).when(action).getClass();
 
         String result = ActionUtils.extractActionType(action);
 

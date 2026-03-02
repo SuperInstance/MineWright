@@ -552,6 +552,17 @@ public class MineWrightConfig {
     public static final ForgeConfigSpec.BooleanValue STRICT_BUDGET_ENFORCEMENT;
 
     /**
+     * Pathfinding timeout threshold in milliseconds.
+     * <p>Pathfinding operations that exceed this timeout are aborted and fallback paths are used.</p>
+     * <p><b>Range:</b> 100 to 10000 (default: 2000)</p>
+     * <p><b>Default:</b> {@code 2000}</p>
+     * <p><b>Config key:</b> {@code performance.pathfindingTimeoutMs}</p>
+     *
+     * @since 2.2.0
+     */
+    public static final ForgeConfigSpec.IntValue PATHFINDING_TIMEOUT_MS;
+
+    /**
      * Enable semantic caching for LLM responses.
      * <p>When enabled, caches similar prompts using text similarity matching.</p>
      * <p><b>Default:</b> {@code true}</p>
@@ -684,6 +695,28 @@ public class MineWrightConfig {
      * @since 2.2.0
      */
     public static final ForgeConfigSpec.DoubleValue MISTAKE_RATE;
+
+    /**
+     * Minimum agent reaction time in milliseconds.
+     * <p>Agents wait at least this long before responding to stimuli.</p>
+     * <p><b>Range:</b> 50 to 1000 (default: 150)</p>
+     * <p><b>Default:</b> {@code 150}</p>
+     * <p><b>Config key:</b> {@code humanization.reaction_time_min_ms}</p>
+     *
+     * @since 2.2.0
+     */
+    public static final ForgeConfigSpec.IntValue REACTION_TIME_MIN_MS;
+
+    /**
+     * Maximum agent reaction time in milliseconds.
+     * <p>Agents wait at most this long before responding to stimuli.</p>
+     * <p><b>Range:</b> 100 to 5000 (default: 500)</p>
+     * <p><b>Default:</b> {@code 500}</p>
+     * <p><b>Config key:</b> {@code humanization.reaction_time_max_ms}</p>
+     *
+     * @since 2.2.0
+     */
+    public static final ForgeConfigSpec.IntValue REACTION_TIME_MAX_MS;
 
     /**
      * Idle action chance per tick.
@@ -1032,6 +1065,14 @@ public class MineWrightConfig {
                      "Recommended: true for production servers")
             .define("strictBudgetEnforcement", true);
 
+        PATHFINDING_TIMEOUT_MS = builder
+            .comment("Pathfinding timeout threshold in milliseconds",
+                     "Pathfinding operations exceeding this timeout are aborted",
+                     "Higher = can find longer paths but may cause lag",
+                     "Lower = faster abort but may fail to find paths",
+                     "Recommended: 2000 for balanced performance")
+            .defineInRange("pathfindingTimeoutMs", 2000, 100, 10000);
+
         builder.pop();
 
         // Semantic Cache Configuration
@@ -1132,6 +1173,22 @@ public class MineWrightConfig {
                      "Lower = fewer mistakes (expert)",
                      "Recommended: 0.03 for realistic behavior")
             .defineInRange("mistake_rate", 0.03, 0.0, 0.2);
+
+        REACTION_TIME_MIN_MS = builder
+            .comment("Minimum agent reaction time in milliseconds",
+                     "Agents wait at least this long before responding to stimuli",
+                     "Lower = faster responses (less realistic)",
+                     "Higher = more realistic but potentially frustrating",
+                     "Recommended: 150 for realistic human reaction time")
+            .defineInRange("reaction_time_min_ms", 150, 50, 1000);
+
+        REACTION_TIME_MAX_MS = builder
+            .comment("Maximum agent reaction time in milliseconds",
+                     "Agents wait at most this long before responding to stimuli",
+                     "Lower = more consistent reaction times",
+                     "Higher = more variance (can simulate fatigue/distraction)",
+                     "Recommended: 500 for typical human variance")
+            .defineInRange("reaction_time_max_ms", 500, 100, 5000);
 
         IDLE_ACTION_CHANCE = builder
             .comment("Idle action chance per tick (0.0 to 0.1)",
@@ -1360,13 +1417,24 @@ public class MineWrightConfig {
         // Validate Pathfinding
         if (ENHANCED_PATHFINDING.get()) {
             int maxNodes = MAX_PATH_SEARCH_NODES.get();
+            int timeout = PATHFINDING_TIMEOUT_MS.get();
             if (maxNodes < 1000 || maxNodes > 50000) {
                 LOGGER.warn("Max path search nodes out of range: {}. Should be 1000-50000", maxNodes);
             }
-            LOGGER.info("Pathfinding: enhanced (max_search_nodes: {})", maxNodes);
+            if (timeout < 100 || timeout > 10000) {
+                LOGGER.warn("Pathfinding timeout out of range: {}. Should be 100-10000ms", timeout);
+            }
+            LOGGER.info("Pathfinding: enhanced (max_search_nodes: {}, timeout: {}ms)", maxNodes, timeout);
         } else {
             LOGGER.info("Pathfinding: basic");
         }
+
+        // Validate Performance Settings
+        int tickBudget = AI_TICK_BUDGET_MS.get();
+        int budgetWarning = BUDGET_WARNING_THRESHOLD.get();
+        boolean strictEnforcement = STRICT_BUDGET_ENFORCEMENT.get();
+        LOGGER.info("Performance: tick_budget={}ms, warning_threshold={}%, strict_enforcement={}",
+            tickBudget, budgetWarning, strictEnforcement);
 
         LOGGER.debug("New feature configuration validation completed");
     }
@@ -1561,7 +1629,9 @@ public class MineWrightConfig {
         return String.format(
             "MineWrightConfig[provider=%s, model=%s, maxTokens=%d, temperature=%.2f, " +
             "actionTickDelay=%d, maxCrew=%d, voice=%s, hivemind=%s, " +
-            "skillLibrary=%s, cascadeRouter=%s, utilityAI=%s, multiAgent=%s, pathfinding=%s]",
+            "skillLibrary=%s, cascadeRouter=%s, utilityAI=%s, multiAgent=%s, pathfinding=%s, " +
+            "perf[tickBudget=%dms, pathfindingTimeout=%dms, strictEnforcement=%s], " +
+            "humanization[reactionTime=%d-%dms, mistakeRate=%.3f]]",
             getValidatedProvider(),
             OPENAI_MODEL.get(),
             MAX_TOKENS.get(),
@@ -1574,7 +1644,13 @@ public class MineWrightConfig {
             CASCADE_ROUTER_ENABLED.get() ? "enabled" : "disabled",
             UTILITY_AI_ENABLED.get() ? "enabled" : "disabled",
             MULTI_AGENT_ENABLED.get() ? "enabled" : "disabled",
-            ENHANCED_PATHFINDING.get() ? "enhanced" : "basic"
+            ENHANCED_PATHFINDING.get() ? "enhanced" : "basic",
+            AI_TICK_BUDGET_MS.get(),
+            PATHFINDING_TIMEOUT_MS.get(),
+            STRICT_BUDGET_ENFORCEMENT.get() ? "true" : "false",
+            REACTION_TIME_MIN_MS.get(),
+            REACTION_TIME_MAX_MS.get(),
+            MISTAKE_RATE.get()
         );
     }
 }

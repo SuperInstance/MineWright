@@ -28,7 +28,7 @@ class ScriptTemplateTest {
 
         ScriptNode rootNode = ScriptNode.builder()
             .type(ScriptNode.NodeType.SEQUENCE)
-            .addChild(ScriptNode.Builder.simpleAction("test_action"))
+            .addChild(ScriptNode.Builder.simpleAction("test_action").build())
             .build();
 
         ScriptTemplate template = ScriptTemplate.builder()
@@ -96,14 +96,16 @@ class ScriptTemplateTest {
             "string",
             "stone",
             false,
-            "Type of block"
+            "Type of block",
+            null
         ));
         parameters.add(new ScriptTemplate.TemplateParameter(
             "quantity",
             "integer",
             64,
             true,
-            "Number of blocks"
+            "Number of blocks",
+            null
         ));
 
         ScriptNode rootNode = ScriptNode.builder()
@@ -112,7 +114,7 @@ class ScriptTemplateTest {
                 ScriptNode.Builder.action("mine", Map.of(
                     "block", "${block_type}",
                     "target", "${quantity}"
-                ))
+                )).build()
             )
             .build();
 
@@ -156,13 +158,14 @@ class ScriptTemplateTest {
             "integer",
             5,
             false,
-            "Movement speed"
+            "Movement speed",
+            null
         ));
 
         ScriptNode rootNode = ScriptNode.builder()
             .type(ScriptNode.NodeType.SEQUENCE)
             .addChild(
-                ScriptNode.Builder.action("move", Map.of("speed", "${speed}"))
+                ScriptNode.Builder.action("move", Map.of("speed", "${speed}")).build()
             )
             .build();
 
@@ -200,7 +203,8 @@ class ScriptTemplateTest {
             "string",
             null,
             true,
-            "Required target"
+            "Required target",
+            null
         ));
 
         ScriptNode rootNode = ScriptNode.builder()
@@ -237,23 +241,24 @@ class ScriptTemplateTest {
             "integer",
             100,
             false,
-            "Max health threshold"
+            "Max health threshold",
+            null
         ));
 
         // Build a complex tree with selectors, sequences, and conditions
         ScriptNode rootNode = ScriptNode.builder()
             .type(ScriptNode.NodeType.SELECTOR)
             .addChild(
-                ScriptNode.Builder.simpleCondition("health_percent() > ${max_health}")
+                ScriptNode.Builder.simpleCondition("health_percent() > ${max_health}").build()
             )
             .addChild(
                 ScriptNode.builder()
                     .type(ScriptNode.NodeType.SEQUENCE)
-                    .addChild(ScriptNode.Builder.simpleAction("retreat"))
+                    .addChild(ScriptNode.Builder.simpleAction("retreat").build())
                     .addChild(
                         ScriptNode.Builder.loop(3,
-                            ScriptNode.Builder.simpleAction("scan")
-                        )
+                            ScriptNode.Builder.simpleAction("scan").build()
+                        ).build()
                     )
                     .build()
             )
@@ -303,7 +308,7 @@ class ScriptTemplateTest {
 
         Map<String, List<ScriptNode>> errorHandlers = new HashMap<>();
         errorHandlers.put("no_tool", List.of(
-            ScriptNode.Builder.simpleAction("announce")
+            ScriptNode.Builder.simpleAction("announce").build()
         ));
 
         ScriptTemplate template = ScriptTemplate.builder()
@@ -387,11 +392,11 @@ class ScriptTemplateTest {
             .addChild(ScriptNode.builder().type(ScriptNode.NodeType.CONDITION).build())
             .addChild(ScriptNode.builder().type(ScriptNode.NodeType.LOOP)
                 .addParameter("iterations", 5)
-                .addChild(ScriptNode.Builder.simpleAction("test"))
+                .addChild(ScriptNode.Builder.simpleAction("test").build())
                 .build())
             .addChild(ScriptNode.builder().type(ScriptNode.NodeType.REPEAT_UNTIL)
                 .withCondition("complete")
-                .addChild(ScriptNode.Builder.simpleAction("work"))
+                .addChild(ScriptNode.Builder.simpleAction("work").build())
                 .build())
             .build();
 
@@ -421,8 +426,8 @@ class ScriptTemplateTest {
         );
 
         List<ScriptTemplate.TemplateParameter> parameters = new ArrayList<>();
-        parameters.add(new ScriptTemplate.TemplateParameter("material", "string", "oak_planks", false, "Building material"));
-        parameters.add(new ScriptTemplate.TemplateParameter("size", "integer", 5, false, "Structure size"));
+        parameters.add(new ScriptTemplate.TemplateParameter("material", "string", "oak_planks", false, "Building material", null));
+        parameters.add(new ScriptTemplate.TemplateParameter("size", "integer", 5, false, "Structure size", null));
 
         // Create nested structure: sequence -> loop -> action
         ScriptNode rootNode = ScriptNode.builder()
@@ -435,7 +440,7 @@ class ScriptTemplateTest {
                         ScriptNode.Builder.action("place", Map.of(
                             "block", "${material}",
                             "quantity", "1"
-                        ))
+                        )).build()
                     )
                     .build()
             )

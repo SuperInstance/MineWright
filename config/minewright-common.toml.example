@@ -198,6 +198,9 @@
     # Enable strict budget enforcement
     strictBudgetEnforcement = true
 
+    # Pathfinding timeout threshold in milliseconds
+    pathfindingTimeoutMs = 2000
+
 #########################################################################################################
 # Semantic Cache Configuration (Intelligent LLM response caching)
 #########################################################################################################
@@ -253,6 +256,12 @@
     # Base mistake rate for agent actions (0.0 to 0.2)
     # 3% = 1 mistake per 33 actions (average human level)
     mistake_rate = 0.03
+
+    # Minimum agent reaction time in milliseconds
+    reaction_time_min_ms = 150
+
+    # Maximum agent reaction time in milliseconds
+    reaction_time_max_ms = 500
 
     # Idle action chance per tick (0.0 to 0.1)
     # 2% = agent performs idle action ~2.4 times per second
