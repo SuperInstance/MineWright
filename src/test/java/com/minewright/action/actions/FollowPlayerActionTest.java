@@ -85,7 +85,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -123,7 +123,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -140,7 +140,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -157,7 +157,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.getName().getString()).thenReturn("TestPlayer");
 
         action = new FollowPlayerAction(foreman, task);
@@ -175,7 +175,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.getName().getString()).thenReturn("TestPlayer");
 
         action = new FollowPlayerAction(foreman, task);
@@ -194,7 +194,7 @@ class FollowPlayerActionTest {
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
         players.add(secondPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.getName().getString()).thenReturn("TestPlayer");
         when(secondPlayer.getName().getString()).thenReturn("SecondPlayer");
         when(foreman.distanceTo(targetPlayer)).thenReturn(1.0); // Closer
@@ -217,7 +217,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(foreman.distanceTo(targetPlayer)).thenReturn(5.0); // Too far
 
         action = new FollowPlayerAction(foreman, task);
@@ -238,7 +238,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(foreman.distanceTo(targetPlayer)).thenReturn(1.5); // Close enough
 
         action = new FollowPlayerAction(foreman, task);
@@ -259,7 +259,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -287,7 +287,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -313,7 +313,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.isRemoved()).thenReturn(true);
 
         action = new FollowPlayerAction(foreman, task);
@@ -341,7 +341,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.isSpectator()).thenReturn(true);
 
         action = new FollowPlayerAction(foreman, task);
@@ -365,7 +365,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(foreman.distanceTo(targetPlayer)).thenReturn(2.5); // Good distance
 
         action = new FollowPlayerAction(foreman, task);
@@ -396,7 +396,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -417,7 +417,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -436,7 +436,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -510,7 +510,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -546,7 +546,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
 
         action = new FollowPlayerAction(foreman, task);
         action.start();
@@ -564,7 +564,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.getName().getString()).thenReturn("Test_Player123");
 
         action = new FollowPlayerAction(foreman, task);
@@ -582,7 +582,7 @@ class FollowPlayerActionTest {
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
         players.add(secondPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(foreman.distanceTo(targetPlayer)).thenReturn(10.0); // Far
         when(foreman.distanceTo(secondPlayer)).thenReturn(3.0); // Near
         when(secondPlayer.isAlive()).thenReturn(true);
@@ -625,7 +625,7 @@ class FollowPlayerActionTest {
 
         List<Player> players = new ArrayList<>();
         players.add(targetPlayer);
-        when(level.players()).thenReturn(players);
+        when(level.players()).thenReturn((List) players);
         when(targetPlayer.isAlive()).thenReturn(false);
 
         action = new FollowPlayerAction(foreman, task);

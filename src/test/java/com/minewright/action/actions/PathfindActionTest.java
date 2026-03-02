@@ -207,9 +207,6 @@ class PathfindActionTest {
 
         // Should start successfully with cached path
         assertFalse(action.isComplete());
-
-        // Clean up cache
-        PathExecutor.clearCache();
     }
 
     @Test
@@ -547,10 +544,9 @@ class PathfindActionTest {
 
     private List<PathNode> createMockPath(BlockPos start, BlockPos target) {
         List<PathNode> path = new ArrayList<>();
-        path.add(new PathNode(start, PathNode.PathType.WALK));
-        path.add(new PathNode(new BlockPos(start.getX() + 1, start.getY(), start.getZ()),
-            PathNode.PathType.WALK));
-        path.add(new PathNode(target, PathNode.PathType.WALK));
+        path.add(new PathNode(start));
+        path.add(new PathNode(new BlockPos(start.getX() + 1, start.getY(), start.getZ())));
+        path.add(new PathNode(target));
         return path;
     }
 }

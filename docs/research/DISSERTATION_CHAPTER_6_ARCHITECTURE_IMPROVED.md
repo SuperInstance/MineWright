@@ -85,7 +85,7 @@ This dissertation builds upon these foundations while contributing novel insight
 - **Minecraft-Specific Architectural Guidance:** First comprehensive mapping of AI architectures to Minecraft-specific challenges (voxel worlds, crafting dependencies, multi-modal interactions)
 - **Architecture Evaluation Framework:** Quantitative comparison method using weighted quality attributes and ATAM-style scenarios
 
-This research positions itself at the intersection of software architecture (Bass et al., 2012; Shaw & Clements, 2006), game AI (Isla, 2005; Orkin, 2004), and modern LLM agents (Wang et al., 2023), contributing both theoretical frameworks and practical implementation patterns for the emerging field of neuro-symbolic game AI.
+This research positions itself at the intersection of software architecture Bass, Clements, and Kazman, "Software Architecture in Practice" (2012); Shaw and Clements, "The Field Guide to Software Architecture" (2006), game AI Isla, "Handling Complexity in the Halo 2 AI" (2005); Orkin, "Applying Goal-Oriented Action Planning to Games" (2004), and modern LLM agents (Wang et al., 2023), contributing both theoretical frameworks and practical implementation patterns for the emerging field of neuro-symbolic game AI.
 
 ---
 
@@ -247,7 +247,7 @@ Evolution Timeline:
 2023: Modern games standardize on BT + HTN hybrids
 ```text
 
-**Key Insight:** Game automation tools served as incubators for AI architectures later adopted by game studios. The "reactive planning" property that made BTs attractive for bots (continuous re-evaluation, hierarchical decomposition) proved equally valuable for legitimate game AI (Isla, 2005; Champandard, 2003).
+**Key Insight:** Game automation tools served as incubators for AI architectures later adopted by game studios. The "reactive planning" property that made BTs attractive for bots (continuous re-evaluation, hierarchical decomposition) proved equally valuable for legitimate game AI Isla, "Handling Complexity in the Halo 2 AI" (2005); Champandard, "Behavior Trees and FSMs in Modern Games" (2003).
 
 ### 1.4.4 Script Learning: From Pickit Systems to Skill Libraries
 
@@ -3425,7 +3425,7 @@ LLM systems suffer from several reliability issues documented in recent research
 
 2. **Malformed Responses**: LLMs may generate output that doesn't match expected schemas (e.g., invalid JSON for action sequences). This requires robust parsing and error handling, adding complexity to the system.
 
-3. **Non-Determinism**: The same command can produce different plans across invocations, creating unpredictable agent behavior. This contradicts the "predictability" requirement identified by Orkin (2004) for game AI.
+3. **Non-Determinism**: The same command can produce different plans across invocations, creating unpredictable agent behavior. This contradicts the "predictability" requirement identified by Orkin, "Applying Goal-Oriented Action Planning to Games" (2004) for game AI.
 
 4. **API Reliability**: Third-party LLM APIs experience downtime and rate limiting. The current system lacks fallback mechanisms for API failures, creating single points of failure.
 
@@ -3512,13 +3512,13 @@ The following patterns are well-researched in academia but not yet implemented:
 
 | Research Area | Key Papers | Implementation Status | Gap |
 |---------------|------------|----------------------|-----|
-| **Behavior Trees** | Isla (2005), Champandard (2007) | Not implemented | HIGH |
-| **HTN Planning** | Ghallab et al. (2004), Hernández (2017) | Not implemented | HIGH |
-| **Utility AI** | Champandard (2007), Hernández-Orallo (2018) | Fully implemented | LOW |
-| **GOAP** | Orkin (2004) | Not implemented (by design) | N/A |
-| **LLM Agents** | Wang et al. (2023), Guss et al. (2022) | Partially implemented | MEDIUM |
-| **Multi-Agent** | Pogamut (2015), Gregory et al. | Partially implemented | MEDIUM |
-| **Architecture Evaluation** | Kazman et al. (1999), Bass et al. (2012) | Not implemented | HIGH |
+| **Behavior Trees** | Isla, "Handling Complexity in the Halo 2 AI" (2005); Champandard, "Behavior Trees and FSMs in Modern Games" (2007) | Not implemented | HIGH |
+| **HTN Planning** | Ghallab et al., "A Survey of Automated Planning and Scheduling" (2004); Hernández et al., "Hierarchical Task Network Planning" (2017) | Not implemented | HIGH |
+| **Utility AI** | Champandard, "Behavior Trees and FSMs in Modern Games" (2007); Hernández-Orallo, "Measuring General Intelligence" (2018) | Fully implemented | LOW |
+| **GOAP** | Orkin, "Applying Goal-Oriented Action Planning to Games" (2004) | Not implemented (by design) | N/A |
+| **LLM Agents** | Wang et al., "Plan, Execute, Verify" (2023); Guss et al., "MineDojo" (2022) | Partially implemented | MEDIUM |
+| **Multi-Agent** | Pogamut, "Pogamut 3" (2015); Gregory et al., "A Survey of Multi-Agent Programming" | Partially implemented | MEDIUM |
+| **Architecture Evaluation** | Kazman et al., "SAAM and ATAM" (1999); Bass et al., "Software Architecture in Practice" (2012) | Not implemented | HIGH |
 
 **Bridging the Gap:**
 
