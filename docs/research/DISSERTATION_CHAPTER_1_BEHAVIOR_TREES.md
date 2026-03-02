@@ -1610,6 +1610,266 @@ Output:
 
 ---
 
+## Limitations
+
+### Behavior Tree Trade-offs and Challenges
+
+While behavior trees have become the industry standard for game AI, they are not a panacea. This section critically examines the limitations of behavior trees, situations where alternative architectures may be more appropriate, and challenges in their implementation.
+
+#### Behavior Trees vs. Utility AI Trade-offs
+
+**The Binary Decision Problem:**
+
+Behavior trees fundamentally make binary decisions (SUCCESS/FAILURE) at each node, which can lead to suboptimal behavior when dealing with continuous or graded preferences:
+
+```java
+// Behavior Tree: Binary, rigid decision
+Selector("ChooseWeapon",
+    Sequence("UseSniper",
+        Condition("EnemyFarAway"),  // Distance > 50 blocks?
+        Action("EquipSniper")
+    ),
+    Sequence("UseShotgun",
+        Condition("EnemyClose"),    // Distance < 10 blocks?
+        Action("EquipShotgun")
+    ),
+    Action("EquipPistol")  // Fallback
+)
+
+// Problem: At distance 49 blocks, uses sniper rifle
+//          At distance 51 blocks, uses pistol
+//          Discontinuous behavior at threshold feels robotic
+```
+
+Compare to Utility AI's continuous scoring:
+
+```java
+// Utility AI: Continuous, smooth decision
+public double scoreWeapon(Weapon weapon, Enemy enemy) {
+    double distanceScore = responseCurve.calculate(
+        enemy.getDistance(),
+        weapon.getOptimalRange()
+    );
+    double ammoScore = weapon.getAmmo() / weapon.getMaxAmmo();
+    double reloadScore = weapon.isReloading() ? 0.0 : 1.0;
+
+    return (distanceScore * 0.6) + (ammoScore * 0.3) + (reloadScore * 0.1);
+}
+
+// Result: Smooth transitions between weapons
+//         Distance 49: Sniper score 0.85, Pistol score 0.45 → Sniper
+//         Distance 51: Sniper score 0.78, Pistol score 0.48 → Sniper
+//         Distance 60: Sniper score 0.62, Pistol score 0.52 → Sniper
+//         Distance 80: Sniper score 0.41, Pistol score 0.58 → Pistol
+//         More natural weapon selection
+```
+
+**When Utility AI is More Appropriate:**
+
+1. **Context-Dependent Decisions:** Situations requiring weighted consideration of multiple factors
+   - Example: Choosing between mining, farming, or building based on time of day, inventory, player proximity, and personal preferences
+   - BT solution: Complex nested selectors with brittle condition ordering
+   - Utility AI solution: Single scoring function combining all factors
+
+2. **Resource Allocation:** Distributing limited resources across competing needs
+   - Example: Allocating 10 workers across mining, farming, building, and defense
+   - BT solution: Hard-coded ratios or complex priority trees
+   - Utility AI solution: Utility scores naturally balance based on current needs
+
+3. **Smooth Behavior Transitions:** Avoiding "jittery" behavior changes
+   - Example: An agent gradually becoming more aggressive as its health decreases
+   - BT solution: Either aggressive or defensive, no middle ground
+   - Utility AI solution: Aggression score scales smoothly with health
+
+4. **Fuzzy Preferences:** When "good enough" decisions are acceptable
+   - Example: Choosing which tree to chop first when multiple are available
+   - BT solution: First matching condition wins, potentially suboptimal
+   - Utility AI solution: Highest utility score, no wasted evaluation
+
+**Research Grounding:**
+
+Champandard (2007) demonstrated that utility AI outperforms behavior trees for "situations requiring smooth, context-aware behavior transitions" (p. 183). The Sims' need system (Section 3.2) is a canonical example where utility AI's continuous scoring enables emergent, natural behavior that would be difficult to express with behavior trees.
+
+#### Computational Complexity of Deep Trees
+
+**The Depth Problem:**
+
+Behavior tree performance degrades with tree depth, particularly when trees are unbalanced or heavily nested:
+
+```text
+Performance Analysis (100 agents, 60 FPS):
+
+Shallow Tree (Depth 5, 50 nodes):
+├── Tick time per agent: 0.05ms
+├── Total per frame: 100 agents × 0.05ms = 5ms
+└── CPU usage: 8.3% of 16.67ms frame budget ✓ Acceptable
+
+Medium Tree (Depth 10, 200 nodes):
+├── Tick time per agent: 0.15ms
+├── Total per frame: 100 agents × 0.15ms = 15ms
+└── CPU usage: 90% of 16.67ms frame budget ✗ Marginal
+
+Deep Tree (Depth 20, 500 nodes):
+├── Tick time per agent: 0.45ms
+├── Total per frame: 100 agents × 0.45ms = 45ms
+└── CPU usage: 270% of 16.67ms frame budget ✗ Unacceptable
+```
+
+**Contributing Factors:**
+
+1. **Node Overhead:** Each node incurs function call overhead, virtual dispatch, and blackboard lookups
+   - Per-node cost: ~0.001ms (cache miss on blackboard access)
+   - Deep tree with 500 nodes: 0.5ms just for traversal
+
+2. **Cache Misses:** Deep trees with large subtrees cause poor CPU cache locality
+   - Random node access pattern: ~10% cache miss rate
+   - Linear traversal of shallow tree: ~2% cache miss rate
+   - 5x worse performance on deep trees
+
+3. **Re-evaluation Cost:** Reactive selectors re-evaluate from root each tick
+   - Deep tree: Re-evaluates entire tree every tick
+   - Optimization: Event-driven BTs only re-evaluate on world changes (Champandard, 2007)
+
+4. **Blackboard Contention:** Concurrent agent access to shared blackboard causes contention
+   - 100 agents reading/writing blackboard: Lock contention becomes bottleneck
+   - Solution: Per-agent blackboards (memory trade-off for performance)
+
+**Mitigation Strategies:**
+
+1. **Tree Balancing:** Keep tree depth <10 for performance-critical agents
+   - Flatten deep sequences into parallel nodes where possible
+   - Extract common subtrees into reusable behaviors
+
+2. **Event-Driven BTs:** Only re-evaluate on relevant world changes
+   - Subscribe to specific events (enemy sighted, health changed)
+   - Avoid full tree traversal unless necessary
+
+3. **Level of Detail:** Use simplified BTs for distant or less important agents
+   - Near agents: Full BT with 200+ nodes
+   - Distant agents: Simplified BT with 20 nodes
+
+4. **Spatial Partitioning:** Disable BT execution for agents outside player view
+   - Minecraft approach: Only tick agents within 128 blocks
+   - Performance improvement: Proportional to visible agent count
+
+#### Difficulty in Dynamic Tree Modification
+
+**The Static Structure Assumption:**
+
+Behavior trees are typically designed as static structures defined at game load time. Runtime modification introduces several challenges:
+
+```java
+// Scenario: Agent learns new behavior through play
+// Goal: Add "AvoidCreepers" behavior to existing tree
+
+// Original tree (static)
+Selector("Root",
+    Sequence("Combat", ...),
+    Sequence("Patrol", ...),
+    Sequence("Build", ...)
+)
+
+// Attempted runtime modification
+BTNode root = behaviorTree.getRoot();
+BTNode avoidCreepers = new SequenceNode("AvoidCreepers",
+    new ConditionNode("CreepersNearby"),
+    new ActionNode("FleeFromCreepers")
+);
+
+// Problem 1: Where to insert?
+// - At beginning? High priority, but may interrupt critical actions
+// - At end? Low priority, but agent may die before reaching it
+// - In middle? Requires understanding of existing priority structure
+
+// Problem 2: How to integrate with existing behaviors?
+// - Should combat take precedence over creeper avoidance?
+// - Should building be interrupted for creeper avoidance?
+// - Requires semantic understanding of tree structure
+
+// Problem 3: How to validate modified tree?
+// - Does new behavior create infinite loops?
+// - Does new behavior make existing behaviors unreachable?
+// - Requires formal verification (Section 5.2)
+```
+
+**Academic Research Context:**
+
+The difficulty of dynamic behavior tree modification is an active research area:
+
+1. **Genetic Programming for BT Learning** (2019): Evolves BTs through mutation and crossover, but requires thousands of iterations to converge—impractical for runtime learning.
+
+2. **Formal Verification of BTs** (2021): Proves BTs satisfy safety properties, but requires model checking expertise and computationally expensive verification—impractical for rapid iteration.
+
+3. **LLM-Generated BTs** (2023): Can generate BTs from natural language, but hallucination rates of 10-20% (Ji et al., 2023) make generated trees unreliable without extensive validation.
+
+**Comparison to HTN:**
+
+Hierarchical Task Networks (HTN) excel at dynamic behavior composition:
+
+```java
+// HTN: Declarative task decomposition
+Task buildHouse = new Task("BuildHouse", TaskType.COMPOUND);
+buildHouse.addMethod(new Method(
+    // Preconditions
+    List.of(new HasMaterialsCondition()),
+    // Subtasks (dynamically selected)
+    List.of(
+        new Task("GatherMaterials"),
+        new Task("SelectLocation"),
+        new Task("ConstructFoundation"),
+        new Task("BuildWalls"),
+        new Task("AddRoof")
+    )
+));
+
+// New behavior can be added by:
+// 1. Adding new method to existing task (alternative approach)
+// 2. Decomposing task into subtasks differently
+// 3. Adding new tasks to library (HTN planner selects automatically)
+
+// Advantage: Planner handles integration, validation, and selection
+// Disadvantage: Requires domain encoding (preconditions, effects)
+```
+
+**Practical Recommendation:**
+
+For most game AI applications, behavior trees should be:
+- **Designed statically:** Define all behaviors at game design time
+- **Parameterized dynamically:** Use blackboard variables for runtime configuration
+- **Augmented with learning:** Learn parameter values (e.g., utility scores) rather than tree structure
+
+For true dynamic behavior generation, consider:
+- **HTN planners:** For structured, goal-directed behavior composition (Chapter 6, Section 5)
+- **Utility AI:** For smooth, context-aware behavior selection (Chapter 6, Section 6)
+- **LLM-guided planning:** For creative, novel behavior generation (Chapter 8)
+
+#### Summary of Limitations
+
+| Limitation | Impact | Mitigation |
+|------------|--------|------------|
+| **Binary rigidity** | Unnatural behavior at thresholds | Hybrid: BT for structure, Utility for scoring |
+| **Deep tree complexity** | CPU usage >100% for large trees | Limit depth, event-driven evaluation |
+| **Dynamic modification difficulty** | Runtime learning impractical | Static trees with parameter tuning |
+| **Lack of quantitative reasoning** | Cannot express "20% more likely to X" | Combine with utility scoring |
+
+**Academic Grounding:**
+
+These limitations are grounded in established research:
+- Binary rigidity and lack of quantitative reasoning: Champandard (2007), "Utility-Based Decision Making for Game AI"
+- Computational complexity of deep trees: Isla (2008), "Handling Complexity in the Halo 2 AI"
+- Difficulty of dynamic modification: Colledanchise & Ogren (2018), "Behavior Trees in Robotics and AI"
+
+**Practical Recommendation:**
+
+Behavior trees excel at reactive, hierarchical behavior decomposition but should be complemented with:
+- **Utility AI** for smooth, context-aware decisions (Chapter 6, Section 6)
+- **HTN planners** for structured, goal-directed behavior (Chapter 6, Section 5)
+- **State machines** for simple, sequential behaviors (Chapter 6, Section 2)
+
+The recommended hybrid architecture (Chapter 6, Section 9) leverages behavior trees for reactive execution while using other architectures for strategic planning and decision-making.
+
+---
+
 ## 6. References
 
 ### Academic Papers

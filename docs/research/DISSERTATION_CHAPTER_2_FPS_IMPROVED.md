@@ -2474,9 +2474,9 @@ public class SpatialPerceptionGrid {
 
 ### Academic Papers
 
-1. **Orkin, J. (2004)** - "Applying Goal-Oriented Action Planning to Games" - AI Game Programming Wisdom 2
-2. **Livingstone, D.** - "Tactical Team AI for Games" - GDC 2019
-3. **Champandard, A.J.** - "Behavior Trees and FSMs in Modern Games" - AIIDE 2020
+1. Orkin, "Applying Goal-Oriented Action Planning to Games" (2004)
+2. Livingstone, "Tactical Team AI for Games" (2019)
+3. Champandard, "Behavior Trees and FSMs in Modern Games" (2020)
 
 ### Game-Specific Resources
 
@@ -2501,9 +2501,9 @@ public class SpatialPerceptionGrid {
 
 ### Books
 
-1. **"Programming Game AI by Example"** - Mat Buckland
-2. **"Artificial Intelligence for Games"** - Ian Millington
-3. **"Game AI Pro"** Series - Various Authors
+1. Buckland, "Programming Game AI by Example" (2005)
+2. Millington, "Artificial Intelligence for Games" (2006)
+3. Various Authors, "Game AI Pro" Series (2014-2020)
 
 ### Online Resources
 

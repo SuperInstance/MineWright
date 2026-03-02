@@ -14,7 +14,7 @@ The central thesis of this chapter: **LLMs don't execute game AI; LLMs generate,
 
 ### 8.1.1 Natural Language Understanding
 
-The most visible contribution of LLMs is semantic understanding of natural language (Vaswani et al., 2017). Traditional systems required:
+The most visible contribution of LLMs is semantic understanding of natural language Vaswani et al., "Attention Is All You Need" (2017). Traditional systems required:
 
 ```java
 // Traditional approach: Exact string matching
@@ -1535,7 +1535,7 @@ Retrieval-Augmented Generation (RAG) represents a paradigm shift in how large la
 
 **Benefits vs Pure LLM Approaches**: Pure LLM systems suffer from several limitations that RAG mitigates: (1) hallucination—LLMs may generate plausible-sounding but factually incorrect game information; (2) staleness—models trained on fixed datasets cannot know about game updates or new strategies; (3) token limitations—extensive game knowledge exceeds context windows; (4) lack of attribution—users cannot verify the source of information. RAG addresses each: retrieved facts are verifiable, knowledge bases update independently, retrieval scales to millions of documents, and sources are explicitly cited.
 
-**Performance Characteristics**: RAG introduces additional latency (typically 50-200ms for vector retrieval) compared to pure LLM inference, but this overhead is negligible compared to LLM response times (1-10 seconds). More importantly, RAG dramatically reduces the need for few-shot prompting and context stuffing, often resulting in net latency reduction and cost savings of 40-60% (Gao et al., 2023).
+**Performance Characteristics**: RAG introduces additional latency (typically 50-200ms for vector retrieval) compared to pure LLM inference, but this overhead is negligible compared to LLM response times (1-10 seconds). More importantly, RAG dramatically reduces the need for few-shot prompting and context stuffing, often resulting in net latency reduction and cost savings of 40-60% Gao et al., "RAG vs. Long-Context LLMs: A Comparative Analysis" (2023).
 
 ### 8.8.2 RAG Components
 
@@ -3068,7 +3068,7 @@ While Large Language Models have revolutionized game AI by enabling natural lang
 
 **The Hallucination Problem:**
 
-LLMs generate plausible-sounding but factually incorrect content—a phenomenon termed "hallucination" in AI research (Ji et al., 2023). In game AI contexts, hallucinations manifest as:
+LLMs generate plausible-sounding but factually incorrect content—a phenomenon termed "hallucination" in AI research Ji et al., "Survey on Hallucination in Natural Language Generation" (2023). In game AI contexts, hallucinations manifest as:
 
 ```java
 // Example 1: Hallucinated Action
@@ -3088,7 +3088,7 @@ LLM Response:
 
 **Hallucination Statistics:**
 
-Current research indicates hallucination rates of 10-20% for current LLMs (Ji et al., 2023). In game AI contexts:
+Current research indicates hallucination rates of 10-20% for current LLMs Ji et al., "Survey on Hallucination in Natural Language Generation" (2023). In game AI contexts:
 
 | LLM Model | Hallucination Rate | Impact on Game AI |
 |-----------|-------------------|------------------|
@@ -3268,7 +3268,7 @@ Player perception:
 
 **Impact on Player Experience:**
 
-Research on human-computer interaction (Nielsen, 1993) demonstrates:
+Research on human-computer interaction Nielsen, "Usability Engineering" (1993) demonstrates:
 
 - **<0.1 second:** Instant feedback, user feels in control
 - **0.1-1 second:** Delayed but acceptable, user attention wanders
@@ -4119,24 +4119,24 @@ public class CascadeRouter {
 
 ## References
 
-1. OpenAI. (2024). GPT-4 Technical Report.
-2. Isla, D. (2005). Handling Complexity in Halo 2.
-3. Orkin, J. (2004). Goal-Oriented Action Planning.
-4. Sutton, R. & Barto, A. (2018). Reinforcement Learning: An Introduction.
-5. minesweeper (2023). MineDojo: Building AI in Minecraft.
-6. Fan, L. et al. (2022). MineRL Baselines.
-7. Baker, M. et al. (2022). Human-level play in Minecraft.
-8. Resilience4j Documentation. (2024). Circuit Breaker Patterns.
-9. Caffeine Cache Documentation. (2024). High-Performance Caching.
-10. GraalVM Documentation. (2024). Polyglot Embedding.
-11. Groq. (2024). Llama Models on Groq.
-12. Google. (2024). Gemini API Documentation.
-13. Anthropic. (2024). Claude API Reference.
-14. Meta. (2024). Llama 3 Model Card.
-15. Microsoft. (2024). Azure OpenAI Service.
-16. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). "Attention is All You Need." *Advances in Neural Information Processing Systems*, 30.
-17. Gao, L., et al. (2023). "RAG vs. Long-Context LLMs: A Comparative Analysis." *arXiv preprint arXiv:2312.12345*.
-18. Reimers, N., & Gurevych, I. (2019). "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks." *Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing*, 3982-3992.
+1. OpenAI, "GPT-4 Technical Report" (2024)
+2. Isla, "Handling Complexity in Halo 2" (2005)
+3. Orkin, "Goal-Oriented Action Planning" (2004)
+4. Sutton and Barto, "Reinforcement Learning: An Introduction" (2018)
+5. minesweeper, "MineDojo: Building AI in Minecraft" (2023)
+6. Fan et al., "MineRL Baselines" (2022)
+7. Baker et al., "Human-level play in Minecraft" (2022)
+8. Resilience4j Documentation, "Circuit Breaker Patterns" (2024)
+9. Caffeine Cache Documentation, "High-Performance Caching" (2024)
+10. GraalVM Documentation, "Polyglot Embedding" (2024)
+11. Groq, "Llama Models on Groq" (2024)
+12. Google, "Gemini API Documentation" (2024)
+13. Anthropic, "Claude API Reference" (2024)
+14. Meta, "Llama 3 Model Card" (2024)
+15. Microsoft, "Azure OpenAI Service" (2024)
+16. Vaswani et al., "Attention Is All You Need" (2017)
+17. Gao et al., "RAG vs. Long-Context LLMs: A Comparative Analysis" (2023)
+18. Reimers and Gurevych, "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" (2019)
 
 ---
 

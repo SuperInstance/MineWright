@@ -1704,7 +1704,7 @@ The Ortony-Clore-Collins (OCC) model of emotions, formalized in *The Cognitive S
 
 #### Cognitive Structure of Emotions
 
-The OCC model organizes emotions around three valuation classes (Ortony et al., 1988):
+The OCC model organizes emotions around three valuation classes Ortony, Clore, and Collins, "The Cognitive Structure of Emotions" (1988):
 
 **1. Event-Based Emotions**: Reactions to consequences of events, distinguished by whether events affect oneself, others, or are merely observed. These include:
 - *Prospective emotions*: hope and fear (uncertain future outcomes)
@@ -1761,7 +1761,7 @@ public class EmotionalCompanionAgent {
 
     /**
      * Complete enumeration of OCC emotion types with intensity ranges.
-     * Organized by valuation class per Ortony, Clore, & Collins (1988).
+     * Organized by valuation class per Ortony, Clore, and Collins, "The Cognitive Structure of Emotions" (1988).
      */
     public enum Emotion {
         // Event-based emotions (consequences of events)
