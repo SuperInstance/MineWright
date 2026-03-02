@@ -1,623 +1,944 @@
-# MineWright Troubleshooting Guide
+# Steve AI Troubleshooting Guide
 
-**Last Updated:** 2026-03-01
 **Version:** 1.0
-
-This guide helps you diagnose and resolve common issues with MineWright.
+**Last Updated:** 2026-03-02
+**Project:** Steve AI - "Cursor for Minecraft"
 
 ---
 
 ## Table of Contents
 
-1. [Quick Diagnostics](#quick-diagnostics)
-2. [Installation Issues](#installation-issues)
-3. [Configuration Issues](#configuration-issues)
-4. [In-Game Issues](#in-game-issues)
-5. [Performance Issues](#performance-issues)
-6. [LLM API Issues](#llm-api-issues)
-7. [Crash Recovery](#crash-recovery)
+1. [Quick Diagnosis](#quick-diagnosis)
+2. [LLM Connection Issues](#1-llm-connection-issues)
+3. [Agent Stuck / Not Responding](#2-agent-stuck--not-responding)
+4. [Memory / Performance Issues](#3-memory--performance-issues)
+5. [Configuration Errors](#4-configuration-errors)
+6. [Multi-Agent Coordination Failures](#5-multi-agent-coordination-failures)
+7. [Voice System Problems](#6-voice-system-problems)
 8. [Debug Logging](#debug-logging)
-9. [Getting Help](#getting-help)
+9. [Common Error Messages](#common-error-messages)
+10. [Recovery Commands](#recovery-commands)
 
 ---
 
-## Quick Diagnostics
+## Quick Diagnosis
 
-### Health Check
+### Symptom Checklist
 
-Run through these checks to identify your issue:
+Use this checklist to quickly identify your issue category:
 
-**Check 1: Mod Loading**
-```
-✓ MineWright appears in Minecraft mods list
-✗ MineWright missing from mods list
-```
-**Solution:** See [Installation Issues](#installation-issues)
+- [ ] **LLM Issues**: Agent says "Planning..." forever, no task generation
+- [ ] **Stuck Agent**: Agent stands still, not moving, walking in circles
+- [ ] **Performance**: Lag, low FPS, game crashes with OutOfMemory
+- [ ] **Configuration**: "API key not found", "Invalid provider" errors
+- [ ] **Coordination**: Multiple agents fighting over same task, not working together
+- [ ] **Voice**: Voice commands not recognized, no audio output
 
-**Check 2: Configuration**
-```
-✓ config/minewright-common.toml exists
-✗ Config file missing or corrupted
-```
-**Solution:** See [Configuration Issues](#configuration-issues)
+### Health Check Commands
 
-**Check 3: API Key**
-```
-✓ Logs show "API key configured: sk-***..."
-✗ Logs show "API key not configured"
-```
-**Solution:** See [Configuration Issues](#configuration-issues)
-
-**Check 4: Agent Spawning**
-```
-✓ /minewright spawn works
-✗ Command unknown or agent doesn't appear
-```
-**Solution:** See [In-Game Issues](#in-game-issues)
-
-**Check 5: Agent Response**
-```
-✓ Agent responds to commands
-✗ Agent silent or shows errors
-```
-**Solution:** See [LLM API Issues](#llm-api-issues)
-
----
-
-## Installation Issues
-
-### Issue: "Failed to load mod"
-
-**Symptoms:**
-- Minecraft crashes on startup
-- Crash report mentions MineWright
-- Mod doesn't appear in mods list
-
-**Diagnosis:**
-
-1. **Check Minecraft Version:**
-   - You must be using **Minecraft 1.20.1**
-   - Other versions will not work
-
-2. **Check Forge Version:**
-   - You must have **Forge 47.x** installed
-   - Run `/forge version` in game to check
-
-3. **Check Java Version:**
-   - Run `java -version` in terminal/command prompt
-   - Must be **Java 17 or higher**
-
-**Solutions:**
-
-**Solution 1: Install Correct Forge**
-1. Download Forge 1.20.1 from [files.minecraftforge.net](https://files.minecraftforge.net/)
-2. Run the installer
-3. Select "Install Client"
-4. Launch Minecraft with Forge profile
-
-**Solution 2: Update Java**
-1. Download Java 17+ from [Adoptium](https://adoptium.net/)
-2. Install Java
-3. Update Minecraft Launcher JVM settings to use new Java
-4. Relaunch Minecraft
-
-**Solution 3: Check for Mod Conflicts**
-1. Move other mods out of the `mods` folder temporarily
-2. Try launching with only MineWright
-3. If it works, add mods back one at a time to find the conflict
-
-**Solution 4: Redownload Mod**
-1. Delete the existing MineWright JAR
-2. Download fresh copy from [Releases](https://github.com/SuperInstance/MineWright/releases)
-3. Ensure file is not corrupted (file size should match release)
-
-### Issue: "Mods loaded but nothing works"
-
-**Symptoms:**
-- Mod appears in mods list
-- Commands don't work
-- No error messages
-
-**Solutions:**
-
-**Solution 1: Verify Forge Profile**
-1. Open Minecraft Launcher
-2. Click arrow next to "Play"
-3. Ensure "Forge 1.20.1" is selected
-4. Click Play
-
-**Solution 2: Check Server vs Client**
-- Some commands only work on certain game modes
-- Single-player: All commands available
-- Multi-player server: Server must have mod installed
-
----
-
-## Configuration Issues
-
-### Issue: "API key not configured"
-
-**Symptoms:**
-- Logs show: "API key not configured"
-- Agent spawns but doesn't respond to commands
-- Commands fail silently
-
-**Solutions:**
-
-**Solution 1: Check Config File Exists**
-1. Navigate to `config/` folder in Minecraft directory
-2. Verify `minewright-common.toml` exists
-3. If missing, copy `minewright-common.toml.example` and rename it
-
-**Solution 2: Verify API Key Format**
-Edit `config/minewright-common.toml`:
-```toml
-[openai]
-apiKey = "${MINEWRIGHT_API_KEY}"  # Environment variable
-# OR
-apiKey = "sk-your-actual-key-here"  # Direct entry
-```
-
-**Solution 3: Set Environment Variable**
 ```bash
-# Linux/macOS
-export MINEWRIGHT_API_KEY="your-key-here"
+# Check if mod is loaded
+/foreman list
 
-# Windows PowerShell
-$env:MINEWRIGHT_API_KEY="your-key-here"
+# Check agent state
+Look at agent in game - press F3 to see debug info
 
-# Windows CMD
-set MINEWRIGHT_API_KEY=your-key-here
+# Check configuration
+View: config/minewright-common.toml
+
+# Check logs
+View: logs/latest.log (search for "MineWright" or "minewright")
 ```
-
-Then launch Minecraft from the same terminal.
-
-**Solution 4: Restart Minecraft**
-- Environment variables are read at launch
-- Must set variable before opening Minecraft
-- Relaunch after setting variable
-
-### Issue: "Invalid API key"
-
-**Symptoms:**
-- Logs show: "Authentication failed" or "Invalid API key"
-- LLM returns 401 error
-
-**Solutions:**
-
-**Solution 1: Verify API Key**
-1. Log in to your API provider's dashboard
-2. Copy the API key again
-3. Ensure no extra spaces or characters
-4. Update config file
-
-**Solution 2: Check Provider Match**
-```toml
-[ai]
-provider = "openai"  # Ensure this matches your key provider
-
-[openai]
-apiKey = "${MINEWRIGHT_API_KEY}"  # OpenAI/z.ai key
-```
-
-```toml
-[ai]
-provider = "groq"  # For Groq
-
-[groq]
-apiKey = "${GROQ_API_KEY}"
-```
-
-**Solution 3: Check API Key Status**
-1. Log in to your provider dashboard
-2. Check if key is active
-3. Check if quota/credits are available
-4. Verify key permissions
-
-### Issue: "Connection timeout"
-
-**Symptoms:**
-- Commands hang for 30+ seconds
-- Timeout error in logs
-- Agent stuck in "PLANNING" state
-
-**Solutions:**
-
-**Solution 1: Check Internet Connection**
-1. Verify your internet is working
-2. Try opening API provider website in browser
-3. Check firewall settings
-
-**Solution 2: Switch Provider**
-Some providers are faster:
-- **Groq:** Very fast, free
-- **z.ai GLM:** Fast, reliable
-- **OpenAI:** Moderate speed
-- **Gemini:** Moderate speed
-
-```toml
-[ai]
-provider = "groq"  # Switch to faster provider
-```
-
-**Solution 3: Increase Timeout**
-Edit `config/minewright-common.toml`:
-```toml
-[openai]
-timeoutMs = 60000  # Increase to 60 seconds
-```
-
-**Solution 4: Check Proxy/VPN**
-- If using VPN, try disabling it
-- If behind proxy, configure Java proxy settings
-- Check if API provider is blocked in your region
 
 ---
 
-## In-Game Issues
+## 1. LLM Connection Issues
 
-### Issue: Agent won't spawn
+### Symptom: Agent stuck in "PLANNING" state forever
 
-**Symptoms:**
-- `/minewright spawn` command does nothing
-- "Unknown command" error
-- Command registered but agent doesn't appear
-
-**Solutions:**
-
-**Solution 1: Check Command Syntax**
-```
-/minewright spawn AgentName
-```
-- Must provide a name
-- Name cannot have spaces (use underscores)
-
-**Solution 2: Check Available Space**
-- Agent needs 2x2x2 space to spawn
-- Try spawning in open area
-- Ensure not spawning inside blocks
-
-**Solution 3: Check Max Agents**
-Edit config:
-```toml
-[behavior]
-maxActiveCrewMembers = 10
-```
-- Cannot exceed this limit
-- Remove existing agents with `/minewright remove`
-
-**Solution 4: Check Game Mode**
-- Some commands disabled in spectator mode
-- Ensure you're in survival or creative mode
-
-### Issue: Agent stuck or not moving
-
-**Symptoms:**
-- Agent spawns but stands still
-- Agent doesn't respond to commands
-- Agent walks in circles
+**Cause:** LLM API not responding, timeout, or circuit breaker open.
 
 **Diagnosis:**
 
-1. **Check Agent State:**
-   ```
-   /minewright list
-   ```
-   - Shows current state: IDLE, PLANNING, EXECUTING, ERROR
+```
+[Search logs for]:
+"Circuit breaker state: CLOSED -> OPEN"
+"Request failed after all retries"
+"LLM call failed: timeout"
+"API key not found"
+```
 
-2. **Check Logs:**
-   - Look for pathfinding errors
-   - Look for action failures
-   - Look for LLM errors
+**Solutions (in order):**
+
+#### 1.1 Check API Key Configuration
+
+**Symptom:** `API key not found` or `401 Unauthorized`
+
+**Solution:**
+
+1. Open `config/minewright-common.toml`
+2. Verify API key is set:
+   ```toml
+   [openai]
+   apiKey = "sk-..."  # Or ${OPENAI_API_KEY} for env var
+   ```
+3. If using environment variables:
+   ```bash
+   # Linux/Mac
+   export OPENAI_API_KEY="sk-..."
+
+   # Windows PowerShell
+   $env:OPENAI_API_KEY="sk-..."
+
+   # Windows CMD
+   set OPENAI_API_KEY=sk-...
+   ```
+4. Restart Minecraft
+
+**Verification:**
+```log
+# Should see in logs:
+[ResilientLLMClient] Initializing resilient client for provider: openai
+[ResilientLLMClient] Resilient client initialized for provider: openai
+```
+
+#### 1.2 Check Circuit Breaker State
+
+**Symptom:** `Circuit breaker state: CLOSED -> OPEN`
+
+**Cause:** Too many failed API calls (5+ failures in a row)
+
+**Solution:**
+
+**Option A - Wait for automatic recovery (60 seconds):**
+- Circuit breaker will automatically transition to HALF_OPEN after 60 seconds
+- Next successful call will transition to CLOSED
+
+**Option B - Manual reset (requires game restart):**
+- Circuit breaker resets on game restart
+- Check logs for reset confirmation
+
+**Option C - Fix underlying issue:**
+- Check internet connection
+- Verify API key is valid
+- Check API quota/limits
+- Try different provider (groq, gemini)
+
+**Verification:**
+```log
+# Should see:
+[openai] Circuit breaker state: OPEN -> HALF_OPEN
+[openai] Circuit breaker state: HALF_OPEN -> CLOSED
+```
+
+#### 1.3 API Timeout Issues
+
+**Symptom:** `LLM call failed: timeout` or `Read timed out`
+
+**Cause:** Network latency, API overloaded, slow model
 
 **Solutions:**
 
-**Solution 1: Ensure Valid Spawn Location**
-- Agent must spawn on solid ground
-- Try respawning in open, flat area
-- Use `/minewright remove` then `/minewright spawn` again
-
-**Solution 2: Check Pathfinding**
-- Agent needs clear path to target
-- Remove obstacles between agent and destination
-- Try commands in open terrain first
-
-**Solution 3: Increase Tick Delay**
+**A. Switch to faster provider:**
 ```toml
-[behavior]
-actionTickDelay = 40  # Increase if server is lagging
+# config/minewright-common.toml
+[ai]
+provider = "groq"  # Groq is fastest (free tier)
+# provider = "openai"  # Slower but more capable
+# provider = "gemini"  # Medium speed
 ```
 
-**Solution 4: Give Simple Commands**
-Start with simple commands:
+**B. Enable batching (reduces API calls):**
+```toml
+[llm]
+enableBatching = true
+batchSize = 5
+batchTimeout = 1000  # milliseconds
 ```
-/minewright order AgentName "say hello"
-/minewright order AgentName "follow me"
+
+**C. Increase timeout:**
+```toml
+[openai]
+requestTimeout = 30000  # 30 seconds (default)
+# Increase to 60000 for slow connections
 ```
 
-Then progress to complex tasks.
+**D. Use simpler model:**
+```toml
+[zai]
+foremanModel = "glm-4.7-air"  # Faster than glm-5
+workerSimpleModel = "glm-4.7-air"
+```
 
-### Issue: Agent falls through world
+#### 1.4 Rate Limiting
 
-**Symptoms:**
-- Agent spawns and immediately falls
-- Agent falls through blocks
-- Agent teleports randomly
+**Symptom:** `Rate limiter rejected request` or `429 Too Many Requests`
 
-**Solutions:**
+**Cause:** Exceeded API rate limits
 
-**Solution 1: Spawn at Ground Level**
-- Spawn at y=64 or higher
-- Ensure ground is solid (not leaves, snow, etc.)
+**Solution:**
 
-**Solution 2: Ensure Valid Block Underneath**
-- Agent needs solid block to stand on
-- Try spawning on stone, dirt, grass
-- Avoid spawning on slabs, stairs, fluids
+**A. Check rate limits:**
+- OpenAI: ~3,000 requests/minute (varies by tier)
+- Groq: ~30 requests/minute (free tier)
+- Gemini: ~60 requests/minute
 
-**Solution 3: Check World Corruption**
-- Try spawning in new world
-- If works in new world, old world may have issues
-- Backup and restore world from earlier save
-
----
-
-## Performance Issues
-
-### Issue: Low FPS / Lag
-
-**Symptoms:**
-- Minecraft runs slowly with mod
-- Frame rate drops when agents are active
-- Delayed agent responses
-
-**Solutions:**
-
-**Solution 1: Reduce Agent Count**
+**B. Reduce agent count:**
 ```toml
 [behavior]
 maxActiveCrewMembers = 3  # Reduce from 10
 ```
 
-**Solution 2: Increase Tick Delay**
+**C. Increase action delay:**
 ```toml
 [behavior]
-actionTickDelay = 40  # Increase from 20 (1 second → 2 seconds)
+actionTickDelay = 40  # 2 seconds instead of 1 second
 ```
 
-**Solution 3: Enable Strict Budget**
+**D. Enable caching:**
 ```toml
-[performance]
-aiTickBudgetMs = 3
-strictBudgetEnforcement = true
+[llm]
+enableCache = true
+cacheSize = 1000
 ```
 
-**Solution 4: Increase JVM Memory**
-Add to Minecraft Launcher JVM Arguments:
-```
--Xmx4G -Xms2G
-```
+#### 1.5 Invalid Response Format
 
-**Solution 5: Optimize Java**
-Use JVM arguments:
-```
--XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200
-```
+**Symptom:** `Failed to parse LLM response` or `JSON parsing error`
 
-### Issue: Out of Memory Crash
+**Cause:** LLM returned malformed JSON or unexpected format
 
-**Symptoms:**
-- Minecraft crashes with OutOfMemoryError
-- Game becomes slow then crashes
-- "Java heap space" error
+**Solution:**
 
-**Solutions:**
+**A. Check model compatibility:**
+- Use models tested with system: `glm-5`, `gpt-4`, `llama3-70b-8192`
+- Avoid experimental models
 
-**Solution 1: Increase Heap Size**
-Add to Minecraft Launcher:
-```
--Xmx6G
-```
-Adjust based on your system RAM:
-- 8GB RAM: `-Xmx4G`
-- 16GB RAM: `-Xmx6G`
-- 32GB RAM: `-Xmx8G`
-
-**Solution 2: Reduce Concurrent Operations**
+**B. Reduce temperature:**
 ```toml
-[behavior]
-maxActiveCrewMembers = 3
-
-[performance]
-aiTickBudgetMs = 3
+[openai]
+temperature = 0.3  # Lower = more deterministic
+# Avoid temperature > 1.0 for task planning
 ```
 
-**Solution 3: Close Other Applications**
-- Close web browsers
-- Close other games
-- Free up system RAM
-
-**Solution 4: Disable Features**
+**C. Enable fallback:**
 ```toml
-[semantic_cache]
-enabled = false
-
-[voice]
-enabled = false
+[llm]
+enableFallback = true
+fallbackMode = "pattern"  # Use pattern-based responses
 ```
 
 ---
 
-## LLM API Issues
+## 2. Agent Stuck / Not Responding
 
-### Issue: Rate Limit / Quota Exceeded
+### Symptom: Agent stands still, not moving
 
-**Symptoms:**
-- "Rate limit exceeded" error in logs
-- Agent stops responding after many commands
-- 429 Too Many Requests error
+**Cause:** Pathfinding failure, stuck detector triggered, action execution blocked
+
+**Diagnosis:**
+
+```
+[Search logs for]:
+"position stuck for X ticks"
+"pathfinding stuck"
+"State transition failed"
+"No path found to target"
+```
+
+**Solutions (in order):**
+
+#### 2.1 Pathfinding Stuck
+
+**Symptom:** Agent doesn't move, pathfinding errors in logs
+
+**Cause:** No valid path to target, obstacles, unloaded chunks
+
+**Diagnosis:**
+```log
+[StuckDetector] pathfinding stuck at BlockPos{x=100, y=64, z=200}
+[PathExecutor] No path found to target
+```
 
 **Solutions:**
 
-**Solution 1: Enable Batching**
+**A. Check target accessibility:**
+- Is target in loaded chunks? (Move closer)
+- Is target obstructed? (Clear path)
+- Is target too far? (> 1000 blocks may fail)
+
+**B. Enable stuck recovery:**
+```toml
+[recovery]
+enableStuckDetection = true
+stuckTimeout = 60  # ticks (3 seconds)
+recoveryStrategy = "repath"  # or "teleport" (debug only)
+```
+
+**C. Increase pathfinding range:**
+```toml
+[pathfinding]
+maxPathDistance = 500  # blocks
+pathTimeout = 10000  # milliseconds
+```
+
+**D. Verify movement validator:**
+```log
+# Check for:
+[MovementValidator] Movement blocked at BlockPos{x=...}
+# Common causes: water, lava, fire, cactus
+```
+
+#### 2.2 Position Stuck
+
+**Symptom:** Agent moves but returns to same position
+
+**Cause:** Walking in circles, navigation loop, conflicting goals
+
+**Diagnosis:**
+```log
+[StuckDetector] SteveAgent position stuck for 60 ticks at BlockPos{x=100, y=64, z=200}
+```
+
+**Solutions:**
+
+**A. Check for conflicting commands:**
+- Are multiple agents trying to reach same spot?
+- Is agent following player AND executing task?
+
+**B. Enable humanization (adds randomness):**
+```toml
+[humanization]
+enableJitter = true
+movementJitter = 0.1  # 10% random variation
+```
+
+**C. Reduce path smoothing:**
+```toml
+[pathfinding]
+enablePathSmoothing = false  # May cause loops in complex terrain
+```
+
+**D. Check action timeout:**
+```toml
+[actions]
+defaultTimeout = 300  # seconds (5 minutes)
+# Agent will give up and report failure
+```
+
+#### 2.3 Progress Stuck
+
+**Symptom:** Agent is moving but task progress not increasing
+
+**Cause:** Wrong target, inefficient path, action implementation bug
+
+**Diagnosis:**
+```log
+[StuckDetector] SteveAgent progress stuck for 100 ticks at 50%
+```
+
+**Solutions:**
+
+**A. Verify action implementation:**
+```log
+# Check for:
+[MineAction] No valid blocks found in range
+[BuildAction] Missing required materials
+[GatherAction] Target resource not found
+```
+
+**B. Check action progress tracking:**
+- Is `getCurrentActionProgress()` being called correctly?
+- Is progress counter incrementing?
+
+**C. Manual intervention:**
+```
+/foreman order <agent_name> stop
+/foreman order <agent_name> idle
+```
+
+#### 2.4 State Machine Stuck
+
+**Symptom:** Agent state doesn't transition (e.g., stuck in PLANNING)
+
+**Cause:** Logic deadlock, event bus failure, state machine error
+
+**Diagnosis:**
+```log
+[StuckDetector] SteveAgent state stuck in PLANNING for 200 ticks
+[AgentStateMachine] Invalid state transition: PLANNING -> EXECUTING
+```
+
+**Solutions:**
+
+**A. Check state machine logs:**
+```log
+# Valid transitions:
+IDLE -> PLANNING (new command)
+PLANNING -> EXECUTING (planning complete)
+PLANNING -> FAILED (planning error)
+EXECUTING -> COMPLETED (all tasks done)
+EXECUTING -> FAILED (execution error)
+```
+
+**B. Force state reset (last resort):**
+- Restart game
+- Use `/foreman remove <agent_name>` then `/foreman spawn <agent_name>`
+
+**C. Check event bus:**
+```log
+# Should see:
+[EventBus] Published StateTransitionEvent: IDLE -> PLANNING
+[EventBus] Published StateTransitionEvent: PLANNING -> EXECUTING
+```
+
+---
+
+## 3. Memory / Performance Issues
+
+### Symptom: Game lag, low FPS, OutOfMemory crash
+
+**Cause:** Too many agents, large structure generation, memory leak
+
+**Diagnosis:**
+
+```
+[Search logs for]:
+"OutOfMemoryError"
+"java.lang.OutOfMemoryError: Java heap space"
+"Memory usage: 90%+"
+"GC overhead limit exceeded"
+```
+
+**Solutions (in order):**
+
+#### 3.1 Reduce Agent Count
+
+**Symptom:** Lag proportional to agent count
+
+**Solution:**
+
+```toml
+[behavior]
+maxActiveCrewMembers = 3  # Reduce from 10
+```
+
+**Performance estimates:**
+- 1 agent: ~5% CPU overhead
+- 5 agents: ~15% CPU overhead
+- 10 agents: ~30% CPU overhead
+- 20+ agents: Significant lag
+
+#### 3.2 Increase JVM Heap
+
+**Symptom:** `OutOfMemoryError: Java heap space`
+
+**Solution:**
+
+**Edit Minecraft launch profile:**
+- In Minecraft Launcher → Installations → Edit
+- Add JVM argument:
+  ```
+  -Xmx4G  # Allocate 4GB (adjust based on your RAM)
+  ```
+- Recommended:
+  - Minimum: 2GB (`-Xmx2G`)
+  - Recommended: 4GB (`-Xmx4G`)
+  - Large modpacks: 6GB (`-Xmx6G`)
+
+#### 3.3 Optimize Structure Generation
+
+**Symptom:** Lag when building large structures
+
+**Cause:** Structure generation loads many chunks at once
+
+**Solution:**
+
+```toml
+[structure]
+maxStructureSize = 1000  # blocks per batch
+chunkLoadingTimeout = 5000  # milliseconds
+enableAsyncGeneration = true
+```
+
+**Best practices:**
+- Build structures in sections (< 1000 blocks each)
+- Use `/foreman order <agent> stop` if lag occurs
+- Reduce view distance if needed
+
+#### 3.4 Reduce Memory Usage
+
+**Symptom:** Gradual memory increase over time
+
+**Cause:** Memory leak, excessive caching
+
+**Solution:**
+
 ```toml
 [llm]
-enableBatching = true
-batchSize = 5
+enableCache = true
+cacheSize = 100  # Reduce from 1000
+cacheTTL = 300  # seconds (5 minutes)
+
+[memory]
+maxConversationHistory = 50  # Reduce from 100
+maxWorldKnowledge = 1000  # Reduce from 10000
 ```
 
-**Solution 2: Enable Caching**
+**Enable memory consolidation:**
 ```toml
-[semantic_cache]
-enabled = true
-max_size = 500
+[memory]
+enableConsolidation = true
+consolidationInterval = 300  # seconds (5 minutes)
 ```
 
-**Solution 3: Use Cascade Router**
-```toml
-[cascade_router]
-enabled = true
+#### 3.5 Profile Tick Usage
+
+**Symptom:** Random lag spikes
+
+**Diagnosis:**
+
+```log
+# Enable tick profiling:
+[TickProfiler] Average tick time: 50ms (target: 50ms for 20 TPS)
+[TickProfiler] ActionExecutor: 30ms (60%)
+[TickProfiler] Pathfinding: 15ms (30%)
+[TickProfiler] StateMachine: 2ms (4%)
 ```
-Routes simple commands to smaller/faster models.
 
-**Solution 4: Increase Quota**
-- Upgrade your API plan
-- Check provider dashboard for quota limits
-- Wait for quota to reset (daily/hourly)
+**Solution:**
 
-### Issue: High API Costs
+Identify bottleneck and optimize:
+- **ActionExecutor**: Reduce action complexity, add action timeout
+- **Pathfinding**: Reduce path distance, disable path smoothing
+- **StateMachine**: Check for state loops, add transition timeout
 
-**Symptoms:**
-- Unexpectedly high API bills
-- Rapid token consumption
+---
 
-**Solutions:**
+## 4. Configuration Errors
 
-**Solution 1: Use Free Providers**
+### Symptom: Configuration errors on startup
+
+**Cause:** Invalid config values, missing required fields, malformed TOML
+
+**Diagnosis:**
+
+```
+[Search logs for]:
+"Configuration error"
+"Invalid value for"
+"Missing required configuration"
+"Failed to load config"
+```
+
+**Solutions (in order):**
+
+#### 4.1 Invalid Provider
+
+**Symptom:** `Invalid provider: xxx` or `Unknown provider`
+
+**Solution:**
+
+Valid providers: `groq`, `openai`, `gemini`
+
 ```toml
 [ai]
-provider = "groq"  # Free
+provider = "groq"  # Must be lowercase
+# NOT: "Groq", "GROQ", " openai ", etc.
 ```
 
-**Solution 2: Enable All Optimizations**
-```toml
-[semantic_cache]
-enabled = true
-
-[cascade_router]
-enabled = true
-
-[llm]
-enableBatching = true
+**Verification:**
+```log
+# Should see:
+[ConfigManager] Loaded provider: groq
 ```
 
-**Solution 3: Use Smaller Models**
-```toml
-[openai]
-model = "glm-4-flash"  # Faster, cheaper
-```
+#### 4.2 Missing API Key
 
-**Solution 4: Monitor Usage**
-Check logs for:
-- Token count per request
-- Number of API calls
-- Cache hit rate
+**Symptom:** `API key not found` or `API key is required`
 
-### Issue: Poor Response Quality
+**Solution:**
 
-**Symptoms:**
-- Agent doesn't understand commands
-- Agent gives wrong actions
-- Confusing responses
-
-**Solutions:**
-
-**Solution 1: Adjust Temperature**
 ```toml
 [openai]
-temperature = 0.5  # Lower = more deterministic
+apiKey = "sk-..."  # Must be valid API key
+# OR use environment variable:
+apiKey = "${OPENAI_API_KEY}"
 ```
 
-**Solution 2: Use Better Model**
+**Common mistakes:**
+- Empty string: `apiKey = ""` ❌
+- Missing quotes: `apiKey = sk-...` ❌
+- Wrong section: `[groq]` when provider is `openai` ❌
+
+**Verification:**
+```log
+# Should see:
+[MineWrightConfig] API key configured: sk-...9abc (preview)
+# NOT:
+[MineWrightConfig] API key not configured
+```
+
+#### 4.3 Invalid Config Values
+
+**Symptom:** `Invalid value for temperature` or `out of range`
+
+**Common config ranges:**
+
 ```toml
+# Valid ranges:
 [openai]
-model = "glm-5"  # More capable
+maxTokens = 8000  # 100 to 65536
+temperature = 0.7  # 0.0 to 2.0
+
+[behavior]
+actionTickDelay = 20  # 1 to 100 ticks
+maxActiveCrewMembers = 10  # 1 to 50
+
+[voice]
+sttLanguage = "en-US"  # Valid BCP 47 language code
 ```
 
-**Solution 3: Clear Cache**
-Sometimes stale cached responses cause issues:
-1. Delete `config/minewright-common.toml`
-2. Restart Minecraft to regenerate
-3. Try command again
+**Solution:** Fix values to be within valid ranges
 
-**Solution 4: Rephrase Commands**
-- Be specific: "build a 5x5x4 stone house" vs "build a house"
-- Use simple language
-- Break complex tasks into steps
+#### 4.4 Malformed TOML
+
+**Symptom:** `Failed to parse config file` or TOML syntax error
+
+**Common TOML mistakes:**
+
+```toml
+# WRONG:
+[openai
+apiKey = "sk-..."  # Missing closing bracket
+apiKey = sk-...     # Missing quotes
+apiKey = 'sk-...'  # Single quotes (use double)
+temperature = 0.7  # Missing newline after
+
+# CORRECT:
+[openai]
+apiKey = "sk-..."
+temperature = 0.7
+```
+
+**Solution:** Validate TOML syntax
+- Use online TOML validator
+- Check for matching brackets
+- Use double quotes for strings
+- Ensure newlines between sections
+
+#### 4.5 Config Not Reloading
+
+**Symptom:** Changed config but no effect
+
+**Cause:** Config not reloaded after edit
+
+**Solution:**
+
+```bash
+# In-game command:
+/reload
+
+# Or restart Minecraft
+```
+
+**Verification:**
+```log
+# Should see:
+[ConfigManager] Configuration reloaded
+[ConfigManager] Provider: groq -> openai
+```
 
 ---
 
-## Crash Recovery
+## 5. Multi-Agent Coordination Failures
 
-### Recovering from Crashes
+### Symptom: Multiple agents fighting, not cooperating, idle when work exists
 
-**Immediate Actions:**
+**Cause:** Contract Net Protocol failure, bid evaluation errors, communication bus issues
 
-1. **Backup Your World:**
-   - Copy `.minecraft/saves/YourWorldName`
-   - Store in safe location
+**Diagnosis:**
 
-2. **Check Crash Report:**
-   - Location: `crash-reports/`
-   - File: `crash-YYYY-MM-DD_HH.MM.SS-server.txt`
-   - Look for "MineWright" in the report
+```
+[Search logs for]:
+"No bids received for task"
+"Contract award failed"
+"Communication bus error"
+"Task announcement timeout"
+```
 
-3. **Check Logs:**
-   - Location: `logs/latest.log`
-   - Search for "ERROR" or "FATAL"
+**Solutions (in order):**
 
-**Common Crash Causes:**
+#### 5.1 No Bids Received
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| OutOfMemoryError | Insufficient RAM | Increase `-Xmx` JVM argument |
-| NullPointerException | Bug in mod | Report issue on GitHub |
-| ClassNotFoundException | Incomplete install | Reinstall mod, verify JAR integrity |
-| NoSuchMethodError | Mod conflict | Remove conflicting mods |
+**Symptom:** Manager announces task but no agents bid
 
-**Recovery Steps:**
+**Cause:** Agents not listening, capability mismatch, bid calculation error
 
-1. **Identify the Crash Type** from crash report
-2. **Apply Solution** from table above
-3. **Restart Minecraft**
-4. **Load World** (may need to restore from backup)
-
-### World Corruption
-
-**Symptoms:**
-- World fails to load
-- Chunks missing
-- Blocks changing randomly
+**Diagnosis:**
+```log
+[ContractNetManager] No bids received for task announcement abc123
+[ContractNetManager] Task award failed: no eligible bidders
+```
 
 **Solutions:**
 
-**Solution 1: Restore Backup**
-```bash
-# Backup your world regularly!
-cp -r .minecraft/saves/YourWorldName ~/.minecraft/backups/
+**A. Check agent capabilities:**
+```log
+# Should see:
+[AgentCapability] Agent SteveAgent[123] registered capabilities: {mining: 0.9, building: 0.7}
 ```
 
-**Solution 2: Remove Agent Data**
-1. Close Minecraft
-2. Navigate to world save: `.minecraft/saves/YourWorldName/`
-3. Delete `minewright/` folder (if exists)
-4. Restart Minecraft
-5. Spawn new agents
+**B. Verify task requirements:**
+- Is task within agent capability range?
+- Is agent too far from task location?
+- Is agent already at maximum load?
 
-**Solution 3: Use Minecraft Region Fixer**
-- External tool for fixing corrupted worlds
-- Download from GitHub
-- Run on your world save
+**C. Check bid timeout:**
+```toml
+[coordination]
+bidTimeout = 5000  # milliseconds (increase if network slow)
+maxBidsPerTask = 10  # maximum bids to accept
+```
+
+#### 5.2 Bid Evaluation Errors
+
+**Symptom:** Bids received but award fails
+
+**Cause:** Invalid bid values, scoring error, award selector bug
+
+**Diagnosis:**
+```log
+[AwardSelector] Failed to evaluate bid: invalid score value
+[ContractNetManager] Task award failed: scoring error
+```
+
+**Solutions:**
+
+**A. Check bid validity:**
+- Score must be 0.0 to 1.0
+- Confidence must be 0.0 to 1.0
+- Estimated time must be positive
+
+```log
+# Valid bid:
+TaskBid[announcement=abc123, bidder=SteveAgent, score=0.85, time=5000ms, conf=0.90, value=0.1530]
+
+# Invalid bid:
+TaskBid[announcement=abc123, bidder=SteveAgent, score=1.5, ...]  # Score > 1.0
+```
+
+**B. Check award selector:**
+```toml
+[coordination]
+awardStrategy = "highest_value"  # or "lowest_time", "highest_score"
+```
+
+#### 5.3 Communication Bus Failures
+
+**Symptom:** Agents not receiving messages
+
+**Cause:** Event bus failure, message serialization error, bus not started
+
+**Diagnosis:**
+```log
+[CommunicationBus] Failed to publish message: bus not initialized
+[AgentCommunicationBus] Message delivery failed: timeout
+```
+
+**Solutions:**
+
+**A. Verify event bus is initialized:**
+```log
+# Should see on startup:
+[EventBus] Initialized with 5 subscribers
+[CommunicationBus] Agent communication bus started
+```
+
+**B. Check message serialization:**
+```log
+# Should see:
+[AgentCommunicationBus] Published message: TaskAnnouncement{type='mining', ...}
+[AgentCommunicationBus] Delivered message to: SteveAgent[123]
+```
+
+**C. Increase message timeout:**
+```toml
+[coordination]
+messageTimeout = 30000  # milliseconds (30 seconds)
+```
+
+#### 5.4 Task Conflicts
+
+**Symptom:** Multiple agents trying to do same task
+
+**Cause:** No conflict resolution, race condition, duplicate awards
+
+**Diagnosis:**
+```log
+# Multiple agents working on same block:
+[SteveAgent-1] Mining block at BlockPos{x=100, y=64, z=200}
+[SteveAgent-2] Mining block at BlockPos{x=100, y=64, z=200}
+```
+
+**Solutions:**
+
+**A. Enable conflict resolution:**
+```toml
+[coordination]
+enableConflictResolution = true
+conflictStrategy = "first_come"  # or "random", "closest"
+```
+
+**B. Use blackboard for coordination:**
+```toml
+[blackboard]
+enabled = true
+shareTaskState = true
+shareWorldKnowledge = true
+```
+
+**C. Check task assignment:**
+```log
+# Should see unique assignments:
+[ContractNetManager] Awarded task abc123 to SteveAgent-1
+[ContractNetManager] Awarded task def456 to SteveAgent-2
+```
+
+---
+
+## 6. Voice System Problems
+
+### Symptom: Voice commands not recognized, no audio output
+
+**Cause:** Microphone not configured, TTS service down, voice system disabled
+
+**Diagnosis:**
+
+```
+[Search logs for]:
+"Voice system not enabled"
+"Microphone not found"
+"TTS service error"
+"Voice recognition failed"
+```
+
+**Solutions (in order):**
+
+#### 6.1 Voice System Disabled
+
+**Symptom:** Voice commands don't work
+
+**Solution:**
+
+```toml
+[voice]
+enabled = true
+mode = "real"  # or "logging" (for testing), NOT "disabled"
+```
+
+**Verification:**
+```log
+# Should see:
+[VoiceSystem] Voice system initialized: RealVoiceSystem
+[VoiceSystem] Voice enabled: true
+```
+
+#### 6.2 Microphone Not Found
+
+**Symptom:** `Microphone not found` or `No audio input device`
+
+**Solution:**
+
+**A. Check system microphone:**
+- Verify microphone works in OS
+- Check Minecraft microphone permissions
+- Test with other voice applications
+
+**B. Configure microphone:**
+```toml
+[voice]
+microphoneName = "default"  # Or specific device name
+sampleRate = 16000  # Hz (16kHz for speech recognition)
+```
+
+**C. Test voice input:**
+```bash
+# In-game, check if voice key is bound:
+Settings → Controls → Voice → Push-to-Talk
+# Press key and speak
+```
+
+#### 6.3 TTS Service Errors
+
+**Symptom:** Agent doesn't speak responses
+
+**Cause:** TTS service down, API key missing, voice not configured
+
+**Diagnosis:**
+```log
+[TextToSpeech] Failed to synthesize speech: API error
+[VoiceSystem] TTS service unavailable
+```
+
+**Solutions:**
+
+**A. Check TTS configuration:**
+```toml
+[voice]
+ttsProvider = "elevenlabs"  # or "docker_mcp", "system"
+ttsVoice = "default"
+```
+
+**B. Verify API key (for ElevenLabs):**
+```toml
+[voice.elevenlabs]
+apiKey = "xi-..."  # ElevenLabs API key
+```
+
+**C. Use system TTS (free, offline):**
+```toml
+[voice]
+ttsProvider = "system"
+```
+
+#### 6.4 Speech Recognition Errors
+
+**Symptom:** Voice commands not recognized correctly
+
+**Cause:** Background noise, language mismatch, poor microphone quality
+
+**Diagnosis:**
+```log
+[SpeechToText] Recognition failed: audio too short
+[SpeechToText] Recognition result: "" (empty)
+```
+
+**Solutions:**
+
+**A. Check language settings:**
+```toml
+[voice]
+sttLanguage = "en-US"  # Must match your language
+sttProvider = "whisper"  # or "system"
+```
+
+**B. Improve audio quality:**
+- Use push-to-talk (hold key while speaking)
+- Reduce background noise
+- Speak clearly and close to microphone
+
+**C. Enable logging mode for debugging:**
+```toml
+[voice]
+mode = "logging"  # Prints recognized text to console instead of executing
+```
+
+**Verification:**
+```log
+# Should see recognized text:
+[LoggingVoiceSystem] Recognized: "build a house"
+```
 
 ---
 
@@ -625,135 +946,226 @@ cp -r .minecraft/saves/YourWorldName ~/.minecraft/backups/
 
 ### Enable Debug Logging
 
-**Step 1: Enable in Config**
-Edit `config/minewright-common.toml`:
-```toml
-[general]
-debugLogging = true
+Edit `config/log4j.xml` or use in-game commands:
+
+```xml
+<!-- Add to log4j.xml -->
+<Logger name="com.minewright" level="DEBUG" />
 ```
 
-**Step 2: Enable Minecraft Debug**
-1. Open Minecraft Launcher
-2. Go to Launch Options
-3. Select your Forge profile
-4. Enable "Open Game Log"
-5. Or add JVM argument: `-Dforge.logging.markers=REGISTRIES,SCAN,FORGE,EVENT`
-
-**Step 3: Check Logs**
-- Location: `logs/latest.log`
-- Real-time: `tail -f logs/latest.log` (Linux/Mac) or use text editor
-
-### Log Locations
-
-| Log File | Purpose | Location |
-|----------|---------|----------|
-| `latest.log` | Current session | `.minecraft/logs/` |
-| `debug.log` | Debug output | `.minecraft/logs/` |
-| `crash-reports/*.txt` | Crash details | `.minecraft/crash-reports/` |
-
-### Useful Log Searches
-
-**Find Errors:**
+Or via command:
 ```
-grep ERROR logs/latest.log
+/log set com.minewright DEBUG
 ```
 
-**Find MineWright Messages:**
+### Key Log Categories
+
+```bash
+# LLM issues
+grep -i "llm\|circuit\|retry\|timeout" logs/latest.log
+
+# Agent stuck
+grep -i "stuck\|pathfind\|state.*transition" logs/latest.log
+
+# Configuration
+grep -i "config\|provider\|api.*key" logs/latest.log
+
+# Coordination
+grep -i "bid\|award\|contract\|announcement" logs/latest.log
+
+# Voice
+grep -i "voice\|stt\|tts\|microphone" logs/latest.log
 ```
-grep MineWright logs/latest.log
+
+### Log Levels
+
+```
+ERROR  - Critical failures (circuit breaker open, crashes)
+WARN   - Recoverable issues (retry, timeout, stuck)
+INFO   - State transitions, task completion
+DEBUG  - Detailed diagnostics (pathfinding, bidding)
+TRACE  - Extremely verbose (every tick, every message)
 ```
 
-**Find API Issues:**
+---
+
+## Common Error Messages
+
+### LLM Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Circuit breaker state: CLOSED -> OPEN` | 5+ consecutive API failures | Wait 60s or check API key |
+| `Request failed after all retries` | API not responding | Check internet, switch provider |
+| `Rate limiter rejected request` | Hit API rate limit | Reduce agent count, increase delay |
+| `Failed to parse LLM response` | Malformed JSON from LLM | Lower temperature, check model |
+| `API key not found` | Missing or invalid API key | Configure API key in config |
+
+### Agent Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `position stuck for X ticks` | Agent not moving | Check pathfinding, clear obstacles |
+| `pathfinding stuck` | No valid path to target | Move closer, clear path, reduce distance |
+| `Invalid state transition: X -> Y` | State machine logic error | Check valid transitions in code |
+| `No path found to target` | Target unreachable | Verify target exists and is accessible |
+| `progress stuck for X ticks` | Task not progressing | Check action implementation, verify target |
+
+### Configuration Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Invalid provider: xxx` | Invalid provider name | Use: groq, openai, or gemini |
+| `API key is required` | Missing API key | Add API key to config or env var |
+| `Invalid value for temperature` | Value out of range | Use 0.0 to 2.0 |
+| `Failed to parse config file` | TOML syntax error | Validate TOML syntax |
+| `Configuration reload failed` | Invalid config values | Fix config values and reload |
+
+### Coordination Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `No bids received for task` | Agents not bidding | Check capabilities, increase timeout |
+| `Task award failed: no eligible bidders` | No valid bids | Check bid scores, verify requirements |
+| `Communication bus error` | Event bus failure | Check bus initialization |
+| `Message delivery failed: timeout` | Network/bus timeout | Increase message timeout |
+| `Multiple agents assigned to same task` | No conflict resolution | Enable conflict resolution |
+
+### Voice Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Voice system not enabled` | Voice disabled in config | Set `voice.enabled = true` |
+| `Microphone not found` | No audio input device | Check system microphone |
+| `TTS service error` | TTS API down or invalid | Check API key, switch provider |
+| `Recognition failed: audio too short` | Voice input too short | Speak longer, use push-to-talk |
+| `STT service unavailable` | Speech recognition service down | Check STT provider config |
+
+---
+
+## Recovery Commands
+
+### In-Game Commands
+
+```bash
+# List all agents
+/foreman list
+
+# Remove stuck agent
+/foreman remove <agent_name>
+
+# Spawn new agent
+/foreman spawn <agent_name>
+
+# Issue command
+/foreman order <agent_name> <command>
+
+# Stop current task
+/foreman order <agent_name> stop
+
+# Set agent idle
+/foreman order <agent_name> idle
+
+# Reload configuration
+/reload
 ```
-grep "API" logs/latest.log
+
+### Configuration Reload
+
+```bash
+# Edit config file
+# config/minewright-common.toml
+
+# Reload in-game
+/reload
+
+# Check reload success
+# Look for: "Configuration reloaded" in logs
 ```
 
-**Find Pathfinding Issues:**
-```
-grep path logs/latest.log
-```
+### Game Restart
 
-### Creating Bug Reports
+When all else fails, restart Minecraft:
 
-When reporting issues, include:
-
-1. **System Info:**
-   ```
-   OS: Windows 11 / macOS 14 / Ubuntu 22.04
-   Java: openjdk 17.0.2
-   Minecraft: 1.20.1
-   Forge: 47.2.0
-   MineWright: 1.0.0
-   ```
-
-2. **Configuration:**
-   - Paste `config/minewright-common.toml` (remove API key)
-
-3. **Relevant Logs:**
-   - Error messages from `logs/latest.log`
-   - Crash report if applicable
-
-4. **Steps to Reproduce:**
-   ```
-   1. Spawn agent with /minewright spawn Steve
-   2. Issue command: /minewright order Steve "build a house"
-   3. Agent freezes
-   4. Error in logs: [...]
-   ```
+1. Save and quit game
+2. Check logs for errors
+3. Fix configuration issues
+4. Start Minecraft
+5. Test with single agent first
 
 ---
 
 ## Getting Help
 
-### Self-Service Resources
+### Information to Collect
 
-- [Installation Guide](INSTALLATION.md)
-- [Configuration Guide](CONFIGURATION.md)
-- [Performance Guide](PERFORMANCE.md)
-- [Main README](../README.md)
+When reporting issues, include:
 
-### Community Support
+1. **Log file excerpts** (search for ERROR, WARN)
+2. **Configuration file** (sanitize API keys)
+3. **Minecraft version** and Forge version
+4. **Steve AI version** (check mod list)
+5. **Steps to reproduce** the issue
+6. **Expected vs actual** behavior
 
-- [GitHub Issues](https://github.com/SuperInstance/MineWright/issues)
-  - Search existing issues first
-  - Create new issue with details
+### Useful Debug Info
 
-- [GitHub Discussions](https://github.com/SuperInstance/MineWright/discussions)
-  - Ask questions
-  - Share setups
-  - Get help from community
+```bash
+# Minecraft version: 1.20.1
+# Forge version: 47.2.0
+# Steve AI version: 1.0.0
+# Java version: 17
 
-### When Creating Issues
+# Log location:
+# - Windows: %appdata%/.minecraft/logs/
+# - Linux/Mac: ~/.minecraft/logs/
 
-Include the following information:
-
-**Required:**
-- Minecraft version
-- Forge version
-- MineWright version
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-
-**Helpful:**
-- Configuration file (with API key removed)
-- Relevant log excerpts
-- Screenshots/videos
-- System specs (OS, Java version, RAM)
-
-### Emergency Recovery
-
-If something goes seriously wrong:
-
-1. **Stop Minecraft** immediately
-2. **Backup your world** to safe location
-3. **Remove MineWright JAR** from mods folder
-4. **Restart Minecraft** to ensure stability
-5. **Report issue** with crash logs
-6. **Reinstall** when fix is available
+# Config location:
+# - Windows: %appdata%/.minecraft/config/
+# - Linux/Mac: ~/.minecraft/config/
+```
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2026-03-01
-**Maintained By:** MineWright Development Team
+## Quick Reference
+
+### Symptom → Quick Fix
+
+| Symptom | Quick Fix |
+|---------|-----------|
+| Agent stuck in PLANNING | Check API key, switch to Groq |
+| Agent not moving | Check pathfinding, clear obstacles |
+| Game lag | Reduce agent count, increase heap |
+| Config errors | Validate TOML syntax, reload config |
+| Agents not cooperating | Check capabilities, increase bid timeout |
+| Voice not working | Enable voice system, check microphone |
+| Out of memory | Increase `-Xmx` to 4GB |
+| Circuit breaker open | Wait 60s or fix API key |
+| High API costs | Enable caching, use Groq |
+
+### Emergency Actions
+
+```bash
+# 1. Stop all agents
+/foreman remove *  (if supported)
+
+# 2. Reduce agent count
+Edit config: maxActiveCrewMembers = 1
+
+# 3. Switch to free provider
+Edit config: provider = "groq"
+
+# 4. Disable expensive features
+Edit config: enableCache = true, enableBatching = true
+
+# 5. Restart game
+```
+
+---
+
+**Document End**
+
+For the latest troubleshooting information, check:
+- GitHub Issues: https://github.com/your-repo/minewright/issues
+- Discord Community: https://discord.gg/your-server
+- Documentation: https://your-docs-site.com
