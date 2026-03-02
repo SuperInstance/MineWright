@@ -2289,6 +2289,186 @@ public class SeparationReunionHandler {
 }
 ```
 
+#### Moral Conflict Mechanics
+
+Minecraft's ethical ambiguity creates opportunities for moral emotions that add depth to companion behavior. The OCC model enables companions to evaluate actions morally and respond appropriately:
+
+```java
+/**
+ * Appraises moral actions and generates appropriate emotional responses.
+ * Enables companions to have ethical boundaries and challenge player behavior.
+ */
+public void appraiseMoralAction(EmotionalEvent action, boolean isMoral) {
+    double moralImpact = isMoral ? 0.5 : -0.5;
+
+    if (action.isPlayerAction()) {
+        // Evaluate player's actions
+        if (isMoral) {
+            // Admiration for moral behavior
+            updateEmotion(Emotion.ADMIRATION, moralImpact * traits.empathy);
+            updateEmotion(Emotion.HAPPY_FOR, moralImpact * 0.3);
+        } else {
+            // Reproach for immoral behavior
+            updateEmotion(Emotion.REPROACH, -moralImpact * traits.empathy);
+            updateEmotion(Emotion.ANGER, -moralImpact * 0.4);
+        }
+    } else if (action.isSelfAction()) {
+        // Evaluate own actions
+        if (isMoral) {
+            // Pride in moral behavior
+            updateEmotion(Emotion.PRIDE, moralImpact);
+            updateEmotion(Emotion.JOY, moralImpact * 0.3);
+        } else {
+            // Shame for immoral behavior
+            updateEmotion(Emotion.SHAME, -moralImpact);
+            updateEmotion(Emotion.DISTRESS, -moralImpact * 0.3);
+        }
+    }
+
+    // Strong moral disagreements can damage relationships
+    if (!isMoral && action.isPlayerAction() && traits.empathy > 0.7) {
+        updateEmotion(Emotion.LIKING, -0.1);  // Reduce liking
+        updateEmotion(Emotion.DISAPPOINTMENT, 0.5);
+    }
+}
+
+/**
+ * Examples of moral appraisals in Minecraft contexts:
+ */
+public void appraiseMinecraftMoralAction(String actionType, Context context) {
+    boolean isMoral = switch (actionType) {
+        // Generally moral actions
+        case "protect_villager" -> true;
+        case "heal_player" -> true;
+        case "share_resources" -> true;
+        case "rescue_animal" -> true;
+
+        // Generally immoral actions
+        case "attack_villager" -> false;
+        case "steal_from_villager" -> false;
+        case "grief_structure" -> false;
+        case "kill_animal_cruelly" -> false;
+
+        // Context-dependent
+        case "kill_passive_mob" -> context.isForSurvival() && !context.isExcessive();
+        case "take_broken_inventory" -> context.isNecessary();
+
+        default -> true;
+    };
+
+    EmotionalEvent event = new EmotionalEvent(actionType, 1.0, true);
+    appraiseMoralAction(event, isMoral);
+}
+```
+
+This enables narrative arcs where companions:
+- Challenge player behavior that conflicts with their values
+- Experience moral growth through changing ethical positions
+- Develop distinct moral identities separate from player alignment
+- Forgive minor transgressions in long-term relationships
+- Set boundaries for unacceptable behavior
+
+#### Emotional Learning and Adaptation
+
+The OCC framework enables companions to learn emotional associations and adapt their responses based on experience:
+
+```java
+/**
+ * Tracks emotional associations with game elements.
+ * Companions learn to like or fear specific biomes, mobs, items, etc.
+ */
+public class EmotionalLearningSystem {
+    private final Map<String, EmotionalAssociation> associations = new HashMap<>();
+    private final EmotionalCompanionAgent agent;
+
+    public void recordEmotionalExperience(String objectId, Emotion emotion, double intensity) {
+        EmotionalAssociation existing = associations.get(objectId);
+
+        if (existing == null) {
+            // First encounter
+            associations.put(objectId, new EmotionalAssociation(objectId, emotion, intensity));
+        } else {
+            // Update existing association with learning rate
+            double learningRate = 0.3;  // How quickly associations update
+            double newIntensity = existing.intensity * (1 - learningRate) + intensity * learningRate;
+            associations.put(objectId, new EmotionalAssociation(objectId, emotion, newIntensity));
+        }
+    }
+
+    public double getEmotionalResponse(String objectId) {
+        EmotionalAssociation association = associations.get(objectId);
+        if (association != null) {
+            // Generate emotional response based on learned association
+            agent.updateEmotion(association.emotion, association.intensity * 0.2);
+            return association.intensity;
+        }
+        return 0.0;
+    }
+}
+
+/**
+ * Examples of learned emotional associations:
+ */
+public void learnMinecraftAssociations() {
+    // Biome preferences
+    if (frequentlyDiesIn("basalt_deltas")) {
+        updateEmotion(Emotion.FEAR, 0.3);
+        emotionalLearning.recordEmotionalExperience("basalt_deltas", Emotion.FEAR, 0.7);
+    }
+
+    if (often_finds_resources_in("lush_caves")) {
+        updateEmotion(Emotion.LIKING, 0.2);
+        emotionalLearning.recordEmotionalExperience("lush_caves", Emotion.JOY, 0.6);
+    }
+
+    // Mob fears
+    if (was_killed_by("creeper")) {
+        updateEmotion(Emotion.FEAR, 0.5);
+        emotionalLearning.recordEmotionalExperience("creeper", Emotion.FEAR, 0.8);
+    }
+
+    // Player personality modeling
+    if (player_often_builds_at_night()) {
+        emotionalLearning.recordEmotionalExperience("player_night_owl", Emotion.LIKING, 0.4);
+    }
+
+    // Shared achievement pride
+    if (completed_structure_together("castle")) {
+        updateEmotion(Emotion.PRIDE, 0.4);
+        emotionalLearning.recordEmotionalExperience("castle", Emotion.LOVE, 0.6);
+    }
+}
+
+/**
+ * Personality adaptation based on experiences:
+ */
+public void adaptPersonalityBasedOnExperiences() {
+    // Companions become more cautious after repeated deaths
+    if (recentDeathCount > 5) {
+        traits.reactivity = Math.max(0.3, traits.reactivity - 0.1);
+        // Fear increases more readily
+    }
+
+    // Companions become more confident after shared successes
+    if (recentSuccessCount > 10) {
+        traits.reactivity = Math.min(1.0, traits.reactivity + 0.05);
+        // Joy intensifies
+    }
+
+    // Empathy can grow through positive social experiences
+    if (positiveSocialInteractions > 20) {
+        traits.empathy = Math.min(1.0, traits.empathy + 0.1);
+    }
+}
+```
+
+This creates emergent personality where each companion develops unique emotional profiles based on their experiences with specific players and worlds. Two companions with identical starting traits will diverge emotionally based on:
+- Different death locations and causes
+- Varied resource discovery patterns
+- Distinct player interaction styles
+- Unique shared achievements
+- Separate moral development trajectories
+
 ### Comparison: OCC Model vs Simple Approval Systems
 
 Game AI relationship systems historically use simple approval or reputation scores. The OCC model offers significant advantages for believable companions:
