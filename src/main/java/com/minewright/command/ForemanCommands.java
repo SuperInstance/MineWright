@@ -129,7 +129,8 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Failed to spawn crew member '{}' (already exists or max crew limit reached)", name);
-            source.sendFailure(Component.literal("Can't add " + name + " to the crew! Either we already have one, or the crew is at maximum capacity."));
+            String errorMsg = "Can't add " + name + " to the crew! Either we already have one, or the crew is at maximum capacity.";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
     }
@@ -147,7 +148,8 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Failed to remove crew member '{}' - not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
+            String errorMsg = "Can't find " + name + " on the crew. Check the roster with /minewright list";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
     }
@@ -158,9 +160,11 @@ public class ForemanCommands {
 
         var names = manager.getCrewMemberNames();
         if (names.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("The job site is empty - no crew members on duty. Use /minewright spawn <name> to hire someone!"), false);
+            String msg = "The job site is empty - no crew members on duty. Use /minewright spawn <name> to hire someone!";
+            source.sendSuccess(() -> Component.literal(msg), false);
         } else {
-            source.sendSuccess(() -> Component.literal("Crew on duty (" + names.size() + "): " + String.join(", ", names)), false);
+            String msg = "Crew on duty (" + names.size() + "): " + String.join(", ", names);
+            source.sendSuccess(() -> Component.literal(msg), false);
         }
         return 1;
     }
@@ -182,7 +186,8 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Stop command failed for '{}' - crew member not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
+            String errorMsg = "Can't find " + name + " on the crew. Check the roster with /minewright list";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
     }
@@ -213,7 +218,8 @@ public class ForemanCommands {
             return 1;
         } else {
             LOGGER.warn("Failed to send command to crew member '{}' - not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
+            String errorMsg = "Can't find " + name + " on the crew. Check the roster with /minewright list";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
     }
@@ -266,7 +272,8 @@ public class ForemanCommands {
 
         if (!voice.isEnabled()) {
             LOGGER.warn("Voice test failed - voice system is disabled");
-            source.sendFailure(Component.literal("Foreman radio is OFF! Use '/minewright voice on' first to enable it."));
+            String errorMsg = "Foreman radio is OFF! Use '/minewright voice on' first to enable it.";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
 
@@ -294,7 +301,8 @@ public class ForemanCommands {
 
         var names = manager.getCrewMemberNames();
         if (names.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("No crew members on duty. Use /minewright spawn <name> to hire someone!"), false);
+            String msg = "No crew members on duty. Use /minewright spawn <name> to hire someone!";
+            source.sendSuccess(() -> Component.literal(msg), false);
             return 1;
         }
 
@@ -322,7 +330,8 @@ public class ForemanCommands {
 
         if (crewMember == null) {
             LOGGER.warn("Promote command failed for '{}' - crew member not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
+            String errorMsg = "Can't find " + name + " on the crew. Check the roster with /minewright list";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
 
@@ -333,7 +342,8 @@ public class ForemanCommands {
             source.sendSuccess(() -> Component.literal("Promoted " + name + " to Foreman"), true);
         } else {
             LOGGER.warn("Promote command failed for '{}' - already a Foreman or Solo agent (current role: {})", name, crewMember.getRole());
-            source.sendFailure(Component.literal(name + " is already a Foreman or Solo agent"));
+            String errorMsg = name + " is already a Foreman or Solo agent";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
 
@@ -351,7 +361,8 @@ public class ForemanCommands {
 
         if (crewMember == null) {
             LOGGER.warn("Demote command failed for '{}' - crew member not found", name);
-            source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
+            String errorMsg = "Can't find " + name + " on the crew. Check the roster with /minewright list";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
 
@@ -362,7 +373,8 @@ public class ForemanCommands {
             source.sendSuccess(() -> Component.literal("Demoted " + name + " to Worker"), true);
         } else {
             LOGGER.warn("Demote command failed for '{}' - already a Worker or Solo agent (current role: {})", name, crewMember.getRole());
-            source.sendFailure(Component.literal(name + " is already a Worker or Solo agent"));
+            String errorMsg = name + " is already a Worker or Solo agent";
+            source.sendFailure(Component.literal(errorMsg));
             return 0;
         }
 
@@ -475,7 +487,8 @@ public class ForemanCommands {
             }
         }
 
-        source.sendFailure(Component.literal("Can't find " + name + " on the crew. Check the roster with /minewright list"));
+        String errorMsg = "Can't find " + name + " on the crew. Check the roster with /minewright list";
+        source.sendFailure(Component.literal(errorMsg));
         return 0;
     }
 
