@@ -55,6 +55,8 @@ Polish and ship improvements
 - ✅ **Script DSL System**: 13 classes for automation script generation and refinement
 - ✅ **Script Tests**: 7 test classes for Script DSL validation
 - ✅ **Skill Tests**: PatternExtractorTest (38 tests, 1,051 lines) - comprehensive pattern recognition coverage
+- ✅ **Skill Learning Loop**: SkillLearningLoop.java (232 lines) - orchestrates automatic skill improvement
+- ✅ **SpotBugs Fixes**: Fixed NP_NULL_ON_SOME_PATH issues in CraftItemAction, PlaceBlockAction, ScriptTemplateLoader
 - ✅ **JaCoCo Coverage**: Configured with package-level thresholds
 - ✅ **Test Documentation**: TEST_COVERAGE.md, TEST_STRUCTURE_GUIDE.md
 - ✅ **GitHub Templates**: PR template, issue templates, dependabot.yml, CODEOWNERS
@@ -1049,7 +1051,7 @@ Steve AI is a sophisticated multi-agent system for Minecraft that combines:
 
 ---
 
-**Document Version:** 2.6
+**Document Version:** 2.7
 **Last Updated:** 2026-03-01
 **Maintained By:** Claude Orchestrator
 **Next Review:** After major architecture changes or dissertation completion
