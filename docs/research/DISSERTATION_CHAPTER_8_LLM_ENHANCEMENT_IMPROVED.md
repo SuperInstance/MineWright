@@ -25,7 +25,7 @@ if (command.equals("build house")) {
 } else if (command.startsWith("create")) {
     // Parsing complexity explodes
 }
-```
+```text
 
 LLM-based systems understand intent regardless of phrasing:
 
@@ -35,7 +35,7 @@ String intent = llm.extractIntent(userCommand);
 // "build a cozy cabin near the river" -> Intent: BUILD_STRUCTURE
 // "construct me a home" -> Intent: BUILD_STRUCTURE
 // "I need shelter" -> Intent: BUILD_STRUCTURE
-```
+```text
 
 **Real-World Impact**: Steve AI's `TaskPlanner` accepts commands ranging from "build a medieval castle" to "construct an underground bunker with storage" to "make a place to sleep." All map to the same structured plan, despite zero keyword overlap.
 
@@ -43,23 +43,23 @@ String intent = llm.extractIntent(userCommand);
 
 Traditional AI struggles with context that spans multiple sentences or requires world knowledge:
 
-```
+```text
 User: "Build a house."
 Steve: [Builds generic house]
 User: "Make it bigger."
 Steve: [Confusion—no reference]
-```
+```text
 
 LLM-based systems maintain conversation context:
 
-```
+```text
 User: "Build a house."
 Steve: [Builds house, stores in memory]
 User: "Make it bigger."
 Steve: [Understands "it" refers to the house, expands it]
 User: "Add a second floor."
 Steve: [Understands we're still working on the same structure]
-```
+```text
 
 **Implementation Pattern**:
 
@@ -79,7 +79,7 @@ public class SteveMemory {
         return prompt.toString();
     }
 }
-```
+```text
 
 ### 8.1.3 Creative Problem Solving
 
@@ -96,16 +96,16 @@ if (roofType == "flat") {
 if (roofType == "peaked") {
     // Works, but only if programmed
 }
-```
+```text
 
 **LLM-Enhanced System**:
-```
+```text
 Generated Plan:
 1. Build peaked roof (45-degree angle)
 2. Add overhangs on all sides (3 blocks)
 3. Place stairs as gutters directing water away
 4. Add slabs under overhangs for drip edges
-```
+```text
 
 The LLM didn't just execute a pattern—it combined multiple concepts (geometry, physics, Minecraft mechanics) into a novel solution.
 
@@ -120,7 +120,7 @@ String[] houseNames = {"House", "Cottage", "Hut"};
 // LLM: Dynamic generation
 String name = llm.generateName(context, structureType);
 // "Riverside Retreat", "Obsidian Outpost", "Sky-High Sanctuary"
-```
+```text
 
 **Variety without Explosion**: Instead of hand-coding hundreds of variations, the LLM generates infinite variety on demand.
 
@@ -128,7 +128,7 @@ String name = llm.generateName(context, structureType);
 
 When faced with unprecedented scenarios, traditional systems fail gracefully or produce errors. LLMs can reason through novel situations:
 
-```
+```text
 User: "Build a treehouse but the tree is on fire."
 
 Traditional: [Exception: No rule for burning tree building]
@@ -136,7 +136,7 @@ LLM:
 1. Wait for fire to spread or extinguish
 2. If extinguished: Build treehouse
 3. If tree destroyed: Build memorial shrine + new treehouse nearby
-```
+```text
 
 ---
 
@@ -168,7 +168,7 @@ public class BridgeAction extends BaseAction {
         placeBlock(nextBlock);
     }
 }
-```
+```text
 
 ### 8.2.2 Real-Time Decision Making
 
@@ -185,18 +185,18 @@ public void onAttacked(DamageSource source) {
 
 // LLM: Too slow for combat
 // Would be dead before response arrives
-```
+```text
 
 ### 8.2.3 Deterministic Guarantees
 
 LLMs are probabilistic. Same input can produce different outputs:
 
-```
+```text
 Prompt: "Place a block at (0, 64, 0)"
 Response 1: "Placing stone block..."
 Response 2: "Placing cobblestone block..."
 Response 3: "Placing block at (0, 65, 0)" // Misunderstood!
-```
+```text
 
 Traditional AI provides deterministic guarantees:
 
@@ -205,7 +205,7 @@ public void placeBlock(BlockPos pos, BlockState block) {
     world.setBlock(pos, block, 3);
     // Guaranteed: Block is now at pos
 }
-```
+```text
 
 ### 8.2.4 Performance-Critical Code
 
@@ -229,7 +229,7 @@ Traditional AI costs:
 
 The key insight that makes Steve AI viable: **The LLM doesn't play Minecraft—the LLM generates the code that plays Minecraft.**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    LLM LAYER (Slow)                          │
 │  • Understands natural language                              │
@@ -255,7 +255,7 @@ The key insight that makes Steve AI viable: **The LLM doesn't play Minecraft—t
 │  • Inventory management                                      │
 │  • Collision detection                                       │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### 8.3.2 Separation of Concerns
 
@@ -277,7 +277,7 @@ The key insight that makes Steve AI viable: **The LLM doesn't play Minecraft—t
 
 The system works at three levels:
 
-```
+```text
 Level 3 (LLM + Traditional): Full intelligence
 - Natural language understanding
 - Adaptive planning
@@ -292,7 +292,7 @@ Level 1 (Direct Control): Minimum viability
 - Manual scripting
 - No learning
 - Static behavior
-```
+```text
 
 If the LLM fails:
 1. Cache of pre-generated plans provides coverage
@@ -322,7 +322,7 @@ public class GeneratedAction extends BaseAction {
         interpreter.executeNextStep(generatedScript);
     }
 }
-```
+```text
 
 **Steve AI Implementation**:
 
@@ -336,7 +336,7 @@ public class TaskPlanner {
         }, executor);
     }
 }
-```
+```text
 
 The LLM generates structured tasks like:
 ```json
@@ -349,7 +349,7 @@ The LLM generates structured tasks like:
     "position": {"x": 0, "y": 0, "z": 0}
   }
 ]
-```
+```text
 
 Traditional AI executes these tasks deterministically.
 
@@ -357,7 +357,7 @@ Traditional AI executes these tasks deterministically.
 
 Given a high-level goal, the LLM generates optimal strategies:
 
-```
+```text
 Goal: "Collect 100 iron ore"
 
 LLM Strategy:
@@ -370,7 +370,7 @@ LLM Strategy:
 7. Light path with torches
 8. Mine iron ore (priority: iron over coal)
 9. Return to surface when inventory full or 100 ore collected
-```
+```text
 
 Traditional AI executes each step:
 
@@ -392,7 +392,7 @@ public class MiningStrategy {
         }
     }
 }
-```
+```text
 
 ### 8.4.3 LLM as Behavior Refiner
 
@@ -413,24 +413,24 @@ public class PerformanceReviewer {
         }
     }
 }
-```
+```text
 
 **Continuous Improvement Loop**:
 
-```
+```text
 1. Agent executes task
 2. Performance logged
 3. LLM reviews logs
 4. LLM suggests optimizations
 5. Agent updates behavior
 6. Repeat
-```
+```text
 
 ### 8.4.4 LLM as Natural Language Interface
 
 The most visible enhancement—natural language control:
 
-```
+```text
 User: "Steve, build me a cozy cabin by the lake,
       make sure it has a fireplace and room for
       enchanting table."
@@ -441,7 +441,7 @@ LLM Understanding:
 - Location: Near water (lake)
 - Features: FIREPLACE, ENCHANTING_SPACE
 - Style: COZY (affects materials, design)
-```
+```text
 
 **Implementation**:
 
@@ -468,7 +468,7 @@ public class PromptBuilder {
         );
     }
 }
-```
+```text
 
 ### 8.4.5 LLM as Learning Accelerator
 
@@ -484,11 +484,11 @@ for episode in range(1000000):  # Millions needed
 Q = llm.generate_initial_policy()  # Prior knowledge encoded
 for episode in range(1000):  # Thousands enough
     # Fine-tune existing knowledge
-```
+```text
 
 **Transfer Learning**:
 
-```
+```text
 LLM Training: All of human knowledge
     ↓
 LLM Output: Minecraft-specific strategies
@@ -496,7 +496,7 @@ LLM Output: Minecraft-specific strategies
 Agent Initialization: Pre-trained policies
     ↓
 RL Fine-Tuning: Adapt to specific environment
-```
+```text
 
 ---
 
@@ -504,7 +504,7 @@ RL Fine-Tuning: Adapt to specific environment
 
 ### 8.5.1 Three-Layer Design
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    BRAIN LAYER                               │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
@@ -541,13 +541,13 @@ RL Fine-Tuning: Adapt to specific environment
 │  │ (Game)      │  │ (Engine)    │  │ (Engine)    │          │
 │  └─────────────┘  └─────────────┘  └─────────────┘          │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### 8.5.2 Data Flow
 
 **Planning Phase** (LLM, Slow):
 
-```
+```text
 User Command
     ↓
 TaskPlanner.planTasksAsync()
@@ -559,11 +559,11 @@ TaskPlanner.planTasksAsync()
 ResponseParser.parseTasks()
     ↓
 List<Task> queued
-```
+```text
 
 **Execution Phase** (Traditional, Fast):
 
-```
+```text
 Game Tick
     ↓
 ActionExecutor.tick()
@@ -573,11 +573,11 @@ CurrentAction.tick()
 Minecraft API calls
     ↓
 World updated
-```
+```text
 
 **Review Phase** (LLM, Periodic):
 
-```
+```text
 Task Complete
     ↓
 ExecutionLog generated
@@ -587,7 +587,7 @@ PerformanceReviewer.review()
 [Async] LLM Analysis
     ↓
 [Later] Suggestions applied
-```
+```text
 
 ### 8.5.3 Async Integration
 
@@ -629,7 +629,7 @@ public class ActionExecutor {
         // Game continues while LLM thinks
     }
 }
-```
+```text
 
 **Key Benefits**:
 - Game never blocks waiting for LLM
@@ -668,7 +668,7 @@ public class AgentStateMachine {
         }
     }
 }
-```
+```text
 
 ### 8.5.5 Humanization in Automated Systems
 
@@ -700,7 +700,7 @@ void humanizedMouseMove(Point start, Point end) {
         Sleep(calculateDelay(duration * 0.01, 0.1));
     }
 }
-```
+```text
 
 **Key Characteristics:**
 - **Timing Variance:** Gaussian distribution (±30% typical)
@@ -725,7 +725,7 @@ void humanizedMouseMove(Point start, Point end) {
 ```java
 // Random jitter only
 int delay = baseDelay + (int) random.gauss(0, baseDelay * 0.3);
-```
+```text
 
 **LLM-Enhanced Approach:**
 ```java
@@ -752,7 +752,7 @@ int calculateDelay(ActionContext context) {
     // Add Gaussian jitter
     return (int) (baseDelay * speedFactor * (1 + random.gauss(0, 0.2)));
 }
-```
+```text
 
 **Key Difference:** Traditional humanization adds random noise to identical actions. LLM-driven humanization creates variation based on semantic understanding of context, personality, and intent.
 
@@ -770,7 +770,7 @@ enum IdleAction {
 
     private final double probability;
 }
-```
+```text
 
 **LLM-Enhanced Personality System:**
 ```java
@@ -815,7 +815,7 @@ public class PersonalityDrivenDecisions {
         );
     }
 }
-```
+```text
 
 **Key Difference:** LLM-driven systems maintain personality consistency across all behaviors, creating coherent character arcs rather than random variation.
 
@@ -827,7 +827,7 @@ public class PersonalityDrivenDecisions {
 if (random.nextDouble() < 0.03) {
     makeMistake();
 }
-```
+```text
 
 **LLM-Enhanced Adaptive Mistakes:**
 ```java
@@ -866,7 +866,7 @@ public class AdaptiveMistakeSimulator {
         mistakeHistory.put(actionType, (currentRate + 1.0) / 2.0);
     }
 }
-```
+```text
 
 **Key Difference:** LLM-driven mistake simulation is adaptive—agents learn from mistakes, become more careful in domains where they've failed, and maintain personality-consistent error rates.
 
@@ -879,7 +879,7 @@ String[] GREETINGS = {
     "Hello!", "Hi there!", "Greetings!"
 };
 String greeting = GREETINGS[random.nextInt(GREETINGS.length)];
-```
+```text
 
 **LLM-Generated Personality-Consistent Dialogue:**
 ```java
@@ -901,7 +901,7 @@ public class PersonalityDialogueGenerator {
         return greeting;
     }
 }
-```
+```text
 
 **Key Difference:** LLM-generated dialogue maintains personality consistency while generating infinite variety—no two conversations are identical, yet all feel "in character."
 
@@ -921,7 +921,7 @@ public class PersonalityDialogueGenerator {
 
 **Three-Tier Humanization Architecture:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │         LLM HUMANIZATION LAYER (Strategic)                  │
 │  • Personality profile maintenance                          │
@@ -947,7 +947,7 @@ public class PersonalityDialogueGenerator {
 │  • Inventory management with pauses                          │
 │  • Look direction with smooth transitions                    │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 **Example: Mining Block with Full Humanization:**
 
@@ -1021,7 +1021,7 @@ public class HumanizedMineAction extends BaseAction {
         return llm.evaluateDecision(prompt);
     }
 }
-```
+```text
 
 #### Steve AI Implementation: Humanization Components
 
@@ -1047,7 +1047,7 @@ public class SessionManager {
         return false;
     }
 }
-```
+```text
 
 **Humanization Utils (HumanizationUtils.java):**
 ```java
@@ -1089,7 +1089,7 @@ public final class HumanizationUtils {
         return RANDOM.nextDouble() < mistakeRate;
     }
 }
-```
+```text
 
 **Mistake Simulator (MistakeSimulator.java):**
 ```java
@@ -1126,7 +1126,7 @@ public class MistakeSimulator {
         mistakeHistory.put(actionType, (currentRate + 1.0) / 2.0);
     }
 }
-```
+```text
 
 **Stuck Detector (StuckDetector.java):**
 ```java
@@ -1154,7 +1154,7 @@ public class StuckDetector {
         return false;
     }
 }
-```
+```text
 
 **Key Implementation Insights:**
 
@@ -1248,7 +1248,7 @@ public class CascadeRouter {
         };
     }
 }
-```
+```text
 
 **Complexity Analysis**:
 
@@ -1275,13 +1275,13 @@ public class ComplexityAnalyzer {
         return new TaskComplexity(ComplexityLevel.COMPLEX, score);
     }
 }
-```
+```text
 
 ### 8.6.3 Cost Analysis
 
 **Monthly Cost Calculation**:
 
-```
+```text
 Assumptions:
 - 100 active agents
 - 10 commands per agent per day
@@ -1300,7 +1300,7 @@ With Cascade Routing:
 - 5% complex (1,500 requests) @ GPT-4: 0.75M × $0.01 = $7.50
 
 Total: $7.69/month (95% cost reduction)
-```
+```text
 
 ### 8.6.4 Caching Strategy
 
@@ -1340,7 +1340,7 @@ public class LLMCache {
         );
     }
 }
-```
+```text
 
 ---
 
@@ -1404,7 +1404,7 @@ public class PromptBuilder {
             """;
     }
 }
-```
+```text
 
 ### 8.7.2 Context Injection
 
@@ -1451,7 +1451,7 @@ private static String formatInventory(Inventory inventory) {
     }
     return sb.toString();
 }
-```
+```text
 
 ### 8.7.3 Few-Shot Examples
 
@@ -1485,7 +1485,7 @@ Response:
 
 YOUR COMMAND:
 """;
-```
+```text
 
 ### 8.7.4 Prompt Versioning
 
@@ -1519,7 +1519,7 @@ public class PromptBuilder {
         };
     }
 }
-```
+```text
 
 ---
 
@@ -1604,7 +1604,7 @@ Retrieval-Augmented Generation transforms how game AI agents access and utilize 
 
 ### 8.9.1 Evolution of Tool Calling (2022-2025)
 
-Tool calling has evolved significantly from simple JSON extraction to sophisticated multi-agent orchestration [OpenAI, 2024; Anthropic, 2025]. Modern implementations support:
+Tool calling has evolved significantly from simple JSON extraction to sophisticated multi-agent orchestration [OpenAI, 2024], [Anthropic, 2025]. Modern implementations support:
 
 **Provider-Specific Implementations:**
 
@@ -1649,7 +1649,7 @@ jsonSchema.addProperty("schema", actionSchema);
 
 responseFormat.add("json_schema", jsonSchema);
 requestBody.add("response_format", responseFormat);
-```
+```text
 
 Benefits: Guarantees schema compliance, reduces hallucinations, better developer experience, production-ready.
 
@@ -1678,7 +1678,7 @@ public class ActionSchema {
         return function;
     }
 }
-```
+```text
 
 **Example Schema:**
 
@@ -1706,7 +1706,7 @@ public class ActionSchema {
     "additionalProperties": false
   }
 }
-```
+```text
 
 ### 8.9.4 Error Handling for Malformed Responses
 
@@ -1753,7 +1753,7 @@ public class ParseError {
         UNKNOWN_ACTION, INVALID_ENUM, MALFORMED_JSON
     }
 }
-```
+```text
 
 ### 8.9.5 Multi-Step Tool Execution Patterns
 
@@ -1784,7 +1784,7 @@ public class TaskOrchestrator {
         );
     }
 }
-```
+```text
 
 ### 8.9.6 Tool Result Feedback Loops
 
@@ -1824,7 +1824,7 @@ public class AdaptiveExecutionLoop {
         });
     }
 }
-```
+```text
 
 ### 8.9.7 Migration Recommendations
 
@@ -1892,7 +1892,7 @@ public class ResilientLLMClient implements AsyncLLMClient {
         });
     }
 }
-```
+```text
 
 **Circuit Breaker Configuration**:
 
@@ -1906,7 +1906,7 @@ public class CircuitBreakerConfig {
             .halfOpenMaxCalls(3);       // Test with 3 calls
     }
 }
-```
+```text
 
 **Retry Configuration**:
 
@@ -1920,7 +1920,7 @@ public class RetryConfig {
             .retryOnException(e -> e instanceof IOException || e instanceof TimeoutException);
     }
 }
-```
+```text
 
 ### 8.8.3 Response Validation
 
@@ -1969,7 +1969,7 @@ public class ResponseValidator {
         return result;
     }
 }
-```
+```text
 
 ### 8.8.4 Fallback Responses
 
@@ -2007,7 +2007,7 @@ public class FallbackResponseSystem {
             """);
     }
 }
-```
+```text
 
 ---
 
@@ -2048,7 +2048,7 @@ public class LLMMetrics {
         );
     }
 }
-```
+```text
 
 ### 8.9.2 Logging Strategy
 
@@ -2094,7 +2094,7 @@ public class LLMLogger {
         );
     }
 }
-```
+```text
 
 ### 8.9.3 Debug Dashboard
 
@@ -2130,7 +2130,7 @@ public class LLMDashboard {
         );
     }
 }
-```
+```text
 
 ### 8.9.4 Troubleshooting Guide
 
@@ -2178,7 +2178,7 @@ void testResponseParser() {
     assertThat(response.getTasks()).hasSize(1);
     assertThat(response.getTasks().get(0).getAction()).isEqualTo("MINE");
 }
-```
+```text
 
 ### 8.10.2 Integration Testing with Mock LLM
 
@@ -2203,7 +2203,7 @@ void testTaskPlanningWithMock() {
     assertThat(response.getTasks()).isNotEmpty();
     verify(mockClient, times(1)).sendAsync(any(), any());
 }
-```
+```text
 
 ### 8.10.3 End-to-End Testing
 
@@ -2233,7 +2233,7 @@ void testFullPlanningExecutionCycle() {
     assertThat(foreman.getBlockPosition()).isEqualTo(new BlockPos(5, 64, 5));
     assertThat(countBlocks(foreman, "stone")).isGreaterThan(20);
 }
-```
+```text
 
 ### 8.10.4 LLM Output Testing
 
@@ -2264,7 +2264,7 @@ void testRealLLMResponses() {
         }
     }
 }
-```
+```text
 
 ---
 
@@ -2293,7 +2293,7 @@ public void handleCommand(String command) {
             }
         });
 }
-```
+```text
 
 **Deliverables**:
 - LLM client integration
@@ -2329,7 +2329,7 @@ public class CachedTaskPlanner {
             });
     }
 }
-```
+```text
 
 **Deliverables**:
 - LRU cache implementation
@@ -2356,7 +2356,7 @@ public class ResilientTaskPlanner {
             });
     }
 }
-```
+```text
 
 **Deliverables**:
 - Circuit breaker
@@ -2379,7 +2379,7 @@ public class OptimizedTaskPlanner {
             .thenApply(this::parseResponse);
     }
 }
-```
+```text
 
 **Deliverables**:
 - Cascade routing
@@ -2403,7 +2403,7 @@ public class OptimizedTaskPlanner {
 ### 8.12.2 Case Studies
 
 **Case 1: Novel Request**
-```
+```text
 User: "Build a watchtower that looks like a mushroom"
 
 Traditional: [No matching pattern]
@@ -2411,10 +2411,10 @@ LLM-Enhanced:
 - Generated plan for mushroom shape
 - Combined tower and mushroom concepts
 - Executed successfully in 67 seconds
-```
+```text
 
 **Case 2: Error Recovery**
-```
+```text
 Situation: Agent ran out of materials during build
 
 Traditional: [Stuck, waiting for input]
@@ -2423,10 +2423,10 @@ LLM-Enhanced:
 - Generated mining plan
 - Collected resources
 - Resumed construction
-```
+```text
 
 **Case 3: Optimization**
-```
+```text
 Initial build: 234 seconds
 
 Performance review identified:
@@ -2435,13 +2435,13 @@ Performance review identified:
 - Poor inventory management
 
 Refined build: 187 seconds (20% faster)
-```
+```text
 
 ### 8.12.3 Production Metrics
 
 **6-Month Production Data**:
 
-```
+```text
 Total Commands Processed: 47,832
 Average Latency: 2.8 seconds
 Cache Hit Rate: 62%
@@ -2451,11 +2451,11 @@ Monthly Cost: $23.91
 Task Success Rate: 94.2%
 Error Recovery Success: 87%
 User Satisfaction: 4.6/5.0
-```
+```text
 
 **Cost Breakdown**:
 
-```
+```text
 Provider Usage:
 - Groq 8b: 58% ($0.32/month)
 - Groq 70b: 28% ($4.21/month)
@@ -2466,7 +2466,7 @@ Token Usage:
 - Input: 7.2M tokens
 - Output: 1.8M tokens
 - Total: 9.0M tokens
-```
+```text
 
 ### 8.12.4 Limitations
 
@@ -2657,7 +2657,7 @@ def react_loop(query, max_iterations=10):
             break
 
     return trajectory
-```
+```text
 
 **Comparison with Steve AI:**
 
@@ -2701,7 +2701,7 @@ def decompose_task(task):
         for subtask in subtasks
         for decomposed in decompose_task(subtask)
     ]
-```
+```text
 
 **HTN vs LLM Decomposition:**
 
@@ -2728,7 +2728,7 @@ public class TaskPlanner {
         }, executor);
     }
 }
-```
+```text
 
 ### 8.16.4 LangChain: Tool Use and Chain Patterns
 
@@ -2747,7 +2747,7 @@ def search_inventory(query: str) -> str:
 # Tool schema auto-generated
 print(search_inventory.args)
 # {'query': {'title': 'Query', 'type': 'string'}}
-```
+```text
 
 **Steve AI ActionRegistry:**
 
@@ -2760,7 +2760,7 @@ registry.register("mine",
 registry.register("place",
     (foreman, task, ctx) -> new PlaceBlockAction(foreman, task),
     priority, PLUGIN_ID);
-```
+```text
 
 **Key Differences:**
 
@@ -2804,7 +2804,7 @@ public class PrioritizedTaskQueue {
         queue.addAll(reprioritized);
     }
 }
-```
+```text
 
 ### 8.16.6 Comprehensive Comparison Table
 
@@ -2826,7 +2826,7 @@ public class PrioritizedTaskQueue {
 
 Steve AI's defining characteristic is positioning the LLM **one abstraction level above** the execution layer. The LLM doesn't play Minecraft—it generates the code that plays Minecraft.
 
-```
+```text
 Traditional LLM Agents (ReAct, AutoGPT, BabyAGI):
 ┌────────────────────────────────────────┐
 │         LLM (Brain + Execution)         │
@@ -2851,7 +2851,7 @@ Steve AI (One Abstraction Away):
 ┌────────────────────────────────────────┐
 │         Minecraft                       │
 └────────────────────────────────────────┘
-```
+```text
 
 **Game AI Specific Advantages:**
 
@@ -2969,7 +2969,7 @@ public enum LLMTier {
     BALANCED,    // Groq 70b (200ms, $0.0001/1K)
     SMART        // GPT-4 (1000ms, $0.01/1K)
 }
-```
+```text
 
 ### 8.17.5 Modern Agent Frameworks (2024-2025)
 
@@ -3084,7 +3084,7 @@ LLM Response:
 // Problem: "ender_chest" is not a valid Minecraft block
 // Problem: "bedrock" is unbreakable and cannot be placed by players
 // Result: Agent fails to execute, appears broken to player
-```
+```text
 
 **Hallucination Statistics:**
 
@@ -3118,7 +3118,7 @@ Current research indicates hallucination rates of 10-20% for current LLMs (Ji et
            return ValidationResult.success();
        }
    }
-   ```
+```text
 
 2. **LLM Self-Correction:** Feed errors back to LLM for correction
    ```java
@@ -3143,7 +3143,7 @@ Current research indicates hallucination rates of 10-20% for current LLMs (Ji et
    }
 
    return fallbackPlan;  // All attempts failed
-   ```
+```text
 
 3. **Hybrid Planning:** Use LLM for high-level planning, symbolic planner for validation
    ```java
@@ -3157,7 +3157,7 @@ Current research indicates hallucination rates of 10-20% for current LLMs (Ji et
    if (validatedPlan == null) {
        validatedPlan = symbolicPlanner.planFromScratch(command);
    }
-   ```
+```text
 
 **Research Gap:** No established best practices for LLM hallucination mitigation in game AI. Current validation strategies are ad-hoc and lack empirical validation.
 
@@ -3167,7 +3167,7 @@ Current research indicates hallucination rates of 10-20% for current LLMs (Ji et
 
 LLM API costs accumulate linearly with usage frequency. For game AI with continuous agent activity:
 
-```
+```text
 Cost Analysis (100 agents, 10 commands/hour/agent):
 ├── Commands per hour: 100 agents × 10 = 1,000 commands
 ├── Commands per day: 1,000 × 24 = 24,000 commands
@@ -3180,12 +3180,12 @@ GPT-4 Cost ($0.03/1K tokens):
 └── Annual cost: $10,800 × 12 = $129,600/year
 
 Result: Economically unviable for most game servers
-```
+```text
 
 **Cost Optimization Strategies:**
 
 1. **Cascade Routing:** Route simple tasks to smaller models
-   ```
+```text
    Distribution:
    ├── 60% cached (cost: $0)
    ├── 25% small model (cost: $0.00001/1K)
@@ -3193,7 +3193,7 @@ Result: Economically unviable for most game servers
    └── 5% large model (cost: $0.01/1K)
 
    Effective cost: $7.69/month (95% reduction)
-   ```
+```text
 
 2. **Skill Caching:** Cache successful plans for reuse
    ```java
@@ -3204,7 +3204,7 @@ Result: Economically unviable for most game servers
    // Cost: $0
 
    // Cache hit rate of 80% reduces costs by 80%
-   ```
+```text
 
 3. **Batch Planning:** Plan multiple commands in single API call
    ```java
@@ -3220,13 +3220,13 @@ Result: Economically unviable for most game servers
        """, commands.toArray());
 
    // 67% cost reduction
-   ```
+```text
 
 **Breakeven Analysis:**
 
 For LLM-based game AI to be economically viable:
 
-```
+```text
 Assumptions:
 ├── Game server revenue: $5/month per player
 ├── Typical players: 100
@@ -3239,7 +3239,7 @@ With optimization:
 ├── Maximum agents: $100 / $7.69 × 100 = 1,300 agents
 
 Result: Viable for <1,300 agents with current optimization
-```
+```text
 
 #### Latency in Real-Time Decision Making
 
@@ -3247,7 +3247,7 @@ Result: Viable for <1,300 agents with current optimization
 
 LLM API calls incur significant latency that conflicts with real-time game requirements:
 
-```
+```text
 Latency Breakdown:
 ├── Network round-trip: 50-200ms
 ├── LLM processing: 500-3000ms
@@ -3264,7 +3264,7 @@ Player perception:
 ├── 300-1000ms: Noticeable delay
 ├── 1000-3000ms: Frustrating
 └── >3000ms: Unacceptable
-```
+```text
 
 **Impact on Player Experience:**
 
@@ -3292,7 +3292,7 @@ Current LLM latency (3-30 seconds) frequently exceeds acceptable thresholds.
        ParsedResponse plan = llm.generatePlan(command);
        agent.executePlan(plan);
    });
-   ```
+```text
 
 2. **Speculative Execution:** Predict likely commands and pre-generate plans
    ```java
@@ -3304,7 +3304,7 @@ Current LLM latency (3-30 seconds) frequently exceeds acceptable thresholds.
 
    // When actual command comes, use pre-generated plan
    // Result: 0ms latency for player
-   ```
+```text
 
 3. **Progressive Enhancement:** Start with simple plan, refine later
    ```java
@@ -3315,7 +3315,7 @@ Current LLM latency (3-30 seconds) frequently exceeds acceptable thresholds.
    // Phase 2 (later): Generate optimized plan
    ParsedResponse optimizedPlan = llm.generatePlan(command);
    agent.refinePlan(optimizedPlan);  // Improve execution
-   ```
+```text
 
 **Research Gap:** No established patterns for hiding LLM latency in real-time games. Current strategies are experimental and lack user studies validating effectiveness.
 
@@ -3325,7 +3325,7 @@ Current LLM latency (3-30 seconds) frequently exceeds acceptable thresholds.
 
 LLM-based game AI depends on external API availability, creating critical vulnerabilities:
 
-```
+```text
 Dependency Risks:
 ├── API Downtime: OpenAI/Groq/Gemini outages
 ├── Rate Limiting: API throttling during high load
@@ -3338,7 +3338,7 @@ Consequences:
 ├── Player commands fail silently
 ├── Game appears "broken"
 └── Player frustration and abandonment
-```
+```text
 
 **Outage Scenarios:**
 
@@ -3362,7 +3362,7 @@ Consequences:
            return fallbackPlanner.plan(command);  // Traditional AI
        }
    }
-   ```
+```text
 
 2. **Plan Caching:** Cache successful plans for offline operation
    ```java
@@ -3375,7 +3375,7 @@ Consequences:
    if (!llmAvailable) {
        return getCachedPlan(command);
    }
-   ```
+```text
 
 3. **Local Model Fallback:** Run small local LLM as backup
    ```java
@@ -3389,7 +3389,7 @@ Consequences:
            return localLLM.generatePlan(command);
        }
    }
-   ```
+```text
 
 **Research Gap:** No established best practices for LLM availability management in game AI. Current resilience strategies are ad-hoc and lack rigorous testing.
 
@@ -3399,7 +3399,7 @@ Consequences:
 
 LLMs have fixed context windows that limit conversation history:
 
-```
+```text
 Context Window Sizes:
 ├── GPT-3.5: 16K tokens (~12K words)
 ├── GPT-4: 128K tokens (~96K words)
@@ -3415,7 +3415,7 @@ Token Consumption:
 
 Problem: Long conversations exceed context window
 Result: LLM "forgets" early conversation, agent appears inconsistent
-```
+```text
 
 **Memory Management Strategies:**
 
@@ -3431,7 +3431,7 @@ Result: LLM "forgets" early conversation, agent appears inconsistent
        conversation.add(new ConversationTurn("SUMMARY", summary));
        conversation.addAll(original.subList(conversation.size() / 2, conversation.size()));
    }
-   ```
+```text
 
 2. **Retrieval-Augmented Generation (RAG):** Store conversations in vector database
    ```java
@@ -3444,7 +3444,7 @@ Result: LLM "forgets" early conversation, agent appears inconsistent
 
    // Include only relevant parts in context
    context.add("RELEVANT_HISTORY", relevant);
-   ```
+```text
 
 3. **Hierarchical Memory:** Multiple memory layers with different retention
    ```java
@@ -3459,7 +3459,7 @@ Result: LLM "forgets" early conversation, agent appears inconsistent
                   longTerm.getSummary();
        }
    }
-   ```
+```text
 
 **Research Gap:** No established best practices for context window management in LLM game agents. Current strategies are experimental and lack user studies comparing effectiveness.
 
@@ -3491,7 +3491,7 @@ Invocation 2:
 
 Problem: Unpredictable agent behavior
 Player confusion: "Why did it build a stone house this time?"
-```
+```text
 
 **Determinism Requirements:**
 
@@ -3509,7 +3509,7 @@ Game AI requires determinism for:
    LLMRequest request = new LLMRequest();
    request.setTemperature(0.0);  // Deterministic (mostly)
    request.setSeed(42);  // Same seed, same output (if supported)
-   ```
+```text
 
 2. **Response Caching:** Cache first response, reuse for identical inputs
    ```java
@@ -3519,7 +3519,7 @@ Game AI requires determinism for:
        cache.put(command, plan);
    }
    // Same command always produces same cached response
-   ```
+```bash
 
 3. **Deterministic Post-Processing:** Add deterministic layer after LLM
    ```java
@@ -3530,7 +3530,7 @@ Game AI requires determinism for:
    ParsedResponse deterministicPlan = symbolicPlanner.refine(llmPlan);
 
    // Same LLM plan always refines to same final plan
-   ```
+```text
 
 **Limitations:**
 
@@ -3547,7 +3547,7 @@ Even with temperature=0, LLMs are not fully deterministic:
 
 Cloud-based LLMs transmit player conversations to external servers:
 
-```
+```text
 Privacy Concerns:
 ├── Player Conversations: Sent to OpenAI/Groq/Gemini servers
 ├── Game State: World knowledge sent with prompts
@@ -3561,7 +3561,7 @@ Risks:
 ├── Data Leaks: Provider security breaches
 ├── Surveillance: Player activity monitored
 └── Compliance: GDPR/CCPA violations
-```
+```text
 
 **Privacy-Preserving Strategies:**
 
@@ -3575,7 +3575,7 @@ Risks:
 
    // Pros: No data leaves player's machine
    // Cons: Higher hardware requirements, slower inference
-   ```
+```text
 
 2. **Data Anonymization:** Strip identifying information before sending
    ```java
@@ -3587,10 +3587,10 @@ Risks:
 
    // Send sanitized prompt to LLM
    ParsedResponse plan = llm.generatePlan(sanitized);
-   ```
+```text
 
 3. **Federated Learning:** Train models locally, share only updates
-   ```
+```text
    Traditional LLM:
    ├── Player data sent to cloud
    ├── Model trained in cloud
@@ -3601,7 +3601,7 @@ Risks:
    ├── Model trained locally
    ├── Only model updates shared
    └── Privacy preserved
-   ```
+```text
 
 **Regulatory Compliance:**
 
@@ -3617,7 +3617,7 @@ Risks:
 
 This chapter, along with much of the dissertation, presents LLMs as a revolutionary technology for game AI. However, an honest assessment reveals significant gaps between the **academic hype** and **practical reality**:
 
-```
+```text
 Academic Claims vs. Practical Reality:
 
 Claim: "LLMs enable natural language understanding for game agents"
@@ -3639,13 +3639,13 @@ Claim: "LLMs reduce development time compared to scripting"
 Reality: LLM development requires ML expertise + game AI expertise
 Cost: 6-12 months of development vs. 1-2 months for traditional AI
 Result: LLMs increase development complexity significantly
-```
+```text
 
 **The Cost-Benefit Reality Check:**
 
 For the Steve AI project's actual use case (1-10 agents, Minecraft automation), LLMs may not be cost-effective:
 
-```
+```text
 Traditional AI Development:
 ├── FSM/BT/HTN Implementation: 1-2 months
 ├── Testing: 1 month
@@ -3663,7 +3663,7 @@ LLM-Based AI Development:
 └── Result: Unpredictable, slow, error-prone
 
 Conclusion: LLMs are 4x more expensive to develop with uncertain benefits
-```
+```text
 
 **When LLMs Make Sense (and When They Don't):**
 
@@ -3691,7 +3691,7 @@ This **hybrid approach** leverages LLMs' strengths (natural language) while avoi
 
 The dissertation's core thesis—"One Abstraction Away" (LLMs generate scripts, traditional AI executes)—is sound in principle but challenging in practice:
 
-```
+```text
 "One Abstraction Away" Implementation Challenges:
 
 Challenge 1: LLM → Script Generation
@@ -3714,7 +3714,7 @@ Challenge 3: Script Learning
 ├── Script quality must be measured
 ├── Scripts must be generalized (not exact matches)
 └── Result: Learning system is complex research problem
-```
+```text
 
 **Critical Gaps:**
 
@@ -3729,7 +3729,7 @@ Without these systems, the "One Abstraction Away" architecture remains **theoret
 
 This dissertation prioritizes **academic novelty** (LLM-based game AI) over **industrial practicality** (traditional game AI). This is appropriate for an academic dissertation but creates a **credibility gap** for practitioners:
 
-```
+```text
 Academic Question: "How can LLMs revolutionize game AI?"
 Industrial Question: "How can we build reliable game AI efficiently?"
 
@@ -3738,7 +3738,7 @@ Industrial Answer: "Use LLMs for natural language only; everything else traditio
 
 This dissertation focuses on the academic answer.
 Practitioners should prioritize the industrial answer.
-```
+```text
 
 **Corrective Self-Critique:**
 
@@ -3756,7 +3756,7 @@ The goal should be **useful Minecraft agents**, not **academically impressive LL
 
 LLM-based game AI introduces failure modes that don't exist in traditional AI:
 
-```
+```text
 Traditional AI Failure Modes:
 ├── Bug in code → Deterministic, reproducible, fixable
 ├── Wrong parameters → Tunable, predictable
@@ -3770,7 +3770,7 @@ LLM AI Failure Modes:
 ├── Latency spike → User experience failure
 ├── Privacy breach → Legal liability
 └── Result: Failures are global, mysterious, unfixable
-```
+```text
 
 **Case Study: The "Broken Agent" Scenario**
 
@@ -3800,7 +3800,7 @@ Result:
 Root Cause: LLM hallucinated invalid actions
 Validation Failure: Schema validation didn't catch semantic errors (bedrock placement)
 Mitigation Gap: No fallback to safe default behavior
-```
+```text
 
 **The "Silent Failure" Problem:**
 
@@ -3832,13 +3832,13 @@ Player Confusion:
 Root Cause: LLM misinterpreted "mine iron ore" as "mine 1 iron ore"
 Problem: No error message, just wrong behavior
 Debugging: Impossible to diagnose without LLM access logs
-```
+```text
 
 **The "Cost Spiral" Problem:**
 
 LLM-based AI can fail economically, not just technically:
 
-```
+```text
 Cost Failure Scenario:
 ├── Month 1: 10 agents, $10/month (acceptable)
 ├── Month 2: 20 agents, $20/month (acceptable)
@@ -3850,7 +3850,7 @@ Cost Failure Scenario:
 Problem: Success kills the project (more agents = higher costs)
 Traditional AI: 200 agents = same cost as 10 agents (CPU/memory only)
 LLM AI: 200 agents = 20x higher cost (API calls scale linearly)
-```
+```text
 
 **Honest Risk Assessment:**
 
@@ -4005,7 +4005,7 @@ enabled = true
 cacheEnabled = true
 cacheSize = 10000
 cacheTTL = 86400  # 24 hours
-```
+```text
 
 ### Cache Configuration
 
@@ -4016,7 +4016,7 @@ maxSize = 10000
 ttl = 86400  # 24 hours
 persistToDisk = true
 diskPath = "config/llm_cache"
-```
+```text
 
 ### Circuit Breaker Configuration
 
@@ -4026,7 +4026,7 @@ failureThreshold = 5
 successThreshold = 2
 timeout = 60  # seconds
 halfOpenMaxCalls = 3
-```
+```text
 
 ### Retry Configuration
 
@@ -4036,7 +4036,7 @@ maxAttempts = 3
 initialWait = 500  # milliseconds
 backoffMultiplier = 2.0
 maxWait = 5000
-```
+```text
 
 ---
 
@@ -4085,7 +4085,7 @@ public class TaskPlanner {
      */
     public LLMCache getLLMCache();
 }
-```
+```text
 
 ### CascadeRouter API
 
@@ -4113,7 +4113,7 @@ public class CascadeRouter {
      */
     public void resetMetrics();
 }
-```
+```text
 
 ---
 

@@ -87,7 +87,7 @@ public class RadiantNPC {
                (contextScore * 0.1);
     }
 }
-```
+```text
 
 **2. Schedule System**
 
@@ -129,7 +129,7 @@ public class Schedule {
         return 0.5;
     }
 }
-```
+```text
 
 **3. Personality Attributes**
 
@@ -155,7 +155,7 @@ public class PersonalityAttributes {
         };
     }
 }
-```
+```text
 
 ### Key Innovations
 
@@ -192,7 +192,7 @@ public class ReactiveBehaviorModule {
         };
     }
 }
-```
+```text
 
 **2. Rumor Mill System**
 
@@ -229,7 +229,7 @@ public class RumorMill {
         scheduleRumorSpread(rumor, location);
     }
 }
-```
+```text
 
 ### Lessons for Minecraft
 
@@ -251,7 +251,7 @@ public class MinecraftDailySchedule {
             .build();
     }
 }
-```
+```text
 
 **2. Goal Prioritization**
 
@@ -300,7 +300,7 @@ public class GoalManager {
         }
     }
 }
-```
+```text
 
 ---
 
@@ -334,7 +334,7 @@ public enum SimNeed {
     private final float decayRate;  // Per minute
     private final String satisfactionCategory;
 }
-```
+```text
 
 #### Need Decay Formula
 
@@ -375,7 +375,7 @@ public class NeedDecayCalculator {
         };
     }
 }
-```
+```text
 
 ### Urgency Calculation
 
@@ -398,7 +398,7 @@ public class UrgencyCalculator {
         return Math.max(0.0f, Math.min(1.0f, urgency));
     }
 }
-```
+```text
 
 ### Need-Driven Action Selection
 
@@ -454,7 +454,7 @@ public class NeedDrivenActionSelector {
         return baseScore * distancePenalty * personalityMod * qualityMod;
     }
 }
-```
+```text
 
 ### Personality Integration
 
@@ -497,7 +497,7 @@ public class SimPersonality {
         return preference;
     }
 }
-```
+```text
 
 ### Lessons for Minecraft
 
@@ -525,7 +525,7 @@ public enum MinecraftAgentNeed {
 
     // ... need implementations
 }
-```
+```text
 
 **2. Need Decay with Activity**
 
@@ -564,7 +564,7 @@ public class ActivityMultipliers {
         ActivityType.FARMING, 0.5f
     );
 }
-```
+```text
 
 **3. Urgency-Driven Behavior**
 
@@ -612,7 +612,7 @@ public class MinecraftUrgencySystem {
         };
     }
 }
-```
+```text
 
 ---
 
@@ -652,7 +652,7 @@ public class Gambit {
         };
     }
 }
-```
+```text
 
 #### Condition System
 
@@ -704,7 +704,7 @@ public class AllyCondition implements Condition {
             });
     }
 }
-```
+```text
 
 #### Gambit Execution
 
@@ -732,7 +732,7 @@ public class GambitController {
         this.gambits.sort(Comparator.comparingInt(Gambit::getPriority).reversed());
     }
 }
-```
+```text
 
 ### Example Gambit Configurations
 
@@ -822,7 +822,7 @@ List<Gambit> tankGambits = List.of(
         TargetType.ENEMY
     )
 );
-```
+```text
 
 ### Lessons for Minecraft
 
@@ -878,7 +878,7 @@ public class MinecraftGambit {
         }
     }
 }
-```
+```text
 
 **2. Default Gambit Configurations**
 
@@ -936,7 +936,7 @@ List<MinecraftGambit> guardGambits = List.of(
         1
     )
 );
-```
+```text
 
 **3. Player-Configurable Gambits**
 
@@ -963,7 +963,7 @@ public class GambitConfigMenu {
         );
     }
 }
-```
+```text
 
 ---
 
@@ -1038,7 +1038,7 @@ public class TacticSlot {
         }
     }
 }
-```
+```text
 
 ### Relationship System
 
@@ -1092,7 +1092,7 @@ public class ApprovalTracker {
         }
     }
 }
-```
+```text
 
 #### Approval Effects
 
@@ -1142,7 +1142,7 @@ public class ApprovalEffects {
         return true;
     }
 }
-```
+```text
 
 ### Companion-Specific Personalities
 
@@ -1185,7 +1185,7 @@ public class MorriganPersonality {
         };
     }
 }
-```
+```text
 
 ### Lessons for Minecraft
 
@@ -1265,7 +1265,7 @@ public class MinecraftApprovalTracker {
         };
     }
 }
-```
+```text
 
 **2. Approval-Driven Behavior**
 
@@ -1312,7 +1312,7 @@ public class ApprovalInfluencedBehavior {
         };
     }
 }
-```
+```text
 
 **3. Personality Variations**
 
@@ -1368,7 +1368,7 @@ public enum MinecraftAgentPersonality {
         };
     }
 }
-```
+```text
 
 ---
 
@@ -1425,7 +1425,7 @@ public class LoyaltyMissionSystem {
         player.getJournal().addMission(mission);
     }
 }
-```
+```text
 
 ### Combat Specialization
 
@@ -1470,7 +1470,7 @@ public class EngineerRole extends CombatRole {
         ), BehaviorPattern.DEFENSIVE);
     }
 }
-```
+```text
 
 ### Character-Specific Dialogue
 
@@ -1517,7 +1517,7 @@ public class GarrusDialogue {
         "For the badge, Shepard. For the badge." // Refers to C-Sec
     );
 }
-```
+```text
 
 ### Lessons for Minecraft
 
@@ -1594,7 +1594,7 @@ public class MinecraftLoyaltyQuest {
         );
     }
 }
-```
+```text
 
 **2. Personality-Driven Banter**
 
@@ -1690,7 +1690,7 @@ public enum MinecraftAgentPersonality {
         this.quotes = quotes;
     }
 }
-```
+```text
 
 ---
 
@@ -1730,9 +1730,9 @@ Based purely on **appealingness** without temporal or causal considerations.
 
 The formal model specifies intensity functions for each emotion. For example, the intensity of joy at time t is:
 
-```
+```text
 I(joy,t) = D(event) × L(realization) × G(global)
-```
+```text
 
 Where D is desirability, L is likelihood/realization, and G represents global factors like unexpectedness and arousal. This mathematical formalization enables direct computational implementation.
 
@@ -1855,7 +1855,7 @@ public class EmotionalCompanionAgent {
         }
     }
 }
-```
+```text
 
 #### Cognitive Appraisal Process
 
@@ -1961,7 +1961,7 @@ private void updateEmotion(Emotion emotion, double delta) {
     double updated = emotion.clamp(current + delta);
     emotionIntensities.put(emotion, updated);
 }
-```
+```text
 
 #### Personality Traits System
 
@@ -1990,7 +1990,7 @@ public class EmotionalTraits {
         this.ambition = ambition;
     }
 }
-```
+```text
 
 #### Emotional Decay Over Time
 
@@ -2044,7 +2044,7 @@ public double calculateMood() {
 
     return valence * (1.0 + arousal * 0.2);
 }
-```
+```text
 
 ### Bonding and Social Mechanics
 
@@ -2095,7 +2095,7 @@ public void onReunion(EmotionalCompanionAgent otherAgent, double separationDurat
 
     emotionalMemory.recordReunion(otherAgent, separationDuration);
 }
-```
+```text
 
 ### Integration with Memory and Relationship Systems
 
@@ -2159,7 +2159,7 @@ public class EmotionalMemory {
             .toList();
     }
 }
-```
+```text
 
 This emotional memory enables several important capabilities:
 
@@ -2216,7 +2216,7 @@ public class RelationshipMilestoneTracker {
         return gratitude * 0.7 - (anger + reproach) * 0.3;
     }
 }
-```
+```text
 
 This milestone system provides:
 
@@ -2280,7 +2280,7 @@ public void appraiseCombatEvent(CombatEvent event) {
         }
     }
 }
-```
+```text
 
 #### Resource Gathering and Crafting
 
@@ -2314,7 +2314,7 @@ public void appraiseResourceEvent(Material material, int amount) {
         updateEmotion(Emotion.GRATITUDE, need * 0.2);
     }
 }
-```
+```text
 
 #### Building and Construction
 
@@ -2353,7 +2353,7 @@ public void appraiseBuildEvent(Structure structure) {
         updateEmotion(Emotion.HAPPY_FOR, quality * 0.4);
     }
 }
-```
+```text
 
 #### Separation and Reunion Behaviors
 
@@ -2427,7 +2427,7 @@ public class SeparationReunionHandler {
         }
     }
 }
-```
+```text
 
 #### Minecraft-Specific Emotional Extensions
 
@@ -2456,7 +2456,7 @@ public enum MinecraftEmotion {
     CURIOSITY,               // Interest in new areas
     DISAPPOINTMENT_EMPTY,    // Unrewarding exploration
 }
-```
+```text
 
 These domain-specific emotions integrate with the base OCC model through inheritance and composition:
 
@@ -2521,7 +2521,7 @@ public class MinecraftEmotionalAgent extends EmotionalCompanionAgent {
         minecraftEmotions.put(emotion, Math.max(0.0, Math.min(1.0, current + delta)));
     }
 }
-```
+```text
 
 These Minecraft-specific emotions enable more nuanced companion responses to sandbox-specific activities while maintaining the psychological grounding of the OCC model.
 
@@ -2574,7 +2574,7 @@ public void appraiseMoralAction(EmotionalEvent action, boolean isMoral) {
     // Record moral event for future reference
     emotionalMemory.recordMoralEvent(action, isMoral);
 }
-```
+```text
 
 **Moral Event Detection in Minecraft:**
 
@@ -2615,7 +2615,7 @@ public class MoralEventDetector {
         };
     }
 }
-```
+```text
 
 This moral evaluation system enables narrative arcs where companions:
 1. **Challenge player behavior** when actions conflict with companion values
@@ -2664,7 +2664,7 @@ public class EmotionalLearningSystem {
         return emotionalAssociations.getOrDefault(key, 0.0);
     }
 }
-```
+```text
 
 **Biome Preferences:**
 
@@ -2709,7 +2709,7 @@ public void appraiseBiomeEntry(Biome biome) {
         }
     }
 }
-```
+```text
 
 **Mob Fears and Preferences:**
 
@@ -2742,7 +2742,7 @@ public void appraiseMobEncounter(Mob mob, boolean isHostile) {
         learningSystem.recordEmotionalExperience(mobKey, Emotion.LIKING, 0.2);
     }
 }
-```
+```text
 
 **Player Personality Modeling:**
 
@@ -2788,7 +2788,7 @@ public void learnPlayerStyle(Player player, GameEvent event) {
         traits.curiosity = Math.min(1.0, traits.curiosity + 0.05);
     }
 }
-```
+```text
 
 This emotional learning system creates **emergent personality** where each companion develops unique emotional profiles based on their experiences with specific players and worlds. Companions who frequently encounter danger in caves will develop cave-related anxiety. Companions who explore with adventurous players will become more exploratory. Companions who experience moral player behavior will develop higher expectations for ethical conduct.
 
@@ -2908,7 +2908,7 @@ public class HorseAIController {
         return path;
     }
 }
-```
+```text
 
 #### Reluctance System
 
@@ -3005,7 +3005,7 @@ public class ReluctanceSystem {
         currentStressLevel = Math.max(0.0f, currentStressLevel - 0.1f);
     }
 }
-```
+```text
 
 #### Bond Development System
 
@@ -3069,7 +3069,7 @@ public class BondTracker {
         return decay;
     }
 }
-```
+```text
 
 ### Key Innovations
 
@@ -3200,7 +3200,7 @@ public class CompanionAwarenessSystem {
         return quality;
     }
 }
-```
+```text
 
 #### Stealth Cooperation System
 
@@ -3317,7 +3317,7 @@ public class StealthCooperationSystem {
         companion.returnToStealth();
     }
 }
-```
+```text
 
 #### Real-Time Emotional Signaling
 
@@ -3408,7 +3408,7 @@ public class EmotionalSignalingSystem {
         };
     }
 }
-```
+```text
 
 #### Companion-to-Companion Dynamics
 
@@ -3545,7 +3545,7 @@ public class CompanionDynamicsSystem {
         };
     }
 }
-```
+```text
 
 #### PTSD and Trauma Mechanics
 
@@ -3649,7 +3649,7 @@ public class TraumaSystem {
         return baseTrauma * proximityModifier * helplessnessModifier * (1.0f + betrayalModifier);
     }
 }
-```
+```text
 
 These trauma mechanics create companion behavior that evolves based on experiences, where:
 - **Combat survivors** may develop anxiety in similar combat situations
@@ -3721,7 +3721,7 @@ public class MinecraftCompanionAwareness {
         return hostiles;
     }
 }
-```
+```text
 
 **2. Minecraft Stealth Cooperation**
 
@@ -3758,7 +3758,7 @@ public class MinecraftStealthCooperation {
         return new StealthAction(StealthBehavior.COOPERATE, desiredPosition);
     }
 }
-```
+```text
 
 ---
 
@@ -3812,7 +3812,7 @@ public class TagSystem {
         }
     }
 }
-```
+```text
 
 #### Tag-Driven Dialogue System
 
@@ -3909,7 +3909,7 @@ public class TagDialogueSystem {
         return base;
     }
 }
-```
+```text
 
 #### Multi-Companion Tag Coordination
 
@@ -4001,7 +4001,7 @@ public class TagCoordinationSystem {
         }
     }
 }
-```
+```text
 
 #### Tag-Based Relationship Dynamics
 
@@ -4142,7 +4142,7 @@ public class TagRelationshipSystem {
         a.sendChatMessage(dialogue);
     }
 }
-```
+```text
 
 This tag-based relationship system creates emergent social dynamics where:
 - **Compassionate characters** naturally gravitate toward healers and protectors
@@ -4211,7 +4211,7 @@ public class MinecraftTagSystem {
         registerTag(new Tag("decorating", "Decorating", TagCategory.INTEREST));
     }
 }
-```
+```text
 
 **2. Tag-Based Dialogue for Minecraft**
 
@@ -4260,7 +4260,7 @@ public class MinecraftTagDialogue {
         return "Hello there.";
     }
 }
-```
+```text
 
 **3. Multi-Agent Tag Coordination**
 
@@ -4299,7 +4299,7 @@ public class MinecraftTagCoordination {
         }
     }
 }
-```
+```text
 
 ---
 
@@ -4359,7 +4359,7 @@ public class ScheduleSystem {
         }
     }
 }
-```
+```text
 
 #### Schedule Entry Types
 
@@ -4415,7 +4415,7 @@ public class ScheduleEntry {
         }
     }
 }
-```
+```text
 
 ### Seasonal Behaviors
 
@@ -4470,7 +4470,7 @@ public class SeasonalSchedule {
         );
     }
 }
-```
+```text
 
 ### Weather Modifications
 
@@ -4507,7 +4507,7 @@ public class WeatherModifier {
         };
     }
 }
-```
+```text
 
 ### Relationship-Dependent Behavior
 
@@ -4553,7 +4553,7 @@ public class RelationshipBehavior {
         };
     }
 }
-```
+```text
 
 ### Lessons for Minecraft
 
@@ -4628,7 +4628,7 @@ public class MinecraftSchedule {
         return schedule;
     }
 }
-```
+```text
 
 **2. Dynamic Schedule Adjustment**
 
@@ -4695,7 +4695,7 @@ public class DynamicScheduleAdjuster {
         return entry;
     }
 }
-```
+```text
 
 **3. Seasonal Variations**
 
@@ -4739,7 +4739,7 @@ public class MinecraftSeasonalSchedule {
         return schedule;
     }
 }
-```
+```text
 
 ---
 
@@ -4791,7 +4791,7 @@ public class BaldursGatePartyAI {
         return null;
     }
 }
-```
+```text
 
 ### Persona 5: Confidant System
 
@@ -4831,7 +4831,7 @@ public class ConfidantSystem {
         }
     }
 }
-```
+```text
 
 ### Fire Emblem: Support Conversations
 
@@ -4885,7 +4885,7 @@ public class SupportSystem {
         }
     }
 }
-```
+```text
 
 ---
 
@@ -4911,13 +4911,13 @@ public class SupportSystem {
 ### Key Patterns Across Systems
 
 **1. Hybrid Autonomy Model**
-```
+```text
 Player Command (highest priority)
     ↓
 Autonomous Goals (medium priority)
     ↓
 Idle Behavior (lowest priority)
-```
+```text
 
 **2. Personality Modifiers**
 All systems use personality to modify:
@@ -5003,7 +5003,7 @@ public class MinecraftCompanionSystem {
         executeAutonomousBehavior(agent);
     }
 }
-```
+```text
 
 ### Relationship-Driven Dialogue
 
@@ -5072,7 +5072,7 @@ public class MinecraftDialogueSystem {
         };
     }
 }
-```
+```text
 
 ### Progressive Personality Development
 
@@ -5133,7 +5133,7 @@ public class PersonalityDevelopment {
         return a + t * (b - a);
     }
 }
-```
+```text
 
 ---
 
@@ -5163,7 +5163,7 @@ public class MinecraftAgent {
         }
     }
 }
-```
+```text
 
 ### Phase 2: Relationship Building (Weeks 3-4)
 
@@ -5187,7 +5187,7 @@ public class RelationshipSystem {
         }
     }
 }
-```
+```text
 
 ### Phase 3: Advanced Behavior (Weeks 5-6)
 
@@ -5210,7 +5210,7 @@ public class GambitSystem {
         return null;
     }
 }
-```
+```text
 
 ### Phase 4: Polish and Depth (Weeks 7-8)
 
@@ -5237,7 +5237,7 @@ public class AdvancedDialogue {
         return base;
     }
 }
-```
+```text
 
 ---
 
@@ -5269,7 +5269,7 @@ The OCC model as implemented requires significant per-tick processing:
 
 Game AI must update at 20-60 ticks per second, creating strict time budgets:
 
-```
+```text
 Tick Budget Analysis (20 TPS Minecraft):
 Total Tick Time: 50ms maximum
 ├── Game Logic: 30ms (world update, physics)
@@ -5281,7 +5281,7 @@ Per-Agent AI Budget: 10ms / 100 agents = 0.1ms maximum
 
 OCC Model Time: 0.15ms per agent
 Result: Budget exceeded by 50%
-```
+```text
 
 **Mitigation Strategies:**
 
@@ -5314,7 +5314,7 @@ Appraisal 2 (Generous):
 
 Both appraisals are "correct" from different perspectives
 Problem: Which behavior should players expect?
-```
+```text
 
 **Cultural Differences in Emotional Expression:**
 
@@ -5346,7 +5346,7 @@ public class CulturalEmotionalModel {
         };
     }
 }
-```
+```text
 
 However, this requires **extensive cultural research** and validation that may not be feasible for game development timelines.
 
@@ -5356,7 +5356,7 @@ However, this requires **extensive cultural research** and validation that may n
 
 As AI agents become more emotionally sophisticated, they risk triggering the **uncanny valley**—the phenomenon where near-human behavior produces revulsion rather than empathy Mori, "The Uncanny Valley" (1970):
 
-```
+```text
 Emotional Sophistication → Player Response
 
 No Emotion (FSM):
@@ -5374,7 +5374,7 @@ Agent: "I feel joy at seeing you, but also shame for my past failures,
         and gratitude for your friendship, yet fear that I may disappoint you..."
 Player: "This is creepy. Why is a Minecraft agent having an existential crisis?"
 Response: Uncanny valley, negative
-```
+```text
 
 **Factors Contributing to Uncanny Valley:**
 
@@ -5390,14 +5390,14 @@ Response: Uncanny valley, negative
    ```java
    // Instead of: "I'm angry at you!"
    // Agent: Refuses to help, attacks player's targets, ignores commands
-   ```
+```bash
 
 2. **Emotional Appropriateness:** Scale emotional intensity to event significance
    ```java
    double emotionalIntensity = baseIntensity * event.importance;
    // Wooden sword lost: intensity 0.1
    // Player death: intensity 1.0
-   ```
+```text
 
 3. **Player Control:** Allow players to disable or simplify emotional systems
    ```java
@@ -5407,7 +5407,7 @@ Response: Uncanny valley, negative
        MODERATE,      // Basic OCC (5 emotions)
        FULL           // Full OCC (22 emotions)
    }
-   ```
+```text
 
 #### Difficulty Validating Emotional Responses
 
@@ -5427,7 +5427,7 @@ EmotionalMetrics metrics = new EmotionalMetrics();
 metrics.add("emotional_appropriateness", ???);  // No objective measure
 metrics.add("player_engagement", ???);  // Subjective
 metrics.add("emotional_realism", ???);  // Culturally dependent
-```
+```text
 
 **Evaluation Approaches (and Limitations):**
 
@@ -5445,7 +5445,7 @@ metrics.add("emotional_realism", ???);  // Culturally dependent
    metrics.add("interaction_frequency", countPlayerInteractions());
    metrics.add("command_compliance_rate", measureCompliance());
    metrics.add("relationship_progression", trackRelationshipGrowth());
-   ```
+```text
    - **Limitation:** Indirect measures, confounding factors
 
 **Result:** Emotional AI systems remain **empirical rather than scientific**—validated through player feedback rather than objective metrics.
@@ -5486,7 +5486,7 @@ These limitations do not invalidate the OCC model's usefulness for game AI, but 
 
 Emotional AI systems create autonomous agents with their own motivations, which can conflict with player expectations:
 
-```
+```text
 Scenario 1: Player Commands During Emotional Distress
 Player: "Come here, I need your help with this raid."
 Agent (Angry at player from previous event): "I don't want to help you right now."
@@ -5497,7 +5497,7 @@ Player: [Quits game in frustration]
 The Problem: Players expect compliant companions
 The Reality: Emotional agents have their own agenda
 The Result: Player frustration when autonomy overrides utility
-```
+```text
 
 **Autonomy vs. Utility Conflict:**
 
@@ -5532,7 +5532,7 @@ PlayerThought: "You're a AI companion, not a toddler having a tantrum."
 The Perception: Emotional autonomy = childish defiance
 The Reality: Complex psychological modeling working as designed
 The Outcome: Player disables emotional system or abandons companion
-```
+```text
 
 **Mitigation Strategies (with Limitations):**
 
@@ -5545,7 +5545,7 @@ The Outcome: Player disables emotional system or abandons companion
 
    Limitation: Defeats the purpose of emotional AI
    Result: Agents become "emotional slaves" - contradictory
-   ```
+```text
 
 2. **Context-Aware Emotional Suppression** - Suppress emotions during critical tasks
    ```java
@@ -5557,7 +5557,7 @@ The Outcome: Player disables emotional system or abandons companion
 
    Limitation: Breaks emotional immersion
    Result: Inconsistent character (emotional sometimes, not others)
-   ```
+```text
 
 3. **Transparent Emotional Reasoning** - Explain why agent is refusing
    ```java
@@ -5567,7 +5567,7 @@ The Outcome: Player disables emotional system or abandons companion
 
    Benefit: Player understands agent's perspective
    Limitation: Still doesn't solve the "I need help now" problem
-   ```
+```text
 
 **Honest Assessment:**
 
@@ -5585,7 +5585,7 @@ Players recruit companions in games for specific utility purposes:
 
 When emotional AI interferes with these utility functions, players feel the companion is "broken":
 
-```
+```text
 Player Mental Model:
 "I recruited a companion to help me mine iron ore.
 If the companion refuses to mine, the companion is not functioning correctly."
@@ -5596,13 +5596,13 @@ Sometimes the companion doesn't want to mine.
 This creates realistic, engaging character dynamics."
 
 The Mismatch: Player utility expectations vs. designer emotional goals
-```
+```text
 
 **The "Useful vs. Interesting" Spectrum:**
 
 Companion design exists on a spectrum:
 
-```
+```text
 PURE UTILITY ←————————————————————→ PURE INTERESTING
 ├────────────────────────────────────────────────────────┤
 Traditional AI Companions         Emotional AI Companions
@@ -5618,7 +5618,7 @@ Player Preference Distribution (estimated):
 └── 10% prefer Interesting-focused companions
 
 Problem: Emotional AI serves the 10% majority at the 60% majority's expense
-```
+```text
 
 **The "Ferelden" Effect (Dragon Age Case Study):**
 
@@ -5650,7 +5650,7 @@ Unlike Dragon Age's 6-12 companions, Steve AI typically has 1-3 companions. If t
    Entity fighter = spawnCompanion("Alice", personalityType.COMBAT);
 
    // If Bob is "too bored to mine," player can use Alice instead
-   ```
+```text
 
 2. **Emotional Complexity Slider** - Allow players to configure emotional depth
    ```java
@@ -5662,7 +5662,7 @@ Unlike Dragon Age's 6-12 companions, Steve AI typically has 1-3 companions. If t
    }
 
    // Player choice serves different player segments
-   ```
+```text
 
 3. **Context-Aware Emotion Suppression** - Disable emotions during critical gameplay moments
    ```java
@@ -5670,7 +5670,7 @@ Unlike Dragon Age's 6-12 companions, Steve AI typically has 1-3 companions. If t
    if (context.isCriticalGameplayMoment()) {
        emotionalSystem.suspend();  // Emotions paused
    }
-   ```
+```text
 
 4. **Clear Communication of Emotional State** - Ensure players understand why companions are refusing
    ```java
@@ -5682,7 +5682,7 @@ Unlike Dragon Age's 6-12 companions, Steve AI typically has 1-3 companions. If t
 
    // Agent explains refusal clearly
    agent.say("I'm too bored to mine right now. Maybe explore instead?");
-   ```
+```text
 
 **Implementation Status
 

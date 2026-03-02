@@ -75,7 +75,7 @@ Before reaching for LLMs, game developers should consider whether classic RTS AI
 
 Real-Time Strategy games present a unique AI challenge:
 
-```
+```text
 RTS AI must simultaneously handle:
 ├── Economic Management
 │   ├── Resource gathering (multiple types)
@@ -96,7 +96,7 @@ RTS AI must simultaneously handle:
     ├── All decisions in real-time
     ├── No turn-based deliberation
     └── Multiple concurrent operations
-```
+```text
 
 ### Why RTS AI Matters for Minecraft
 
@@ -169,7 +169,7 @@ build_order:
         rush_defense_mode()
     else:
         continue_economy_build()
-```
+```text
 
 **Key Elements:**
 - **Supply-based triggers:** Actions happen at specific supply counts
@@ -215,7 +215,7 @@ def check_rush_threat():
     if threat_level >= 8:
         switch_to_defensive_build()
         pull_workers_for_defense()
-```
+```text
 
 ### 2. Total Annihilation (1997) - Physics-Based RTS
 
@@ -283,7 +283,7 @@ public class TerrainAnalyzer {
         return best;
     }
 }
-```
+```text
 
 ### 3. Age of Empires II (1999) - Resource Balancing Master
 
@@ -294,7 +294,7 @@ public class TerrainAnalyzer {
 
 Age of Empires II implemented sophisticated resource management:
 
-```
+```text
 Resource Priority Matrix (AoE2 AI):
 
 ┌──────────────────────────────────────────────────────────┐
@@ -313,7 +313,7 @@ Resource Priority Matrix (AoE2 AI):
 │ Stone    │ Defenses, Town        │ Low unless building   │
 │          │ Centers, Castles      │ towers/castles        │
 └──────────────────────────────────────────────────────────┘
-```
+```text
 
 #### Dynamic Villager Allocation
 
@@ -368,7 +368,7 @@ public class ResourceManager {
         priorityScores.put(ResourceType.STONE, clamp(stonePriority));
     }
 }
-```
+```text
 
 **Complexity Analysis:**
 - Time: O(n) for priority calculation, O(1) for reallocation
@@ -430,7 +430,7 @@ public class TechTreeManager {
         return clamp(baseValue);
     }
 }
-```
+```text
 
 ### 4. Command & Conquer Series - Unit Coordination
 
@@ -510,7 +510,7 @@ private:
         return enemies.empty() ? nullptr : enemies[0];
     }
 };
-```
+```text
 
 #### Attack Timing Heuristics
 
@@ -558,7 +558,7 @@ public class AttackCoordinator {
         return attackScore >= 0.6;
     }
 }
-```
+```text
 
 ### 5. Warcraft III (2002) - Hero Management
 
@@ -628,7 +628,7 @@ public class HeroAI {
         return heroPower >= campPower * 1.2;  // 20% safety margin
     }
 }
-```
+```text
 
 #### Creeping Patterns
 
@@ -666,7 +666,7 @@ public class CreepingManager {
         return route;
     }
 }
-```
+```text
 
 ### 6. Supreme Commander (2007) - Strategic Zoom
 
@@ -725,7 +725,7 @@ public class StrategicAI {
         }
     }
 }
-```
+```text
 
 ---
 
@@ -798,7 +798,7 @@ public class RTSAI {
         }
     }
 }
-```
+```text
 
 **FSM Benefits:**
 - Clear, predictable behavior
@@ -860,7 +860,7 @@ List<BuildOrderStep> ninePoolSpeed = List.of(
     new BuildOrderStep(() -> poolComplete(), build(EXTRACTOR)),
     new BuildOrderStep(() -> minerals() >= 100, research(METABOLIC_BOOST))
 );
-```
+```text
 
 ### 3. Influence Maps
 
@@ -938,7 +938,7 @@ public class InfluenceMap {
         return best;
     }
 }
-```
+```text
 
 **Strategic Uses of Influence Maps:**
 
@@ -1047,7 +1047,7 @@ public class ResourceGatheringFactors {
         }
     }
 }
-```
+```text
 
 **Utility AI Benefits:**
 - Flexible, extensible (add factors without rewriting)
@@ -1117,7 +1117,7 @@ public class ResourceAllocator {
         return priorities;
     }
 }
-```
+```text
 
 ### 6. Hierarchical Task Networks (HTN)
 
@@ -1127,7 +1127,7 @@ While FSMs, build orders, and utility AI dominated early RTS games, the mid-2000
 
 **Core Concept**: HTN planning breaks down complex tasks through recursive decomposition:
 
-```
+```text
 build_castle (Compound Task)
 ├── Method: build_castle_basic
 │   ├── Preconditions: {has_resources: true, has_land: true}
@@ -1143,7 +1143,7 @@ build_castle (Compound Task)
 │       ├── lay_foundation (Primitive)
 │       ├── build_walls (Primitive)
 │       └── add_roof (Primitive)
-```
+```text
 
 **Task Types**:
 
@@ -1158,21 +1158,21 @@ build_castle (Compound Task)
 Hierarchical Task Network (HTN) planning was first formalized by Erol, Hendler, and Nau (1994) as a hierarchical approach to automated planning that leverages domain knowledge through structured task decomposition. Unlike classical planning that searches through flat action spaces, HTN planning recursively decomposes high-level tasks into primitive actions using domain-specific methods, dramatically reducing search complexity (Erol et al., 1994). Nau et al. (2003) demonstrated with the SHOP2 system that HTN planners could outperform classical planners by orders of magnitude on problems with appropriate hierarchical structure.
 
 **Traditional (Flat) Planning:**
-```
+```text
 Goal: Build a castle
 → Search ALL possible action sequences
 → A* through massive state space
 → Slow, unpredictable, computationally expensive
-```
+```text
 
 **HTN (Hierarchical) Planning:**
-```
+```text
 Goal: Build a castle
 → Match to compound task "build_castle"
 → Select applicable method based on preconditions
 → Recursively decompose subtasks
 → Fast, predictable, designer-controlled
-```
+```text
 
 **Performance Comparison**:
 
@@ -1208,7 +1208,7 @@ function HTN_Decompose(task, worldState):
                 if plan.complete:
                     return plan
         return FAILURE  // No applicable method
-```
+```text
 
 #### 6.4 HTN in Modern RTS Games
 
@@ -1251,7 +1251,7 @@ public class HeroAI {
         executePlan(plan);
     }
 }
-```
+```text
 
 **Supreme Commander (2007)** extended HTN with strategic hierarchy:
 
@@ -1287,7 +1287,7 @@ public class StrategicHTN {
                 new PrimitiveTask("use_abilities")
             ));
 }
-```
+```text
 
 #### 6.5 HTN vs GOAP Comparison
 
@@ -1389,7 +1389,7 @@ public class MinecraftHTN {
                     .addMethod(followPathMethod)
             ));
 }
-```
+```text
 
 #### 6.7 Benefits of HTN for Minecraft AI
 
@@ -1470,7 +1470,7 @@ public class HybridTaskPlanner {
         return tacticalPlan;
     }
 }
-```
+```text
 
 **Cost Reduction Analysis**:
 
@@ -1553,10 +1553,10 @@ Every node returns exactly one of three statuses:
 
 FSM complexity grows **quadratically** (O(n²)) with states:
 
-```
+```text
 FSM with 5 states:   5 × 4 = 20 transitions (manageable)
 FSM with 50 states:  50 × 49 = 2,450 transitions (unmaintainable)
-```
+```text
 
 **Real-world example:** *BioShock* (2007) used FSMs for enemy AI. The "Leadhead Splicer" required 47 states with 1,842 transition conditions.
 
@@ -1601,13 +1601,13 @@ Sequence("MineResources",
         Repeater("ContinueMining", -1)
     )
 )
-```
+```text
 
 ### 7.7 LLM-Generated Behavior Trees
 
 Recent research (2023) demonstrates LLMs can generate valid BTs from natural language:
 
-```
+```text
 Input: "Navigate to kitchen, pick up red cup, bring to living room"
 
 Output:
@@ -1617,7 +1617,7 @@ Output:
     └── Sequence
         ├── Action: Navigate(location="living room")
         └── Action: PlaceObject()
-```
+```text
 
 **Application:** LLMs can generate Minecraft agent BTs from player commands: "Build a wooden house" → complete behavior tree.
 
@@ -1651,12 +1651,12 @@ Spatial reasoning - the ability to understand, navigate, and manipulate space - 
 Potential fields model navigation as a physical system where agents move through a field of forces.
 
 **Mathematical Foundation:**
-```
+```text
 Total Force: F(p) = F_attractive(p) + F_repulsive(p)
 
 Attractive (goal seeking): F_goal = ξ × (goal - position)
 Repulsive (obstacle avoidance): F_obstacle = η × (1/d - 1/ρ₀) / d²
-```
+```text
 
 **Properties:**
 - O(1) query time per tick
@@ -1687,11 +1687,11 @@ NavMeshes represent walkable surfaces as connected polygons, providing efficient
 Flow fields excel at coordinating hundreds of units moving toward common goals.
 
 **Architecture:**
-```
+```text
 1. Integration Field: Goal → Dijkstra Flood Fill → Cost Map
 2. Vector Field: Cost Map → Gradient → Flow Directions
 3. Agent Movement: Position → Lookup → Velocity
-```
+```text
 
 **Supreme Commander Case Study (2007):**
 - Map size: Up to 81 km²
@@ -1725,7 +1725,7 @@ Flow fields excel at coordinating hundreds of units moving toward common goals.
 
 ### 8.6 Minecraft Decision Guide
 
-```
+```text
 Q: How many agents?
 ├─ 1-3 → A* or Potential Fields
 └─ 4+ same goal → Flow Fields
@@ -1737,7 +1737,7 @@ Q: Pathfinding distance?
 
 Q: Dynamic obstacles?
 └─ Yes → Potential Fields (local) + A* (global)
-```
+```text
 
 **Recommended Hybrid Architecture:**
 ```java
@@ -1750,7 +1750,7 @@ public class HybridPathfindingSystem {
         return aStarPath(start, goal);
     }
 }
-```
+```text
 
 ### 8.7 Academic Foundations
 
@@ -1813,11 +1813,11 @@ public final class MinecraftServer {
         // - Player actions
     }
 }
-```
+```text
 
 **The 50ms Tick Budget Breakdown:**
 
-```
+```text
 Total Tick Budget: 50ms (100%)
 ├── World State Updates: 15ms (30%)
 │   ├── Block state changes
@@ -1848,7 +1848,7 @@ Total Tick Budget: 50ms (100%)
     ├── Packet serialization
     ├── Client state updates
     └── Player actions processing
-```
+```text
 
 **Critical Implication:** AI receives **5ms maximum** per tick for ALL agents combined. With 10 agents, each gets 0.5ms. With 100 agents, each gets 0.05ms (50 microseconds).
 
@@ -1953,7 +1953,7 @@ public class TickBudgetManager {
         timingHistory.clear();
     }
 }
-```
+```text
 
 **Integration with Server Tick:**
 
@@ -1979,7 +1979,7 @@ public class SteveAISystem {
         }
     }
 }
-```
+```text
 
 ### 9.3 Chunk Loading Constraints
 
@@ -2071,7 +2071,7 @@ public class ChunkValidator {
         }
     }
 }
-```
+```text
 
 **AI Action with Chunk Validation:**
 
@@ -2096,13 +2096,13 @@ public class MineBlockAction extends BaseAction {
         mineBlock(targetBlock);
     }
 }
-```
+```text
 
 ### 9.4 Multiplayer Synchronization Constraints
 
 **Network Latency in Multiplayer:**
 
-```
+```text
 Single-Player Timing:
 ├── AI decision: 0-5ms (same tick)
 ├── Action execution: 0-50ms (same or next tick)
@@ -2114,7 +2114,7 @@ Multi-Player Timing:
 ├── Client → Server: 50-200ms (action confirmation)
 ├── Action execution: 100-450ms total (round-trip)
 └── Visual feedback: 100-450ms (network dependent)
-```
+```text
 
 **Bandwidth Constraints:**
 
@@ -2173,7 +2173,7 @@ public class MultiplayerActionExecutor {
         scheduleRollbackCheck(action, estimatedLatencyMs * 2);
     }
 }
-```
+```text
 
 ### 9.5 Performance Optimization Strategies
 
@@ -2200,7 +2200,7 @@ public class ActionCache {
         return result;
     }
 }
-```
+```text
 
 **Strategy 2: Spatial Partitioning**
 
@@ -2234,7 +2234,7 @@ public class SpatialAgentUpdater {
         }
     }
 }
-```
+```text
 
 **Strategy 3: Priority-Based Ticking**
 
@@ -2280,7 +2280,7 @@ public class PriorityAgentUpdater {
         return priority;
     }
 }
-```
+```text
 
 ### 9.6 Practical Implications
 
@@ -2429,7 +2429,7 @@ public class CherryPiBot {
         }
     }
 }
-```
+```text
 
 **Key Insight from CherryPi:** Despite using ML components (LSTM for strategy, CNN for building placement), CherryPi lost to **Samsung's SAIDA bot**, which used **only rule-based systems and finite state machines**. This proves that traditional AI techniques can still outperform ML in RTS games.
 
@@ -2489,7 +2489,7 @@ public class BuildOrderSearch {
         return best;
     }
 }
-```
+```text
 
 #### 2. Tyr (2019)
 
@@ -2552,13 +2552,13 @@ public class ProductionManager {
         return Collections.max(scores.entrySet(), Map.Entry.comparingByValue()).getKey();
     }
 }
-```
+```text
 
 ### What AlphaStar Actually Does
 
 DeepMind's AlphaStar is entirely built on neural networks:
 
-```
+```text
 AlphaStar Architecture (All Neural):
 ├── Transformer Backbone - Process unit information
 ├── Deep LSTM Core - Handle temporal sequences
@@ -2566,7 +2566,7 @@ AlphaStar Architecture (All Neural):
 ├── Pointer Network - Select units
 ├── Centralized Value Baseline - Estimate state values
 └── Self-Attention Mechanism - Process observations
-```
+```text
 
 **Important:** AlphaStar cannot be easily adapted for non-ML use cases. It represents the opposite approach - deep neural networks for everything.
 
@@ -2665,7 +2665,7 @@ public class MinecraftResourceManager {
         return clamp(score, 0.0, 1.0);
     }
 }
-```
+```text
 
 ### 2. Multi-Agent Coordination
 
@@ -2745,7 +2745,7 @@ public class AgentCoordinator {
         return score;
     }
 }
-```
+```text
 
 ### 3. Tech Progression Logic
 
@@ -2822,7 +2822,7 @@ public class TechProgressionManager {
         return true;
     }
 }
-```
+```text
 
 ### 4. Area Control (Influence Maps)
 
@@ -2889,7 +2889,7 @@ public class AreaControlSystem {
         return influenceMap.getNegativeInfluence(chunk.getCenter());
     }
 }
-```
+```text
 
 ### 5. Defensive Triggers
 
@@ -2971,7 +2971,7 @@ public class ThreatResponseSystem {
         agent.broadcast(new ThreatAlert(agent.getPosition(), ThreatLevel.CRITICAL));
     }
 }
-```
+```text
 
 ---
 
@@ -2987,7 +2987,7 @@ The MineWright mod already has foundational components that align with RTS AI:
 
 #### Recommended Architecture
 
-```
+```text
 MineWright RTS-Enhanced Architecture:
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -3009,7 +3009,7 @@ MineWright RTS-Enhanced Architecture:
 │                     Action Execution                         │
 │  (BaseAction subclasses, tick-based execution)              │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 #### Code Example: Enhanced Task Prioritization
 
@@ -3138,7 +3138,7 @@ public class SafetyFactor implements UtilityFactor {
         return "safety";
     }
 }
-```
+```text
 
 ---
 
@@ -3203,7 +3203,7 @@ public class AutomatedMiningSystem {
         return Math.max(0, Math.min(1, score));
     }
 }
-```
+```text
 
 ### Case Study 2: Multi-Agent Farming
 
@@ -3269,7 +3269,7 @@ public class FarmingCoordinator {
         return score;
     }
 }
-```
+```text
 
 ### Case Study 3: Defense Against Hostile Mobs
 
@@ -3334,7 +3334,7 @@ public class DefenseCoordinator {
         }
     }
 }
-```
+```text
 
 ---
 
@@ -3488,7 +3488,7 @@ While behavior trees represent the industry standard for game AI (80% of AAA stu
 
 Behavior trees require traversing from root to leaf every tick, creating computational costs that scale with tree depth:
 
-```
+```text
 Tick Time Complexity: O(d × n)
 Where:
 d = tree depth (typically 5-15 levels)
@@ -3513,7 +3513,7 @@ Sequence
 │           └── Action: Shoot
 Depth: 6 levels
 Tick Time: 0.5-2ms per agent
-```
+```text
 
 **Memory Overhead:**
 
@@ -3561,7 +3561,7 @@ public class BehaviorTree {
         // Tree structure changed, but execution state may be inconsistent
     }
 }
-```
+```text
 
 **Contrast with Utility AI:**
 
@@ -3581,7 +3581,7 @@ public class UtilitySystem {
         // System gracefully degrades with fewer actions
     }
 }
-```
+```text
 
 This makes utility AI superior for **dynamic agent capabilities** (e.g., learning new skills, equipment changes) where behavior trees would require complex tree surgery.
 
@@ -3590,7 +3590,7 @@ This makes utility AI superior for **dynamic agent capabilities** (e.g., learnin
 **Behaviors Poorly Suited for Behavior Trees:**
 
 1. **Stateful Sequences with Long Durations:**
-   ```
+```text
    Problem: Multi-step crafting with 30-minute steps
    BT Solution: Must maintain massive in-memory state
    Alternative: HTN planning with persistent tasks
@@ -3604,10 +3604,10 @@ This makes utility AI superior for **dynamic agent capabilities** (e.g., learnin
 
    Challenge: If interrupted at step 2/4, where do we resume?
    HTN handles this naturally with task decomposition.
-   ```
+```text
 
 2. **Blending Multiple Concurrent Behaviors:**
-   ```
+```text
    Problem: Agent needs to patrol AND maintain cover AND chat
    BT Solution: Complex parallel nodes with priority weighting
    Alternative: Utility AI scores all actions simultaneously
@@ -3624,10 +3624,10 @@ This makes utility AI superior for **dynamic agent capabilities** (e.g., learnin
    - MaintainCover: score 0.8
    - Chat: score 0.3
    → Select MaintainCover
-   ```
+```text
 
 3. **Context-Dependent Decision Weighting:**
-   ```
+```text
    Problem: Combat behavior depends on 15+ contextual factors
    BT Solution: Massive condition chains
    Alternative: Utility AI with weighted considerations
@@ -3645,7 +3645,7 @@ This makes utility AI superior for **dynamic agent capabilities** (e.g., learnin
    Utility AI Approach (Elegant):
    Score = (HasWeapon × 0.3) + (InRange × 0.25) + (AmmoLevel × 0.2) + ...
    Single formula replaces 15+ condition nodes
-   ```
+```text
 
 #### When Utility AI Outperforms Behavior Trees
 
@@ -3700,7 +3700,7 @@ double calculateAttackScore(Action action, Context context) {
 // Adding new weapon type:
 // BT: Add new Sequence branch (3-5 nodes)
 // Utility AI: Add weapon to registry (1 line)
-```
+```text
 
 #### Hybrid Approaches: Combining BT Strengths with Utility Flexibility
 
@@ -3735,7 +3735,7 @@ BehaviorTree combatTree = new BehaviorTree(
     ),
     combatUtilityScorer
 );
-```
+```text
 
 This hybrid approach provides:
 - **BT Structure**: Clear hierarchy, authorable, debuggable
@@ -3794,7 +3794,7 @@ Even within RTS games themselves, state machines face fundamental limitations th
 
 As documented in Section 2.7, FSMs suffer from exponential state growth:
 
-```
+```text
 RTS Unit States with 5 Binary Variables:
 - HasWeapon: yes/no
 - HasAmmo: yes/no
@@ -3808,7 +3808,7 @@ Transitions: 32 × 32 = 1,024 (worst case)
 With 10 Variables (common for complex units):
 States: 2^10 = 1,024
 Transitions: 1,048,576 (unmanageable)
-```
+```text
 
 **Lack of Reactivity:**
 
@@ -3822,7 +3822,7 @@ Tick 3: (Enemy visible now) → State: CHASE
 
 Result: 100ms delay before response
 Problem: Player perceives agent as "sluggish"
-```
+```text
 
 **Behavior Tree Solution:**
 ```java
@@ -3834,7 +3834,7 @@ Every Tick:
 
 Result: Immediate response when condition becomes true
 Benefit: Agent feels "responsive" and "alive"
-```
+```text
 
 ### Real-Time Performance Constraints in Game AI
 
@@ -3842,7 +3842,7 @@ Benefit: Agent feels "responsive" and "alive"
 
 All game AI operates within strict time budgets determined by the game's target frame rate. For Minecraft operating at 20 ticks per second (TPS):
 
-```
+```text
 Tick Budget Analysis (20 TPS Minecraft):
 Total Tick Time: 50ms maximum
 ├── World Update: 20ms (chunk loading, block updates, entities)
@@ -3853,7 +3853,7 @@ Total Tick Time: 50ms maximum
 └── Network/Sync: Variable (multiplayer overhead)
 
 Per-Agent AI Budget: 10ms / 100 agents = 0.1ms maximum
-```
+```text
 
 **Computational Realities:**
 

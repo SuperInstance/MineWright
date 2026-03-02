@@ -33,7 +33,7 @@
 12. [Testing Strategies](#12-testing-strategies)
 13. [Visual Editing Tools](#13-visual-editing-tools)
 14. [Data-Driven Design Principles](#14-data-driven-design-principles)
-15. [Limitations and Future Work](#15-limitations-and-future-work)
+15. [Limitations and Future Work](#limitations-and-future-work)
 
 ---
 
@@ -95,7 +95,7 @@ This research positions itself at the intersection of software architecture (Bas
 
 Game AI has evolved through distinct eras, each building on previous approaches:
 
-```
+```text
 Pre-2000: Hardcoded Logic
 ├── Decision Trees
 ├── Rule-Based Systems
@@ -117,7 +117,7 @@ Pre-2000: Hardcoded Logic
 ├── Large Language Model Agents (Voyager, 2023)
 ├── Neuro-Symbolic Hybrid Systems
 └── Multi-Agent Orchestration
-```
+```text
 
 ### 1.2 Architectural Decision Framework
 
@@ -138,7 +138,7 @@ Choosing the right architecture requires analyzing multiple dimensions:
 
 Minecraft presents unique challenges for AI architectures:
 
-```
+```text
 Minecraft Environment Characteristics:
 ├── Voxel-Based World
 │   ├── Discrete, blocky terrain
@@ -160,7 +160,7 @@ Minecraft Environment Characteristics:
 │   ├── Building (construction)
 │   ├── Combat (entity targeting)
 │   └── Exploration (map knowledge)
-```
+```text
 
 These characteristics heavily influence architecture selection, as we'll explore throughout this chapter.
 
@@ -174,7 +174,7 @@ These characteristics heavily influence architecture selection, as we'll explore
 
 **Historical Analysis:** Game bots pioneered the "brain-script-execution" separation that modern LLM agents now formalize. WoW Glider (2005-2009) implemented a primitive three-layer architecture:
 
-```
+```text
 WoW Glider Architecture (2005):
 ┌─────────────────────────────────┐
 │   ORCHESTRATION LAYER           │
@@ -199,7 +199,7 @@ WoW Glider Architecture (2005):
 │   • Combat Module (rotation)    │
 │   • Navigation (waypoints)      │
 └─────────────────────────────────┘
-```
+```text
 
 **Key Finding:** WoW Glider's architecture anticipated modern "One Abstraction Away" philosophy—high-level planning (FSM states) separated from low-level execution (input simulation). This separation enabled both sophistication (complex combat rotations) and robustness (graceful degradation) (WoW Glider analysis, 2026).
 
@@ -225,7 +225,7 @@ public interface ICombatRoutine
     void BuffPulse();        // Buffing logic
     bool WantToAttack(Unit target);
 }
-```
+```text
 
 **Architectural Innovation:** Honorbuddy separated core functionality (memory reading, navigation mesh integration) from behaviors (combat routines, questing profiles). This enabled:
 - **Community Contributions:** Users wrote custom combat routines for each WoW class
@@ -238,14 +238,14 @@ public interface ICombatRoutine
 
 **Historical Trajectory:** Behavior trees transitioned from game automation to mainstream game AI:
 
-```
+```text
 Evolution Timeline:
 2005: WoW Glider uses FSM for bot decision-making
 2007: Halo 2 introduces behavior trees to AAA games (Isla, 2005)
 2010: Honorbuddy implements BT for complex questing behaviors
 2015: Horizon: Zero Dawn uses HTN (successor to BT) for AI
 2023: Modern games standardize on BT + HTN hybrids
-```
+```text
 
 **Key Insight:** Game automation tools served as incubators for AI architectures later adopted by game studios. The "reactive planning" property that made BTs attractive for bots (continuous re-evaluation, hierarchical decomposition) proved equally valuable for legitimate game AI (Isla, 2005; Champandard, 2003).
 
@@ -253,12 +253,12 @@ Evolution Timeline:
 
 **Diablo's NIP System (Demonbuddy, Koolo):** Diablo bots pioneered declarative rule-based item filtering:
 
-```
+```text
 # Diablo Pickit Rule (NIP format)
 [Name] == ColossusBlade && [Quality] == Unique && [Flag] == Ethereal # [KEEP]
 [Name] == PhaseBlade && [Quality] == Unique # [KEEP]
 [Type] == Armor && [Quality] == Magic && [MagicFind] >= 30 # [KEEP]
-```
+```text
 
 **Architectural Pattern:** Declarative rules separated decision logic ("what to keep") from execution ("how to pick up"). This enabled:
 - **Community Sharing:** Players shared pickit files like configuration
@@ -276,7 +276,7 @@ The pickit system represents an early form of "caching decisions" that LLM skill
 
 **Historical Progression:**
 
-```
+```text
 PODBot (CS 1.6, ~2001):
 ├── Pre-recorded waypoint graphs
 ├── Manual waypoint placement by mappers
@@ -298,7 +298,7 @@ Steve AI (2026):
 ├── Path smoothing (Bezier curves)
 ├── Movement validation (Minecraft-specific)
 └── Dynamic obstacle avoidance
-```
+```text
 
 **Key Finding:** Navigation evolved from static authored paths (PODBot) to dynamic navmesh generation (Honorbuddy) to hierarchical real-time planning (Steve AI). Each advancement reduced authoring burden while increasing adaptability to dynamic environments.
 
@@ -325,7 +325,7 @@ void humanizedMouseMove(Point start, Point end, int duration) {
         Sleep(duration * easeInOut(t) * 0.01);
     }
 }
-```
+```text
 
 **Key Insight:** Anti-detection techniques (timing randomization, non-linear paths, mistake simulation) are exactly the patterns that create believable, characterful AI companions. The difference is intent:
 - **Bot Goal:** Evade detection, appear human to avoid bans
@@ -347,22 +347,22 @@ void recoverFromStuck() {
         case MAX_ATTEMPTS: castSpell("Hearthstone"); break;  // Last resort: Teleport
     }
 }
-```
+```text
 
 **Pattern Evolution:**
-```
+```text
 WoW Glider (2005): Simple timeout → Return to start
 Honorbuddy (2010): Multi-stage recovery → Hearth on failure
 OSRS Bots (2015): Random event solvers → Interrupt + resume
 Steve AI (2026): Exponential backoff + graceful degradation → Continue with degraded functionality
-```
+```text
 
 **Connection to Modern AI:** Steve AI's `ErrorRecoveryStrategy` and `RetryPolicy` extend these patterns with modern resilience engineering (exponential backoff, circuit breakers, graceful degradation—see Chapter 11, Implementation Patterns).
 
 ### 1.4.8 Multi-Agent Coordination: From Companion Mode to Foreman-Worker
 
 **EVE Online's TinyMiner (2010s):** Pioneered multi-account "companion mode":
-```
+```text
 Leader Bot:
 ├── Makes decisions (mining targets, belt navigation)
 ├── Targets enemies
@@ -373,7 +373,7 @@ Follower Bots:
 ├── Follow leader's movement
 ├── Maintain formation
 └── Specialized roles (hauler, defender)
-```
+```text
 
 **Architectural Innovation:** Role-based specialization emerged as more efficient than generalized bots. Each account had a specific purpose, coordinated through shared state.
 
@@ -410,7 +410,7 @@ Follower Bots:
 
 A **Finite State Machine** is defined mathematically as a 5-tuple:
 
-```
+```text
 FSM = (Q, Σ, δ, q₀, F)
 
 Where:
@@ -419,7 +419,7 @@ Q = finite set of states
 δ = transition function (Q × Σ → Q)
 q₀ = initial state
 F = set of accepting/terminal states
-```
+```text
 
 In game AI terms:
 - **States** represent modes of behavior (Patrol, Chase, Attack, Flee)
@@ -465,7 +465,7 @@ public class SimpleEnemyAI {
         }
     }
 }
-```
+```text
 
 **Implementation Complexity:** ⭐ (Very Low)
 **When to Use:** Prototypes, simple enemies with <5 states
@@ -538,7 +538,7 @@ public class EnemyStateMachine {
         }
     }
 }
-```
+```text
 
 **Implementation Complexity:** ⭐⭐ (Low)
 **When to Use:** Medium complexity, need state-specific data
@@ -583,7 +583,7 @@ fsm.addTransition("patrol", "chase",
     ctx -> ctx.canSeePlayer(),
     ctx -> ctx.playSound("alert")
 );
-```
+```text
 
 **Implementation Complexity:** ⭐⭐ (Low)
 **When to Use:** Data-driven design, designer tuning
@@ -624,7 +624,7 @@ public class PushdownAutomaton {
 // Minecraft Use: GUI navigation
 // [Gameplay] → [Inventory] → [Crafting] → [RecipeSelection]
 // Pop returns to previous state
-```
+```text
 
 #### Pattern: Concurrent State Machines
 
@@ -643,7 +643,7 @@ public class ConcurrentStateMachine {
 // - Movement FSM: idle, walk, run, jump, fall
 // - Action FSM: mining, building, attacking
 // - Animation FSM: upper_body, lower_body
-```
+```text
 
 ---
 
@@ -659,7 +659,7 @@ public class ConcurrentStateMachine {
 
 ### 2.5 FSM Performance Characteristics
 
-```
+```text
 State Lookup: O(1)
 ├── Enum-based: Constant time array access
 ├── HashMap-based: O(1) average
@@ -675,7 +675,7 @@ Tick Time:
 ├── Simple FSM: < 0.01 ms
 ├── Complex FSM: 0.01 - 0.1 ms
 └── Concurrent FSM: 0.05 - 0.5 ms
-```
+```text
 
 ### 2.6 When to Use FSM in Minecraft
 
@@ -696,7 +696,7 @@ Tick Time:
 
 As complexity grows, FSM states multiply exponentially:
 
-```
+```text
 Example: Combat AI with 5 binary variables
 - Has weapon: yes/no
 - Has ammo: yes/no
@@ -706,11 +706,11 @@ Example: Combat AI with 5 binary variables
 
 Total combinations: 2^5 = 32 states
 Transitions: 32 × 32 = 1,024 (worst case)
-```
+```text
 
 **Solution: Hierarchical FSM (HFSM)**
 
-```
+```text
 CombatRoot
 ├── RangedCombat
 │   ├── HasAmmo
@@ -724,7 +724,7 @@ CombatRoot
 
 States: 8 (down from 32)
 Transitions: ~15 (down from 1,024)
-```
+```text
 
 #### Lack of Reactivity
 
@@ -744,7 +744,7 @@ public class EventDrivenFSM {
         }
     }
 }
-```
+```text
 
 ### 2.8 Implementation Status
 
@@ -844,7 +844,7 @@ enum NodeStatus {
     FAILURE,  // Node failed
     RUNNING   // Node still executing
 }
-```
+```text
 
 #### Sequence Node
 
@@ -875,7 +875,7 @@ public class SequenceNode implements BTNode {
         return NodeStatus.SUCCESS;
     }
 }
-```
+```text
 
 #### Selector Node
 
@@ -906,13 +906,13 @@ public class SelectorNode implements BTNode {
         return NodeStatus.FAILURE;
     }
 }
-```
+```text
 
 ### 3.4 Minecraft Behavior Tree Examples
 
 #### Example: Autonomous Resource Gathering
 
-```
+```text
 ROOT (Selector)
 ├── Sequence: Gather Wood
 │   ├── Condition: Need wood?
@@ -940,11 +940,11 @@ ROOT (Selector)
     ├── Condition: Hungry?
     ├── Action: Find nearby animals
     └── Action: Hunt animal
-```
+```text
 
 #### Example: Building with BT
 
-```
+```text
 ROOT (Sequence: Build House)
 ├── Sequence: Gather Materials
 │   ├── Selector: Get Wood
@@ -984,7 +984,7 @@ ROOT (Sequence: Build House)
     ├── Action: Place door
     ├── Action: Place windows
     └── Action: Add torches
-```
+```text
 
 ### 3.5 BT Implementation Complexity
 
@@ -999,7 +999,7 @@ ROOT (Sequence: Build House)
 
 ### 3.6 BT Performance Characteristics
 
-```
+```text
 Tree Traversal: O(n) where n = nodes visited
 ├── Best case: O(1) - root succeeds/fails immediately
 ├── Average case: O(log n) - balanced tree
@@ -1014,7 +1014,7 @@ Tick Time:
 ├── Small tree (20 nodes): < 0.01 ms
 ├── Medium tree (100 nodes): 0.01 - 0.05 ms
 └── Large tree (500 nodes): 0.05 - 0.2 ms
-```
+```text
 
 ### 3.7 BT vs FSM Decision Matrix
 
@@ -1076,7 +1076,7 @@ while (!bt.isComplete()) {
     NodeStatus status = bt.tick(steve, blackboard);
     Thread.sleep(50); // 20 ticks per second
 }
-```
+```text
 
 ---
 
@@ -1094,7 +1094,7 @@ while (!bt.isComplete()) {
 
 ### 4.2 GOAP Architecture
 
-```
+```text
 GOAP Planning Process:
 1. Define Goal State (e.g., "hasWeapon: true", "enemyDead: true")
 2. Get Current World State
@@ -1105,7 +1105,7 @@ GOAP Planning Process:
    └── Heuristic: Distance from goal
 4. Execute actions sequentially
 5. Replan if world state changes
-```
+```text
 
 ### 4.3 GOAP Implementation for Minecraft
 
@@ -1134,7 +1134,7 @@ public class WorldState {
         return copy;
     }
 }
-```
+```text
 
 #### Actions
 
@@ -1171,7 +1171,7 @@ public abstract class BaseGoapAction implements GoapAction {
         return newState;
     }
 }
-```
+```text
 
 #### Minecraft-Specific Actions
 
@@ -1232,7 +1232,7 @@ public class CraftItemAction extends BaseGoapAction {
         return true;
     }
 }
-```
+```text
 
 #### GOAP Planner
 
@@ -1293,7 +1293,7 @@ public class GoapPlanner {
         return null; // No plan found
     }
 }
-```
+```text
 
 ### 4.4 GOAP Implementation Complexity
 
@@ -1308,7 +1308,7 @@ public class GoapPlanner {
 
 ### 4.5 GOAP Performance Characteristics
 
-```
+```text
 Planning: O(b^d) where b = branching factor, d = depth
 ├── Small state space (10 states): O(1) - < 1 ms
 ├── Medium state space (100 states): O(10-100) - 1-10 ms
@@ -1324,7 +1324,7 @@ Replanning:
 ├── On every state change
 ├── Cached until invalid
 └── Costly for dynamic worlds
-```
+```text
 
 ### 4.6 When to Use GOAP in Minecraft
 
@@ -1384,7 +1384,7 @@ The key insight of HTN planning is that many real-world planning problems have n
 
 ### 5.2 HTN Architecture
 
-```
+```text
 HTN Decomposition:
 High-Level Task: "Build House"
     ↓
@@ -1402,7 +1402,7 @@ Primitive Actions:
     - Move to location
     - Perform mining/chopping
     - Return to site
-```
+```text
 
 ### 5.3 HTN Implementation for Minecraft
 
@@ -1450,7 +1450,7 @@ public class MinecraftHTNDomain {
         );
     }
 }
-```
+```text
 
 #### HTN Planner
 
@@ -1519,7 +1519,7 @@ public class HTNPlanner {
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
 }
-```
+```text
 
 ### 5.4 HTN Implementation Complexity
 
@@ -1533,7 +1533,7 @@ public class HTNPlanner {
 
 ### 5.5 HTN Performance Characteristics
 
-```
+```text
 Decomposition: O(m × d) where m = methods, d = depth
 ├── Simple hierarchy: O(10-100) - < 1 ms
 ├── Medium hierarchy: O(100-1000) - 1-5 ms
@@ -1549,7 +1549,7 @@ Replanning:
 ├── Only when methods fail
 ├── Much less frequent than GOAP
 └── Better for dynamic worlds
-```
+```text
 
 ### 5.6 When to Use HTN in Minecraft
 
@@ -1605,7 +1605,7 @@ List<Task> primitiveTasks = htnPlanner.decompose(rootTask, worldState);
 
 // Execute using existing action system
 actionExecutor.executeTasks(primitiveTasks);
-```
+```text
 
 **HTN Domain Definition Example:**
 ```java
@@ -1631,10 +1631,10 @@ htnDomain.addMethod(new HTNMethod("build_house_with_gathering")
     ])
     .priority(50) // Lower priority
 );
-```
+```text
 
 **Hybrid LLM + HTN Architecture:**
-```
+```text
 Player Command
     ↓
 LLM Planner (understands natural language)
@@ -1644,7 +1644,7 @@ HTN Decomposition (structures the plan)
 Behavior Tree (reactive execution)
     ↓
 Action Executor (tick-based execution)
-```
+```text
 
 ---
 
@@ -1655,9 +1655,9 @@ Action Executor (tick-based execution)
 **Utility AI** scores actions based on multiple contextual factors, selecting the highest-scoring action.
 
 **Formula:**
-```
+```text
 Utility(Action) = Σ(Curve(Normalized_Input) × Weight)
-```
+```text
 
 **Key Components:**
 - **Considerations**: Input factors (distance, health, etc.)
@@ -1668,30 +1668,30 @@ Utility(Action) = Σ(Curve(Normalized_Input) × Weight)
 ### 6.2 Response Curves
 
 #### Linear Curve
-```
+```text
 Score = m × x + b
-```
+```text
 - **Use:** Direct proportional relationships
 - **Example:** More resources = higher utility
 
 #### Logistic Curve (S-Curve)
-```
+```text
 Score = 1 / (1 + e^(-k × (x - x₀)))
-```
+```text
 - **Use:** Threshold-based decisions
 - **Example:** Health below 30% = flee
 
 #### Exponential Curve
-```
+```text
 Score = base^(exponent × x)
-```
+```text
 - **Use:** Rapidly increasing values
 - **Example:** Threat level increases with proximity
 
 #### Binary Curve
-```
+```text
 Score = 1 if condition_met else 0
-```
+```text
 - **Use:** Boolean conditions
 - **Example:** Has weapon? Can place block?
 
@@ -1753,7 +1753,7 @@ public class WorkerUtilitySystem {
             .orElse(null);
     }
 }
-```
+```text
 
 #### Utility Action Implementation
 
@@ -1792,7 +1792,7 @@ public class UtilityAction {
         return totalWeight > 0 ? totalScore / totalWeight : 0.0;
     }
 }
-```
+```text
 
 ### 6.4 Utility AI Implementation Complexity
 
@@ -1806,7 +1806,7 @@ public class UtilityAction {
 
 ### 6.5 Utility AI Performance
 
-```
+```text
 Scoring: O(a × c) where a = actions, c = considerations
 ├── Small (5 actions, 3 considerations): O(15) - < 0.01 ms
 ├── Medium (20 actions, 5 considerations): O(100) - 0.01-0.1 ms
@@ -1822,7 +1822,7 @@ Reactive Re-evaluation:
 ├── Every tick (optional)
 ├── On change (better)
 └── Cached until invalid (best)
-```
+```text
 
 ### 6.6 When to Use Utility AI in Minecraft
 
@@ -1890,7 +1890,7 @@ List<Task> prioritized = prioritizer.prioritize(tasks, context);
 DecisionExplanation explanation = DecisionExplanation.explain(
     selectedTask, allTasks, context, prioritizer);
 UtilityAIIntegration.logDecision(explanation);
-```
+```text
 
 ---
 
@@ -1930,7 +1930,7 @@ public class LLMTaskPlanner {
             });
     }
 }
-```
+```text
 
 #### Pattern 2: LLM as Meta-Controller
 
@@ -1959,7 +1959,7 @@ public class LLMMetaController {
         });
     }
 }
-```
+```text
 
 #### Pattern 3: LLM + Skill Library (Voyager Pattern)
 
@@ -2001,7 +2001,7 @@ public class SkillLibrary {
             });
     }
 }
-```
+```text
 
 ### 7.3 LLM Implementation Complexity
 
@@ -2016,7 +2016,7 @@ public class SkillLibrary {
 
 ### 7.4 LLM Performance Characteristics
 
-```
+```text
 LLM API Call: 3-60 seconds (network dependent)
 ├── Fast model (Groq Llama 3-70b): 1-3s
 ├── Medium model (GPT-4): 5-15s
@@ -2038,7 +2038,7 @@ Cache Hit Rate:
 ├── With skill library: 40-60%
 ├── With HTN fallback: 60-80%
 └── Hybrid system: 80-95%
-```
+```text
 
 ### 7.5 Implementation Status
 
@@ -2105,7 +2105,7 @@ The LLM system is integrated with:
 5. **Skill Library**: Cache successful patterns as reusable skills (Voyager pattern)
 
 **Current Architecture Flow:**
-```
+```text
 Player Command ("Build a house")
     ↓
 AgentStateMachine: IDLE → PLANNING
@@ -2125,7 +2125,7 @@ ActionExecutor executes tasks tick-by-tick
 AgentStateMachine: EXECUTING → COMPLETED
     ↓
 AgentStateMachine: COMPLETED → IDLE
-```
+```text
 
 **Recommended Improvements:**
 1. Add HTN fallback for common commands (reduce LLM calls by 60-80%)
@@ -2167,7 +2167,7 @@ public class SessionManager {
         };
     }
 }
-```
+```text
 
 **Key Features:**
 - **Session Phases**: Models warm-up (5-15 min), performance (15-60 min), fatigue (60+ min)
@@ -2184,7 +2184,7 @@ public static int gaussianJitter(int baseMs, double variancePercent) {
     int jittered = (int) (baseMs + jitter);
     return Math.max(MIN_ACTION_DELAY_MS, Math.min(MAX_ACTION_DELAY_MS, jittered));
 }
-```
+```text
 
 **Bezier Curve Movement (Honorbuddy pattern):**
 ```java
@@ -2195,7 +2195,7 @@ public static double[] bezierPoint(double t, List<double[]> controlPoints) {
     double z = Math.pow(1 - t, 2) * p0[2] + 2 * (1 - t) * t * p1[2] + Math.pow(t, 2) * p2[2];
     return new double[] {x, y, z};
 }
-```
+```text
 
 **Adaptive Mistake Simulation:**
 ```java
@@ -2217,7 +2217,7 @@ public class MistakeSimulator {
         return random.nextDouble() < baseErrorRate;
     }
 }
-```
+```text
 
 **Idle Behavior Controller:**
 - Personality-driven idle actions (wandering, examining, following)
@@ -2250,7 +2250,7 @@ public class StuckDetector {
         return null;  // Not stuck
     }
 }
-```
+```text
 
 **Exponential Backoff Recovery (modern resilience pattern):**
 ```java
@@ -2284,7 +2284,7 @@ public class ErrorRecoveryStrategy {
         }
     }
 }
-```
+```text
 
 **Retry Policy Configuration:**
 ```java
@@ -2297,7 +2297,7 @@ public class RetryPolicy {
         return (long) (baseDelayMs * Math.pow(backoffMultiplier, attemptNumber));
     }
 }
-```
+```text
 
 #### 7.6.3 Item Rules Engine
 
@@ -2324,7 +2324,7 @@ ItemRule valuablePickaxe = new ItemRule(
     RuleAction.KEEP,
     priority = 100
 );
-```
+```text
 
 **Rule Evaluation:**
 ```java
@@ -2345,7 +2345,7 @@ public class RuleEvaluator {
         return RuleAction.DEFAULT;  // No rule matched
     }
 }
-```
+```text
 
 **Integration with LLM Planning:**
 - LLM generates natural language item preferences ("Keep high-quality tools")
@@ -2384,7 +2384,7 @@ public class RuleEvaluator {
 
 ### 8.2 Decision Flowchart
 
-```
+```text
                     ┌─────────────────────────┐
                     │   Need AI for Game Agent? │
                     └──────────┬──────────────┘
@@ -2458,11 +2458,11 @@ public class RuleEvaluator {
               │  Utility AI for      │
               │  scoring decisions  │
               └─────────────────────┘
-```
+```text
 
 ### 8.3 Implementation Complexity vs Capability Matrix
 
-```
+```text
 Capability vs Complexity:
 
 High Capability
@@ -2477,7 +2477,7 @@ High Capability
     │                                │        │
     └────────────────────────────────────────┘
         Low Complexity              High Complexity
-```
+```text
 
 ---
 
@@ -2487,44 +2487,44 @@ High Capability
 
 #### Pattern 1: LLM + Behavior Tree
 
-```
+```text
 LLM generates plan → BT executes plan
 ├── LLM: "Build a house" → [gather_wood, craft_planks, build]
 ├── BT: Executes each action with reactivity
 └── Benefits: Natural language + reactive execution
-```
+```text
 
 #### Pattern 2: Utility AI + Behavior Tree
 
-```
+```text
 Utility scores select behavior tree
 ├── Utility: Score combat = 0.8, build = 0.3, patrol = 0.1
 ├── BT: Execute combat behavior tree
 └── Benefits: Dynamic selection + structured execution
-```
+```text
 
 #### Pattern 3: HTN + GOAP
 
-```
+```text
 HTN decomposes high-level → GOAP plans low-level
 ├── HTN: "build_house" → [gather, build]
 ├── GOAP: Plan "gather" actions
 └── Benefits: Structured decomposition + optimal planning
-```
+```text
 
 #### Pattern 4: FSM + Event System
 
-```
+```text
 FSM for states + Events for reactivity
 ├── FSM: Current state = PATROL
 ├── Event: ENEMY_SPOTTED
 ├── Transition: PATROL → CHASE
 └── Benefits: Explicit states + immediate reactivity
-```
+```text
 
 ### 9.2 Recommended Hybrid for Steve AI
 
-```
+```text
 Three-Layer Hybrid Architecture:
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -2555,7 +2555,7 @@ Three-Layer Hybrid Architecture:
 │  - Progress monitoring and rebalancing                      │
 │  - Event-driven reactivity                                   │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -2580,33 +2580,33 @@ Three-Layer Hybrid Architecture:
 
 #### Scenario 1: Single-Agent Autonomous Building
 
-```
+```text
 LLM Planner → HTN Decomposition → Behavior Tree Execution
 ├── Player: "Build a small wooden house"
 ├── LLM: Understands command, generates high-level plan
 ├── HTN: Decomposes into structured build steps
 └── BT: Executes each step with reactivity
-```
+```text
 
 #### Scenario 2: Multi-Agent Resource Gathering
 
-```
+```text
 Utility AI Worker Assignment + Behavior Tree Execution
 ├── Foreman: Utility scores assign workers to tasks
 ├── Workers: Each has BT for their assigned task
 ├── Events: Task completion, interrupts
 └── Rebalancing: Reassign workers dynamically
-```
+```text
 
 #### Scenario 3: Combat & Defense
 
-```
+```text
 Behavior Tree Reactivity + Utility AI Targeting
 ├── BT: High-priority combat branch
 ├── Utility: Score targets (threat, distance, loot)
 ├── FSM: Combat states (attack, flee, hide)
 └── Events: Damage received, allies nearby
-```
+```text
 
 ### 10.3 Implementation Priorities
 
@@ -2631,7 +2631,7 @@ Behavior Tree Reactivity + Utility AI Targeting
 
 ### 11.1 Code Organization
 
-```
+```text
 com.steve.ai
 ├── bt/                    # Behavior Tree system
 │   ├── nodes/              # Node implementations
@@ -2660,7 +2660,7 @@ com.steve.ai
 └── fsm/                    # FSM components
     ├── StateMachine.java
     └── StateTransitionTable.java
-```
+```java
 
 ### 11.2 Integration Pattern: Adapter
 
@@ -2688,7 +2688,7 @@ public class ActionNodeAdapter implements BTNode {
 // Registering in BT
 BehaviorTree bt = new BehaviorTree();
 bt.addChild(new ActionNodeAdapter(new MineBlockAction()));
-```
+```text
 
 ### 11.3 Migration Patterns
 
@@ -2719,7 +2719,7 @@ root.addChild(new SequenceNode(
     new ActionNode(this::chaseEnemy)
 ));
 root.addChild(new ActionNode(this::patrol));
-```
+```text
 
 #### Hardcoded → LLM Planning Migration
 
@@ -2742,7 +2742,7 @@ public void execute() {
             taskQueue.addAll(tasks);
         });
 }
-```
+```text
 
 ### 11.4 Multiplayer Architecture Patterns
 
@@ -2750,7 +2750,7 @@ Multiplayer environments introduce unique architectural challenges for AI agents
 
 **The Multiplayer Synchronization Challenge:**
 
-```
+```text
 Single-Player Timing:
 ├── AI decision: 0-5ms (same tick)
 ├── Action execution: 0-50ms (same or next tick)
@@ -2762,7 +2762,7 @@ Multi-Player Timing:
 ├── Client → Server: 50-200ms (action confirmation)
 ├── Action execution: 100-450ms total (round-trip)
 └── Visual feedback: 100-450ms (network dependent)
-```
+```text
 
 **Bandwidth Constraints:**
 
@@ -2851,7 +2851,7 @@ public class MultiplayerAwareActionExecutor {
         }, delayMs, TimeUnit.MILLISECONDS);
     }
 }
-```
+```text
 
 **Bandwidth Optimization:**
 
@@ -2904,7 +2904,7 @@ public class ActionBatcher {
         return unbatchedSize - batchSize;
     }
 }
-```
+```text
 
 **Latency Compensation Strategies:**
 
@@ -2947,7 +2947,7 @@ public class LatencyCompensator {
         scheduleAction(action, scheduledTick);
     }
 }
-```
+```text
 
 **State Synchronization:**
 
@@ -2998,7 +2998,7 @@ public class StateSynchronizer {
         );
     }
 }
-```
+```text
 
 **Architectural Decision Matrix:**
 
@@ -3059,7 +3059,7 @@ public void testFSMValidTransitions() {
     assertFalse(fsm.transitionTo(AgentState.COMPLETED));
     assertEquals(AgentState.PLANNING, fsm.getCurrentState());
 }
-```
+```text
 
 #### Testing BT Nodes
 
@@ -3081,7 +3081,7 @@ public void testSelectorNode() {
 
     assertEquals(NodeStatus.SUCCESS, sel.tick(null, null));
 }
-```
+```text
 
 #### Testing Utility Scoring
 
@@ -3099,7 +3099,7 @@ public void testUtilityScoring() {
 
     assertTrue(score > 0.5);
 }
-```
+```text
 
 ### 12.2 Integration Testing
 
@@ -3123,7 +3123,7 @@ public void testLLMPlanningToBTExecution() {
     assertNotNull(bt);
     assertEquals(NodeStatus.SUCCESS, bt.tick(mockSteve, mockContext));
 }
-```
+```text
 
 ### 12.3 Performance Testing
 
@@ -3141,7 +3141,7 @@ public void testBehaviorTreePerformance() {
     double avgMs = (endTime - startTime) / 1_000_000.0 / 10000;
     assertTrue(avgMs < 1.0, "Average tick time: " + avgMs + "ms");
 }
-```
+```text
 
 ---
 
@@ -3185,7 +3185,7 @@ public class BehaviorTreeEditor extends Application {
         stage.show();
     }
 }
-```
+```text
 
 ---
 
@@ -3231,7 +3231,7 @@ public class BehaviorTreeEditor extends Application {
     ]
   }
 }
-```
+```text
 
 ### 14.2 Data-Driven HTN Domains
 
@@ -3259,7 +3259,7 @@ public class BehaviorTreeEditor extends Application {
     }
   ]
 }
-```
+```text
 
 ### 14.3 Data-Driven Utility Definitions
 
@@ -3295,7 +3295,7 @@ public class BehaviorTreeEditor extends Application {
     }
   ]
 }
-```
+```text
 
 ---
 
@@ -3567,7 +3567,7 @@ The following patterns are well-researched in academia but not yet implemented:
 
 The current foreman-worker architecture assumes single-server deployment, which creates fundamental scalability limitations:
 
-```
+```text
 Single-Server Constraints:
 ├── CPU: Single machine processes all AI
 ├── Memory: All agent state in one JVM
@@ -3579,7 +3579,7 @@ Consequences:
 - Geographic Latency: All players connect to same server
 - Single Point of Failure: Server crash affects all agents
 - No Horizontal Scaling: Cannot add more servers to increase capacity
-```
+```text
 
 **Distributed Architecture Challenges:**
 
@@ -3591,17 +3591,17 @@ Implementing multi-server coordination introduces significant complexity:
    Server A: Agent at (100, 64, 100), state: IDLE
    Server B: Agent at (100, 64, 100), state: MINING
    // Which state is correct?
-   ```
+```text
 
 2. **Coordination Overhead:** Network latency between servers
-   ```
+```text
    Local Coordination: <1ms (in-memory)
    Network Coordination: 50-200ms (RPC)
    Result: 50-200x slower multi-server coordination
-   ```
+```text
 
 3. **LLM Request Routing:** Which server handles LLM planning?
-   ```
+```text
    Option A: Dedicated LLM server
    - Pros: Centralized API key management
    - Cons: Single point of failure, network latency
@@ -3609,7 +3609,7 @@ Implementing multi-server coordination introduces significant complexity:
    Option B: Each server handles own LLM requests
    - Pros: No single point of failure
    - Cons: Duplicate API costs, inconsistent caching
-   ```
+```text
 
 **Research Gap:** No established patterns for distributed LLM-based game AI agents. Current multi-agent systems (Pogamut, 2015) assume traditional AI architectures without LLM dependency.
 
@@ -3632,33 +3632,33 @@ Agent C (Worker): Receives command, starts moving
 Total Coordination Delay: 300ms
 Problem: Agent A assumes coordination is instant, plans accordingly
 Result: Agents B and C collide, both try to place blocks
-```
+```text
 
 **Latency-Hiding Strategies:**
 
 1. **Speculative Execution:** Predict agent actions before confirmation
-   ```
+```text
    Foreman predicts: Agent B will place block at (100, 64, 100)
    Foreman plans next action based on prediction
    If prediction correct: No latency penalty
    If prediction wrong: Rollback and replan (expensive)
-   ```
+```text
 
 2. **Parallel Planning:** Plan multiple branches simultaneously
-   ```
+```text
    Branch 1: Agent B succeeds
    Branch 2: Agent B fails
    Branch 3: Agent B is delayed
    Execute appropriate branch when confirmation arrives
    Cost: 3x planning overhead
-   ```
+```text
 
 3. **Loose Coordination:** Allow agents to work independently with periodic sync
-   ```
+```text
    Agents work on separate sub-tasks
    Sync every 5 seconds to reconcile
    Risk: Suboptimal resource allocation
-   ```
+```text
 
 **Research Question:** How do you maintain coherent multi-agent behavior with 100-200ms network latency? Traditional multi-agent systems (Stone & Veloso, 2000) assume <10ms latency for coordination.
 
@@ -3682,13 +3682,13 @@ Distributed AI systems introduce bugs that only appear under specific timing con
 // - LLM response timing control
 
 // Result: Bug may appear once in 1000 test runs
-```
+```text
 
 **Observability Challenges:**
 
 Traditional debugging tools (breakpoints, stepping) don't work well with distributed async systems:
 
-```
+```text
 Traditional Debugging:
 1. Set breakpoint
 2. Inspect variables
@@ -3705,7 +3705,7 @@ Better Approach: Distributed tracing
 - Log all events with timestamps
 - Reconstruct execution flow
 - Identify timing-related bugs
-```
+```text
 
 **Tooling Gap:** No established debugging tools for distributed LLM-based game AI. Traditional distributed tracing tools (Jaeger, Zipkin) don't handle LLM-specific concerns (prompt/response tracking, hallucination detection).
 
@@ -3715,7 +3715,7 @@ Better Approach: Distributed tracing
 
 Each agent requires significant memory for AI systems:
 
-```
+```text
 Per-Agent Memory Breakdown:
 ├── LLM Conversation History: 100-500 KB
 ├── Emotional State: 50 KB (22 emotions + decay)
@@ -3728,7 +3728,7 @@ Total Per Agent: 1-4 MB
 
 With 100 Agents: 100-400 MB
 With 1000 Agents: 1-4 GB (problematic)
-```
+```text
 
 **Memory Management Strategies:**
 
@@ -3742,7 +3742,7 @@ With 1000 Agents: 1-4 GB (problematic)
        // Use full AI
        agent.setAIComplexity(AIComplexity.HIGH);
    }
-   ```
+```text
 
 2. **Just-In-Time Loading:**
    ```java
@@ -3754,7 +3754,7 @@ With 1000 Agents: 1-4 GB (problematic)
    agent.onPlayerLeave(() -> {
        unloadFullAIState();  // Free memory
    });
-   ```
+```text
 
 3. **Memory Pooling:**
    ```java
@@ -3763,7 +3763,7 @@ With 1000 Agents: 1-4 GB (problematic)
    agent.setMemoryPool(pool);
    // When agent dies, memory returns to pool
    // When agent spawns, memory allocated from pool
-   ```
+```text
 
 **Research Gap:** No established patterns for memory management in LLM-based multi-agent systems. Traditional game AI memory optimization (LOD, pooling) doesn't account for LLM-specific memory demands (conversation history, skill libraries).
 
@@ -3800,7 +3800,7 @@ public synchronized Task claimTask(Agent agent) {
     }
     return queue.poll();
 }
-```
+```text
 
 **Deadlock Risks:**
 
@@ -3816,7 +3816,7 @@ Thread B (Agent 2): Locks Resource B → Waits for Resource A
 Agent 1: Claims "Iron Ore" → Needs "Furnace"
 Agent 2: Claims "Furnace" → Needs "Iron Ore"
 // Deadlock: Neither can proceed
-```
+```text
 
 **Synchronization Strategies:**
 
@@ -3828,7 +3828,7 @@ Agent 2: Claims "Furnace" → Needs "Iron Ore"
    // Atomic operations without locks
    taskMap.putIfAbsent(taskId, task);
    taskMap.replace(taskId, oldTask, newTask);
-   ```
+```text
 
 2. **Actor Model:**
    ```java
@@ -3836,7 +3836,7 @@ Agent 2: Claims "Furnace" → Needs "Iron Ore"
    agentActor.tell(message);
    // No shared state, no locks needed
    // Message passing ensures thread safety
-   ```
+```text
 
 3. **Software Transactional Memory (STM):**
    ```java
@@ -3846,7 +3846,7 @@ Agent 2: Claims "Furnace" → Needs "Iron Ore"
        resourceB.claim(agent1);
    });
    // If transaction fails, automatically retries
-   ```
+```text
 
 **Research Gap:** No established best practices for thread synchronization in LLM-based game AI. Traditional game AI synchronization Isla, "Handling Complexity in the Halo 2 AI" (2005) doesn't account for LLM planning's async nature.
 
@@ -3869,7 +3869,7 @@ This chapter presents sophisticated multi-agent coordination protocols (Contract
 
 Multi-agent coordination research assumes large numbers of agents (100-1000) to justify coordination overhead. The Steve AI project's actual use case involves 1-10 agents, for which sophisticated coordination is **unnecessary complexity**:
 
-```
+```text
 Coordination Overhead Analysis:
 ├── Contract Net Protocol: 5-10ms per task auction
 ├── Blackboard Lookup: 1-3ms per knowledge query
@@ -3881,7 +3881,7 @@ Problem: Exceeds 50ms tick budget by 2-3x
 
 Reality Check: For 1-10 agents, simple task queues are faster
 Result: Sophisticated coordination makes performance worse, not better
-```
+```text
 
 **The "Coordination Tax":**
 
@@ -3908,7 +3908,7 @@ awardContract(winningBid);  // 2-5ms (network)
 
 Total: 5-1013ms overhead
 Result: 5-1000x slower than simple queue
-```
+```text
 
 **Honest Recommendation:**
 
@@ -3938,7 +3938,7 @@ The academic literature on multi-agent coordination assumes **large-scale system
 
 This chapter, like much of the dissertation, relies heavily on academic citations to justify architectural decisions. However, this creates a **citation bias** where well-documented techniques are recommended over simpler, less-documented approaches:
 
-```
+```text
 Citation Count vs. Practical Utility:
 ├── Behavior Trees: 500+ citations, widely recommended
 ├── HTN Planning: 200+ citations, academically popular
@@ -3947,7 +3947,7 @@ Citation Count vs. Practical Utility:
 
 Reality Check: For 1-10 agents, simple task queues are superior
 Academic Bias: Dissertation recommends BT/HTN despite being unnecessary
-```
+```text
 
 **The "Publication Pressure" Problem:**
 

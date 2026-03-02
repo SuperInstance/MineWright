@@ -54,6 +54,7 @@ Polish and ship improvements
 - ✅ **Integration Test Framework**: MockMinecraftServer, TestEntityFactory, TestScenarioBuilder
 - ✅ **Script DSL System**: 13 classes for automation script generation and refinement
 - ✅ **Script Tests**: 7 test classes for Script DSL validation
+- ✅ **Skill Tests**: PatternExtractorTest (38 tests, 1,051 lines) - comprehensive pattern recognition coverage
 - ✅ **JaCoCo Coverage**: Configured with package-level thresholds
 - ✅ **Test Documentation**: TEST_COVERAGE.md, TEST_STRUCTURE_GUIDE.md
 - ✅ **GitHub Templates**: PR template, issue templates, dependabot.yml, CODEOWNERS
@@ -226,7 +227,7 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 - ⏳ Small model fine-tuning (Cascade router exists, actual specialization not done)
 - ⏳ Comprehensive evaluation pipeline
 
-**Test Coverage:** ~23% (54 test files / 234 source files) - Gap in core component tests
+**Test Coverage:** ~24% (55 test files / 234 source files) - Gap in core component tests
 
 ### Codebase Metrics (2026-03-01 Audit)
 
@@ -234,8 +235,8 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 |--------|-------|-------|
 | **Source Files** | 234 | Java files in src/main/java |
 | **Source Lines** | 85,752 | Lines of production code |
-| **Test Files** | 54 | Java files in src/test/java |
-| **Test Lines** | 32,298 | Lines of test code |
+| **Test Files** | 55 | Java files in src/test/java |
+| **Test Lines** | 33,349 | Lines of test code |
 | **Documentation Files** | 425 | Markdown files in docs/ |
 | **Documentation Lines** | 521,003 | Comprehensive documentation |
 | **Packages** | 49 | Including behavior, llm, memory, etc. |
@@ -1033,7 +1034,7 @@ Steve AI is a sophisticated multi-agent system for Minecraft that combines:
 
 **Current Status (2026-03-01 Audit):**
 - **Code:** 85% complete (234 files, 85,752 lines)
-- **Tests:** 23% coverage (54 files, 32,298 lines) - needs improvement
+- **Tests:** 24% coverage (55 files, 33,349 lines) - improving
 - **Documentation:** 425 files, 521,003 lines - comprehensive
 - **Dissertation:** A-grade (92/100), targeting A+ (97+)
 - **Security:** All critical issues addressed (2026-03-01)
@@ -1048,7 +1049,7 @@ Steve AI is a sophisticated multi-agent system for Minecraft that combines:
 
 ---
 
-**Document Version:** 2.5
+**Document Version:** 2.6
 **Last Updated:** 2026-03-01
 **Maintained By:** Claude Orchestrator
 **Next Review:** After major architecture changes or dissertation completion
