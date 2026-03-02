@@ -1,5 +1,6 @@
 package com.minewright.htn;
 
+import com.minewright.testutil.TestLogger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ class HTNPlannerTest {
 
     @BeforeEach
     void setUp() {
+        TestLogger.initForTesting();
         basicState = HTNWorldState.createMutable();
         stateWithAxe = HTNWorldState.builder()
             .property("hasAxe", true)
