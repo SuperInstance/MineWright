@@ -3,7 +3,7 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Updated:** 2026-03-01
-**Version:** 2.5
+**Version:** 2.8
 
 ---
 
@@ -229,7 +229,7 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 - ⏳ Small model fine-tuning (Cascade router exists, actual specialization not done)
 - ⏳ Comprehensive evaluation pipeline
 
-**Test Coverage:** ~24% (55 test files / 234 source files) - Gap in core component tests
+**Test Coverage:** 39% (91 test files / 235 source files) - Comprehensive test suite
 
 ### Codebase Metrics (2026-03-01 Audit)
 

@@ -192,7 +192,7 @@ class FollowProcessTest {
 
         List<Player> players = new ArrayList<>();
         players.add(mockOwnerPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         Player owner = followProcess.getOwnerEntity();
         assertNotNull(owner);
@@ -207,7 +207,7 @@ class FollowProcessTest {
         List<Player> players = new ArrayList<>();
         players.add(mockOtherPlayer);
         players.add(mockOwnerPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         Player owner = followProcess.getOwnerEntity();
         assertNotNull(owner);
@@ -283,7 +283,7 @@ class FollowProcessTest {
         List<Player> players = new ArrayList<>();
         players.add(mockOwnerPlayer);
         players.add(mockOtherPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         // Owner is at distance 10
         when(mockOwnerPlayer.position()).thenReturn(new Vec3(10, 64, 0));
@@ -474,7 +474,7 @@ class FollowProcessTest {
 
         List<Player> players = new ArrayList<>();
         players.add(mockOwnerPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         // Owner at distance 10 (within MAX_TELEPORT_DISTANCE)
         when(mockOwnerPlayer.position()).thenReturn(new Vec3(10, 64, 0));
@@ -489,7 +489,7 @@ class FollowProcessTest {
 
         List<Player> players = new ArrayList<>();
         players.add(mockOwnerPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         // Owner at distance 100 (outside MAX_TELEPORT_DISTANCE of 64)
         when(mockOwnerPlayer.position()).thenReturn(new Vec3(100, 64, 0));
@@ -521,7 +521,7 @@ class FollowProcessTest {
     void testFindPlayerByUUID_NullUUID() {
         List<Player> players = new ArrayList<>();
         players.add(mockOwnerPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         // Don't set owner UUID
         Player found = followProcess.getOwnerEntity();
@@ -546,7 +546,7 @@ class FollowProcessTest {
         List<Player> players = new ArrayList<>();
         players.add(mockOtherPlayer);
         players.add(mockOwnerPlayer);
-        when(mockLevel.players()).thenReturn((List) players);
+        when(mockLevel.players()).thenAnswer(invocation -> players);
 
         Player found = followProcess.getOwnerEntity();
         assertNotNull(found);

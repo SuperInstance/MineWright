@@ -1,13 +1,18 @@
 package com.minewright.voice;
 
-import com.minewright.testutil.TestLogger;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.List;
+import com.minewright.testutil.TestLogger;
 
 /**
  * TTS implementation that uses ElevenLabs through Docker MCP Gateway.
