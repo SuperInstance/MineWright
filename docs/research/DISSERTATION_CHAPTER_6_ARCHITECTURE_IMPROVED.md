@@ -2050,6 +2050,14 @@ Cache Hit Rate:
 - Error handling and retry logic with resilience patterns (Resilience4j)
 - Configuration via TOML config file
 - Comprehensive JavaDoc documentation
+- **Humanization System** (`SessionManager`, `HumanizationUtils`, `MistakeSimulator`, `IdleBehaviorController`)
+- **Stuck Detection and Recovery** (`StuckDetector`, `ErrorRecoveryStrategy`, `RetryPolicy`)
+- **Item Rules Engine** (`ItemRule`, `ItemRuleRegistry`, `RuleEvaluator`)
+- **Behavior Tree Runtime Engine** (composite, leaf, decorator nodes)
+- **HTN Planner** (methods, world state, domain)
+- **Advanced Pathfinding** (hierarchical A*, path smoothing, movement validation)
+- **Cascade Router** (tier-based model selection)
+- **Evaluation Infrastructure** (metrics collection, benchmark scenarios)
 
 **Partially Implemented:**
 - Skill library exists (`SkillLibrary` class) but not extensively integrated with LLM planning
@@ -2123,6 +2131,227 @@ AgentStateMachine: COMPLETED → IDLE
 3. Add skill learning from successful LLM plans (Voyager pattern)
 4. Implement execution feedback loop (LLM adapts based on success/failure)
 5. Add multi-agent LLM coordination (foreman-worker pattern with LLM negotiation)
+
+### 7.6 Humanization and Error Recovery Systems
+
+**Academic Context:** The implementation of humanization and error recovery systems in Steve AI draws upon patterns from 30 years of game automation research (WoW Glider, 2005; Honorbuddy, 2010; OSRS bots, 2015) while adapting them for legitimate AI companion development (Game automation analysis, 2026; DISSERTATION_AUTOMATION_PATTERNS.md).
+
+#### 7.6.1 Humanization System Implementation
+
+**Core Components:**
+
+```java
+// Session-based fatigue modeling (inspired by Honorbuddy's session system)
+public class SessionManager {
+    public enum SessionPhase {
+        WARMUP,      // 0-10 min: 30% slower, 50% more mistakes
+        PERFORMANCE, // 10-60 min: Normal speed, normal mistakes
+        FATIGUE      // 60+ min: 50% slower, 2x mistakes
+    }
+
+    public double getReactionMultiplier() {
+        return switch (getCurrentPhase()) {
+            case WARMUP -> 1.3;
+            case PERFORMANCE -> 1.0;
+            case FATIGUE -> 1.5;
+        };
+    }
+
+    public double getErrorMultiplier() {
+        return switch (getCurrentPhase()) {
+            case WARMUP -> 1.5;
+            case PERFORMANCE -> 1.0;
+            case FATIGUE -> 2.0;
+        };
+    }
+}
+```
+
+**Key Features:**
+- **Session Phases**: Models warm-up (5-15 min), performance (15-60 min), fatigue (60+ min)
+- **Break Simulation**: Random breaks after 30 min minimum, forced breaks after 2 hours
+- **Fatigue Tracking**: Linear fatigue increase from 60 min to max at 3 hours
+- **Reaction Multiplier**: 1.0-1.5x based on session phase
+- **Error Multiplier**: 1.0-2.0x based on session phase
+
+**Gaussian Timing Jitter (WoW Glider pattern):**
+```java
+public static int gaussianJitter(int baseMs, double variancePercent) {
+    double stdDev = baseMs * variancePercent;
+    double jitter = RANDOM.nextGaussian() * stdDev;
+    int jittered = (int) (baseMs + jitter);
+    return Math.max(MIN_ACTION_DELAY_MS, Math.min(MAX_ACTION_DELAY_MS, jittered));
+}
+```
+
+**Bezier Curve Movement (Honorbuddy pattern):**
+```java
+public static double[] bezierPoint(double t, List<double[]> controlPoints) {
+    // Quadratic Bezier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+    double x = Math.pow(1 - t, 2) * p0[0] + 2 * (1 - t) * t * p1[0] + Math.pow(t, 2) * p2[0];
+    double y = Math.pow(1 - t, 2) * p0[1] + 2 * (1 - t) * t * p1[1] + Math.pow(t, 2) * p2[1];
+    double z = Math.pow(1 - t, 2) * p0[2] + 2 * (1 - t) * t * p1[2] + Math.pow(t, 2) * p2[2];
+    return new double[] {x, y, z};
+}
+```
+
+**Adaptive Mistake Simulation:**
+```java
+public class MistakeSimulator {
+    public boolean shouldMakeMistake(ActionContext context) {
+        double baseErrorRate = 0.03;  // 3% base
+
+        // Personality affects mistake rate
+        if (personality.getConscientiousness() > 80) {
+            baseErrorRate *= 0.5;  // Careful agents
+        } else if (personality.getNeuroticism() > 70) {
+            baseErrorRate *= 1.5;  // Anxious agents
+        }
+
+        // Fatigue increases mistakes
+        double fatigueLevel = sessionManager.getFatigueLevel();
+        baseErrorRate *= (1.0 + fatigueLevel);
+
+        return random.nextDouble() < baseErrorRate;
+    }
+}
+```
+
+**Idle Behavior Controller:**
+- Personality-driven idle actions (wandering, examining, following)
+- Context-aware behavior selection (combat vs. building vs. exploration)
+- OCEAN personality traits affect idle behavior distribution
+
+#### 7.6.2 Stuck Detection and Recovery System
+
+**Detection Categories (inspired by Honorbuddy's stuck handling):**
+
+```java
+public enum StuckType {
+    POSITION_STUCK,  // Agent hasn't moved (60 ticks threshold)
+    PROGRESS_STUCK,  // Moving but task not advancing (100 ticks)
+    STATE_STUCK,     // State machine not transitioning (200 ticks)
+    PATH_STUCK,      // No valid path to target (immediate)
+    RESOURCE_STUCK   // Cannot acquire required resources
+}
+
+public class StuckDetector {
+    private static final int POSITION_STUCK_TICKS = 60;
+    private static final int PROGRESS_STUCK_TICKS = 100;
+    private static final int STATE_STUCK_TICKS = 200;
+
+    public StuckType detectStuck() {
+        if (pathStuck) return StuckType.PATH_STUCK;
+        if (isPositionStuck(POSITION_STUCK_TICKS)) return StuckType.POSITION_STUCK;
+        if (isProgressStuck(...)) return StuckType.PROGRESS_STUCK;
+        if (isStateStuck(...)) return StuckType.STATE_STUCK;
+        return null;  // Not stuck
+    }
+}
+```
+
+**Exponential Backoff Recovery (modern resilience pattern):**
+```java
+public class ErrorRecoveryStrategy {
+    public void handleFailure(ActionContext context, Exception error) {
+        int attempt = context.getFailureCount();
+
+        if (attempt < MAX_RETRIES) {
+            // Exponential backoff
+            long backoffDelay = (long) (BASE_DELAY * Math.pow(2, attempt));
+            scheduleRetry(context, backoffDelay);
+        } else {
+            // Graceful degradation
+            degradeGracefully(context);
+            context.resetFailureCount();
+        }
+    }
+
+    private void degradeGracefully(ActionContext context) {
+        switch (context.getActionType()) {
+            case MINING:
+                context.transitionTo(State.RETURNING);
+                break;
+            case BUILDING:
+                saveProgress(context);
+                context.transitionTo(State.IDLE);
+                break;
+            case COMBAT:
+                context.transitionTo(State.FLEEING);
+                break;
+        }
+    }
+}
+```
+
+**Retry Policy Configuration:**
+```java
+public class RetryPolicy {
+    private final int maxRetries;
+    private final long baseDelayMs;
+    private final double backoffMultiplier;
+
+    public long calculateBackoff(int attemptNumber) {
+        return (long) (baseDelayMs * Math.pow(backoffMultiplier, attemptNumber));
+    }
+}
+```
+
+#### 7.6.3 Item Rules Engine
+
+**Pattern Origin:** Diablo's Pickit system (Demonbuddy, Koolo) pioneered declarative item filtering rules (NIP format). Steve AI extends this pattern with a full rule engine.
+
+**Declarative Rule Structure:**
+```java
+public class ItemRule {
+    private String name;
+    private List<RuleCondition> conditions;  // All must match
+    private RuleAction action;               // KEEP, DROP, PICKUP
+    private int priority;                    // Higher = evaluated first
+    private boolean enabled;
+}
+
+// Example rule:
+ItemRule valuablePickaxe = new ItemRule(
+    "Valuable Pickaxes",
+    List.of(
+        new ItemTypeCondition(ItemType.PICKAXE),
+        new DurabilityCondition(0.5, 1.0),    // 50-100% durability
+        new EnchantmentCondition(minLevel = 3)
+    ),
+    RuleAction.KEEP,
+    priority = 100
+);
+```
+
+**Rule Evaluation:**
+```java
+public class RuleEvaluator {
+    public RuleAction evaluate(ItemStack item, List<ItemRule> rules) {
+        // Sort by priority (highest first)
+        List<ItemRule> sortedRules = rules.stream()
+            .filter(ItemRule::isEnabled)
+            .sorted(Comparator.comparingInt(ItemRule::getPriority).reversed())
+            .toList();
+
+        for (ItemRule rule : sortedRules) {
+            if (allConditionsMatch(rule, item)) {
+                return rule.getAction();
+            }
+        }
+
+        return RuleAction.DEFAULT;  // No rule matched
+    }
+}
+```
+
+**Integration with LLM Planning:**
+- LLM generates natural language item preferences ("Keep high-quality tools")
+- System converts to structured ItemRule instances
+- Rules persist across sessions (learned preferences)
+- Rules can be shared between agents (foreman → workers)
+
+**Academic Contribution:** This implementation represents the first formal integration of game automation's declarative rule pattern with LLM-driven AI companions, bridging the gap between hand-authored bot configuration and dynamic AI preference learning.
 
 ---
 
@@ -3851,6 +4080,81 @@ Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., ... & K
 - Dense retrieval for large-scale knowledge bases
 - Vector similarity search performance analysis
 
+### Game Automation Research (Historical Patterns)
+
+MDY Industries, LLC v. Blizzard Entertainment, Inc. (2011). 629 F.3d 928 (9th Cir.).
+
+- Landmark case establishing copyright implications of game bot development
+- Legal precedent for automation software analysis
+- p. 936: "Copyright protection extends to non-literal elements of software"
+
+Game Automation Analysis. (2026). "Comprehensive Technical Analysis of Historical Game Automation Tools." *Steve AI Research Archives*.
+
+- WoW Glider (2005-2009): Three-layer architecture, FSM decision-making
+- Honorbuddy (2010-2017): Plugin architecture, C# combat routines
+- Diablo bots (Demonbuddy, Koolo): Pickit system (NIP format)
+- OSRS bots (DreamBot, OSRSBot): Java scripting API
+- MUD automation (TinTin++, ZMud): Event-driven scripting
+- Pattern catalog: Three-layer separation, plugin architecture, declarative rules
+- Humanization techniques: Gaussian timing, Bezier curves, mistake simulation
+- Error recovery: Multi-stage escalation, exponential backoff
+
+**DISSERTATION_AUTOMATION_PATTERNS.md** (2026). "Appendix: Historical Game Automation Patterns." *Steve AI Dissertation Appendix*.
+
+- Section 1: Historical timeline of game automation (1990s-2020s)
+- Section 2: Architectural pattern catalog (8 core patterns)
+- Section 5: Humanization techniques (timing, movement, mistakes, session modeling)
+- Section 6: Error recovery patterns (multi-stage, circuit breaker)
+- Section 7: Multi-agent coordination (leader-follower, contract net, blackboard)
+- Section 9: Integration with modern LLM architectures
+- Pattern mapping table: Historical → Modern applications
+
+**Key Architectural Patterns from Game Automation:**
+
+1. **Three-Layer Separation** (WoW Glider, 2005):
+   - Orchestration layer (FSM, task scheduling)
+   - Game state layer (memory reading, position tracking)
+   - Execution layer (input simulation, action execution)
+   - Modern application: LLM planning → Script layer → Execution
+
+2. **Plugin Architecture** (Honorbuddy, 2010):
+   - IBotPlugin interface for extensibility
+   - Community contributions through C# DLLs
+   - Modularity: Core updates don't break user plugins
+   - Modern application: ActionRegistry + SkillLibrary
+
+3. **Declarative Rules** (Diablo Pickit, 2000s):
+   - NIP format: `[Name] == Sword && [Quality] == Unique # [KEEP]`
+   - Separation of decision logic from execution
+   - Community sharing and rapid iteration
+   - Modern application: LLM-generated task definitions, ItemRule engine
+
+4. **Humanization Techniques** (WoW Glider, Honorbuddy, 2005-2010):
+   - Gaussian timing jitter: `baseDelay + randomGaussian(0, stdDev)`
+   - Bezier curve movement for natural input simulation
+   - Mistake simulation: 2-5% intentional error rates
+   - Session fatigue modeling: Performance degrades over time
+   - Modern application: SessionManager, HumanizationUtils, MistakeSimulator
+
+5. **Error Recovery** (Honorbuddy, 2010):
+   - Multi-stage stuck recovery: Jump → Backup → Random turn → Hearthstone
+   - Escalating recovery strategies
+   - Modern application: ErrorRecoveryStrategy, RetryPolicy, StuckDetector
+
+6. **Multi-Agent Coordination** (EVE TinyMiner, 2010s):
+   - Leader-follower pattern
+   - Role-based specialization (hauler, defender, booster)
+   - Modern application: Foreman-Worker pattern with LLM negotiation
+
+**Academic Contribution:**
+This dissertation's analysis of game automation architectures represents the first comprehensive academic treatment of these systems as precursors to modern LLM-enhanced AI agents. While legitimate AI research has often overlooked these tools due to their controversial nature, they served as "unofficial research laboratories" where real-world constraints (detection evasion, 24/7 operation, multi-account efficiency) drove architectural innovation that directly informs contemporary AI agent design.
+
+**Cross-References:**
+- Chapter 1, Section 1.4: "Historical Automation Architectures: Lessons from Game Bots"
+- Chapter 6, Section 7.6: "Humanization and Error Recovery Systems"
+- Chapter 8, Section 8.5.5: "Humanization in Automated Systems"
+- Appendix: `DISSERTATION_AUTOMATION_PATTERNS.md`
+
 ---
 
 ### Internal Project References
@@ -3861,8 +4165,21 @@ Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., ... & K
 4. Architecture Comparison - `C:\Users\casey\steve\docs\research\ARCHITECTURE_COMPARISON.md`
 5. Game AI Architectures - `C:\Users\casey\steve\docs\research\GAME_AI_ARCHITECTURES.md`
 6. Game AI Patterns - `C:\Users\casey\steve\docs\research\GAME_AI_PATTERNS.md`
+7. **Dissertation Automation Patterns** - `C:\Users\casey\steve\docs\research\DISSERTATION_AUTOMATION_PATTERNS.md` (NEW)
 
-**Document Status:** Complete
-**Last Updated:** 2026-02-28
-**Version:** 2.0 (Improved)
-**Next Review:** After implementation feedback
+**Implementation References:**
+- `src/main/java/com/minewright/humanization/SessionManager.java`
+- `src/main/java/com/minewright/humanization/HumanizationUtils.java`
+- `src/main/java/com/minewright/humanization/MistakeSimulator.java`
+- `src/main/java/com/minewright/humanization/IdleBehaviorController.java`
+- `src/main/java/com/minewright/recovery/StuckDetector.java`
+- `src/main/java/com/minewright/action/ErrorRecoveryStrategy.java`
+- `src/main/java/com/minewright/action/RetryPolicy.java`
+- `src/main/java/com/minewright/rules/ItemRule.java`
+- `src/main/java/com/minewright/rules/ItemRuleRegistry.java`
+- `src/main/java/com/minewright/rules/RuleEvaluator.java`
+
+**Document Status:** Complete with Game Automation Integration
+**Last Updated:** 2026-03-01
+**Version:** 2.1 (Enhanced with Historical Pattern Analysis)
+**Next Review:** After dissertation finalization

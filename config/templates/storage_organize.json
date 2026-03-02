@@ -1,0 +1,316 @@
+{
+  "metadata": {
+    "id": "storage_organize",
+    "name": "Inventory Organization System",
+    "description": "Intelligently sorts, stores, and manages inventory with automatic categorization",
+    "author": "Steve AI",
+    "version": "1.0.0",
+    "tags": ["storage", "organization", "inventory"],
+    "category": "utility"
+  },
+  "parameters": [
+    {
+      "name": "storage_chest_location",
+      "type": "string",
+      "default": "${nearest_chest}",
+      "description": "Location of storage chests",
+      "required": true
+    },
+    {
+      "name": "sort_method",
+      "type": "string",
+      "default": "category",
+      "description": "How to sort items (category, value, name)",
+      "required": false,
+      "allowed_values": ["category", "value", "name", "rarity"]
+    },
+    {
+      "name": "keep_valuables",
+      "type": "boolean",
+      "default": true,
+      "description": "Keep valuable items in inventory",
+      "required": false
+    },
+    {
+      "name": "discard_junk",
+      "type": "boolean",
+      "default": true,
+      "description": "Discard low-value items",
+      "required": false
+    },
+    {
+      "name": "junk_threshold",
+      "type": "integer",
+      "default": 5,
+      "description": "Maximum stack size to consider as junk",
+      "required": false
+    },
+    {
+      "name": "organize_hotbar",
+      "type": "boolean",
+      "default": true,
+      "description": "Organize hotbar for quick access",
+      "required": false
+    },
+    {
+      "name": "consolidate_stacks",
+      "type": "boolean",
+      "default": true,
+      "description": "Consolidate partial stacks",
+      "required": false
+    }
+  ],
+  "requirements": {
+    "inventory": [],
+    "tools": [],
+    "maxExecutionTime": 300,
+    "maxDistance": 50
+  },
+  "triggers": [
+    {
+      "type": "inventory_full",
+      "condition": "inventory_free_slots() < 3",
+      "description": "Auto-organize when inventory is nearly full"
+    },
+    {
+      "type": "manual",
+      "description": "Manual organization command"
+    },
+    {
+      "type": "interval",
+      "condition": "interval_minutes(10)",
+      "description": "Periodic organization"
+    }
+  ],
+  "root_node": {
+    "type": "sequence",
+    "children": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Organizing inventory..."
+        }
+      },
+      {
+        "type": "if",
+        "condition": "${consolidate_stacks} == true",
+        "then": {
+          "type": "action",
+          "action": "consolidate_stacks",
+          "parameters": {
+            "merge_partial": true
+          }
+        }
+      },
+      {
+        "type": "action",
+        "action": "categorize_inventory",
+        "parameters": {
+          "method": "${sort_method}"
+        }
+      },
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "condition",
+            "condition": "inventory_free_slots() > 0",
+            "description": "Has space, continue organizing"
+          },
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Inventory is full. Moving items to storage first."
+            }
+          }
+        ]
+      },
+      {
+        "type": "if",
+        "condition": "${discard_junk} == true",
+        "then": {
+          "type": "sequence",
+          "children": [
+            {
+              "type": "action",
+              "action": "identify_junk",
+              "parameters": {
+                "max_stack_size": "${junk_threshold}"
+              }
+            },
+            {
+              "type": "loop",
+              "iterations": "junk_count()",
+              "children": [
+                {
+                  "type": "action",
+                  "action": "discard",
+                  "parameters": {
+                    "item": "next_junk_item()",
+                    "confirm": false
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "action",
+        "action": "pathfind",
+        "parameters": {
+          "target": "${storage_chest_location}"
+        }
+      },
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "deposit_by_category",
+            "parameters": {
+              "location": "${storage_chest_location}",
+              "categories": [
+                "ores",
+                "logs",
+                "food",
+                "tools",
+                "armor",
+                "misc"
+              ]
+            }
+          },
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Items sorted and stored by category"
+            }
+          }
+        ]
+      },
+      {
+        "type": "if",
+        "condition": "${keep_valuables} == true",
+        "then": {
+          "type": "sequence",
+          "children": [
+            {
+              "type": "action",
+              "action": "identify_valuables",
+              "parameters": {
+                "min_value": "medium"
+              }
+            },
+            {
+              "type": "action",
+              "action": "withdraw",
+              "parameters": {
+                "items": "identified_valuables()",
+                "location": "${storage_chest_location}"
+              }
+            },
+            {
+              "type": "action",
+              "action": "arrange_inventory",
+              "parameters": {
+                "valuables_first": true
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "if",
+        "condition": "${organize_hotbar} == true",
+        "then": {
+          "type": "sequence",
+          "children": [
+            {
+              "type": "action",
+              "action": "organize_hotbar",
+              "parameters": {
+                "slot_1": "weapon",
+                "slot_2": "pickaxe",
+                "slot_3": "food",
+                "slot_4": "blocks",
+                "slot_5": "torch",
+                "slot_6": "utility",
+                "slot_7": "shield",
+                "slot_8": "ranged",
+                "slot_9": "empty"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "action",
+        "action": "compact_inventory",
+        "parameters": {
+          "fill_gaps": true
+        }
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Inventory organized! Free slots: ${inventory_free_slots()}"
+        }
+      }
+    ]
+  },
+  "error_handlers": {
+    "no_storage_access": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Cannot access storage chest. Keeping items organized in inventory."
+            }
+          },
+          {
+            "type": "action",
+            "action": "arrange_inventory",
+            "parameters": {
+              "method": "${sort_method}"
+            }
+          }
+        ]
+      }
+    ],
+    "inventory_corrupted": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Inventory data corrupted. Performing emergency reset."
+            }
+          },
+          {
+            "type": "action",
+            "action": "emergency_inventory_reset"
+          }
+        ]
+      }
+    ]
+  },
+  "telemetry": {
+    "logLevel": "info",
+    "metrics": [
+      "items_stored",
+      "items_discarded",
+      "space_freed",
+      "categories_used",
+      "organization_time"
+    ]
+  }
+}

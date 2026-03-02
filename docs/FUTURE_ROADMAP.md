@@ -3,7 +3,7 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Last Updated:** 2026-03-01
-**Version:** 1.3
+**Version:** 1.4
 
 ---
 
@@ -74,13 +74,13 @@ Steve AI aims to become the definitive implementation of "One Abstraction Away" 
 **2026-03-01 Audit Metrics:**
 | Metric | Value |
 |--------|-------|
-| Source Files | 234 |
-| Source Lines | 85,752 |
+| Source Files | 267 |
+| Source Lines | 95,000+ |
 | Test Files | 60+ |
 | Test Lines | 45,000+ |
 | Documentation Files | 425 |
 | Documentation Lines | 521,003 |
-| Packages | 49 |
+| Packages | 55+ |
 | TODO/FIXME Count | 4 |
 
 **Fully Implemented (Production Ready):**
@@ -113,6 +113,12 @@ Steve AI aims to become the definitive implementation of "One Abstraction Away" 
 - **NEW (2026-03-01):** Script DSL System (13 classes for automation script generation)
 - **NEW (2026-03-01):** Integration Test Framework (MockMinecraftServer, TestEntityFactory, TestScenarioBuilder)
 - **NEW (2026-03-01):** GitHub Actions CI/CD Pipeline (4 workflows + templates)
+- **NEW (2026-03-01):** Humanization System (4 classes - Gaussian jitter, mistake simulation, idle behaviors)
+- **NEW (2026-03-01):** Goal Composition System (7 classes - NavigationGoal, CompositeNavigationGoal, etc.)
+- **NEW (2026-03-01):** Process Arbitration System (6 classes - ProcessManager, BehaviorProcess, etc.)
+- **NEW (2026-03-01):** Profile System (6 classes - TaskProfile, ProfileExecutor, ProfileRegistry)
+- **NEW (2026-03-01):** Stuck Detection System (9 classes - StuckDetector, RecoveryManager, strategies)
+- **NEW (2026-03-01):** Item Rules Engine (7 classes - ItemRule, RuleEvaluator, ItemRuleRegistry)
 
 **Partially Implemented:**
 - Action implementations (basic mining, building done - advanced features needed)
@@ -125,9 +131,9 @@ Steve AI aims to become the definitive implementation of "One Abstraction Away" 
 - Small model fine-tuning (Cascade router exists, actual specialization not done)
 - Comprehensive evaluation pipeline
 
-### Test Coverage: **~35%** (60+/234 files) - IMPROVED 2026-03-01
+### Test Coverage: **~32%** (60+/267 files) - IMPROVED 2026-03-01
 
-- 60+ test files / 234 source files
+- 60+ test files / 267 source files
 - 45,000+ lines of test code (up from 32,298)
 - **NEW:** ActionExecutor comprehensive tests (50+ test methods)
 - **NEW:** AgentStateMachine comprehensive tests (61 test methods with concurrency tests)
@@ -692,7 +698,7 @@ Orkin, "Applying Goal-Oriented Action Planning to Games" (2005)
 
 ---
 
-**Document Version:** 1.2
+**Document Version:** 1.4
 **Last Updated:** 2026-03-01
 **Maintained By:** Development Team
 **Next Review:** Monthly or after major milestones

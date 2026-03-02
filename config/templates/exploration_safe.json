@@ -1,0 +1,407 @@
+{
+  "metadata": {
+    "id": "exploration_safe",
+    "name": "Safe Exploration",
+    "description": "Safely explores new terrain, marks points of interest, and returns home at night",
+    "author": "Steve AI",
+    "version": "1.0.0",
+    "tags": ["exploration", "mapping", "safe"],
+    "category": "exploration"
+  },
+  "parameters": [
+    {
+      "name": "exploration_radius",
+      "type": "integer",
+      "default": 200,
+      "description": "Maximum distance from home to explore",
+      "required": false
+    },
+    {
+      "name": "home_location",
+      "type": "string",
+      "default": "${spawn_point}",
+      "description": "Location to return to at night",
+      "required": true
+    },
+    {
+      "name": "return_at_night",
+      "type": "boolean",
+      "default": true,
+      "description": "Return home when night falls",
+      "required": false
+    },
+    {
+      "name": "mark_points_of_interest",
+      " "type": "boolean",
+      "default": true,
+      "description": "Mark villages, temples, and other POIs",
+      "required": false
+    },
+    {
+      "name": "avoid_hostiles",
+      "type": "boolean",
+      "default": true,
+      "description": "Avoid areas with hostile mobs",
+      "required": false
+    },
+    {
+      "name": "max_exploration_time",
+      "type": "integer",
+      "default": 600,
+      "description": "Maximum exploration time in seconds",
+      "required": false
+    }
+  ],
+  "requirements": {
+    "inventory": [
+      {"item": "torch", "quantity": 64},
+      {"item": "food", "quantity": 16}
+    ],
+    "tools": [],
+    "maxExecutionTime": 3600,
+    "maxDistance": 500
+  },
+  "triggers": [
+    {
+      "type": "time",
+      "condition": "time_of_day() == 'day'",
+      "description": "Start exploration at day"
+    },
+    {
+      "type": "manual",
+      "description": "Manual exploration command"
+    }
+  ],
+  "root_node": {
+    "type": "sequence",
+    "children": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Beginning exploration within ${exploration_radius} blocks"
+        }
+      },
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "condition",
+            "condition": "inventory_has('torch', 32)",
+            "description": "Check if we have torches"
+          },
+          {
+            "type": "sequence",
+            "children": [
+              {
+                "type": "action",
+                "action": "announce",
+                "parameters": {
+                  "message": "Not enough torches for safe exploration"
+                }
+              },
+              {
+                "type": "action",
+                "action": "fail",
+                "parameters": {
+                  "reason": "insufficient_supplies"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "mark_home",
+        "parameters": {
+          "location": "${home_location}",
+          "name": "home_base"
+        }
+      },
+      {
+        "type": "repeat_until",
+        "condition": "exploration_time() > ${max_exploration_time} || (${return_at_night} && time_of_day() == 'night')",
+        "children": [
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "distance_to('${home_location}') < ${exploration_radius}",
+                "description": "Check if within exploration range"
+              },
+              {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "announce",
+                    "parameters": {
+                      "message": "Reached exploration boundary. Returning home."
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "break",
+                    "parameters": {
+                      "reason": "boundary_reached"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "!${return_at_night} || time_of_day() == 'day'",
+                "description": "Continue if daytime or night return disabled"
+              },
+              {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "announce",
+                    "parameters": {
+                      "message": "Night is falling. Returning home."
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "pathfind",
+                    "parameters": {
+                      "target": "${home_location}"
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "break",
+                    "parameters": {
+                      "reason": "night_fell"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "if",
+            "condition": "${avoid_hostiles} == true",
+            "then": {
+              "type": "selector",
+              "children": [
+                {
+                  "type": "condition",
+                  "condition": "nearest_hostile_distance() > 20",
+                  "description": "Path is clear, continue"
+                },
+                {
+                  "type": "sequence",
+                  "children": [
+                    {
+                      "type": "action",
+                      "action": "announce",
+                      "parameters": {
+                        "message": "Hostiles nearby, choosing alternate route"
+                      }
+                    },
+                    {
+                      "type": "action",
+                      "action": "pathfind",
+                      "parameters": {
+                        "target": "random_direction",
+                        "max_distance": 50,
+                        "avoid_entities": ["hostile"]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "type": "action",
+            "action": "explore_direction",
+            "parameters": {
+              "direction": "random_unexplored",
+              "distance": 50
+            }
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "light_level() < 8",
+                "description": "Dark area, place torch"
+              },
+              {
+                "type": "action",
+                "action": "continue"
+              }
+            ],
+            "fallback": {
+              "type": "action",
+              "action": "place",
+              "parameters": {
+                "block": "torch",
+                "position": "wall_adjacent"
+              }
+            }
+          },
+          {
+            "type": "if",
+            "condition": "${mark_points_of_interest} == true",
+            "then": {
+              "type": "selector",
+              "children": [
+                {
+                  "type": "condition",
+                  "condition": "nearby_structure() != null",
+                  "description": "Check if near structure"
+                },
+                {
+                  "type": "action",
+                  "action": "continue"
+                }
+              ],
+              "fallback": {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "announce",
+                    "parameters": {
+                      "message": "Found ${nearby_structure()}! Marking location."
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "mark_location",
+                    "parameters": {
+                      "name": "poi_${nearby_structure()}_${random_id()}",
+                      "type": "${nearby_structure()}",
+                      "position": "current_position()"
+                    }
+                  },
+                  {
+                    "type": "selector",
+                    "children": [
+                      {
+                        "type": "condition",
+                        "condition": "${nearby_structure()} == 'village'",
+                        "description": "Village found, worth noting"
+                      },
+                      {
+                        "type": "action",
+                        "action": "continue"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": "action",
+            "action": "wait",
+            "parameters": {
+              "ticks": 20
+            }
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Exploration complete. Returning home."
+        }
+      },
+      {
+        "type": "action",
+        "action": "pathfind",
+        "parameters": {
+          "target": "${home_location}"
+        }
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Safely returned home. Exploration complete!"
+        }
+      }
+    ]
+  },
+  "error_handlers": {
+    "insufficient_supplies": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Cannot explore: insufficient supplies"
+        }
+      }
+    ],
+    "lost": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Lost! Using compass to find home."
+            }
+          },
+          {
+            "type": "action",
+            "action": "pathfind",
+            "parameters": {
+              "target": "${home_location}",
+              "follow_compass": true
+            }
+          }
+        ]
+      }
+    ],
+    "danger_detected": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Danger detected! Returning home immediately."
+            }
+          },
+          {
+            "type": "action",
+            "action": "pathfind",
+            "parameters": {
+              "target": "${home_location}",
+              "sprint": true,
+              "avoid_dangers": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "telemetry": {
+    "logLevel": "info",
+    "metrics": [
+      "distance_traveled",
+      "chunks_explored",
+      "points_of_interest_found",
+      "exploration_time",
+      "torches_placed"
+    ]
+  }
+}

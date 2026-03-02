@@ -1,0 +1,358 @@
+{
+  "metadata": {
+    "id": "building_house",
+    "name": "House Building Script",
+    "description": "Builds a complete house with area clearing, foundation, walls, and roof",
+    "author": "Steve AI",
+    "version": "1.0.0",
+    "tags": ["building", "construction", "house"],
+    "category": "construction"
+  },
+  "parameters": [
+    {
+      "name": "width",
+      "type": "integer",
+      "default": 7,
+      "description": "House width in blocks",
+      "required": false
+    },
+    {
+      "name": "depth",
+      "type": "integer",
+      "default": 7,
+      "description": "House depth in blocks",
+      "required": false
+    },
+    {
+      "name": "height",
+      "type": "integer",
+      "default": 4,
+      "description": "House height in blocks",
+      "required": false
+    },
+    {
+      "name": "wall_material",
+      "type": "string",
+      "default": "oak_planks",
+      "description": "Material for walls",
+      "required": true
+    },
+    {
+      "name": "foundation_material",
+      "type": "string",
+      "default": "cobblestone",
+      "description": "Material for foundation",
+      "required": false
+    },
+    {
+      "name": "roof_material",
+      "type": "string",
+      "default": "oak_stairs",
+      "description": "Material for roof",
+      "required": false
+    },
+    {
+      "name": "build_location",
+      "type": "string",
+      "default": "${player_position} + [5, 0, 5]",
+      "description": "Location to build the house",
+      "required": false
+    },
+    {
+      "name": "clear_area",
+      "type": "boolean",
+      "default": true,
+      "description": "Clear vegetation and obstacles before building",
+      "required": false
+    }
+  ],
+  "requirements": {
+    "inventory": [
+      {"item": "${wall_material}", "quantity": 100},
+      {"item": "${foundation_material}", "quantity": 50}
+    ],
+    "tools": [],
+    "maxExecutionTime": 1200,
+    "maxDistance": 50
+  },
+  "triggers": [
+    {
+      "type": "manual",
+      "description": "Executed when manually ordered"
+    }
+  ],
+  "root_node": {
+    "type": "sequence",
+    "children": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Starting construction of ${width}x${depth}x${height} house"
+        }
+      },
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "condition",
+            "condition": "inventory_has('${wall_material}', ${width * ${depth * ${height}})",
+            "description": "Check if we have enough wall material"
+          },
+          {
+            "type": "sequence",
+            "children": [
+              {
+                "type": "action",
+                "action": "announce",
+                "parameters": {
+                  "message": "Not enough materials. Gathering resources..."
+                }
+              },
+              {
+                "type": "selector",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "gather",
+                    "parameters": {
+                      "resource": "${wall_material}",
+                      "amount": ${width * ${depth * ${height}},
+                      "radius": 100
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "craft",
+                    "parameters": {
+                      "item": "${wall_material}",
+                      "count": ${width * ${depth * ${height}}
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "fail",
+                    "parameters": {
+                      "reason": "insufficient_resources"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "condition",
+            "condition": "inventory_has('${foundation_material}', ${width * ${depth}})",
+            "description": "Check if we have enough foundation material"
+          },
+          {
+            "type": "sequence",
+            "children": [
+              {
+                "type": "action",
+                "action": "gather",
+                "parameters": {
+                  "resource": "${foundation_material}",
+                  "amount": ${width * ${depth},
+                  "radius": 100
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "pathfind",
+        "parameters": {
+          "target": "${build_location}"
+        }
+      },
+      {
+        "type": "if",
+        "condition": "${clear_area} == true",
+        "then": {
+          "type": "sequence",
+          "children": [
+            {
+              "type": "action",
+              "action": "announce",
+              "parameters": {
+                "message": "Clearing build area..."
+              }
+            },
+            {
+              "type": "action",
+              "action": "clear_area",
+              "parameters": {
+                "center": "${build_location}",
+                "width": ${width + 4},
+                "depth": ${depth + 4},
+                "remove_vegetation": true,
+                "remove_fluids": false
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Laying foundation..."
+        }
+      },
+      {
+        "type": "action",
+        "action": "build_foundation",
+        "parameters": {
+          "location": "${build_location}",
+          "width": "${width}",
+          "depth": "${depth}",
+          "material": "${foundation_material}"
+        }
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Building walls..."
+        }
+      },
+      {
+        "type": "loop",
+        "iterations": "${height}",
+        "children": [
+          {
+            "type": "action",
+            "action": "build_walls",
+            "parameters": {
+              "location": "${build_location}",
+              "width": "${width}",
+              "depth": "${depth}",
+              "height": "${_iteration}",
+              "material": "${wall_material}",
+              "leave_opening": true
+            }
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Building roof..."
+        }
+      },
+      {
+        "type": "action",
+        "action": "build_roof",
+        "parameters": {
+          "location": "${build_location}",
+          "width": "${width}",
+          "depth": "${depth}",
+          "roof_height": 2,
+          "material": "${roof_material}"
+        }
+      },
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "action",
+            "action": "place_door",
+            "parameters": {
+              "location": "${build_location} + [${width/2}, 1, 0]",
+              "facing": "north"
+            }
+          },
+          {
+            "type": "action",
+            "action": "log",
+            "parameters": {
+              "level": "warn",
+              "message": "No door available, skipping"
+            }
+          }
+        ]
+      },
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "action",
+            "action": "place_windows",
+            "parameters": {
+              "location": "${build_location}",
+              "wall_height": "${height}",
+              "window_type": "glass"
+            }
+          },
+          {
+            "type": "action",
+            "action": "log",
+            "parameters": {
+              "level": "warn",
+              "message": "No glass available, skipping windows"
+            }
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "House construction complete!"
+        }
+      }
+    ]
+  },
+  "error_handlers": {
+    "insufficient_resources": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Cannot build: insufficient resources"
+        }
+      }
+    ],
+    "area_blocked": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Build area is obstructed, trying to clear..."
+            }
+          },
+          {
+            "type": "action",
+            "action": "clear_area",
+            "parameters": {
+              "center": "${build_location}",
+              "width": ${width + 4},
+              "depth": ${depth + 4}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "telemetry": {
+    "logLevel": "info",
+    "metrics": [
+      "execution_time",
+      "blocks_placed",
+      "materials_used",
+      "construction_phases"
+    ]
+  }
+}

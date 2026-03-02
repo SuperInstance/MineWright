@@ -3,7 +3,7 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Updated:** 2026-03-01
-**Version:** 2.4
+**Version:** 2.5
 
 ---
 
@@ -47,7 +47,7 @@ Polish and ship improvements
 | Priority 2: Testing | ✅ DONE | 100% |
 | Priority 3: Features | ✅ DONE | 100% |
 | Priority 4: Dissertation | 🔄 IN PROGRESS | 60% |
-| Priority 5: Bot Research | 🔄 IN PROGRESS | 10% |
+| Priority 5: Bot Research | 🔄 IN PROGRESS | 80% |
 
 ### Recent Completions (2026-03-01)
 - ✅ **CI/CD Pipeline**: Full GitHub Actions workflows (ci.yml, release.yml, codeql.yml, dependency-review.yml)
@@ -243,6 +243,7 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 
 **Packages Breakdown:**
 - `action/` - Task execution system
+- `action/actions/` - Individual action implementations
 - `behavior/` - Behavior tree runtime (composite/leaf/decorator)
 - `blackboard/` - Shared knowledge system
 - `client/` - GUI and input handling
@@ -256,7 +257,9 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 - `evaluation/` - Metrics and benchmarking
 - `event/` - Event bus system
 - `execution/` - State machine and interceptors
+- `goal/` - Navigation goal composition (NEW)
 - `htn/` - Hierarchical Task Network planner
+- `humanization/` - Human-like behavior utilities (NEW)
 - `llm/` - LLM integration (async/batch/cache/cascade/resilience)
 - `memory/` - Persistence and vector search
 - `mentorship/` - Teaching and learning system
@@ -264,10 +267,15 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 - `pathfinding/` - A*, hierarchical pathfinding
 - `personality/` - AI personality system
 - `plugin/` - Plugin architecture
+- `profile/` - Task profile system (NEW)
+- `recovery/` - Stuck detection and recovery (NEW)
+- `recovery/strategies/` - Recovery strategy implementations
+- `rules/` - Declarative item rules engine (NEW)
 - `script/` - Script parsing and execution
 - `security/` - Input sanitization and validation
 - `skill/` - Skill library system
 - `structure/` - Procedural generation
+- `util/` - Utility classes
 - `voice/` - TTS/STT integration
 
 ### Research Documentation
@@ -289,6 +297,60 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 2. **MUD Automation Parallel**: External scripts prefigured modern agent architecture
 3. **Automatic Conversation Model**: Scripts = automatic, LLM = thoughtful
 4. **Muscle Memory Analogy**: Scripts become automatic with practice/refinement
+
+### New Systems (2026-03-01)
+
+**Inspired by Game Bot Research (WoW Glider, Honorbuddy, Baritone):**
+
+1. **Humanization System** (`humanization/` - 4 classes)
+   - `HumanizationUtils` - Gaussian jitter, reaction times, mistake simulation
+   - `MistakeSimulator` - Probabilistic mistake triggering
+   - `IdleBehaviorController` - Human-like idle behaviors
+   - `SessionManager` - Play session tracking for fatigue simulation
+
+2. **Goal Composition System** (`goal/` - 7 classes)
+   - `NavigationGoal` - Interface for pathfinding objectives
+   - `CompositeNavigationGoal` - ANY/ALL goal composition
+   - `GetToBlockGoal` - Find nearest block of type
+   - `GetToEntityGoal` - Track and reach entities
+   - `RunAwayGoal` - Escape from danger
+   - `Goals` - Factory for goal creation
+   - `WorldState` - World state snapshot for goal evaluation
+
+3. **Process Arbitration System** (`behavior/` - 6 classes)
+   - `ProcessManager` - Priority-based behavior arbitration
+   - `BehaviorProcess` - Interface for behavior processes
+   - `SurvivalProcess` - Eat, heal, avoid danger
+   - `TaskExecutionProcess` - Execute assigned tasks
+   - `IdleProcess` - Wander, chat, self-improve
+   - `FollowProcess` - Follow player or other agents
+
+4. **Profile System** (`profile/` - 6 classes)
+   - `TaskProfile` - Declarative task sequences (Honorbuddy-inspired)
+   - `ProfileTask` - Individual profile tasks
+   - `ProfileParser` - Parse profiles from JSON
+   - `ProfileExecutor` - Execute profile tasks
+   - `ProfileRegistry` - Store and retrieve profiles
+   - `ProfileGenerator` - LLM-driven profile generation
+
+5. **Stuck Detection System** (`recovery/` - 9 classes)
+   - `StuckDetector` - Detect position/progress/state/path stuck
+   - `StuckType` - Categorize stuck conditions
+   - `RecoveryStrategy` - Interface for recovery behaviors
+   - `RecoveryManager` - Coordinate recovery attempts
+   - `RepathStrategy` - Recalculate path
+   - `TeleportStrategy` - Emergency teleport
+   - `AbortStrategy` - Give up and report
+   - `RecoveryResult` - Recovery outcome tracking
+
+6. **Item Rules Engine** (`rules/` - 7 classes)
+   - `ItemRule` - Declarative item filtering rules
+   - `RuleCondition` - Rule predicates (name, type, tag, etc.)
+   - `RuleAction` - Actions (KEEP, DROP, PICKUP, IGNORE)
+   - `RuleEvaluator` - Evaluate rules against items
+   - `ItemRuleParser` - Parse rules from config
+   - `ItemRuleRegistry` - Rule storage and lookup
+   - `ItemRuleContext` - Context for rule evaluation
 
 ---
 
@@ -353,23 +415,46 @@ workerComplexModel = "glm-5"
 |---------|---------|-------------|
 | `action` | Task execution | ActionExecutor, ActionResult |
 | `action.actions` | Individual action implementations | MineAction, BuildAction, GatherAction |
+| `behavior` | Behavior tree runtime & process arbitration | ProcessManager, BehaviorProcess |
+| `blackboard` | Shared knowledge system | BlackboardEntry, KnowledgeArea |
+| `client` | GUI and input | ForemanOverlayScreen, KeyBindings |
+| `command` | Command registration | CommandRegistry |
+| `communication` | Inter-agent messaging | AgentMessage, CommunicationBus |
+| `config` | Configuration management | ConfigChangeEvent, ConfigVersion |
+| `coordination` | Multi-agent coordination | TaskBid, TaskAnnouncement |
+| `decision` | Utility AI and decision making | UtilityScore |
+| `di` | Dependency injection | SimpleServiceContainer |
+| `entity` | Minecraft entities | ForemanEntity |
+| `evaluation` | Metrics and benchmarking | MetricsCollector |
+| `event` | Event system | EventBus, StateTransitionEvent |
+| `execution` | State machine, interceptors | AgentStateMachine, InterceptorChain |
+| `goal` | Navigation goal composition | NavigationGoal, CompositeNavigationGoal, Goals |
+| `htn` | Hierarchical Task Network planner | HTNPlanner, Method, Domain |
+| `humanization` | Human-like behavior utilities | HumanizationUtils, MistakeSimulator, IdleBehaviorController |
 | `llm` | LLM integration | PromptBuilder, ResponseParser |
 | `llm.async` | Async LLM clients | AsyncLLMClient, LLMExecutorService |
 | `llm.batch` | Batching infrastructure | BatchingLLMClient, PromptBatcher |
+| `llm.cache` | Semantic caching | SemanticLLMCache, TextEmbedder |
+| `llm.cascade` | Tier-based model selection | CascadeRouter, TaskComplexity |
 | `llm.resilience` | Resilience patterns | ResilientLLMClient, LLMFallbackHandler |
-| `execution` | State machine, interceptors | AgentStateMachine, InterceptorChain |
-| `plugin` | Plugin architecture | ActionRegistry, PluginManager |
 | `memory` | Persistence and retrieval | CompanionMemory, ConversationManager |
+| `memory.embedding` | Embedding models | EmbeddingModel, LocalEmbeddingModel |
 | `memory.vector` | Semantic search | InMemoryVectorStore |
-| `orchestration` | Multi-agent coordination | OrchestratorService, AgentCommunicationBus |
-| `communication` | Inter-agent messaging | AgentMessage |
+| `mentorship` | Teaching and learning system | MentorshipManager |
+| `orchestration` | Multi-agent orchestration | OrchestratorService, AgentCommunicationBus |
+| `pathfinding` | A*, hierarchical pathfinding | HierarchicalPathfinder, MovementValidator |
 | `personality` | AI personality system | ForemanArchetypeConfig, PersonalityTraits |
-| `voice` | Voice integration | VoiceSystem, SpeechToText, TextToSpeech |
+| `plugin` | Plugin architecture | ActionRegistry, PluginManager |
+| `profile` | Task profile system | TaskProfile, ProfileExecutor, ProfileRegistry |
+| `recovery` | Stuck detection and recovery | StuckDetector, RecoveryManager, StuckType |
+| `recovery.strategies` | Recovery strategy implementations | RepathStrategy, TeleportStrategy, AbortStrategy |
+| `rules` | Declarative item rules engine | ItemRule, RuleEvaluator, ItemRuleRegistry |
+| `script` | Script parsing and execution | Script, ScriptParser, ScriptGenerator |
+| `security` | Input sanitization and validation | InputSanitizer |
+| `skill` | Skill library system | Skill, TaskPattern |
 | `structure` | Procedural generation | StructureGenerators |
-| `client` | GUI and input | ForemanOverlayScreen, KeyBindings |
-| `di` | Dependency injection | SimpleServiceContainer |
-| `event` | Event system | EventBus, StateTransitionEvent |
-| `config` | Configuration management | ConfigChangeEvent |
+| `util` | Utility classes | TickProfiler, ActionUtils |
+| `voice` | Voice integration | VoiceSystem, SpeechToText, TextToSpeech |
 
 ---
 
@@ -963,7 +1048,7 @@ Steve AI is a sophisticated multi-agent system for Minecraft that combines:
 
 ---
 
-**Document Version:** 2.2
+**Document Version:** 2.5
 **Last Updated:** 2026-03-01
 **Maintained By:** Claude Orchestrator
 **Next Review:** After major architecture changes or dissertation completion

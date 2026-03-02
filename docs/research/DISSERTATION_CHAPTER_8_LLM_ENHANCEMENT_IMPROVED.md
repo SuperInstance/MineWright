@@ -1023,6 +1023,171 @@ public class HumanizedMineAction extends BaseAction {
 }
 ```
 
+#### Steve AI Implementation: Humanization Components
+
+**Session Manager (SessionManager.java):**
+```java
+// Full implementation with three-phase fatigue modeling
+public class SessionManager {
+    public enum SessionPhase {
+        WARMUP,      // 0-10 min: 30% slower reactions, 50% more mistakes
+        PERFORMANCE, // 10-60 min: Optimal performance
+        FATIGUE      // 60+ min: 50% slower reactions, 2x mistakes
+    }
+
+    // Break simulation: 10% chance after 30 min, forced after 2 hours
+    public boolean shouldTakeBreak() {
+        long timeSinceLastBreak = System.currentTimeMillis() - lastBreakTime;
+        if (timeSinceLastBreak >= MAX_BREAK_INTERVAL_MS) {
+            return true;  // Forced break
+        }
+        if (timeSinceLastBreak >= MIN_BREAK_INTERVAL_MS) {
+            return random.nextDouble() < BREAK_CHANCE;  // 10% chance
+        }
+        return false;
+    }
+}
+```
+
+**Humanization Utils (HumanizationUtils.java):**
+```java
+public final class HumanizationUtils {
+    // Gaussian jitter for timing variation
+    public static int gaussianJitter(int baseMs, double variancePercent) {
+        double stdDev = baseMs * variancePercent;
+        double jitter = RANDOM.nextGaussian() * stdDev;
+        int jittered = (int) (baseMs + jitter);
+        return Math.max(MIN_ACTION_DELAY_MS, Math.min(MAX_ACTION_DELAY_MS, jittered));
+    }
+
+    // Human-like reaction time (250-500ms)
+    public static int humanReactionTime() {
+        double reactionMs = RANDOM.nextGaussian() * REACTION_TIME_STD_DEV_MS + MEAN_REACTION_TIME_MS;
+        return (int) Math.max(MIN_REACTION_TIME_MS, Math.min(MAX_REACTION_TIME_MS, reactionMs));
+    }
+
+    // Context-aware reaction time (fatigue, complexity, familiarity)
+    public static int contextualReactionTime(double fatigueLevel, double complexity, double familiarity) {
+        double reactionMs = humanReactionTime();
+        reactionMs *= (1.0 + fatigueLevel * 0.5);     // Fatigue slows
+        reactionMs *= (1.0 + complexity * 1.0);        // Complexity slows
+        reactionMs *= (1.0 - familiarity * 0.3);      // Familiarity speeds up
+        return (int) Math.max(MIN_REACTION_TIME_MS, Math.min(MAX_REACTION_TIME_MS * 2, reactionMs));
+    }
+
+    // Bezier curve interpolation for smooth movement
+    public static double[] bezierPoint(double t, List<double[]> controlPoints) {
+        // Quadratic Bezier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+        double x = Math.pow(1 - t, 2) * p0[0] + 2 * (1 - t) * t * p1[0] + Math.pow(t, 2) * p2[0];
+        double y = Math.pow(1 - t, 2) * p0[1] + 2 * (1 - t) * t * p1[1] + Math.pow(t, 2) * p2[1];
+        double z = Math.pow(1 - t, 2) * p0[2] + 2 * (1 - t) * t * p1[2] + Math.pow(t, 2) * p2[2];
+        return new double[] {x, y, z};
+    }
+
+    // Probabilistic mistake triggering
+    public static boolean shouldMakeMistake(double mistakeRate) {
+        return RANDOM.nextDouble() < mistakeRate;
+    }
+}
+```
+
+**Mistake Simulator (MistakeSimulator.java):**
+```java
+public class MistakeSimulator {
+    private Map<String, Double> mistakeHistory = new HashMap<>();
+
+    public boolean shouldMakeMistake(ActionContext context) {
+        double baseErrorRate = 0.03;  // 3% base
+
+        // Personality affects mistake rate
+        PersonalityTraits personality = agent.getPersonality();
+        if (personality.getConscientiousness() > 80) {
+            baseErrorRate *= 0.5;  // Very careful
+        } else if (personality.getNeuroticism() > 70) {
+            baseErrorRate *= 1.5;  // Anxious
+        }
+
+        // Fatigue increases mistakes
+        double fatigueLevel = sessionManager.getFatigueLevel();
+        baseErrorRate *= (1.0 + fatigueLevel);
+
+        // Learn from past mistakes
+        String actionType = context.getActionType();
+        double pastMistakeRate = mistakeHistory.getOrDefault(actionType, 0.0);
+        if (pastMistakeRate > 0.10) {
+            baseErrorRate *= 0.7;  // Become more careful
+        }
+
+        return random.nextDouble() < baseErrorRate;
+    }
+
+    public void recordMistake(String actionType) {
+        double currentRate = mistakeHistory.getOrDefault(actionType, 0.0);
+        mistakeHistory.put(actionType, (currentRate + 1.0) / 2.0);
+    }
+}
+```
+
+**Stuck Detector (StuckDetector.java):**
+```java
+public class StuckDetector {
+    private static final int POSITION_STUCK_TICKS = 60;     // 3 seconds
+    private static final int PROGRESS_STUCK_TICKS = 100;    // 5 seconds
+    private static final int STATE_STUCK_TICKS = 200;       // 10 seconds
+
+    public boolean tickAndDetect() {
+        Vec3 currentPosition = entity.position();
+        double distanceMoved = lastPosition.distanceTo(currentPosition);
+
+        if (distanceMoved < MIN_MOVEMENT_DISTANCE) {
+            stuckPositionTicks++;
+            if (stuckPositionTicks >= POSITION_STUCK_TICKS) {
+                LOGGER.debug("Position stuck for {} ticks", stuckPositionTicks);
+                return true;
+            }
+        } else {
+            stuckPositionTicks = 0;
+            lastPosition = currentPosition;
+        }
+
+        // Similar tracking for progress and state...
+        return false;
+    }
+}
+```
+
+**Key Implementation Insights:**
+
+1. **Session Modeling** (`SessionManager`) provides realistic fatigue curves:
+   - Warm-up: First 10 minutes with 30% slower reactions
+   - Performance: Optimal for 50 minutes
+   - Fatigue: After 60 minutes with 50% slower reactions and 2x mistakes
+   - Break simulation prevents unrealistic 24/7 operation
+
+2. **Gaussian Jitter** (`HumanizationUtils.gaussianJitter()`) creates natural timing variance:
+   - 68% of values within ±1 standard deviation
+   - 95% of values within ±2 standard deviations
+   - Clamped to realistic action delays (30-1000ms)
+
+3. **Bezier Curves** (`HumanizationUtils.bezierPoint()`) smooth movement paths:
+   - Quadratic Bezier for simple curves (3 control points)
+   - Cubic Bezier for complex curves (4 control points)
+   - Creates natural-looking movement vs. linear interpolation
+
+4. **Adaptive Mistakes** (`MistakeSimulator`) learns from experience:
+   - Base 3% error rate
+   - Personality modifiers (conscientious = 50% mistakes, neurotic = 150% mistakes)
+   - Fatigue multiplier (up to 2x mistakes when exhausted)
+   - Learning adjustment (becomes more careful after repeated failures)
+
+5. **Stuck Detection** (`StuckDetector`) identifies multiple failure modes:
+   - Position stuck: Not moving despite movement attempts
+   - Progress stuck: Moving but task not advancing
+   - State stuck: State machine not transitioning
+   - Path stuck: No valid path to target
+
+**Cross-Reference:** See Chapter 6, Section 7.6 for detailed architectural discussion of these systems and their relationship to historical game automation patterns.
+
 **Ethical Note:** This dissertation focuses on legitimate applications of humanization techniques for creating engaging AI companions. Using these techniques to violate game Terms of Service or gain unfair advantages in competitive games is unethical and may result in account bans. The goal is characterful AI, not deception.
 
 **Academic Contribution:** This section synthesizes 30 years of game automation research into a coherent framework for LLM-enhanced humanization. The key advancement is moving from "random noise for anti-detection" to "semantic variation for characterful engagement"—transforming evasion techniques into immersive gameplay features.

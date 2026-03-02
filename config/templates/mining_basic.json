@@ -1,0 +1,289 @@
+{
+  "metadata": {
+    "id": "mining_basic",
+    "name": "Basic Mining Automation",
+    "description": "Mines specific block type with tool durability management and automatic storage returns",
+    "author": "Steve AI",
+    "version": "1.0.0",
+    "tags": ["mining", "automation", "resources"],
+    "category": "resource_gathering"
+  },
+  "parameters": [
+    {
+      "name": "block_type",
+      "type": "string",
+      "default": "iron_ore",
+      "description": "Type of block to mine",
+      "required": true
+    },
+    {
+      "name": "target_quantity",
+      "type": "integer",
+      "default": 64,
+      "description": "Number of blocks to mine",
+      "required": false
+    },
+    {
+      "name": "search_radius",
+      "type": "integer",
+      "default": 64,
+      "description": "Search radius for finding blocks",
+      "required": false
+    },
+    {
+      "name": "storage_location",
+      "type": "string",
+      "default": "${chest_nearby}",
+      "description": "Location to store mined items",
+      "required": false
+    }
+  ],
+  "requirements": {
+    "inventory": [],
+    "tools": ["pickaxe"],
+    "maxExecutionTime": 600,
+    "maxDistance": 100
+  },
+  "triggers": [
+    {
+      "type": "manual",
+      "description": "Executed when manually ordered by player"
+    },
+    {
+      "type": "inventory_empty",
+      "condition": "inventory_free_slots() > 20",
+      "description": "Auto-start when inventory has space"
+    }
+  ],
+  "root_node": {
+    "type": "sequence",
+    "children": [
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "condition",
+            "condition": "inventory_has('pickaxe', 1)",
+            "description": "Check if we have a pickaxe"
+          },
+          {
+            "type": "sequence",
+            "children": [
+              {
+                "type": "action",
+                "action": "say",
+                "parameters": {
+                  "message": "I need a pickaxe to mine!"
+                }
+              },
+              {
+                "type": "action",
+                "action": "fail",
+                "parameters": {
+                  "reason": "no_pickaxe"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "equip_best_tool",
+        "parameters": {
+          "tool_type": "pickaxe",
+          "block_type": "${block_type}"
+        }
+      },
+      {
+        "type": "repeat_until",
+        "condition": "inventory_count('${block_type}') >= ${target_quantity} || inventory_free_slots() == 0",
+        "children": [
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "blocks_in_range('${block_type}', ${search_radius}) > 0",
+                "description": "Check if target blocks exist nearby"
+              },
+              {
+                "type": "action",
+                "action": "say",
+                "parameters": {
+                  "message": "No ${block_type} found within ${search_radius} blocks"
+                }
+              }
+            ]
+          },
+          {
+            "type": "action",
+            "action": "pathfind",
+            "parameters": {
+              "target": "nearest",
+              "block_type": "${block_type}",
+              "max_distance": "${search_radius}"
+            }
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "tool_durability() > 10",
+                "description": "Check if tool has enough durability"
+              },
+              {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "say",
+                    "parameters": {
+                      "message": "Tool durability low, returning to storage"
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "deposit",
+                    "parameters": {
+                      "location": "${storage_location}",
+                      "items": ["${block_type}"]
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "equip_best_tool",
+                    "parameters": {
+                      "tool_type": "pickaxe"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "action",
+            "action": "mine",
+            "parameters": {
+              "block": "${block_type}",
+              "quantity": 1
+            }
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "inventory_free_slots() > 0",
+                "description": "Check if inventory has space"
+              },
+              {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "say",
+                    "parameters": {
+                      "message": "Inventory full, returning to storage"
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "deposit",
+                    "parameters": {
+                      "location": "${storage_location}"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "say",
+        "parameters": {
+          "message": "Mining complete! Collected ${target_quantity} ${block_type}"
+        }
+      },
+      {
+        "type": "action",
+        "action": "deposit",
+        "parameters": {
+          "location": "${storage_location}",
+          "items": ["${block_type}"]
+        }
+      }
+    ]
+  },
+  "error_handlers": {
+    "no_pickaxe": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Cannot mine: no pickaxe available"
+        }
+      }
+    ],
+    "no_blocks_found": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "No target blocks found in search area"
+        }
+      }
+    ],
+    "inventory_full": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "pathfind",
+            "parameters": {
+              "target": "${storage_location}"
+            }
+          },
+          {
+            "type": "action",
+            "action": "deposit_all"
+          }
+        ]
+      }
+    ],
+    "tool_broken": [
+      {
+        "type": "selector",
+        "children": [
+          {
+            "type": "action",
+            "action": "equip_best_tool",
+            "parameters": {
+              "tool_type": "pickaxe"
+            }
+          },
+          {
+            "type": "action",
+            "action": "fail",
+            "parameters": {
+              "reason": "no_pickaxe"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "telemetry": {
+    "logLevel": "info",
+    "metrics": [
+      "execution_time",
+      "blocks_mined",
+      "distance_traveled",
+      "tool_durability_used"
+    ]
+  }
+}

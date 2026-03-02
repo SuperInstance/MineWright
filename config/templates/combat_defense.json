@@ -1,0 +1,363 @@
+{
+  "metadata": {
+    "id": "combat_defense",
+    "name": "Defensive Combat",
+    "description": "Defensive combat AI that attacks threats and retreats when low on health",
+    "author": "Steve AI",
+    "version": "1.0.0",
+    "tags": ["combat", "defense", "survival"],
+    "category": "combat"
+  },
+  "parameters": [
+    {
+      "name": "engage_distance",
+      "type": "integer",
+      "default": 16,
+      "description": "Maximum distance to engage enemies",
+      "required": false
+    },
+    {
+      "name": "flee_health_threshold",
+      "type": "integer",
+      "default": 30,
+      "description": "Health percentage to trigger retreat",
+      "required": false
+    },
+    {
+      "name": "safe_location",
+      "type": "string",
+      "default": "${player_position}",
+      "description": "Location to retreat to when low health",
+      "required": false
+    },
+    {
+      "name": "priority_targets",
+      "type": "array",
+      "default": ["zombie", "skeleton", "spider", "creeper"],
+      "description": "Enemy types to prioritize",
+      "required": false
+    },
+    {
+      "name": "use_shield",
+      "type": "boolean",
+      "default": true,
+      "description": "Use shield for blocking attacks",
+      "required": false
+    },
+    {
+      "name": "max_combat_time",
+      "type": "integer",
+      "default": 60,
+      "description": "Maximum seconds to stay in combat",
+      "required": false
+    }
+  ],
+  "requirements": {
+    "inventory": [],
+    "tools": ["sword"],
+    "maxExecutionTime": 300,
+    "maxDistance": 100
+  },
+  "triggers": [
+    {
+      "type": "entity_detected",
+      "condition": "nearest_hostile_distance() < ${engage_distance}",
+      "description": "Enemy detected within range"
+    },
+    {
+      "type": "attacked",
+      "description": "Agent was attacked"
+    },
+    {
+      "type": "manual",
+      "description": "Manual combat command"
+    }
+  ],
+  "root_node": {
+    "type": "sequence",
+    "children": [
+      {
+        "type": "action",
+        "action": "equip_best_weapon",
+        "parameters": {
+          "weapon_type": "sword"
+        }
+      },
+      {
+        "type": "if",
+        "condition": "${use_shield} == true",
+        "then": {
+          "type": "action",
+          "action": "equip_shield",
+          "parameters": {
+            "slot": "offhand"
+          }
+        }
+      },
+      {
+        "type": "loop",
+        "iterations": -1,
+        "children": [
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "health_percent() < ${flee_health_threshold}",
+                "description": "Check if health is critical"
+              },
+              {
+                "type": "condition",
+                "condition": "combat_time() > ${max_combat_time}",
+                "description": "Check if combat exceeded time limit"
+              },
+              {
+                "type": "condition",
+                "condition": "nearest_hostile_distance() > ${engage_distance}",
+                "description": "No enemies in range"
+              },
+              {
+                "type": "action",
+                "action": "continue_combat"
+              }
+            ],
+            "fallback": {
+              "type": "sequence",
+              "children": [
+                {
+                  "type": "action",
+                  "action": "announce",
+                  "parameters": {
+                    "message": "Retreating to safety!"
+                  }
+                },
+                {
+                  "type": "action",
+                  "action": "flee",
+                  "parameters": {
+                    "target": "${safe_location}",
+                    "sprint": true
+                  }
+                },
+                {
+                  "type": "action",
+                  "action": "break",
+                  "parameters": {
+                    "reason": "combat_ended"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "action",
+            "action": "scan_for_threats",
+            "parameters": {
+              "max_distance": "${engage_distance}",
+              "priority_types": "${priority_targets}"
+            }
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "threat_found() != null",
+                "description": "Check if threats exist"
+              },
+              {
+                "type": "action",
+                "action": "break",
+                "parameters": {
+                  "reason": "no_threats"
+                }
+              }
+            ]
+          },
+          {
+            "type": "action",
+            "action": "evaluate_threat",
+            "parameters": {
+              "target": "nearest_hostile()"
+            }
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "sequence",
+                "condition": "threat_type() == 'creeper' && distance_to(threat) < 4",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "flee",
+                    "parameters": {
+                      "target": "away_from_threat",
+                      "distance": 8,
+                      "sprint": true
+                    }
+                  },
+                  {
+                    "type": "action",
+                    "action": "announce",
+                    "parameters": {
+                      "message": "Creeper too close! Running away!"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "selector",
+                    "children": [
+                      {
+                        "type": "condition",
+                        "condition": "distance_to(threat) > 4",
+                        "description": "Enemy is far, approach"
+                      },
+                      {
+                        "type": "action",
+                        "action": "approach",
+                        "parameters": {
+                          "target": "nearest_hostile()",
+                          "distance": 2,
+                          "strafe": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "action",
+                    "action": "attack",
+                    "parameters": {
+                      "target": "nearest_hostile()",
+                      "charge": false
+                    }
+                  },
+                  {
+                    "type": "if",
+                    "condition": "${use_shield} == true && incoming_attack()",
+                    "then": {
+                      "type": "action",
+                      "action": "block_with_shield",
+                      "parameters": {
+                        "duration": "until_attack_ends"
+                      }
+                    }
+                  },
+                  {
+                    "type": "selector",
+                    "children": [
+                      {
+                        "type": "condition",
+                        "condition": "threat_health() > 0",
+                        "description": "Enemy still alive"
+                      },
+                      {
+                        "type": "action",
+                        "action": "continue"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "action",
+            "action": "wait",
+            "parameters": {
+              "ticks": 10
+            }
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Combat complete. All threats eliminated."
+        }
+      }
+    ]
+  },
+  "error_handlers": {
+    "no_weapon": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "No weapon available! Fleeing!"
+            }
+          },
+          {
+            "type": "action",
+            "action": "flee",
+            "parameters": {
+              "target": "${safe_location}",
+              "sprint": true
+            }
+          }
+        ]
+      }
+    ],
+    "low_health": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "eat_food",
+            "parameters": {
+              "food": "best_available"
+            }
+          },
+          {
+            "type": "action",
+            "action": "flee",
+            "parameters": {
+              "target": "${safe_location}",
+              "sprint": true
+            }
+          }
+        ]
+      }
+    ],
+    "surrounded": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "Surrounded by enemies! Fighting desperately!"
+            }
+          },
+          {
+            "type": "action",
+            "action": "spin_attack",
+            "parameters": {
+              "radius": 3
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "telemetry": {
+    "logLevel": "info",
+    "metrics": [
+      "enemies_defeated",
+      "damage_dealt",
+      "damage_taken",
+      "combat_duration",
+      "health_remaining"
+    ]
+  }
+}

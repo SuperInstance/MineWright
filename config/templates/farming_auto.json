@@ -1,0 +1,373 @@
+{
+  "metadata": {
+    "id": "farming_auto",
+    "name": "Automated Farming",
+    "description": "Automatically plants, grows, and harvests crops with intelligent replanting",
+    "author": "Steve AI",
+    "version": "1.0.0",
+    "tags": ["farming", "automation", "crops"],
+    "category": "resource_generation"
+  },
+  "parameters": [
+    {
+      "name": "crop_type",
+      "type": "string",
+      "default": "wheat",
+      "description": "Type of crop to farm",
+      "required": true,
+      "allowed_values": ["wheat", "carrots", "potatoes", "beetroots", "pumpkin", "melon"]
+    },
+    {
+      "name": "farm_size",
+      "type": "integer",
+      "default": 8,
+      "description": "Size of farm (plots per row)",
+      "required": false
+    },
+    {
+      "name": "farm_location",
+      "type": "string",
+      "default": "${designated_farm_area}",
+      "description": "Location of the farm",
+      "required": true
+    },
+    {
+      "name": "auto_bone_meal",
+      "type": "boolean",
+      "default": true,
+      "description": "Use bone meal to accelerate growth",
+      "required": false
+    },
+    {
+      "name": "storage_chest",
+      "type": "string",
+      "default": "${chest_nearby}",
+      "description": "Chest to store harvested crops",
+      "required": false
+    },
+    {
+      "name": "continuous_mode",
+      "type": "boolean",
+      "default": true,
+      "description": "Keep farming indefinitely",
+      "required": false
+    }
+  ],
+  "requirements": {
+    "inventory": [
+      {"item": "seeds", "quantity": 64}
+    ],
+    "tools": ["hoe"],
+    "maxExecutionTime": 1800,
+    "maxDistance": 50
+  },
+  "triggers": [
+    {
+      "type": "time",
+      "condition": "time_of_day() == 'dawn'",
+      "description": "Check farm at dawn"
+    },
+    {
+      "type": "manual",
+      "description": "Manual farming command"
+    },
+    {
+      "type": "interval",
+      "condition": "interval_minutes(30)",
+      "description": "Check farm every 30 minutes"
+    }
+  ],
+  "root_node": {
+    "type": "sequence",
+    "children": [
+      {
+        "type": "action",
+        "action": "equip_best_tool",
+        "parameters": {
+          "tool_type": "hoe"
+        }
+      },
+      {
+        "type": "action",
+        "action": "pathfind",
+        "parameters": {
+          "target": "${farm_location}"
+        }
+      },
+      {
+        "type": "repeat_until",
+        "condition": "!${continuous_mode} && inventory_full()",
+        "children": [
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "inventory_has('${crop_type}_seeds', 1)",
+                "description": "Check if we have seeds"
+              },
+              {
+                "type": "sequence",
+                "children": [
+                  {
+                    "type": "action",
+                    "action": "withdraw",
+                    "parameters": {
+                      "item": "${crop_type}_seeds",
+                      "amount": 64,
+                      "location": "${storage_chest}"
+                    }
+                  },
+                  {
+                    "type": "selector",
+                    "children": [
+                      {
+                        "type": "condition",
+                        "condition": "inventory_has('${crop_type}_seeds', 1)",
+                        "description": "Check if withdrawal succeeded"
+                      },
+                      {
+                        "type": "action",
+                        "action": "announce",
+                        "parameters": {
+                          "message": "No seeds available, stopping farm work"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "loop",
+            "iterations": "${farm_size}",
+            "children": [
+              {
+                "type": "selector",
+                "children": [
+                  {
+                    "type": "condition",
+                    "condition": "is_crop_mature('${crop_type}', current_position())",
+                    "description": "Check if crop is ready to harvest"
+                  },
+                  {
+                    "type": "condition",
+                    "condition": "is_soil_empty(current_position())",
+                    "description": "Check if soil is empty (needs planting)"
+                  },
+                  {
+                    "type": "condition",
+                    "condition": "is_crop_growing('${crop_type}', current_position())",
+                    "description": "Crop is growing, skip"
+                  },
+                  {
+                    "type": "action",
+                    "action": "next_plot",
+                    "parameters": {
+                      "farm_location": "${farm_location}",
+                      "plot_index": "${_iteration}"
+                    }
+                  }
+                ],
+                "fallback": {
+                  "type": "action",
+                  "action": "continue"
+                }
+              },
+              {
+                "type": "selector",
+                "children": [
+                  {
+                    "type": "sequence",
+                    "condition": "is_crop_mature('${crop_type}', current_position())",
+                    "children": [
+                      {
+                        "type": "action",
+                        "action": "harvest",
+                        "parameters": {
+                          "crop": "${crop_type}",
+                          "replant": true
+                        }
+                      },
+                      {
+                        "type": "selector",
+                        "children": [
+                          {
+                            "type": "condition",
+                            "condition": "inventory_free_space() > 10",
+                            "description": "Check inventory space"
+                          },
+                          {
+                            "type": "sequence",
+                            "children": [
+                              {
+                                "type": "action",
+                                "action": "pathfind",
+                                "parameters": {
+                                  "target": "${storage_chest}"
+                                }
+                              },
+                              {
+                                "type": "action",
+                                "action": "deposit_all",
+                                "parameters": {
+                                  "keep": ["${crop_type}_seeds"]
+                                }
+                              },
+                              {
+                                "type": "action",
+                                "action": "pathfind",
+                                "parameters": {
+                                  "target": "${farm_location}"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "sequence",
+                    "condition": "is_soil_empty(current_position())",
+                    "children": [
+                      {
+                        "type": "action",
+                        "action": "till_soil",
+                        "parameters": {
+                          "position": "current_position()"
+                        }
+                      },
+                      {
+                        "type": "action",
+                        "action": "place",
+                        "parameters": {
+                          "block": "${crop_type}_seeds",
+                          "position": "current_position()"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "sequence",
+                    "condition": "${auto_bone_meal} && inventory_has('bone_meal', 1)",
+                    "children": [
+                      {
+                        "type": "action",
+                        "action": "apply_bone_meal",
+                        "parameters": {
+                          "crop": "${crop_type}",
+                          "position": "current_position()"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "action",
+                "action": "next_plot",
+                "parameters": {
+                  "farm_location": "${farm_location}",
+                  "plot_index": "${_iteration}"
+                }
+              }
+            ]
+          },
+          {
+            "type": "selector",
+            "children": [
+              {
+                "type": "condition",
+                "condition": "${continuous_mode} == true",
+                "description": "Continue farming"
+              },
+              {
+                "type": "action",
+                "action": "announce",
+                "parameters": {
+                  "message": "Farming cycle complete. Harvested crops stored."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": "deposit_all",
+        "parameters": {
+          "location": "${storage_chest}",
+          "keep": ["${crop_type}_seeds"]
+        }
+      },
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Farming session complete!"
+        }
+      }
+    ]
+  },
+  "error_handlers": {
+    "no_seeds": [
+      {
+        "type": "action",
+        "action": "announce",
+        "parameters": {
+          "message": "Out of seeds! Please restock."
+        }
+      }
+    ],
+    "no_hoe": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "announce",
+            "parameters": {
+              "message": "No hoe available! Please provide one."
+            }
+          },
+          {
+            "type": "action",
+            "action": "fail",
+            "parameters": {
+              "reason": "missing_tool"
+            }
+          }
+        ]
+      }
+    ],
+    "inventory_full": [
+      {
+        "type": "sequence",
+        "children": [
+          {
+            "type": "action",
+            "action": "pathfind",
+            "parameters": {
+              "target": "${storage_chest}"
+            }
+          },
+          {
+            "type": "action",
+            "action": "deposit_all"
+          }
+        ]
+      }
+    ]
+  },
+  "telemetry": {
+    "logLevel": "info",
+    "metrics": [
+      "crops_harvested",
+      "crops_planted",
+      "execution_time",
+      "yield_per_cycle"
+    ]
+  }
+}

@@ -3,14 +3,25 @@ package com.minewright.entity;
 import com.minewright.MineWrightMod;
 import com.minewright.action.ActionExecutor;
 import com.minewright.action.Task;
+import com.minewright.behavior.ProcessManager;
+import com.minewright.behavior.processes.FollowProcess;
+import com.minewright.behavior.processes.IdleProcess;
+import com.minewright.behavior.processes.SurvivalProcess;
+import com.minewright.behavior.processes.TaskExecutionProcess;
 import com.minewright.dialogue.ProactiveDialogueManager;
 import com.minewright.hivemind.CloudflareClient;
 import com.minewright.hivemind.TacticalDecisionService;
+import com.minewright.humanization.HumanizationUtils;
+import com.minewright.humanization.SessionManager;
 import com.minewright.memory.CompanionMemory;
 import com.minewright.memory.ForemanMemory;
 import com.minewright.orchestration.AgentMessage;
 import com.minewright.orchestration.AgentRole;
 import com.minewright.orchestration.OrchestratorService;
+import com.minewright.recovery.RecoveryManager;
+import com.minewright.recovery.RecoveryResult;
+import com.minewright.recovery.StuckDetector;
+import com.minewright.recovery.StuckType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -31,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -218,11 +230,43 @@ public class ForemanEntity extends PathfinderMob {
      */
     private long lastStateSync = 0;
 
+    // ========== Process Arbitration System ==========
+
+    /**
+     * Process manager for behavior arbitration.
+     * Coordinates competing behaviors via priority-based selection.
+     * Replaces direct ActionExecutor.tick() calls with process-based arbitration.
+     */
+    private ProcessManager processManager;
+
+    // ========== Stuck Detection and Recovery ==========
+
+    /**
+     * Detects when the agent is stuck (position, progress, state, or path).
+     * Monitors movement, task progress, and state transitions.
+     */
+    private StuckDetector stuckDetector;
+
+    /**
+     * Manages recovery strategies for stuck conditions.
+     * Attempts escalation chain: repath -> teleport -> abort.
+     */
+    private RecoveryManager recoveryManager;
+
+    // ========== Session and Humanization ==========
+
+    /**
+     * Manages session state and fatigue modeling.
+     * Tracks warm-up, performance, and fatigue phases.
+     */
+    private SessionManager sessionManager;
+
     /**
      * Constructs a new ForemanEntity.
      *
      * <p>Initializes all subsystems including memory, action executor,
-     * dialogue manager, and tactical service. The entity starts in
+     * dialogue manager, tactical service, process manager, stuck detection,
+     * recovery manager, and session manager. The entity starts in
      * invulnerable mode and registers with the orchestrator on first tick.</p>
      *
      * @param entityType The entity type from registration
@@ -244,6 +288,49 @@ public class ForemanEntity extends PathfinderMob {
         // Initialize orchestrator reference
         if (!level.isClientSide) {
             this.orchestrator = MineWrightMod.getOrchestratorService();
+        }
+
+        // Initialize process manager and register behavior processes
+        this.processManager = new ProcessManager(this);
+        initializeProcesses();
+
+        // Initialize stuck detection and recovery
+        this.stuckDetector = new StuckDetector(this);
+        this.recoveryManager = new RecoveryManager(this);
+
+        // Initialize session management
+        this.sessionManager = new SessionManager();
+    }
+
+    /**
+     * Initializes all behavior processes for the process manager.
+     * Processes are registered in priority order (highest first).
+     *
+     * <p>Process Priority Order:</p>
+     * <ol>
+     *   <li>SurvivalProcess (100) - Emergency behaviors</li>
+     *   <li>TaskExecutionProcess (50) - Normal work execution</li>
+     *   <li>FollowProcess (25) - Player following</li>
+     *   <li>IdleProcess (10) - Fallback idle behavior</li>
+     * </ol>
+     */
+    private void initializeProcesses() {
+        if (processManager == null) {
+            LOGGER.warn("[{}] ProcessManager not initialized, cannot register processes", entityName);
+            return;
+        }
+
+        try {
+            // Register processes in priority order (highest first)
+            processManager.registerProcess(new SurvivalProcess(this));
+            processManager.registerProcess(new TaskExecutionProcess(this));
+            processManager.registerProcess(new FollowProcess(this));
+            processManager.registerProcess(new IdleProcess(this));
+
+            LOGGER.info("[{}] Registered {} behavior processes",
+                entityName, processManager.getProcessCount());
+        } catch (Exception e) {
+            LOGGER.error("[{}] Failed to initialize behavior processes", entityName, e);
         }
     }
 
@@ -277,7 +364,9 @@ public class ForemanEntity extends PathfinderMob {
      *   <li>Check tactical situation via Hive Mind (if enabled)</li>
      *   <li>Sync state with edge service (if enabled)</li>
      *   <li>Process incoming inter-agent messages</li>
-     *   <li>Execute queued actions via ActionExecutor</li>
+     *   <li>Update session state and fatigue</li>
+     *   <li>Execute behavior processes via ProcessManager</li>
+     *   <li>Detect and recover from stuck conditions</li>
      *   <li>Trigger proactive dialogue</li>
      *   <li>Report task progress to foreman</li>
      * </ul>
@@ -350,34 +439,62 @@ public class ForemanEntity extends PathfinderMob {
                 messageQueue.clear();
             }
 
-            // Execute actions - most critical, wrap carefully
-            try {
-                actionExecutor.tick();
-                errorRecoveryTicks = 0; // Reset error counter on success
-            } catch (Exception e) {
-                LOGGER.error("[{}] Critical error in action executor", entityName, e);
-                errorRecoveryTicks++;
+            // Update session state (fatigue, breaks)
+            if (sessionManager != null) {
+                try {
+                    sessionManager.update();
+                } catch (Exception e) {
+                    LOGGER.warn("[{}] Session manager error (continuing without session tracking)", entityName, e);
+                }
+            }
 
-                // Only send chat message once per error burst (not every tick)
-                if (errorRecoveryTicks == 1) {
-                    try {
-                        sendChatMessage("Hit a snag there boss. Working on it...");
-                    } catch (Exception ignored) {
-                        // If chat fails too, just log and continue
+            // Execute behaviors via ProcessManager - NEW approach
+            if (processManager != null) {
+                try {
+                    processManager.tick();
+                    errorRecoveryTicks = 0; // Reset error counter on success
+                } catch (Exception e) {
+                    LOGGER.error("[{}] Critical error in process manager", entityName, e);
+                    errorRecoveryTicks++;
+
+                    // Only send chat message once per error burst (not every tick)
+                    if (errorRecoveryTicks == 1) {
+                        try {
+                            sendChatMessage("Hit a snag there boss. Working on it...");
+                        } catch (Exception ignored) {
+                            // If chat fails too, just log and continue
+                        }
+                    }
+
+                    // After 3 consecutive errors, reset the process manager to recover
+                    if (errorRecoveryTicks >= 3) {
+                        LOGGER.warn("[{}] Too many errors, resetting process manager", entityName);
+                        try {
+                            processManager.forceDeactivate();
+                            processManager = new ProcessManager(this);
+                            initializeProcesses();
+                            errorRecoveryTicks = 0;
+                            sendChatMessage("Alright, I'm back on track now.");
+                        } catch (Exception resetError) {
+                            LOGGER.error("[{}] Failed to reset process manager", entityName, resetError);
+                        }
                     }
                 }
+            } else {
+                // Fallback to old action executor if process manager not available
+                try {
+                    actionExecutor.tick();
+                } catch (Exception e) {
+                    LOGGER.error("[{}] Critical error in action executor (fallback)", entityName, e);
+                }
+            }
 
-                // After 3 consecutive errors, reset the action executor to recover
-                if (errorRecoveryTicks >= 3) {
-                    LOGGER.warn("[{}] Too many errors, resetting action executor", entityName);
-                    try {
-                        actionExecutor.stopCurrentAction();
-                        actionExecutor = new ActionExecutor(this);
-                        errorRecoveryTicks = 0;
-                        sendChatMessage("Alright, I'm back on track now.");
-                    } catch (Exception resetError) {
-                        LOGGER.error("[{}] Failed to reset action executor", entityName, resetError);
-                    }
+            // Stuck detection and recovery - NEW feature
+            if (stuckDetector != null && recoveryManager != null) {
+                try {
+                    detectAndRecoverFromStuck();
+                } catch (Exception e) {
+                    LOGGER.warn("[{}] Stuck detection/recovery error (continuing anyway)", entityName, e);
                 }
             }
 
@@ -398,6 +515,62 @@ public class ForemanEntity extends PathfinderMob {
                 LOGGER.warn("[{}] Failed to report progress", entityName, e);
                 // Progress reporting is not critical
             }
+        }
+    }
+
+    /**
+     * Detects stuck conditions and attempts recovery.
+     *
+     * <p>This method:</p>
+     * <ol>
+     *   <li>Updates stuck detector state</li>
+     *   <li>Checks for any stuck condition</li>
+     *   <li>Attempts recovery if stuck detected</li>
+     *   <li>Resets detector on successful recovery</li>
+     * </ol>
+     */
+    private void detectAndRecoverFromStuck() {
+        // Update stuck detection
+        boolean detected = stuckDetector.tickAndDetect();
+
+        if (!detected) {
+            return; // Not stuck
+        }
+
+        // Determine stuck type
+        StuckType stuckType = stuckDetector.detectStuck();
+        if (stuckType == null) {
+            return; // No specific stuck type detected
+        }
+
+        LOGGER.warn("[{}] Stuck detected: {} at position {}",
+            entityName, stuckType, blockPosition());
+
+        // Attempt recovery
+        RecoveryResult result = recoveryManager.attemptRecovery(stuckType);
+
+        switch (result) {
+            case SUCCESS:
+                LOGGER.info("[{}] Recovery successful from {}", entityName, stuckType);
+                stuckDetector.reset();
+                sendChatMessage("Phew, got unstuck!");
+                break;
+
+            case RETRY:
+                // Will retry next tick
+                LOGGER.debug("[{}] Recovery retrying for {}", entityName, stuckType);
+                break;
+
+            case ESCALATE:
+                LOGGER.info("[{}] Recovery escalating for {}", entityName, stuckType);
+                break;
+
+            case ABORT:
+                LOGGER.warn("[{}] Recovery aborted for {}, giving up", entityName, stuckType);
+                stuckDetector.reset();
+                actionExecutor.stopCurrentAction();
+                sendChatMessage("I'm stuck and can't complete this task.");
+                break;
         }
     }
 
@@ -961,6 +1134,109 @@ public class ForemanEntity extends PathfinderMob {
         if (dialogueManager != null) {
             dialogueManager.forceComment(triggerType, context);
         }
+    }
+
+    // ========== New System Getters ==========
+
+    /**
+     * Gets the process manager for behavior arbitration.
+     *
+     * @return ProcessManager instance, or null if not initialized
+     */
+    public ProcessManager getProcessManager() {
+        return processManager;
+    }
+
+    /**
+     * Gets the name of the currently active behavior process.
+     *
+     * @return Active process name, or "IDLE" if no process is active
+     */
+    public String getActiveProcessName() {
+        return processManager != null ? processManager.getActiveProcessName() : "IDLE";
+    }
+
+    /**
+     * Gets the stuck detector for monitoring agent position and progress.
+     *
+     * @return StuckDetector instance, or null if not initialized
+     */
+    public StuckDetector getStuckDetector() {
+        return stuckDetector;
+    }
+
+    /**
+     * Gets the recovery manager for handling stuck conditions.
+     *
+     * @return RecoveryManager instance, or null if not initialized
+     */
+    public RecoveryManager getRecoveryManager() {
+        return recoveryManager;
+    }
+
+    /**
+     * Gets the session manager for fatigue and break tracking.
+     *
+     * @return SessionManager instance, or null if not initialized
+     */
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    /**
+     * Gets a humanized reaction delay based on session state.
+     *
+     * <p>This method applies session-aware modifiers to reaction time:</p>
+     * <ul>
+     *   <li>Warm-up phase: +30% slower</li>
+     *   <li>Fatigue phase: +50% slower</li>
+     *   <li>Normal phase: base reaction time</li>
+     * </ul>
+     *
+     * @return Reaction delay in ticks (20 ticks = 1 second)
+     */
+    public int getHumanizedReactionDelay() {
+        if (sessionManager == null || !sessionManager.isEnabled()) {
+            // Base reaction time: 150-600ms converted to ticks (3-12 ticks)
+            int reactionMs = HumanizationUtils.humanReactionTime();
+            return Math.max(3, Math.min(12, reactionMs / 50));
+        }
+
+        // Get session-based multipliers
+        double fatigue = sessionManager.getFatigueLevel();
+        double phaseMultiplier = sessionManager.getReactionMultiplier();
+
+        // Generate contextual reaction time
+        int reactionMs = HumanizationUtils.contextualReactionTime(fatigue, 0.0, 0.0);
+        reactionMs = (int) (reactionMs * phaseMultiplier);
+
+        // Convert to ticks (round up)
+        return Math.max(3, Math.min(20, (reactionMs + 49) / 50));
+    }
+
+    /**
+     * Checks if agent should make a mistake based on session state.
+     *
+     * <p>Mistake probability is affected by:</p>
+     * <ul>
+     *   <li>Base rate: 3% (configurable)</li>
+     *   <li>Fatigue: up to 2x multiplier</li>
+     *   <li>Warm-up: 1.5x multiplier</li>
+     * </ul>
+     *
+     * @param baseRate Base mistake probability (0.0 to 1.0)
+     * @return true if agent should make a mistake
+     */
+    public boolean shouldMakeMistake(double baseRate) {
+        if (sessionManager == null || !sessionManager.isEnabled()) {
+            return HumanizationUtils.shouldMakeMistake(baseRate);
+        }
+
+        // Apply session-based error multiplier
+        double errorMultiplier = sessionManager.getErrorMultiplier();
+        double adjustedRate = baseRate * errorMultiplier;
+
+        return HumanizationUtils.shouldMakeMistake(adjustedRate);
     }
 }
 
