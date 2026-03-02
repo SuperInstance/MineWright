@@ -148,7 +148,11 @@ public class PlaceBlockAction extends BaseAction {
         if (foreman != null && foreman.getNavigation() != null) {
             foreman.getNavigation().stop();
         }
-        LOGGER.debug("[{}] Place block action cleanup complete", foreman.getEntityName());
+        LOGGER.debug("[{}] Place block action cleanup complete", getForemanName());
+    }
+
+    private String getForemanName() {
+        return foreman != null ? foreman.getEntityName() : "unknown";
     }
 
     @Override

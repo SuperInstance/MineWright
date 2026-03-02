@@ -137,7 +137,7 @@ public class CraftItemAction extends BaseAction {
             if (foreman != null && foreman.getNavigation() != null) {
                 foreman.getNavigation().stop();
             }
-            LOGGER.info("[{}] Craft action cancelled: {}x {}", foreman.getEntityName(), quantity, itemName);
+            LOGGER.info("[{}] Craft action cancelled: {}x {}", getForemanName(), quantity, itemName);
         } finally {
             cleanup();
         }
@@ -149,7 +149,11 @@ public class CraftItemAction extends BaseAction {
         if (foreman != null && foreman.getNavigation() != null) {
             foreman.getNavigation().stop();
         }
-        LOGGER.debug("[{}] Craft action cleanup complete", foreman.getEntityName());
+        LOGGER.debug("[{}] Craft action cleanup complete", getForemanName());
+    }
+
+    private String getForemanName() {
+        return foreman != null ? foreman.getEntityName() : "unknown";
     }
 
     @Override

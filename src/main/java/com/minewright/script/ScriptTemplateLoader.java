@@ -325,8 +325,12 @@ public class ScriptTemplateLoader {
      * Extracts template ID from file path.
      */
     private static String getTemplateId(Path path) {
-        String filename = path.getFileName().toString();
-        return filename.substring(0, filename.lastIndexOf('.'));
+        Path fileName = path.getFileName();
+        if (fileName == null) {
+            return "unknown";
+        }
+        String filenameStr = fileName.toString();
+        return filenameStr.substring(0, filenameStr.lastIndexOf('.'));
     }
 
     /**
