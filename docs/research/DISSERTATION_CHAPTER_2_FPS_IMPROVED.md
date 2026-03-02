@@ -16,16 +16,18 @@
 5. [Game Theory in FPS AI: Adversarial Reasoning](#5-game-theory-in-fps-ai-adversarial-reasoning)
 6. [Machine Learning in Combat AI: Deep Reinforcement Learning](#6-machine-learning-in-combat-ai-deep-reinforcement-learning)
 7. [Evaluation Methodology: Metrics and Standards](#7-evaluation-methodology-metrics-and-standards)
-8. [Counter-Strike: Waypoint Navigation and Aiming Algorithms](#8-counter-strike-waypoint-navigation-and-aiming-algorithms)
-9. [Cover Systems: Detection and Tactical Positioning](#9-cover-systems-detection-and-tactical-positioning)
-10. [Squad Tactics: Brothers in Arms and Team Coordination](#10-squad-tactics-brothers-in-arms-and-team-coordination)
-11. [Aiming Systems: Accuracy, Reaction Time, and Weapon Handling](#11-aiming-systems-accuracy-reaction-time-and-weapon-handling)
-12. [Threat Assessment and Decision Matrices](#12-threat-assessment-and-decision-matrices)
-13. [Minecraft Applications: Combat AI in Block-Based Worlds](#13-minecraft-applications-combat-ai-in-block-based-worlds)
-14. [Reference Implementation: Java Code Examples](#14-reference-implementation-java-code-examples)
-15. [Best Practices and Design Patterns](#15-best-practices-and-design-patterns)
-16. [Limitations and Challenges](#16-limitations-and-challenges)
-17. [References and Further Reading](#17-references-and-further-reading)
+8. [Counter-Strike: Waypoint Navigation and Aiming Algorithms](#13-counter-strike-waypoint-navigation-and-aiming-algorithms)
+9. [Modern FPS AI: 2015-2025 Innovations](#8-modern-fps-ai-2015-2025-innovations)
+10. [State of the Art: 2024-2025 Advances](#9-state-of-the-art-2024-2025-advances)
+11. [Cover Systems: Detection and Tactical Positioning](#10-cover-systems-detection-and-tactical-positioning)
+12. [Squad Tactics: Brothers in Arms and Team Coordination](#11-squad-tactics-brothers-in-arms-and-team-coordination)
+13. [Aiming Systems: Accuracy, Reaction Time, and Weapon Handling](#12-aiming-systems-accuracy-reaction-time-and-weapon-handling)
+14. [Threat Assessment and Decision Matrices](#14-threat-assessment-and-decision-matrices)
+15. [Minecraft Applications: Combat AI in Block-Based Worlds](#15-minecraft-applications-combat-ai-in-block-based-worlds)
+16. [Reference Implementation: Java Code Examples](#16-reference-implementation-java-code-examples)
+17. [Best Practices and Design Patterns](#17-best-practices-and-design-patterns)
+18. [Limitations and Challenges](#18-limitations-and-challenges)
+19. [References and Further Reading](#19-references-and-further-reading)
 
 ---
 
@@ -4877,9 +4879,9 @@ def compare_agents(agent1, agent2, num_runs=100):
 
 ---
 
-## 8. Counter-Strike: Waypoint Navigation and Aiming Algorithms
+## 13. Counter-Strike: Waypoint Navigation and Aiming Algorithms
 
-### 4.1 Historical Evolution
+### 13.1 Historical Evolution
 
 Counter-Strike bot AI evolved through three generations:
 
@@ -4891,7 +4893,7 @@ Counter-Strike bot AI evolved through three generations:
 | **Realbot** | CS 1.6 | Waypoint-free navigation, learned from humans |
 | **Official CZ/Source Bots** | CS:CZ/CS:GO | NAV mesh navigation, tactical awareness |
 
-### 4.2 PODbot Waypoint System
+### 13.2 PODbot Waypoint System
 
 PODbot (Ping of Death bot) used discrete waypoints connected by paths:
 
@@ -5135,11 +5137,11 @@ void NavigateToGoal(bot_t* bot, vec3_t goal) {
 
 ---
 
-## 5. Modern FPS AI: 2015-2025 Innovations
+## 8. Modern FPS AI: 2015-2025 Innovations
 
 The period from 2015 to 2025 witnessed dramatic evolution in FPS game AI, driven by advances in machine learning, increased computational budgets, and player expectations for more intelligent opponents. Modern tactical shooters introduced destruction systems, ability-based combat, and sophisticated squad coordination that required new AI approaches.
 
-### 5.1 Rainbow Six Siege (2015): Destruction-Aware Tactical AI
+### 8.1 Rainbow Six Siege (2015): Destruction-Aware Tactical AI
 
 Rainbow Six Siege revolutionized FPS AI with its destruction system, requiring AI agents to reason about dynamic environmental changes.
 
@@ -6042,11 +6044,11 @@ public class GloryKillAI {
 
 ---
 
-## 6. State of the Art: 2024-2025 Advances
+## 9. State of the Art: 2024-2025 Advances
 
 The years 2024-2025 have seen transformative advances in FPS game AI, driven by breakthroughs in large language models, reinforcement learning, and player behavior modeling. These developments blur the line between human and artificial intelligence in ways previously confined to science fiction.
 
-### 6.1 Machine Learning-Enhanced FPS Bots
+### 9.1 Machine Learning-Enhanced FPS Bots
 
 Modern FPS games increasingly use machine learning to create more human-like and adaptable opponents.
 
@@ -6603,9 +6605,9 @@ public class ProceduralBehaviorGenerator {
 
 ---
 
-## 7. Cover Systems: Detection and Tactical Positioning
+## 10. Cover Systems: Detection and Tactical Positioning
 
-### 7.1 Cover Detection Algorithm
+### 10.1 Cover Detection Algorithm
 
 FPS AI needs to identify cover positions dynamically:
 
@@ -6847,9 +6849,9 @@ public class CoverCombatState {
 
 ---
 
-## 6. Squad Tactics: Brothers in Arms and Team Coordination
+## 11. Squad Tactics: Brothers in Arms and Team Coordination
 
-### 6.1 Fire and Maneuver Doctrine
+### 11.1 Fire and Maneuver Doctrine
 
 Brothers in Arms (2005) implemented realistic military squad tactics:
 
@@ -7129,9 +7131,9 @@ public class SquadCommandSystem {
 
 ---
 
-## 7. Aiming Systems: Accuracy, Reaction Time, and Weapon Handling
+## 12. Aiming Systems: Accuracy, Reaction Time, and Weapon Handling
 
-### 7.1 Aiming Accuracy Formula
+### 12.1 Aiming Accuracy Formula
 
 FPS bots need realistic but imperfect aim:
 
@@ -7358,9 +7360,9 @@ public class RecoilSystem {
 
 ---
 
-## 8. Threat Assessment and Decision Matrices
+## 14. Threat Assessment and Decision Matrices
 
-### 8.1 Threat Calculation
+### 14.1 Threat Calculation
 
 FPS AI must continuously evaluate which enemy poses the greatest threat:
 
@@ -7592,9 +7594,9 @@ public class TargetSelectionSystem {
 
 ---
 
-## 9. Minecraft Applications: Combat AI in Block-Based Worlds
+## 15. Minecraft Applications: Combat AI in Block-Based Worlds
 
-### 9.1 Minecraft-Specific Combat Challenges
+### 15.1 Minecraft-Specific Combat Challenges
 
 Minecraft's block-based world presents unique AI challenges that differ significantly from traditional FPS games:
 
@@ -7610,7 +7612,7 @@ Minecraft's block-based world presents unique AI challenges that differ signific
 
 **Key Insight:** Minecraft's discrete, grid-based world simplifies some AI problems (clear position quantization, explicit connectivity) while complicating others (3D movement, dynamic terrain modification).
 
-### 9.2 Minecraft Combat AI Implementation
+### 15.2 Minecraft Combat AI Implementation
 
 #### Applied FPS Techniques in Minecraft
 
@@ -8109,7 +8111,7 @@ Minecraft's block-based world presents unique AI challenges:
 | **Weapon Range** | Realistic ballistics | Block distance (simpler) |
 | **Verticality** | Mostly 2D navigation | Full 3D (ladders, stairs) |
 
-### 9.2 Minecraft Combat AI Implementation
+### 15.2 Minecraft Combat AI Implementation
 
 ```java
 /**
@@ -8551,9 +8553,9 @@ public class MinecraftWeaponSelection {
 
 ---
 
-## 10. Reference Implementation: Java Code Examples
+## 16. Reference Implementation: Java Code Examples
 
-### 10.1 Complete FPS Bot Class
+### 16.1 Complete FPS Bot Class
 
 ```java
 /**
@@ -8805,9 +8807,9 @@ public class FPSBot {
 
 ---
 
-## 11. Best Practices and Design Patterns
+## 17. Best Practices and Design Patterns
 
-### 11.1 FPS AI Design Principles
+### 17.1 FPS AI Design Principles
 
 | Principle | Description | Example |
 |-----------|-------------|---------|
@@ -8817,7 +8819,7 @@ public class FPSBot {
 | **Team Coordination** | Squad AI communicates | Callouts, suppressing fire, flanking |
 | **Performance** | Budget CPU time carefully | Spatial hashing, culling |
 
-### 11.2 Common Pitfalls to Avoid
+### 17.2 Common Pitfalls to Avoid
 
 ```java
 // BAD: Perfect aim
@@ -8886,11 +8888,11 @@ public class SpatialPerceptionGrid {
 
 ---
 
-## 12. Limitations and Challenges
+## 18. Limitations and Challenges
 
 The FPS AI architectures examined in this chapter represent significant achievements in game artificial intelligence, yet each system faces fundamental limitations that constrained their effectiveness and influenced subsequent AI development. Understanding these limitations provides critical insights for designing AI systems in Minecraft and other dynamic environments.
 
-### 12.1 Computational Constraints in Real-Time Systems
+### 18.1 Computational Constraints in Real-Time Systems
 
 FPS games must maintain 60 FPS while updating dozens of AI agents simultaneously, creating severe computational budgets that limit AI sophistication. In Quake III Arena, each bot had approximately 0.5-1.0 milliseconds per frame for all AI processing, including perception, pathfinding, and decision-making (Buckland, "Programming Game AI by Example", 2005). This constraint necessitated precomputation and simplified decision models that could not adapt to novel situations.
 
@@ -8898,7 +8900,7 @@ FPS games must maintain 60 FPS while updating dozens of AI agents simultaneously
 
 **For Minecraft AI:** The Minecraft environment imposes even stricter constraints, with typical servers running at 20 TPS (ticks per second) rather than 60 FPS. While this provides more time per tick (50ms vs 16ms), the block-based world and potential for hundreds of entities demand efficient AI architectures. The solution lies in the "One Abstraction Away" philosophy: LLMs handle strategic planning infrequently, while lightweight FSMs and behavior trees handle tactical execution at 20 TPS.
 
-### 12.2 Domain Engineering Requirements
+### 18.2 Domain Engineering Requirements
 
 GOAP and similar planning systems require extensive domain engineering—hand-crafting actions, preconditions, effects, and goals for each game type. In F.E.A.R., the AI team spent months authoring approximately 50 atomic actions with precise world state representations (Orkin, 2004). Each new weapon, enemy type, or environmental feature required updating the action library and potentially rebalancing the entire planning system.
 
@@ -8906,7 +8908,7 @@ GOAP and similar planning systems require extensive domain engineering—hand-cr
 
 **Fragility to Novelty:** GOAP systems generate emergent behaviors within their defined action space but cannot innovate beyond it. When F.E.A.R. players discovered tactics the designers hadn't anticipated (such as specific grenade-bounce trajectories), the AI initially struggled to respond effectively until patches added new actions and goals. This brittleness contrasts with human players' ability to innovate using tools in unintended ways.
 
-### 12.3 Navigation in Dynamic Environments
+### 18.3 Navigation in Dynamic Environments
 
 Waypoint-based navigation (Quake III, Counter-Strike 1.6) and navmesh systems (modern Counter-Strike) both assume a relatively static geometry. While they support dynamic obstacles, they cannot efficiently handle frequently changing terrain—a core feature of Minecraft where players can mine and place blocks arbitrarily.
 
@@ -8966,7 +8968,7 @@ The FPS AI systems analyzed in this chapter pioneered techniques that remain rel
 
 ---
 
-## 13. References and Further Reading
+## 19. References and Further Reading
 
 **Related Chapters:** For GOAP architectural details, see **Chapter 6, Section 4**. For behavior tree combat implementations, see **Chapter 1, Section 3.3**. For squad coordination patterns applied to multi-agent systems, see **Chapter 6, Section 9**.
 

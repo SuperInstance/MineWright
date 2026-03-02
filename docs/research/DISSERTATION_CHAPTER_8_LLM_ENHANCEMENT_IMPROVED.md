@@ -1,5 +1,11 @@
 # Chapter 8: How LLMs Enhance Traditional AI
 
+**Dissertation Chapter:** LLM-Enhanced Game AI Architectures
+**Focus:** Large Language Model integration with traditional game AI systems
+**Target Application:** Hybrid architectures for intelligent autonomous agents
+
+---
+
 ## The Convergence of Paradigms
 
 **Chapter Overview:** This final analytical chapter synthesizes thirty years of game AI evolution with the transformative potential of Large Language Models. Building on the architectural frameworks from **Chapter 6** and the personality systems from **Chapter 3**, we demonstrate how LLMs don't replace traditional AI—they amplify it. The "One Abstraction Away" philosophy introduced here represents the culmination of this dissertation's theoretical contributions.

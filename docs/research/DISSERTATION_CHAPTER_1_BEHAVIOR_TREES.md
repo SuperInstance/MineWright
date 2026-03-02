@@ -15,7 +15,7 @@
 4. [Comparison: BT vs FSM](#4-comparison-bt-vs-fsm)
 5. [Academic Foundations](#5-academic-foundations)
 6. [Limitations and Challenges](#6-limitations-and-challenges)
-7. [Advanced Behavior Tree Patterns (2018-2025)](#61-advanced-behavior-tree-patterns-2018-2025)
+7. [Advanced Behavior Tree Patterns (2018-2025)](#7-advanced-behavior-tree-patterns-2018-2025)
 8. [Formal Methods in Behavior Trees](#8-formal-methods-in-behavior-trees) (NEW)
 9. [Theoretical Foundations](#9-theoretical-foundations) (NEW)
 10. [Research Frontiers (2020-2025)](#10-research-frontiers-2020-2025) (NEW)
@@ -4067,11 +4067,11 @@ The recommended hybrid architecture (Chapter 6, Section 9) leverages behavior tr
 
 ---
 
-## 6.1 Advanced Behavior Tree Patterns (2018-2025)
+## 7. Advanced Behavior Tree Patterns (2018-2025)
 
 Modern game AI has evolved beyond basic behavior tree patterns to address performance, scalability, and complexity challenges in large-scale games. This section examines advanced patterns that have emerged in the past seven years.
 
-### 6.1.1 Event-Driven Behavior Trees
+### 7.1 Event-Driven Behavior Trees
 
 **Problem:** Reactive behavior trees re-evaluate from the root every tick, wasting CPU cycles when nothing has changed.
 
@@ -4172,7 +4172,7 @@ public enum EventType {
 
 **Citation:** Cheng, K. (2019). "Event-Driven Behavior Trees for Large-Scale AI." *Game AI Pro 3.*
 
-### 6.1.2 Data-Driven Behavior Trees
+### 7.2 Data-Driven Behavior Trees
 
 **Problem:** Hard-coded BT logic requires recompilation for behavior changes, slowing iteration.
 
@@ -4324,7 +4324,7 @@ public class BehaviorTreeParser {
 
 **Citation:** Sterling, J. (2020). "Data-Driven AI Systems in Strategy Games." *GDC Vault.*
 
-### 6.1.3 BT Optimization Techniques
+### 7.3 BT Optimization Techniques
 
 #### Node Execution Caching
 
@@ -4455,7 +4455,7 @@ public class ParallelNode extends CompositeNode {
 - 4-core CPU: 3.5x speedup for parallel subtrees
 - 8-core CPU: 6.2x speedup for parallel subtrees
 
-### 6.1.4 BT Debugging and Visualization Tools
+### 7.4 BT Debugging and Visualization Tools
 
 #### Node Execution Tracing
 
@@ -4584,7 +4584,7 @@ public class BehaviorTreeVisualizer {
 
 **Citation:** Gormley, J. (2021). "Debugging Behavior Trees at Scale." *Game AI Pro 4.*
 
-### 6.1.5 Hybrid BT Architectures
+### 7.5 Hybrid BT Architectures
 
 Modern games combine behavior trees with other AI architectures for optimal results.
 
