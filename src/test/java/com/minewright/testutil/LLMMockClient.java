@@ -1,6 +1,9 @@
 package com.minewright.testutil;
 
-import com.minewright.llm.async.*;
+import com.minewright.llm.async.AsyncLLMClient;
+import com.minewright.llm.async.LLMException;
+import com.minewright.llm.async.LLMResponse;
+import com.minewright.llm.async.LLMExecutorService;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,11 +17,11 @@ import java.util.concurrent.CompletableFuture;
  */
 public class LLMMockClient implements AsyncLLMClient {
 
+    private final String providerId;
     private final String model;
-    private final LLMProvider provider;
     private long responseDelayMs = 100;
     private double failureRate = 0.0;
-    private String mockResponse = """
+    private String mockResponseContent = """
         {
             "tasks": [
                 {
@@ -29,39 +32,49 @@ public class LLMMockClient implements AsyncLLMClient {
         }
         """;
 
-    public LLMMockClient(String model, LLMProvider provider) {
+    /**
+     * Creates a mock client with the specified provider and model.
+     */
+    public LLMMockClient(String providerId, String model) {
+        this.providerId = providerId;
         this.model = model;
-        this.provider = provider;
     }
 
+    /**
+     * Creates a mock client with default values.
+     */
     public LLMMockClient() {
-        this("mock-model", LLMProvider.OPENAI);
+        this("mock-provider", "mock-model");
     }
 
+    /**
+     * Sets the delay before responding (in milliseconds).
+     */
     public void setResponseDelay(long delayMs) {
         this.responseDelayMs = delayMs;
     }
 
+    /**
+     * Sets the rate of failures (0.0 to 1.0).
+     */
     public void setFailureRate(double rate) {
         this.failureRate = Math.max(0.0, Math.min(1.0, rate));
     }
 
+    /**
+     * Sets the mock response content.
+     */
     public void setMockResponse(String response) {
-        this.mockResponse = response;
+        this.mockResponseContent = response;
     }
 
     @Override
-    public String getModel() {
-        return model;
+    public String getProviderId() {
+        return providerId;
     }
 
     @Override
-    public LLMProvider getProvider() {
-        return provider;
-    }
-
-    @Override
-    public CompletableFuture<LLMResponse> chatAsync(LLMRequest request) {
+    public CompletableFuture<LLMResponse> sendAsync(String prompt, Map<String, Object> params) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Thread.sleep(responseDelayMs);
@@ -70,50 +83,56 @@ public class LLMMockClient implements AsyncLLMClient {
             }
 
             if (Math.random() < failureRate) {
-                throw new LLMException("Mock failure");
+                throw new LLMException(
+                    "Mock failure",
+                    LLMException.ErrorType.SERVER_ERROR,
+                    providerId,
+                    true
+                );
             }
 
-            return new LLMResponse(
-                mockResponse,
-                request.getMessages().get(request.getMessages().size() - 1).content(),
-                Map.of("model", model, "provider", provider.name()),
-                100 + mockResponse.length()
-            );
+            return LLMResponse.builder()
+                .content(mockResponseContent)
+                .model(model)
+                .providerId(providerId)
+                .tokensUsed(100 + mockResponseContent.length())
+                .latencyMs(responseDelayMs)
+                .fromCache(false)
+                .build();
         }, LLMExecutorService.getInstance());
     }
 
-    @Override
-    public CompletableFuture<LLMResponse> chatAsync(LLMRequest request, LLMCache cache) {
-        return chatAsync(request);
-    }
-
-    @Override
-    public void shutdown() {
-        // No-op for mock
-    }
-
-    @Override
-    public boolean isHealthy() {
-        return true;
-    }
-
+    /**
+     * Creates a simple mock client with default settings.
+     */
     public static LLMMockClient createSimple() {
-        return new LLMMockClient("gpt-3.5-turbo", LLMProvider.OPENAI);
+        return new LLMMockClient();
     }
 
-    public static LLMMockClient createComplex() {
-        return new LLMMockClient("gpt-4", LLMProvider.OPENAI);
-    }
-
-    public static LLMMockClient createFast() {
-        LLMMockClient client = new LLMMockClient("fast-model", LLMProvider.GROQ);
-        client.setResponseDelay(50);
+    /**
+     * Creates a mock client that always returns the specified response.
+     */
+    public static LLMMockClient withResponse(String response) {
+        LLMMockClient client = new LLMMockClient();
+        client.setMockResponse(response);
         return client;
     }
 
-    public static LLMMockClient createUnreliable(double failureRate) {
-        LLMMockClient client = new LLMMockClient("unreliable-model", LLMProvider.OPENAI);
-        client.setFailureRate(failureRate);
+    /**
+     * Creates a mock client that always fails.
+     */
+    public static LLMMockClient createFailing() {
+        LLMMockClient client = new LLMMockClient();
+        client.setFailureRate(1.0);
+        return client;
+    }
+
+    /**
+     * Creates a mock client with zero delay for fast tests.
+     */
+    public static LLMMockClient createFast() {
+        LLMMockClient client = new LLMMockClient();
+        client.setResponseDelay(0);
         return client;
     }
 }
