@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -50,7 +51,7 @@ class ContractNetProtocolTest extends IntegrationTestBase {
         assertNotNull(announcementId, "Announcement ID should not be null");
         assertEquals(1, manager.getActiveCount(), "Should have one active negotiation");
 
-        ContractNegotiation negotiation = manager.getNegotiation(announcementId);
+        ContractNetManager.ContractNegotiation negotiation = manager.getNegotiation(announcementId);
         assertNotNull(negotiation, "Negotiation should exist");
         assertEquals(ContractNetManager.ContractState.ANNOUNCED, negotiation.getState(),
             "Negotiation should be in ANNOUNCED state");
@@ -180,7 +181,7 @@ class ContractNetProtocolTest extends IntegrationTestBase {
         assertTrue(winner.isPresent(), "Should have a winner");
         assertEquals(agent2, winner.get().bidderId(), "Agent2 should win (highest score)");
 
-        ContractNegotiation negotiation = manager.getNegotiation(announcementId);
+        ContractNetManager.ContractNegotiation negotiation = manager.getNegotiation(announcementId);
         assertEquals(ContractNetManager.ContractState.AWARDED, negotiation.getState(),
             "Negotiation should be in AWARDED state");
         assertEquals(agent2, negotiation.getAwardedAgent(), "Agent2 should be awarded");
@@ -312,7 +313,7 @@ class ContractNetProtocolTest extends IntegrationTestBase {
 
         assertFalse(manager.submitBid(lateBid), "Late bid should be rejected");
 
-        ContractNegotiation negotiation = manager.getNegotiation(announcementId);
+        ContractNetManager.ContractNegotiation negotiation = manager.getNegotiation(announcementId);
         assertEquals(ContractNetManager.ContractState.EXPIRED, negotiation.getState(),
             "Negotiation should be expired");
     }
@@ -494,7 +495,7 @@ class ContractNetProtocolTest extends IntegrationTestBase {
         manager.awardToBestBidder(announcementId);
 
         // Manually set to completed
-        ContractNegotiation negotiation = manager.getNegotiation(announcementId);
+        ContractNetManager.ContractNegotiation negotiation = manager.getNegotiation(announcementId);
         manager.closeNegotiation(announcementId, ContractNetManager.ContractState.COMPLETED);
 
         int initialCount = manager.getAllNegotiations().size();
