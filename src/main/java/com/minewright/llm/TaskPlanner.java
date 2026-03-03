@@ -399,6 +399,12 @@ public class TaskPlanner {
     }
 
     /**
+     * Maximum timeout for task planning operations.
+     * Includes time for LLM calls, retries, and fallback.
+     */
+    private static final long PLAN_TASKS_TIMEOUT_MS = 180000; // 3 minutes
+
+    /**
      * Asynchronously plans tasks for crew member using the configured LLM provider.
      *
      * <p>This method returns immediately with a CompletableFuture, allowing the game thread
@@ -408,13 +414,28 @@ public class TaskPlanner {
      * <p><b>Non-blocking:</b> Game thread is never blocked</p>
      * <p><b>Resilient:</b> Automatic retry, circuit breaker, fallback on failure</p>
      * <p><b>Cached:</b> Repeated prompts may hit cache (40-60% hit rate)</p>
+     * <p><b>Timeout Protection:</b> Overall 3-minute timeout prevents hanging</p>
      *
      * @param foreman   The crew member entity making the request
      * @param command The user command to plan
      * @return CompletableFuture that completes with the parsed response, or null on failure
      */
     public CompletableFuture<ResponseParser.ParsedResponse> planTasksAsync(ForemanEntity foreman, String command) {
-        return planTasksAsync(foreman, command, true);
+        return planTasksAsync(foreman, command, true)
+            .orTimeout(PLAN_TASKS_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof java.util.concurrent.TimeoutException) {
+                    LOGGER.error("[Async] Task planning timed out after {}ms for command: {}",
+                        PLAN_TASKS_TIMEOUT_MS, command);
+                    return null;
+                }
+                // Log other exceptions
+                if (throwable.getCause() != null) {
+                    LOGGER.error("[Async] Task planning failed: {}",
+                        throwable.getCause().getMessage());
+                }
+                return null;
+            });
     }
 
     /**
@@ -583,6 +604,8 @@ public class TaskPlanner {
      *   <li>Track metrics for optimization</li>
      * </ol>
      *
+     * <p><b>Timeout Protection:</b> Overall 3-minute timeout prevents hanging</p>
+     *
      * @param foreman The crew member entity making the request
      * @param command The user command to plan
      * @return CompletableFuture that completes with the parsed response, or null on failure
@@ -620,7 +643,7 @@ public class TaskPlanner {
             params.put("worldKnowledge", worldKnowledge);
             params.put("providerId", "cascade");
 
-            // Route through cascade system
+            // Route through cascade system with timeout protection
             return cascadeRouter.route(userPrompt, params)
                 .thenApply(response -> {
                     String content = response.getContent();
@@ -644,7 +667,13 @@ public class TaskPlanner {
 
                     return parsed;
                 })
+                .orTimeout(PLAN_TASKS_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .exceptionally(throwable -> {
+                    if (throwable instanceof java.util.concurrent.TimeoutException) {
+                        LOGGER.error("[Cascade] Task planning timed out after {}ms for command: {}",
+                            PLAN_TASKS_TIMEOUT_MS, command);
+                        return null;
+                    }
                     LOGGER.error("[Cascade] Error planning tasks: {}",
                         throwable.getMessage(), throwable);
                     return null;

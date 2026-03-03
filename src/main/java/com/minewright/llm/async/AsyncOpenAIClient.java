@@ -121,6 +121,12 @@ public class AsyncOpenAIClient implements AsyncLLMClient {
             model, maxTokens, temperature);
     }
 
+    /**
+     * Maximum timeout for LLM requests including retries.
+     * Ensures overall operation doesn't hang even with retries.
+     */
+    private static final long OVERALL_TIMEOUT_MS = 120000; // 2 minutes total
+
     @Override
     public CompletableFuture<LLMResponse> sendAsync(String prompt, Map<String, Object> params) {
         long startTime = System.currentTimeMillis();
@@ -138,7 +144,31 @@ public class AsyncOpenAIClient implements AsyncLLMClient {
 
         LOGGER.debug("[openai] Sending async request (prompt length: {} chars)", prompt.length());
 
-        return sendWithRetry(request, startTime, 0);
+        // Apply overall timeout to prevent hanging even with retries
+        return sendWithRetry(request, startTime, 0)
+            .orTimeout(OVERALL_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof java.util.concurrent.TimeoutException) {
+                    LOGGER.error("[openai] Overall timeout exceeded ({}ms) - request cancelled", OVERALL_TIMEOUT_MS);
+                    throw new LLMException(
+                        "Request timeout: exceeded " + OVERALL_TIMEOUT_MS + "ms (including retries)",
+                        LLMException.ErrorType.TIMEOUT,
+                        PROVIDER_ID,
+                        true
+                    );
+                }
+                // Re-throw other exceptions
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new LLMException(
+                    "Request failed: " + throwable.getMessage(),
+                    LLMException.ErrorType.NETWORK_ERROR,
+                    PROVIDER_ID,
+                    true,
+                    throwable
+                );
+            });
     }
 
     /**

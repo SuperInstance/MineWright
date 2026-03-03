@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.TimeoutException;
 
 /**
  * LLM client with intelligent batching to respect rate limits.
@@ -70,6 +71,13 @@ public class BatchingLLMClient {
     private volatile boolean running;
 
     /**
+     * Maximum timeout for batched requests including queue time.
+     * Background tasks may wait longer in queue.
+     */
+    private static final long USER_PROMPT_TIMEOUT_MS = 120000; // 2 minutes
+    private static final long BACKGROUND_PROMPT_TIMEOUT_MS = 300000; // 5 minutes
+
+    /**
      * Creates a new BatchingLLMClient.
      *
      * @param underlyingClient The underlying AsyncLLMClient to use for actual API calls
@@ -111,7 +119,7 @@ public class BatchingLLMClient {
     // === Public API ===
 
     /**
-     * Submits a high-priority user interaction prompt.
+     * Submits a high-priority user interaction prompt with timeout protection.
      * These are sent quickly with minimal batching.
      *
      * @param prompt The prompt text
@@ -120,11 +128,23 @@ public class BatchingLLMClient {
      */
     public CompletableFuture<String> submitUserPrompt(String prompt, Map<String, Object> context) {
         heartbeat.onUserActivity();
-        return batcher.submitUserPrompt(prompt, context);
+        return batcher.submitUserPrompt(prompt, context)
+            .orTimeout(USER_PROMPT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Batching] User prompt timed out after {}ms: {}",
+                        USER_PROMPT_TIMEOUT_MS, truncate(prompt, 50));
+                    throw new RuntimeException("User prompt timeout: exceeded " + USER_PROMPT_TIMEOUT_MS + "ms", throwable);
+                }
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("User prompt failed", throwable);
+            });
     }
 
     /**
-     * Submits a prompt with specified type.
+     * Submits a prompt with specified type and timeout protection.
      *
      * @param prompt The prompt text
      * @param type The prompt type
@@ -136,11 +156,28 @@ public class BatchingLLMClient {
         if (type == PromptBatcher.PromptType.DIRECT_USER || type == PromptBatcher.PromptType.URGENT) {
             heartbeat.onUserActivity();
         }
-        return batcher.submit(prompt, type, context);
+
+        long timeout = (type == PromptBatcher.PromptType.BACKGROUND)
+            ? BACKGROUND_PROMPT_TIMEOUT_MS
+            : USER_PROMPT_TIMEOUT_MS;
+
+        return batcher.submit(prompt, type, context)
+            .orTimeout(timeout, TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Batching] Prompt timed out after {}ms (type: {}): {}",
+                        timeout, type, truncate(prompt, 50));
+                    throw new RuntimeException("Prompt timeout: exceeded " + timeout + "ms", throwable);
+                }
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("Prompt failed", throwable);
+            });
     }
 
     /**
-     * Submits a background task prompt.
+     * Submits a background task prompt with timeout protection.
      * These are batched aggressively to reduce API calls.
      *
      * @param prompt The prompt text
@@ -148,18 +185,51 @@ public class BatchingLLMClient {
      * @return A future that will complete with the response
      */
     public CompletableFuture<String> submitBackgroundPrompt(String prompt, Map<String, Object> context) {
-        return batcher.submitBackgroundPrompt(prompt, context);
+        return batcher.submitBackgroundPrompt(prompt, context)
+            .orTimeout(BACKGROUND_PROMPT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Batching] Background prompt timed out after {}ms: {}",
+                        BACKGROUND_PROMPT_TIMEOUT_MS, truncate(prompt, 50));
+                    throw new RuntimeException("Background prompt timeout: exceeded " + BACKGROUND_PROMPT_TIMEOUT_MS + "ms", throwable);
+                }
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("Background prompt failed", throwable);
+            });
     }
 
     /**
-     * Submits a normal priority prompt.
+     * Submits a normal priority prompt with timeout protection.
      *
      * @param prompt The prompt text
      * @param context Additional context
      * @return A future that will complete with the response
      */
     public CompletableFuture<String> submitNormalPrompt(String prompt, Map<String, Object> context) {
-        return batcher.submit(prompt, PromptBatcher.PromptType.NORMAL, context);
+        return batcher.submit(prompt, PromptBatcher.PromptType.NORMAL, context)
+            .orTimeout(USER_PROMPT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Batching] Normal prompt timed out after {}ms: {}",
+                        USER_PROMPT_TIMEOUT_MS, truncate(prompt, 50));
+                    throw new RuntimeException("Normal prompt timeout: exceeded " + USER_PROMPT_TIMEOUT_MS + "ms", throwable);
+                }
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("Normal prompt failed", throwable);
+            });
+    }
+
+    /**
+     * Truncates a string for logging.
+     */
+    private static String truncate(String str, int maxLength) {
+        if (str == null) return "[null]";
+        if (str.length() <= maxLength) return str;
+        return str.substring(0, maxLength) + "...";
     }
 
     // === Batch Sending ===

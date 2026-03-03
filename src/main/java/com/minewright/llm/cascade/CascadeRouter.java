@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -66,6 +68,11 @@ public class CascadeRouter {
     private static final int MAX_ESCALATION_ATTEMPTS = 3;
 
     /**
+     * Maximum timeout for cascade routing including all fallback attempts.
+     */
+    private static final long CASCADE_TIMEOUT_MS = 180000; // 3 minutes
+
+    /**
      * Creates a new CascadeRouter with the specified dependencies.
      *
      * @param cache LLM response cache
@@ -100,6 +107,8 @@ public class CascadeRouter {
      *   <li>Track metrics and log decision</li>
      * </ol>
      *
+     * <p><b>Timeout Protection:</b> Overall 3-minute timeout including all fallback attempts</p>
+     *
      * @param command The user command
      * @param context Additional context (foreman, world knowledge, etc.)
      * @return CompletableFuture with the LLM response
@@ -121,8 +130,22 @@ public class CascadeRouter {
         // Step 3: Select initial tier
         LLMTier selectedTier = selectTier(complexity);
 
-        // Step 4: Execute with fallback
-        return executeWithFallback(command, context, complexity, selectedTier, 0);
+        // Step 4: Execute with fallback and timeout protection
+        return executeWithFallback(command, context, complexity, selectedTier, 0)
+            .orTimeout(CASCADE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Cascade] Routing timed out after {}ms for command: {}",
+                        CASCADE_TIMEOUT_MS, truncate(command));
+                    failures.incrementAndGet();
+                    throw new RuntimeException("Cascade routing timeout: exceeded " + CASCADE_TIMEOUT_MS + "ms", throwable);
+                }
+                // Re-throw other exceptions
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("Cascade routing failed", throwable);
+            });
     }
 
     /**

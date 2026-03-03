@@ -3,7 +3,7 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Updated:** 2026-03-02
-**Version:** 2.9
+**Version:** 3.0
 
 ---
 
@@ -346,7 +346,9 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 
 ### Research Documentation
 
-**12+ research documents generated:**
+**60+ research documents generated:**
+
+**Foundational Research:**
 - NPC Scripting Evolution (philosophical foundation)
 - Game Automation History (MUD, RTS, MMO patterns)
 - Behavior Trees, FSMs, HTN, GOAP deep dives
@@ -357,6 +359,14 @@ The core insight: LLMs should plan and refine, not execute every action. Traditi
 - Memory systems (conversational, semantic, persistent)
 - Voice integration patterns
 - Performance analysis
+
+**Latest Research (2026-03-02):**
+- `BARITONE_MINEFLAYER_ANALYSIS.md` - Goal composition, pathfinding optimization, plugin architecture
+- `VOYAGER_SKILL_SYSTEM.md` - Vector-indexed skills, iterative refinement, compositional hierarchies
+- `IMPLEMENTATION_GUIDE_PRIORITY_1.md` - Skill composition system implementation
+- `PERFORMANCE_OPTIMIZATION_ROADMAP.md` - Memory, CPU, thread safety analysis
+- `MINECRAFT_AI_SOTA_2024_2025.md` - 47-page comprehensive Minecraft AI landscape analysis
+- `STEVE_AI_COMPARISON_2024_2025.md` - Competitive positioning vs research systems
 
 **Key Research Insights:**
 1. **Serial-to-Parallel Revolution**: Modern async compute enables true agent existence
@@ -649,6 +659,136 @@ IDLE → PLANNING → EXECUTING → COMPLETED → IDLE
 4. A/B testing for script variants
 
 **Expected Outcome:** Quantifiable evidence of agent improvement over time.
+
+---
+
+## 7.5 Recent Research Findings (2026-03-02)
+
+### Baritone Goal System Analysis
+
+**Research Document:** `docs/research/BARITONE_MINEFLAYER_ANALYSIS.md`
+
+**Key Patterns Discovered:**
+
+1. **Goal Composition Pattern**
+   - `GoalBlock` - Target exact block position
+   - `GoalXZ` - Long-distance X/Z navigation
+   - `GoalComposite` - Multiple acceptable targets (ANY/ALL semantics)
+   - Goals provide both `isInGoal()` validation and heuristic cost estimation
+
+2. **Movement Cost System**
+   - `ActionCosts` constants for weighted pathfinding
+   - Vertical movement costs 2x horizontal
+   - Water movement costs 2.5x normal
+   - Tool-aware breaking costs
+
+3. **Path Caching Optimization**
+   - 2-bit chunk representation (00=AIR, 01=SOLID, 10=WATER, 11=AVOID)
+   - `SplicedPath` for memory-efficient path concatenation
+   - Binary heap open set (10x faster than ArrayList)
+
+**Adoption Status:** Already implemented in `goal/` package (7 classes, 100% complete)
+
+---
+
+### Mineflayer Plugin Architecture
+
+**Research Document:** `docs/research/BARITONE_MINEFLAYER_ANALYSIS.md`
+
+**Key Patterns Discovered:**
+
+1. **Event-Driven Plugin System**
+   - Plugins register event handlers (blockBreak, blockPlace, entitySpawn)
+   - Promise-based action chaining (JavaScript async/await)
+   - Behavior injection through middleware
+
+2. **Behavior Tree Integration**
+   - `mineflayer-behavior` plugin for tree-based AI
+   - `bot.pathfinder` for A* navigation with goal composition
+   - State machine plugin for complex behaviors
+
+3. **Interruptible Processes**
+   - All bot operations are cancellable
+   - State persistence across interruptions
+   - Graceful degradation on failure
+
+**Adoption Status:** Partial - plugin system exists, behavior tree runtime complete, process arbitration implemented
+
+---
+
+### Voyager Skill System Research
+
+**Research Documents:**
+- `docs/research/VOYAGER_SKILL_SYSTEM.md` - Complete skill system analysis
+- `docs/research/IMPLEMENTATION_GUIDE_PRIORITY_1.md` - Implementation guide for skill composition
+
+**Key Patterns Discovered:**
+
+1. **Vector-Indexed Skill Library**
+   - Skills stored as executable code with vector embeddings
+   - Semantic search via cosine similarity
+   - Automatic skill categorization by task type
+
+2. **Iterative Refinement Loop**
+   - 3-4 rounds of self-correction based on environment feedback
+   - Critic Agent validates skill success before permanent storage
+   - Success rate tracking for skill ranking
+
+3. **Compositional Skill Hierarchies**
+   - Complex skills call simpler skills (e.g., "craftIronPickaxe" calls "mineIron", "craftSticks", "craftPlanks")
+   - Automatic composition discovery from execution sequences
+   - Dependency validation before skill execution
+
+4. **Performance Results**
+   - 3.3x more unique items collected
+   - 2.3x longer exploration distances
+   - 15.3x faster tech tree progression
+
+**Adoption Status:** Foundation complete (SkillLibrary with semantic search, success tracking), composition system ready to implement
+
+---
+
+### Performance Optimization Research
+
+**Research Document:** `docs/research/PERFORMANCE_OPTIMIZATION_ROADMAP.md`
+
+**Key Findings:**
+
+1. **Memory Optimization**
+   - Identified unbounded collections in CompanionMemory
+   - CopyOnWriteArrayList overhead in emotional memories
+   - Recommendation: Add size limits, use ReentrantReadWriteLock
+
+2. **Pathfinding Performance**
+   - Good: Object pooling in AStarPathfinder (prevents GC pressure)
+   - Good: 2-bit chunk caching reduces memory footprint
+   - Moderate: Vector store performance can be improved with batch operations
+
+3. **Thread Safety**
+   - Excellent: ConcurrentHashMap usage throughout
+   - Excellent: Lock-free AtomicInteger counters
+   - Moderate: Some synchronized blocks could be replaced with striped locks
+
+**Adoption Status:** Ongoing - memory optimizations ready to implement
+
+---
+
+### Cross-Pattern Synthesis
+
+**Common Themes Across All Systems:**
+
+1. **Composition Over Monolith** - All successful systems compose simple behaviors into complex ones
+2. **Interruptibility First** - Every operation must be safely cancellable
+3. **State Persistence** - Save intermediate state for recovery
+4. **Semantic Indexing** - Vector embeddings for skill/pattern retrieval
+5. **Cost-Based Decision Making** - Explicit cost modeling for pathfinding and action selection
+
+**Steve AI Position:**
+- ✅ Goal composition system implemented (matches Baritone)
+- ✅ Behavior tree runtime complete (matches Mineflayer)
+- ✅ Skill library foundation with semantic search (matches Voyager pattern)
+- 🔄 Skill composition loop ready to implement (Priority 1)
+- 🔄 Performance optimizations identified and prioritized
 
 ---
 
@@ -1114,7 +1254,7 @@ Steve AI is a sophisticated multi-agent system for Minecraft that combines:
 
 ---
 
-**Document Version:** 2.9
+**Document Version:** 3.0
 **Last Updated:** 2026-03-02
 **Maintained By:** Claude Orchestrator
 **Next Review:** After major architecture changes or dissertation completion

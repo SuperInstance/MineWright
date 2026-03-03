@@ -55,6 +55,12 @@ public class AsyncGroqClient implements AsyncLLMClient {
     private final double temperature;
 
     /**
+     * Maximum timeout for LLM requests.
+     * Ensures overall operation doesn't hang.
+     */
+    private static final long OVERALL_TIMEOUT_MS = 60000; // 1 minute
+
+    /**
      * Constructs an AsyncGroqClient.
      *
      * @param apiKey      Groq API key (required)
@@ -118,6 +124,29 @@ public class AsyncGroqClient implements AsyncLLMClient {
                 }
 
                 return parseResponse(response.body(), latencyMs);
+            })
+            .orTimeout(OVERALL_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof java.util.concurrent.TimeoutException) {
+                    LOGGER.error("[groq] Overall timeout exceeded ({}ms) - request cancelled", OVERALL_TIMEOUT_MS);
+                    throw new LLMException(
+                        "Request timeout: exceeded " + OVERALL_TIMEOUT_MS + "ms",
+                        LLMException.ErrorType.TIMEOUT,
+                        PROVIDER_ID,
+                        true
+                    );
+                }
+                // Re-throw other exceptions
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new LLMException(
+                    "Request failed: " + throwable.getMessage(),
+                    LLMException.ErrorType.NETWORK_ERROR,
+                    PROVIDER_ID,
+                    true,
+                    throwable
+                );
             });
     }
 

@@ -60,6 +60,12 @@ public class AsyncGeminiClient implements AsyncLLMClient {
     private final double temperature;
 
     /**
+     * Maximum timeout for LLM requests.
+     * Gemini can be slower, so we give it more time.
+     */
+    private static final long OVERALL_TIMEOUT_MS = 120000; // 2 minutes
+
+    /**
      * Constructs an AsyncGeminiClient.
      *
      * @param apiKey      Google AI Studio API key (required)
@@ -122,6 +128,29 @@ public class AsyncGeminiClient implements AsyncLLMClient {
                 }
 
                 return parseResponse(response.body(), latencyMs);
+            })
+            .orTimeout(OVERALL_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof java.util.concurrent.TimeoutException) {
+                    LOGGER.error("[gemini] Overall timeout exceeded ({}ms) - request cancelled", OVERALL_TIMEOUT_MS);
+                    throw new LLMException(
+                        "Request timeout: exceeded " + OVERALL_TIMEOUT_MS + "ms",
+                        LLMException.ErrorType.TIMEOUT,
+                        PROVIDER_ID,
+                        true
+                    );
+                }
+                // Re-throw other exceptions
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new LLMException(
+                    "Request failed: " + throwable.getMessage(),
+                    LLMException.ErrorType.NETWORK_ERROR,
+                    PROVIDER_ID,
+                    true,
+                    throwable
+                );
             });
     }
 

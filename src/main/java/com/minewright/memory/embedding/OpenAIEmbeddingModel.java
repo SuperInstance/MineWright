@@ -380,7 +380,7 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
     }
 
     /**
-     * Calls the OpenAI embeddings API for a single text.
+     * Calls the OpenAI embeddings API for a single text with timeout protection.
      *
      * @param text Input text
      * @return Embedding vector
@@ -400,21 +400,26 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
                 .timeout(Duration.ofSeconds(REQUEST_TIMEOUT_SECONDS))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(request,
-                HttpResponse.BodyHandlers.ofString());
+        try {
+            HttpResponse<String> response = httpClient.send(request,
+                    HttpResponse.BodyHandlers.ofString());
 
-        apiCalls.incrementAndGet();
+            apiCalls.incrementAndGet();
 
-        if (response.statusCode() == 200) {
-            return parseEmbeddingResponse(response.body());
-        } else {
-            throw new IOException("OpenAI API error: HTTP " + response.statusCode() +
-                    " - " + response.body());
+            if (response.statusCode() == 200) {
+                return parseEmbeddingResponse(response.body());
+            } else {
+                throw new IOException("OpenAI API error: HTTP " + response.statusCode() +
+                        " - " + response.body());
+            }
+        } catch (java.net.http.HttpTimeoutException e) {
+            LOGGER.error("Embedding API request timed out for text (hash: {})", text.hashCode());
+            throw new IOException("Embedding request timeout", e);
         }
     }
 
     /**
-     * Calls the OpenAI embeddings API for multiple texts.
+     * Calls the OpenAI embeddings API for multiple texts with timeout protection.
      *
      * @param texts Input texts
      * @return Array of embedding vectors
@@ -431,24 +436,32 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
         }
         requestBody.add("input", inputs);
 
+        // Batch requests may take longer - use longer timeout
+        int batchTimeout = Math.min(REQUEST_TIMEOUT_SECONDS * 2, 60);
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                .timeout(Duration.ofSeconds(REQUEST_TIMEOUT_SECONDS))
+                .timeout(Duration.ofSeconds(batchTimeout))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(request,
-                HttpResponse.BodyHandlers.ofString());
+        try {
+            HttpResponse<String> response = httpClient.send(request,
+                    HttpResponse.BodyHandlers.ofString());
 
-        apiCalls.incrementAndGet();
+            apiCalls.incrementAndGet();
 
-        if (response.statusCode() == 200) {
-            return parseBatchEmbeddingResponse(response.body(), texts.length);
-        } else {
-            throw new IOException("OpenAI API error: HTTP " + response.statusCode() +
-                    " - " + response.body());
+            if (response.statusCode() == 200) {
+                return parseBatchEmbeddingResponse(response.body(), texts.length);
+            } else {
+                throw new IOException("OpenAI API error: HTTP " + response.statusCode() +
+                        " - " + response.body());
+            }
+        } catch (java.net.http.HttpTimeoutException e) {
+            LOGGER.error("Batch embedding API request timed out for {} texts", texts.length);
+            throw new IOException("Batch embedding request timeout", e);
         }
     }
 

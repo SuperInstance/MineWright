@@ -12,7 +12,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -208,13 +211,35 @@ public class GLMCascadeRouter {
     }
 
     /**
-     * Sends a request to z.ai with the specified model.
+     * Sends a request to z.ai with the specified model using async with timeout protection.
+     *
+     * @param model The GLM model to use
+     * @param systemPrompt System context
+     * @param userMessage User message
+     * @param maxTokens Maximum tokens in response
+     * @return Response from the model
+     * @throws Exception if request fails or times out
      */
     private String sendRequest(String model, String systemPrompt, String userMessage, int maxTokens) throws Exception {
         if (apiKey == null || apiKey.isEmpty()) {
             throw new Exception("API key not configured");
         }
 
+        // Use CompletableFuture with timeout protection
+        return sendRequestAsync(model, systemPrompt, userMessage, maxTokens)
+            .get(150, TimeUnit.SECONDS); // 2.5 minute total timeout for fallback chain safety
+    }
+
+    /**
+     * Sends an async request to z.ai with timeout protection.
+     *
+     * @param model The GLM model to use
+     * @param systemPrompt System context
+     * @param userMessage User message
+     * @param maxTokens Maximum tokens in response
+     * @return CompletableFuture with the response
+     */
+    private CompletableFuture<String> sendRequestAsync(String model, String systemPrompt, String userMessage, int maxTokens) {
         JsonObject requestBody = new JsonObject();
         requestBody.addProperty("model", model);
         requestBody.addProperty("max_tokens", maxTokens);
@@ -238,33 +263,48 @@ public class GLMCascadeRouter {
             .uri(URI.create(ZAI_API_URL))
             .header("Authorization", "Bearer " + apiKey)
             .header("Content-Type", "application/json")
-            .timeout(Duration.ofSeconds(120))
+            .timeout(Duration.ofSeconds(90)) // Individual request timeout
             .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
             .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        LOGGER.debug("[Cascade] Sending async request to model: {}", model);
 
-        if (response.statusCode() != 200) {
-            throw new Exception("API returned status " + response.statusCode() + ": " + response.body());
-        }
-
-        // Parse response
-        JsonObject responseJson = JsonParser.parseString(response.body()).getAsJsonObject();
-        if (responseJson.has("choices")) {
-            JsonArray choices = responseJson.getAsJsonArray("choices");
-            if (choices.size() > 0) {
-                JsonObject firstChoice = choices.get(0).getAsJsonObject();
-                if (firstChoice.has("message")) {
-                    return firstChoice.getAsJsonObject("message").get("content").getAsString();
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenApply(response -> {
+                if (response.statusCode() != 200) {
+                    throw new RuntimeException("API returned status " + response.statusCode() + ": " + response.body());
                 }
-            }
-        }
 
-        throw new Exception("Invalid response format");
+                // Parse response
+                JsonObject responseJson = JsonParser.parseString(response.body()).getAsJsonObject();
+                if (responseJson.has("choices")) {
+                    JsonArray choices = responseJson.getAsJsonArray("choices");
+                    if (choices.size() > 0) {
+                        JsonObject firstChoice = choices.get(0).getAsJsonObject();
+                        if (firstChoice.has("message")) {
+                            return firstChoice.getAsJsonObject("message").get("content").getAsString();
+                        }
+                    }
+                }
+
+                throw new RuntimeException("Invalid response format");
+            })
+            .orTimeout(120, TimeUnit.SECONDS) // Overall timeout for this attempt
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Cascade] Request to model {} timed out after 120s", model);
+                    throw new RuntimeException("Request timeout: exceeded 120s", throwable);
+                }
+                // Wrap other exceptions
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("Request failed: " + throwable.getMessage(), throwable);
+            });
     }
 
     /**
-     * Processes a vision request with glm-4.6v.
+     * Processes a vision request with glm-4.6v with timeout protection.
      *
      * @param systemPrompt System context
      * @param userMessage  User message
@@ -275,70 +315,99 @@ public class GLMCascadeRouter {
         try {
             LOGGER.info("[Cascade] Processing vision request with glm-4.6v");
 
-            JsonObject requestBody = new JsonObject();
-            requestBody.addProperty("model", MODEL_VISION);
-            requestBody.addProperty("max_tokens", 2048);
+            // Use async with timeout protection
+            return processVisionRequestAsync(systemPrompt, userMessage, imageBase64)
+                .get(150, TimeUnit.SECONDS); // 2.5 minute timeout for vision requests
 
-            JsonArray messages = new JsonArray();
-
-            JsonObject systemMsg = new JsonObject();
-            systemMsg.addProperty("role", "system");
-            systemMsg.addProperty("content", systemPrompt);
-            messages.add(systemMsg);
-
-            // Build multimodal content
-            JsonArray content = new JsonArray();
-
-            JsonObject textPart = new JsonObject();
-            textPart.addProperty("type", "text");
-            textPart.addProperty("text", userMessage);
-            content.add(textPart);
-
-            JsonObject imagePart = new JsonObject();
-            imagePart.addProperty("type", "image_url");
-            JsonObject imageUrl = new JsonObject();
-            imageUrl.addProperty("url", "data:image/png;base64," + imageBase64);
-            imagePart.add("image_url", imageUrl);
-            content.add(imagePart);
-
-            JsonObject userMsg = new JsonObject();
-            userMsg.addProperty("role", "user");
-            userMsg.add("content", content);
-            messages.add(userMsg);
-
-            requestBody.add("messages", messages);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(ZAI_API_URL))
-                .header("Authorization", "Bearer " + apiKey)
-                .header("Content-Type", "application/json")
-                .timeout(Duration.ofSeconds(120))
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                LOGGER.error("[Cascade] Vision request failed: {}", response.body());
-                return "Vision analysis failed: API error";
-            }
-
-            JsonObject responseJson = JsonParser.parseString(response.body()).getAsJsonObject();
-            if (responseJson.has("choices")) {
-                JsonArray choices = responseJson.getAsJsonArray("choices");
-                if (choices.size() > 0) {
-                    return choices.get(0).getAsJsonObject()
-                        .getAsJsonObject("message")
-                        .get("content").getAsString();
-                }
-            }
-
-            return "Vision analysis failed: Invalid response";
-
+        } catch (TimeoutException e) {
+            LOGGER.error("[Cascade] Vision request timed out after 150s");
+            return "Vision analysis failed: Request timeout";
         } catch (Exception e) {
             LOGGER.error("[Cascade] Vision request error: {}", e.getMessage());
             return "Vision analysis failed: " + e.getMessage();
         }
+    }
+
+    /**
+     * Processes a vision request asynchronously with timeout protection.
+     *
+     * @param systemPrompt System context
+     * @param userMessage  User message
+     * @param imageBase64  Base64-encoded image (PNG/JPEG)
+     * @return CompletableFuture with the response
+     */
+    private CompletableFuture<String> processVisionRequestAsync(String systemPrompt, String userMessage, String imageBase64) {
+        JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("model", MODEL_VISION);
+        requestBody.addProperty("max_tokens", 2048);
+
+        JsonArray messages = new JsonArray();
+
+        JsonObject systemMsg = new JsonObject();
+        systemMsg.addProperty("role", "system");
+        systemMsg.addProperty("content", systemPrompt);
+        messages.add(systemMsg);
+
+        // Build multimodal content
+        JsonArray content = new JsonArray();
+
+        JsonObject textPart = new JsonObject();
+        textPart.addProperty("type", "text");
+        textPart.addProperty("text", userMessage);
+        content.add(textPart);
+
+        JsonObject imagePart = new JsonObject();
+        imagePart.addProperty("type", "image_url");
+        JsonObject imageUrl = new JsonObject();
+        imageUrl.addProperty("url", "data:image/png;base64," + imageBase64);
+        imagePart.add("image_url", imageUrl);
+        content.add(imagePart);
+
+        JsonObject userMsg = new JsonObject();
+        userMsg.addProperty("role", "user");
+        userMsg.add("content", content);
+        messages.add(userMsg);
+
+        requestBody.add("messages", messages);
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(ZAI_API_URL))
+            .header("Authorization", "Bearer " + apiKey)
+            .header("Content-Type", "application/json")
+            .timeout(Duration.ofSeconds(120))
+            .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+            .build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenApply(response -> {
+                if (response.statusCode() != 200) {
+                    LOGGER.error("[Cascade] Vision request failed: {}", response.body());
+                    throw new RuntimeException("Vision analysis failed: API error");
+                }
+
+                JsonObject responseJson = JsonParser.parseString(response.body()).getAsJsonObject();
+                if (responseJson.has("choices")) {
+                    JsonArray choices = responseJson.getAsJsonArray("choices");
+                    if (choices.size() > 0) {
+                        return choices.get(0).getAsJsonObject()
+                            .getAsJsonObject("message")
+                            .get("content").getAsString();
+                    }
+                }
+
+                throw new RuntimeException("Vision analysis failed: Invalid response");
+            })
+            .orTimeout(120, TimeUnit.SECONDS)
+            .exceptionally(throwable -> {
+                if (throwable instanceof TimeoutException) {
+                    LOGGER.error("[Cascade] Vision request timed out after 120s");
+                    throw new RuntimeException("Vision analysis failed: Request timeout", throwable);
+                }
+                if (throwable instanceof RuntimeException) {
+                    throw (RuntimeException) throwable;
+                }
+                throw new RuntimeException("Vision analysis failed: " + throwable.getMessage(), throwable);
+            });
     }
 
     // === Failure Tracking ===
