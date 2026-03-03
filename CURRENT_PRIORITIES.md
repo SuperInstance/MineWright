@@ -10,8 +10,8 @@ Last Updated: 2026-03-03
 
 | Priority | Task | Effort | Impact | Status |
 |----------|------|--------|--------|--------|
-| **P0** | Add tests for ActionExecutor | Medium | High | 🔴 Not Started |
-| **P0** | Add tests for AgentStateMachine | Medium | High | 🔴 Not Started |
+| **P0** | Add tests for ActionExecutor | Medium | High | ✅ DONE (909 lines) |
+| **P0** | Add tests for AgentStateMachine | Medium | High | ✅ DONE (1048 lines) |
 | **P1** | Implement skill composition system | High | Very High | 🟡 Foundation Ready |
 | **P1** | Complete multi-agent coordination | Medium | High | 🟡 50% Done |
 | **P2** | Re-enable Checkstyle/SpotBugs | Low | Medium | 🔴 Disabled |
@@ -21,51 +21,41 @@ Last Updated: 2026-03-03
 
 ---
 
-## P0: Critical (Do First)
+## P0: Critical ✅ COMPLETE
 
-### 1. Add Tests for ActionExecutor
+### 1. Tests for ActionExecutor ✅
 
-**Why**: Core execution engine, no tests = risk of regression
+**Status**: COMPLETE - 909 lines of comprehensive tests
 
 **Location**: `src/test/java/com/minewright/action/ActionExecutorTest.java`
 
-**What to Test**:
-```java
-@Test void testExecuteSingleTask()
-@Test void testExecuteMultipleTasksInOrder()
-@Test void testTaskFailureHandling()
-@Test void testInterceptorChainCalled()
-@Test void testStateTransitions()
-@Test void testConcurrentTaskExecution()
-```
+**Coverage**:
+- Tick-based execution flow
+- Task queue management
+- Action lifecycle (start, tick, complete, fail)
+- Interceptor chain integration
+- Error handling and recovery
+- State machine integration
+- Async planning behavior
+- Budget enforcement
 
-**Approach**:
-1. Mock ForemanEntity and Task
-2. Create mock actions that succeed/fail
-3. Verify state transitions
-4. Verify interceptor calls
+### 2. Tests for AgentStateMachine ✅
 
-### 2. Add Tests for AgentStateMachine
-
-**Why**: State management is critical, untested = bugs
+**Status**: COMPLETE - 1048 lines of comprehensive tests
 
 **Location**: `src/test/java/com/minewright/execution/AgentStateMachineTest.java`
 
-**What to Test**:
-```java
-@Test void testIdleToPlanningTransition()
-@Test void testPlanningToExecutingTransition()
-@Test void testExecutingToCompletedTransition()
-@Test void testInvalidTransitionRejected()
-@Test void testErrorStateRecovery()
-@Test void testStatePersistence()
-```
-
-**Approach**:
-1. Create state machine instance
-2. Trigger valid transitions
-3. Verify state changes
-4. Test invalid transitions are rejected
+**Coverage**:
+- State initialization and getters
+- Valid state transitions
+- Invalid state transitions
+- Event publishing on transitions
+- Thread safety of state transitions
+- Forced transitions (bypassing validation)
+- State machine reset
+- Utility methods (canAcceptCommands, isActive)
+- Valid transitions query
+- Concurrent access (50+ thread tests)
 
 ---
 
