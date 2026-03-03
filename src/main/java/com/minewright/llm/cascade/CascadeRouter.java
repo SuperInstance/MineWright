@@ -31,7 +31,36 @@ import java.util.concurrent.atomic.AtomicLong;
  * </ol>
  *
  * <p><b>Design Inspiration:</b> SmartCRDT/Aequor cascade routing patterns</p>
- * <p><b>Thread Safety:</b> All operations are thread-safe</p>
+ * <p><b>Thread Safety:</b> All operations are thread-safe. Uses ConcurrentHashMap and atomic counters for safe concurrent access.</p>
+ *
+ * <p><b>Example Usage:</b></p>
+ * <pre>{@code
+ * // Create clients for different tiers
+ * Map<LLMTier, AsyncLLMClient> clients = Map.of(
+ *     LLMTier.SIMPLE, new SimpleLLMClient(),
+ *     LLMTier.COMPLEX, new ComplexLLMClient()
+ * );
+ *
+ * // Initialize router
+ * CascadeRouter router = new CascadeRouter(cache, analyzer, clients);
+ *
+ * // Route a command (automatically selects tier)
+ * CompletableFuture<LLMResponse> future = router.route(
+ *     "mine 10 iron ore",
+ *     context
+ * );
+ *
+ * // Get statistics
+ * router.logStats();
+ * double totalCost = router.getTotalCost();
+ * }</pre>
+ *
+ * @see ComplexityAnalyzer
+ * @see LLMTier
+ * @see TaskComplexity
+ * @see RoutingDecision
+ * @see com.minewright.llm.async.AsyncLLMClient
+ * @see com.minewright.llm.async.LLMCache
  *
  * @since 1.6.0
  */
@@ -75,9 +104,10 @@ public class CascadeRouter {
     /**
      * Creates a new CascadeRouter with the specified dependencies.
      *
-     * @param cache LLM response cache
-     * @param analyzer Task complexity analyzer
-     * @param clients Map of tier to async clients
+     * @param cache LLM response cache for storing and retrieving responses
+     * @param analyzer Task complexity analyzer for determining task difficulty
+     * @param clients Map of tier to async clients (must contain at least one tier)
+     * @throws IllegalArgumentException if clients map is null or empty
      */
     public CascadeRouter(LLMCache cache, ComplexityAnalyzer analyzer,
                          Map<LLMTier, AsyncLLMClient> clients) {
@@ -109,9 +139,11 @@ public class CascadeRouter {
      *
      * <p><b>Timeout Protection:</b> Overall 3-minute timeout including all fallback attempts</p>
      *
-     * @param command The user command
-     * @param context Additional context (foreman, world knowledge, etc.)
-     * @return CompletableFuture with the LLM response
+     * @param command The natural language command to route
+     * @param context Additional context map (may contain "foreman", "worldKnowledge", "model", "providerId")
+     * @return CompletableFuture that completes with the LLM response
+     * @throws RuntimeException if routing times out or all fallback tiers fail
+     * @throws TimeoutException if overall routing exceeds 3 minutes
      */
     public CompletableFuture<LLMResponse> route(String command, Map<String, Object> context) {
         totalRequests.incrementAndGet();
@@ -215,8 +247,14 @@ public class CascadeRouter {
     /**
      * Selects the appropriate LLM tier for a given complexity level.
      *
-     * @param complexity Task complexity
-     * @return Recommended LLM tier
+     * <p>This method uses the configured complexity-to-tier mapping and ensures
+     * the selected tier is available. If the recommended tier is not available,
+     * it will find the next available tier.</p>
+     *
+     * @param complexity Task complexity level to map to a tier
+     * @return Recommended LLM tier that is available for use
+     * @see TaskComplexity
+     * @see LLMTier
      */
     public LLMTier selectTier(TaskComplexity complexity) {
         LLMTier tier = config.getTierForComplexity(complexity);

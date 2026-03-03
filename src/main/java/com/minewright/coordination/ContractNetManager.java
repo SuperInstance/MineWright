@@ -30,13 +30,50 @@ import java.util.stream.Collectors;
  *
  * <p><b>Thread Safety:</b></p>
  * <ul>
- *   <li>Uses ConcurrentHashMap for thread-safe storage</li>
- *   <li>AtomicBoolean for bid submission state</li>
+ *   <li>Uses ConcurrentHashMap for thread-safe negotiation storage</li>
+ *   <li>Synchronized blocks for bid submission and contract awarding</li>
  *   <li>Safe for concurrent access from multiple agents</li>
  * </ul>
  *
+ * <p><b>Example Usage:</b></p>
+ * <pre>{@code
+ * // Create manager
+ * ContractNetManager manager = new ContractNetManager();
+ *
+ * // Add listener for events
+ * manager.addListener(new ContractListener() {
+ *     public void onAnnouncement(TaskAnnouncement announcement) {
+ *         // Notify agents of new task
+ *     }
+ *
+ *     public void onContractAwarded(String id, TaskBid winner) {
+ *         // Winner can start executing
+ *     }
+ * });
+ *
+ * // Manager announces task
+ * Task task = new Task("mine", Map.of("block", "iron_ore"));
+ * String announcementId = manager.announceTask(task, managerUUID, 30000);
+ *
+ * // Agents submit bids
+ * TaskBid bid1 = TaskBid.builder()
+ *     .announcementId(announcementId)
+ *     .bidderId(agent1UUID)
+ *     .score(0.95)
+ *     .estimatedTime(5000)
+ *     .build();
+ * manager.submitBid(bid1);
+ *
+ * // Manager awards to best bidder
+ * Optional<TaskBid> winner = manager.awardToBestBidder(announcementId);
+ * }</pre>
+ *
  * @see TaskAnnouncement
  * @see TaskBid
+ * @see ContractNegotiation
+ * @see ContractListener
+ * @see com.minewright.action.Task
+ *
  * @since 1.3.0
  */
 public class ContractNetManager {
@@ -183,6 +220,8 @@ public class ContractNetManager {
     private final AtomicBoolean acceptingBids;
     private final List<ContractListener> listeners;
     private final Object negotiationLock;
+    private final WorkloadTracker workloadTracker;
+    private final AwardSelector awardSelector;
 
     /**
      * Creates a new Contract Net manager.
@@ -192,12 +231,33 @@ public class ContractNetManager {
         this.acceptingBids = new AtomicBoolean(true);
         this.listeners = new ArrayList<>();
         this.negotiationLock = new Object();
+        this.workloadTracker = new WorkloadTracker();
+        this.awardSelector = new AwardSelector();
+    }
+
+    /**
+     * Creates a new Contract Net manager with custom components.
+     *
+     * @param workloadTracker Custom workload tracker
+     * @param awardSelector Custom award selector
+     */
+    public ContractNetManager(WorkloadTracker workloadTracker, AwardSelector awardSelector) {
+        this.negotiations = new ConcurrentHashMap<>();
+        this.acceptingBids = new AtomicBoolean(true);
+        this.listeners = new ArrayList<>();
+        this.negotiationLock = new Object();
+        this.workloadTracker = workloadTracker != null ? workloadTracker : new WorkloadTracker();
+        this.awardSelector = awardSelector != null ? awardSelector : new AwardSelector();
     }
 
     /**
      * Adds a listener for contract events.
      *
-     * @param listener The listener to add
+     * <p>Listeners are notified of announcements, bid submissions, contract awards,
+     * and negotiation expirations. Listeners should be thread-safe as callbacks
+     * may occur from multiple threads.</p>
+     *
+     * @param listener The listener to add (not null)
      */
     public void addListener(ContractListener listener) {
         if (listener != null) {
@@ -540,5 +600,188 @@ public class ContractNetManager {
         return (int) negotiations.values().stream()
             .filter(n -> !n.isClosed() || n.getState() == ContractState.AWARDED)
             .count();
+    }
+
+    // ========== Workload Tracking Integration ==========
+
+    /**
+     * Gets the workload tracker for this manager.
+     *
+     * @return The workload tracker
+     */
+    public WorkloadTracker getWorkloadTracker() {
+        return workloadTracker;
+    }
+
+    /**
+     * Registers an agent for workload tracking.
+     *
+     * @param agentId Agent UUID
+     * @param maxConcurrentTasks Maximum concurrent tasks for this agent
+     * @return true if registered successfully
+     */
+    public boolean registerAgent(UUID agentId, int maxConcurrentTasks) {
+        return workloadTracker.registerAgent(agentId, maxConcurrentTasks);
+    }
+
+    /**
+     * Unregisters an agent from workload tracking.
+     *
+     * @param agentId Agent UUID
+     * @return The removed workload, or null if not found
+     */
+    public WorkloadTracker.AgentWorkload unregisterAgent(UUID agentId) {
+        return workloadTracker.unregisterAgent(agentId);
+    }
+
+    /**
+     * Gets the current workload for an agent.
+     *
+     * @param agentId Agent UUID
+     * @return Agent workload, or null if not registered
+     */
+    public WorkloadTracker.AgentWorkload getAgentWorkload(UUID agentId) {
+        return workloadTracker.getWorkload(agentId);
+    }
+
+    /**
+     * Gets the current load factor for an agent.
+     *
+     * @param agentId Agent UUID
+     * @return Load factor (0.0-1.0), or 0.0 if not registered
+     */
+    public double getAgentLoad(UUID agentId) {
+        return workloadTracker.getCurrentLoad(agentId);
+    }
+
+    /**
+     * Checks if an agent is available for new tasks.
+     *
+     * @param agentId Agent UUID
+     * @return true if available, false otherwise
+     */
+    public boolean isAgentAvailable(UUID agentId) {
+        return workloadTracker.isAvailable(agentId);
+    }
+
+    /**
+     * Assigns a task to an agent through the workload tracker.
+     *
+     * @param agentId Agent UUID
+     * @param taskId Task identifier
+     * @return true if task was assigned, false if at capacity or not registered
+     */
+    public boolean assignTaskToAgent(UUID agentId, String taskId) {
+        return workloadTracker.assignTask(agentId, taskId);
+    }
+
+    /**
+     * Marks a task as completed for an agent.
+     *
+     * @param agentId Agent UUID
+     * @param taskId Task identifier
+     * @param success Whether the task succeeded
+     * @return true if task was marked completed, false if not found
+     */
+    public boolean completeAgentTask(UUID agentId, String taskId, boolean success) {
+        return workloadTracker.completeTask(agentId, taskId, success);
+    }
+
+    // ========== Advanced Bid Selection ==========
+
+    /**
+     * Selects the best bid using workload-aware scoring.
+     *
+     * <p>This method uses the AwardSelector to evaluate bids with
+     * workload-aware scoring, considering agent availability and
+     * current load factors.</p>
+     *
+     * @param announcementId The announcement ID
+     * @return Selection result with detailed scoring, or empty result if no bids
+     */
+    public Optional<AwardSelector.SelectionResult> selectWinnerDetailed(String announcementId) {
+        ContractNegotiation negotiation = negotiations.get(announcementId);
+
+        if (negotiation == null || negotiation.getBids().isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Enhance bids with current load information
+        List<TaskBid> enhancedBids = negotiation.getBids().stream()
+            .map(bid -> {
+                double currentLoad = workloadTracker.getCurrentLoad(bid.bidderId());
+                // Update the bid's current load if it differs
+                if (Math.abs(bid.getCurrentLoad() - currentLoad) > 0.001) {
+                    Map<String, Object> updatedCapabilities = new HashMap<>(bid.capabilities());
+                    updatedCapabilities.put("currentLoad", currentLoad);
+                    return TaskBid.builder()
+                        .announcementId(bid.announcementId())
+                        .bidderId(bid.bidderId())
+                        .score(bid.score())
+                        .estimatedTime(bid.estimatedTime())
+                        .confidence(bid.confidence())
+                        .capabilities(updatedCapabilities)
+                        .build();
+                }
+                return bid;
+            })
+            .collect(Collectors.toList());
+
+        AwardSelector.SelectionResult result = awardSelector.selectBestBidDetailed(enhancedBids, announcementId);
+
+        return Optional.of(result);
+    }
+
+    /**
+     * Awards the contract to the best bidder using detailed selection.
+     *
+     * <p>Convenience method that combines selectWinnerDetailed and awardContract.</p>
+     *
+     * @param announcementId The announcement ID
+     * @return Optional containing the selection result, or empty if no bids
+     */
+    public Optional<AwardSelector.SelectionResult> awardToBestBidderDetailed(String announcementId) {
+        Optional<AwardSelector.SelectionResult> resultOpt = selectWinnerDetailed(announcementId);
+
+        if (resultOpt.isPresent() && resultOpt.get().hasWinner()) {
+            AwardSelector.SelectionResult result = resultOpt.get();
+            TaskBid winner = result.getSelectedBid();
+
+            if (awardContract(announcementId, winner)) {
+                return resultOpt;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Gets the award selector used by this manager.
+     *
+     * @return The award selector
+     */
+    public AwardSelector getAwardSelector() {
+        return awardSelector;
+    }
+
+    /**
+     * Gets statistics about contract negotiations and workload.
+     *
+     * @return Map of statistic name to value
+     */
+    public Map<String, Object> getFullStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+
+        // Negotiation stats
+        stats.put("totalNegotiations", negotiations.size());
+        stats.put("activeNegotiations", getActiveCount());
+
+        // Award selector stats
+        stats.putAll(awardSelector.getStatistics());
+
+        // Workload stats
+        stats.putAll(workloadTracker.getStatistics());
+
+        return stats;
     }
 }

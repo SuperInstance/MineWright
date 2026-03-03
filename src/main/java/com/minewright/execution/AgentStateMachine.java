@@ -18,7 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Invalid transitions are rejected and logged. State changes publish
  * events to the EventBus for observers.</p>
  *
- * <p><b>Thread Safety:</b> Uses AtomicReference for thread-safe state updates.</p>
+ * <p><b>Thread Safety:</b> Uses AtomicReference for thread-safe state updates.
+ * All state changes are atomic using compare-and-set operations.</p>
  *
  * <p><b>Valid State Transitions:</b></p>
  * <ul>
@@ -35,8 +36,16 @@ import java.util.concurrent.atomic.AtomicReference;
  * </ul>
  *
  * <p><b>Example Usage:</b></p>
- * <pre>
- * AgentStateMachine sm = new AgentStateMachine(eventBus);
+ * <pre>{@code
+ * // Create state machine with event bus
+ * EventBus eventBus = new SimpleEventBus();
+ * AgentStateMachine sm = new AgentStateMachine(eventBus, "Agent1");
+ *
+ * // Subscribe to state changes
+ * eventBus.subscribe(StateTransitionEvent.class, event -> {
+ *     System.out.println("State: " + event.getFromState() +
+ *                        " → " + event.getToState());
+ * });
  *
  * // Transition states
  * sm.transitionTo(AgentState.PLANNING);  // IDLE → PLANNING
@@ -52,11 +61,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * if (sm.canTransitionTo(AgentState.EXECUTING)) {
  *     sm.transitionTo(AgentState.EXECUTING);
  * }
- * </pre>
+ * }</pre>
  *
- * @since 1.1.0
  * @see AgentState
  * @see StateTransitionEvent
+ * @see com.minewright.event.EventBus
+ *
+ * @since 1.1.0
  */
 public class AgentStateMachine {
 
@@ -113,7 +124,7 @@ public class AgentStateMachine {
     /**
      * Constructs a state machine starting in IDLE state.
      *
-     * @param eventBus Event bus for state change notifications (can be null)
+     * @param eventBus Event bus for state change notifications (can be null if not needed)
      */
     public AgentStateMachine(EventBus eventBus) {
         this(eventBus, "default");
@@ -122,8 +133,8 @@ public class AgentStateMachine {
     /**
      * Constructs a state machine with agent identifier.
      *
-     * @param eventBus Event bus for state change notifications (can be null)
-     * @param agentId  Agent identifier for logging
+     * @param eventBus Event bus for state change notifications (can be null if not needed)
+     * @param agentId  Agent identifier for logging and event tracking
      */
     public AgentStateMachine(EventBus eventBus, String agentId) {
         this.currentState = new AtomicReference<>(AgentState.IDLE);
@@ -135,7 +146,12 @@ public class AgentStateMachine {
     /**
      * Returns the current state.
      *
-     * @return Current AgentState
+     * <p>This is a thread-safe read operation that returns the state
+     * at the time of the call. The state may change immediately after
+     * this method returns in multi-threaded scenarios.</p>
+     *
+     * @return Current AgentState (never null)
+     * @see AgentState
      */
     public AgentState getCurrentState() {
         return currentState.get();
@@ -144,8 +160,11 @@ public class AgentStateMachine {
     /**
      * Checks if transition to target state is valid.
      *
-     * @param targetState Desired target state
-     * @return true if transition is valid
+     * <p>This is a read-only operation that does not modify state.
+     * Use this method to validate transitions before calling {@link #transitionTo(AgentState)}.</p>
+     *
+     * @param targetState Desired target state to validate
+     * @return true if transition from current state to target state is valid, false otherwise
      */
     public boolean canTransitionTo(AgentState targetState) {
         if (targetState == null) return false;
@@ -159,10 +178,13 @@ public class AgentStateMachine {
     /**
      * Transitions to a new state if valid.
      *
-     * <p>If transition is valid, publishes a StateTransitionEvent to the EventBus.</p>
+     * <p>If transition is valid, publishes a StateTransitionEvent to the EventBus.
+     * This is a thread-safe atomic operation using compare-and-set.</p>
      *
-     * @param targetState Target state
-     * @return true if transition was successful
+     * @param targetState Target state to transition to
+     * @return true if transition was successful, false if invalid or concurrent modification occurred
+     * @see #canTransitionTo(AgentState)
+     * @see StateTransitionEvent
      */
     public boolean transitionTo(AgentState targetState) {
         return transitionTo(targetState, null);
@@ -171,9 +193,12 @@ public class AgentStateMachine {
     /**
      * Transitions to a new state with reason.
      *
-     * @param targetState Target state
-     * @param reason      Reason for transition (for logging/events)
-     * @return true if transition was successful
+     * <p>If transition is valid, publishes a StateTransitionEvent to the EventBus
+     * with the provided reason. This is a thread-safe atomic operation using compare-and-set.</p>
+     *
+     * @param targetState Target state to transition to
+     * @param reason      Human-readable reason for transition (used in logging and events)
+     * @return true if transition was successful, false if invalid or concurrent modification occurred
      */
     public boolean transitionTo(AgentState targetState, String reason) {
         if (targetState == null) {

@@ -234,8 +234,21 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
 
     @Override
     public float[] embed(String text) {
-        if (text == null || text.isEmpty()) {
+        // Input validation
+        if (text == null) {
+            LOGGER.warn("embed() called with null text, returning zero vector");
             return createZeroVector();
+        }
+
+        if (text.isEmpty()) {
+            LOGGER.debug("embed() called with empty text, returning zero vector");
+            return createZeroVector();
+        }
+
+        // Check for unreasonably long input
+        if (text.length() > 100000) {
+            LOGGER.warn("embed() called with unusually long text ({} chars), truncating", text.length());
+            text = text.substring(0, 100000);
         }
 
         // Check cache
@@ -245,11 +258,12 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
         if (entry != null && !entry.isExpired()) {
             cacheHits.incrementAndGet();
             updateAccessOrder(key);
-            LOGGER.debug("Cache hit for text (hash: {})", key);
+            LOGGER.debug("Cache hit for text (hash: {}, length: {})", key, text.length());
             return entry.embedding;
         }
 
         cacheMisses.incrementAndGet();
+        LOGGER.debug("Cache miss for text (hash: {}, length: {})", key, text.length());
 
         // Generate embedding via API
         float[] embedding = fetchEmbedding(text);
@@ -281,8 +295,36 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
 
     @Override
     public float[][] embedBatch(String[] texts) {
-        if (texts == null || texts.length == 0) {
+        // Input validation
+        if (texts == null) {
+            LOGGER.warn("embedBatch() called with null array, returning empty array");
             return new float[0][];
+        }
+
+        if (texts.length == 0) {
+            LOGGER.debug("embedBatch() called with empty array, returning empty array");
+            return new float[0][];
+        }
+
+        // Check for unreasonably large batch
+        if (texts.length > MAX_BATCH_SIZE) {
+            LOGGER.warn("embedBatch() called with {} texts, exceeding max batch size of {}. Truncating.",
+                       texts.length, MAX_BATCH_SIZE);
+            String[] truncated = new String[MAX_BATCH_SIZE];
+            System.arraycopy(texts, 0, truncated, 0, MAX_BATCH_SIZE);
+            texts = truncated;
+        }
+
+        // Validate individual texts
+        for (int i = 0; i < texts.length; i++) {
+            if (texts[i] == null) {
+                LOGGER.warn("embedBatch() encountered null text at index {}, replacing with empty string", i);
+                texts[i] = "";
+            } else if (texts[i].length() > 100000) {
+                LOGGER.warn("embedBatch() encountered unusually long text at index {} ({} chars), truncating",
+                           i, texts[i].length());
+                texts[i] = texts[i].substring(0, 100000);
+            }
         }
 
         // Process in batches to respect API limits
@@ -294,10 +336,13 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
             String[] batch = new String[batchLength];
             System.arraycopy(texts, i, batch, 0, batchLength);
 
+            LOGGER.debug("Processing batch {}-{}/{}", i, batchEnd, texts.length);
+
             float[][] batchEmbeddings = fetchBatchEmbeddings(batch);
             System.arraycopy(batchEmbeddings, 0, embeddings, i, batchLength);
         }
 
+        LOGGER.info("Generated {} embeddings", embeddings.length);
         return embeddings;
     }
 
@@ -557,21 +602,32 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
     /**
      * Caches an embedding with LRU eviction.
      *
-     * @param key Cache key
-     * @param embedding Embedding vector
+     * <p>Implements size-based eviction with detailed logging for monitoring cache behavior.</p>
+     *
+     * @param key Cache key (hash of text)
+     * @param embedding Embedding vector to cache
      */
     private void cacheEmbedding(int key, float[] embedding) {
         synchronized (cacheLock) {
+            int evictedCount = 0;
+
             // Evict oldest entries if cache is full
             while (cache.size() >= MAX_CACHE_SIZE) {
                 Integer oldest = accessOrder.pollFirst();
                 if (oldest != null) {
                     cache.remove(oldest);
+                    evictedCount++;
                 }
+            }
+
+            if (evictedCount > 0) {
+                LOGGER.debug("Cache full: evicted {} old entries to make room for new embedding", evictedCount);
             }
 
             cache.put(key, new CacheEntry(embedding));
             accessOrder.addLast(key);
+
+            LOGGER.debug("Cached embedding (hash: {}, cache size: {})", key, cache.size());
         }
     }
 

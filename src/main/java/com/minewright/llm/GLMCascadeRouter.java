@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Cascade router for z.ai GLM models with intelligent model selection.
@@ -446,4 +447,56 @@ public class GLMCascadeRouter {
         String recommendedModel,
         String reasoning
     ) {}
+
+    /**
+     * Metrics for a single model in the cascade.
+     */
+    public static class ModelMetrics {
+        private final long requestCount;
+        private final long successCount;
+        private final long failureCount;
+        private final double avgLatencyMs;
+        private final double successRate;
+
+        public ModelMetrics(long requestCount, long successCount, long failureCount,
+                           double avgLatencyMs, double successRate) {
+            this.requestCount = requestCount;
+            this.successCount = successCount;
+            this.failureCount = failureCount;
+            this.avgLatencyMs = avgLatencyMs;
+            this.successRate = successRate;
+        }
+
+        public long getRequestCount() { return requestCount; }
+        public long getSuccessCount() { return successCount; }
+        public long getFailureCount() { return failureCount; }
+        public double getAvgLatencyMs() { return avgLatencyMs; }
+        public double getSuccessRate() { return successRate; }
+    }
+
+    /**
+     * Overall metrics for the cascade router.
+     */
+    public static class CascadeMetrics {
+        private final ConcurrentHashMap<String, ModelMetrics> modelMetrics;
+        private final long totalTokensUsed;
+        private final long localLLMUsageCount;
+
+        public CascadeMetrics() {
+            this.modelMetrics = new ConcurrentHashMap<>();
+            this.totalTokensUsed = 0;
+            this.localLLMUsageCount = 0;
+        }
+
+        public void addModelMetrics(String model, ModelMetrics metrics) {
+            modelMetrics.put(model, metrics);
+        }
+
+        public ConcurrentHashMap<String, ModelMetrics> getModelMetrics() {
+            return modelMetrics;
+        }
+
+        public long getTotalTokensUsed() { return totalTokensUsed; }
+        public long getLocalLLMUsageCount() { return localLLMUsageCount; }
+    }
 }
