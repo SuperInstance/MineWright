@@ -11,6 +11,10 @@ import com.minewright.memory.CompanionMemory;
 import com.minewright.orchestration.AgentRole;
 import com.minewright.orchestration.OrchestratorService;
 import com.minewright.voice.VoiceManager;
+import com.minewright.observability.MetricsCollector;
+import com.minewright.observability.MetricsReporter;
+import com.minewright.observability.ObservabilityConfig;
+import com.minewright.observability.TracingService;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -95,6 +99,21 @@ public class ForemanCommands {
                     .executes(ForemanCommands::voiceStatus))
                 .then(Commands.literal("test")
                     .executes(ForemanCommands::voiceTest)))
+            // Observability commands - require OP permission
+            .then(Commands.literal("metrics")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
+                .executes(ForemanCommands::showMetrics))
+            .then(Commands.literal("export")
+                .requires(source -> source.hasPermission(PERMISSION_ADMIN))
+                .then(Commands.literal("metrics")
+                    .then(Commands.argument("path", StringArgumentType.string())
+                        .executes(ForemanCommands::exportMetrics)))
+                .then(Commands.literal("traces")
+                    .then(Commands.argument("path", StringArgumentType.string())
+                        .executes(ForemanCommands::exportTraces)))
+                .then(Commands.literal("package")
+                    .then(Commands.argument("path", StringArgumentType.string())
+                        .executes(ForemanCommands::exportPackage))))
         );
     }
 
@@ -548,5 +567,117 @@ public class ForemanCommands {
         }
 
         return archetype.toString();
+    }
+
+    // ========== OBSERVABILITY COMMANDS ==========
+
+    /**
+     * Displays current metrics summary in-game.
+     */
+    private static int showMetrics(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+
+        LOGGER.info("Command /minewright metrics executed by {}", source.getTextName());
+
+        try {
+            MetricsReporter reporter = new MetricsReporter();
+            String conciseReport = reporter.generateConciseReport();
+            source.sendSuccess(() -> Component.literal(conciseReport), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to generate metrics report", e);
+            source.sendFailure(Component.literal("Failed to generate metrics: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    /**
+     * Exports metrics to a file.
+     */
+    private static int exportMetrics(CommandContext<CommandSourceStack> context) {
+        String exportPath = StringArgumentType.getString(context, "path");
+        CommandSourceStack source = context.getSource();
+
+        LOGGER.info("Command /minewright export metrics {} executed by {}", exportPath, source.getTextName());
+
+        source.sendSuccess(() -> Component.literal("Exporting metrics to " + exportPath + "..."), true);
+
+        // Use shared executor for async export
+        COMMAND_EXECUTOR.submit(() -> {
+            try {
+                MetricsReporter reporter = new MetricsReporter();
+                reporter.exportToJson(exportPath, "metrics");
+                reporter.exportToCsv(exportPath, "metrics");
+
+                String successMsg = "Metrics exported successfully to: " + exportPath;
+                LOGGER.info(successMsg);
+                source.sendSuccess(() -> Component.literal(successMsg), true);
+            } catch (Exception e) {
+                LOGGER.error("Failed to export metrics", e);
+                source.sendFailure(Component.literal("Failed to export metrics: " + e.getMessage()));
+            }
+        });
+
+        return 1;
+    }
+
+    /**
+     * Exports traces to a file.
+     */
+    private static int exportTraces(CommandContext<CommandSourceStack> context) {
+        String exportPath = StringArgumentType.getString(context, "path");
+        CommandSourceStack source = context.getSource();
+
+        LOGGER.info("Command /minewright export traces {} executed by {}", exportPath, source.getTextName());
+
+        source.sendSuccess(() -> Component.literal("Exporting traces to " + exportPath + "..."), true);
+
+        // Use shared executor for async export
+        COMMAND_EXECUTOR.submit(() -> {
+            try {
+                TracingService tracing = TracingService.getInstance();
+                int jsonCount = tracing.exportToJson(exportPath);
+                int csvCount = tracing.exportToCsv(exportPath);
+
+                String successMsg = String.format("Traces exported successfully: %d traces to %s",
+                    jsonCount + csvCount, exportPath);
+                LOGGER.info(successMsg);
+                source.sendSuccess(() -> Component.literal(successMsg), true);
+            } catch (Exception e) {
+                LOGGER.error("Failed to export traces", e);
+                source.sendFailure(Component.literal("Failed to export traces: " + e.getMessage()));
+            }
+        });
+
+        return 1;
+    }
+
+    /**
+     * Exports a complete package including metrics and traces.
+     */
+    private static int exportPackage(CommandContext<CommandSourceStack> context) {
+        String exportPath = StringArgumentType.getString(context, "path");
+        CommandSourceStack source = context.getSource();
+
+        LOGGER.info("Command /minewright export package {} executed by {}", exportPath, source.getTextName());
+
+        source.sendSuccess(() -> Component.literal("Exporting complete package to " + exportPath + "..."), true);
+
+        // Use shared executor for async export
+        COMMAND_EXECUTOR.submit(() -> {
+            try {
+                MetricsReporter reporter = new MetricsReporter();
+                String packagePath = reporter.exportCompletePackage(exportPath, "observability");
+
+                String successMsg = "Complete package exported to: " + packagePath;
+                LOGGER.info(successMsg);
+                source.sendSuccess(() -> Component.literal(successMsg), true);
+            } catch (Exception e) {
+                LOGGER.error("Failed to export package", e);
+                source.sendFailure(Component.literal("Failed to export package: " + e.getMessage()));
+            }
+        });
+
+        return 1;
     }
 }
