@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -85,8 +85,7 @@ public class AStarPathfinder {
     private static final int DEFAULT_MAX_NODES = 10000;
 
     /** Node pool for reusing PathNode objects (reduces GC pressure). */
-    private static final PriorityBlockingQueue<PathNode> nodePool =
-        new PriorityBlockingQueue<>(100, Comparator.comparingDouble(n -> -n.fCost()));
+    private static final Queue<PathNode> nodePool = new ConcurrentLinkedQueue<>();
 
     /** Statistics for monitoring pathfinder performance. */
     private static final AtomicInteger nodesExplored = new AtomicInteger(0);
@@ -581,6 +580,9 @@ public class AStarPathfinder {
     /**
      * Creates a new PathNode or reuses one from the pool.
      *
+     <p>IMPORTANT: This method properly reuses pooled nodes to reset their state
+     * instead of creating new objects, reducing GC pressure during heavy pathfinding.</p>
+     *
      * @param pos      Position
      * @param parent   Parent node
      * @param gCost    Cost from start
@@ -592,8 +594,9 @@ public class AStarPathfinder {
                                         MovementType movement) {
         PathNode node = nodePool.poll();
         if (node != null) {
-            // Reuse existing node
-            return new PathNode(pos, parent, gCost, hCost, movement);
+            // Reuse pooled node by resetting its state
+            node.reset(pos, parent, gCost, hCost, movement);
+            return node;
         }
         // Create new node
         return new PathNode(pos, parent, gCost, hCost, movement);
@@ -602,11 +605,23 @@ public class AStarPathfinder {
     /**
      * Returns nodes to the pool for reuse.
      *
+     * <p>After returning nodes to the pool, we clear their parent references
+     * to prevent memory leaks through circular references.</p>
+     *
      * @param nodes Collection of nodes to return
      */
     private void returnNodesToPool(Collection<PathNode> nodes) {
-        // Don't pool - just let GC handle it
-        // Pooling can cause issues with parent references
+        if (nodes == null || nodes.isEmpty()) {
+            return;
+        }
+        for (PathNode node : nodes) {
+            // Clear parent reference before returning to pool
+            node.parent = null;
+            // Only pool if pos is set (node may have been nulled for copy nodes)
+            if (node.pos != null) {
+                nodePool.offer(node);
+            }
+        }
     }
 
     private void returnNodesToPool(Set<BlockPos> positions) {

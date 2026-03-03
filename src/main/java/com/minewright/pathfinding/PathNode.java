@@ -28,8 +28,8 @@ import net.minecraft.core.BlockPos;
  * @see PathfindingContext
  */
 public class PathNode implements Comparable<PathNode> {
-    /** The block position this node represents. Immutable. */
-    public final BlockPos pos;
+    /** The block position this node represents. Mutable for object pooling. */
+    public BlockPos pos;
 
     /** Actual cost from start to this node. */
     public double gCost;
@@ -167,5 +167,26 @@ public class PathNode implements Comparable<PathNode> {
         return Math.abs(pos.getX() - other.getX()) +
                Math.abs(pos.getY() - other.getY()) +
                Math.abs(pos.getZ() - other.getZ());
+    }
+
+    /**
+     * Resets this node's state for object pooling.
+     *
+     * <p>Called by AStarPathfinder when reusing pooled nodes
+     * to avoid creating new objects during pathfinding.</p>
+     *
+     * @param newPos   New block position
+     * @param parent   Parent node in path
+     * @param gCost    Cost from start
+     * @param hCost    Heuristic cost to goal
+     * @param movement Movement type to reach this node
+     */
+    public void reset(BlockPos newPos, PathNode parent, double gCost, double hCost, MovementType movement) {
+        this.pos = newPos;
+        this.parent = parent;
+        this.gCost = gCost;
+        this.hCost = hCost;
+        this.movement = movement;
+        this.costMultiplier = 1.0;
     }
 }
