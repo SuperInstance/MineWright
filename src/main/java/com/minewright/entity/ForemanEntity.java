@@ -2,15 +2,12 @@ package com.minewright.entity;
 
 import com.minewright.MineWrightMod;
 import com.minewright.action.ActionExecutor;
-import com.minewright.action.Task;
 import com.minewright.behavior.ProcessManager;
 import com.minewright.behavior.processes.FollowProcess;
 import com.minewright.behavior.processes.IdleProcess;
 import com.minewright.behavior.processes.SurvivalProcess;
 import com.minewright.behavior.processes.TaskExecutionProcess;
 import com.minewright.dialogue.ProactiveDialogueManager;
-import com.minewright.hivemind.CloudflareClient;
-import com.minewright.hivemind.TacticalDecisionService;
 import com.minewright.humanization.HumanizationUtils;
 import com.minewright.humanization.SessionManager;
 import com.minewright.memory.CompanionMemory;
@@ -19,9 +16,7 @@ import com.minewright.orchestration.AgentMessage;
 import com.minewright.orchestration.AgentRole;
 import com.minewright.orchestration.OrchestratorService;
 import com.minewright.recovery.RecoveryManager;
-import com.minewright.recovery.RecoveryResult;
 import com.minewright.recovery.StuckDetector;
-import com.minewright.recovery.StuckType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -40,11 +35,6 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A MineWright crew member entity that autonomously executes tasks in Minecraft.
@@ -65,51 +55,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   <li>Fly and become invulnerable for building tasks</li>
  * </ul>
  *
- * <p><b>Architecture:</b></p>
+ * <p><b>Architecture (Refactored Wave 46):</b></p>
  * <pre>
- * ForemanEntity
- * ├── ActionExecutor - Queue and execute tasks tick-by-tick
- * ├── TaskPlanner - Async LLM calls for planning
- * ├── ForemanMemory - Task history and conversation context
- * ├── CompanionMemory - Player preferences and learning
- * ├── ProactiveDialogueManager - Contextual commentary
- * ├── OrchestratorService - Multi-agent coordination
- * └── TacticalDecisionService - Fast reflex decisions via edge
+ * ForemanEntity (Main Entity Class - ~400 lines)
+ * ├── EntityState - State management and data
+ * ├── ActionCoordinator - Action execution and stuck recovery
+ * ├── CommunicationHandler - Orchestration and dialogue
+ * └── Minecraft Entity - PathfinderMob inheritance
  * </pre>
  *
  * <p><b>Thread Safety:</b></p>
  * <ul>
  *   <li>Entity operations are single-threaded on the Minecraft server thread</li>
- *   <li>{@code ConcurrentLinkedQueue} for thread-safe message passing</li>
- *   <li>{@code AtomicBoolean} for orchestrator registration flag</li>
- *   <li>{@code volatile} for task progress visibility across threads</li>
+ *   <li>Delegated classes use thread-safe collections for cross-thread communication</li>
  *   <li>LLM calls are async and execute on separate thread pools</li>
  * </ul>
  *
- * <p><b>State Management:</b></p>
- * <p>The entity maintains state through:</p>
- * <ul>
- *   <li>{@link AgentRole} - SOLO, FOREMAN, or WORKER in orchestration</li>
- *   <li>{@link ActionExecutor} state machine - IDLE, PLANNING, EXECUTING, etc.</li>
- *   <li>Current task tracking with progress reporting</li>
- *   <li>Memory systems that persist across server restarts</li>
- * </ul>
- *
- * <p><b>Lifecycle:</b></p>
- * <ol>
- *   <li>Spawned via command or GUI</li>
- *   <li>Registers with orchestrator on first tick</li>
- *   <li>Receives commands from player (GUI or chat)</li>
- *   <li>Plans tasks asynchronously (non-blocking)</li>
- *   <li>Executes actions tick-by-tick</li>
- *   <li>Reports progress and completion</li>
- *   <li>Persists state to NBT on world save</li>
- * </ol>
- *
  * @see ActionExecutor
- * @see TaskPlanner
- * @see OrchestratorService
- * @see com.minewright.action.actions.BaseAction
+ * @see EntityState
+ * @see ActionCoordinator
+ * @see CommunicationHandler
  *
  * @since 1.0.0
  */
@@ -118,209 +83,66 @@ public class ForemanEntity extends PathfinderMob {
     private static final EntityDataAccessor<String> ENTITY_NAME =
         SynchedEntityData.defineId(ForemanEntity.class, EntityDataSerializers.STRING);
 
-    /**
-     * The display name of this crew member.
-     * Synchronized to clients via entity data.
-     * Marked volatile for visibility across threads.
-     */
-    private volatile String entityName;
+    // ========== Delegated Subsystems ==========
 
     /**
-     * Long-term memory storing task history, conversation context,
-     * and knowledge learned from experience.
+     * Manages all state for this entity.
+     * Encapsulates identity, memory, orchestration state, and movement capabilities.
      */
-    private ForemanMemory memory;
+    private final EntityState state;
 
     /**
-     * Companion memory storing player preferences, learning from interactions,
-     * and personalization data.
+     * Coordinates action execution and behavior arbitration.
+     * Manages tick-based execution, stuck detection, and recovery.
      */
-    private CompanionMemory companionMemory;
+    private final ActionCoordinator actionCoordinator;
 
     /**
-     * Action executor responsible for queuing and executing tasks.
-     * Implements tick-based execution to prevent server freezing.
+     * Handles communication, orchestration, and dialogue.
+     * Manages inter-agent messaging, task reporting, and proactive dialogue.
      */
-    private ActionExecutor actionExecutor;
+    private final CommunicationHandler communicationHandler;
 
-    /**
-     * Dialogue manager for proactive commentary about task progress,
-     * discoveries, and contextual observations.
-     */
-    private ProactiveDialogueManager dialogueManager;
-
-    /**
-     * Tick counter used for periodic operations (e.g., progress reporting).
-     */
-    private int tickCounter = 0;
-
-    /**
-     * Counter for consecutive errors in action executor - used for recovery.
-     */
-    private int errorRecoveryTicks = 0;
-
-    /**
-     * Whether this entity is currently in flying mode.
-     * When flying, gravity is disabled and movement is unrestricted.
-     */
-    private boolean isFlying = false;
-
-    /**
-     * Whether this entity is immune to all damage.
-     * Used during building to prevent suffocation, fall damage, etc.
-     */
-    private boolean isInvulnerable = false;
-
-    // ========== Orchestration Support ==========
-
-    /**
-     * This agent's role in the orchestration hierarchy.
-     * SOLO - Working alone without coordination
-     * FOREMAN - Coordinating other agents
-     * WORKER - Taking tasks from foreman
-     * Marked volatile for visibility across threads during role changes.
-     */
-    private volatile AgentRole role = AgentRole.SOLO;
-
-    /**
-     * Reference to the orchestration service for multi-agent coordination.
-     * Used for task distribution, progress tracking, and inter-agent communication.
-     * Marked volatile for visibility across threads (lazy initialization).
-     */
-    private volatile OrchestratorService orchestrator;
-
-    /**
-     * Thread-safe queue for incoming messages from other agents.
-     * Messages are polled and processed during each tick.
-     */
-    private final ConcurrentLinkedQueue<AgentMessage> messageQueue = new ConcurrentLinkedQueue<>();
-
-    /**
-     * Flag indicating whether this agent has registered with the orchestrator.
-     * Uses AtomicBoolean for thread-safe initialization on first tick.
-     */
-    private final AtomicBoolean registeredWithOrchestrator = new AtomicBoolean(false);
-
-    /**
-     * ID of the currently assigned task from the foreman.
-     * Used for progress reporting and completion notification.
-     * Marked volatile for visibility across threads.
-     */
-    private volatile String currentTaskId = null;
-
-    /**
-     * Current progress percentage (0-100) for the active task.
-     * Marked volatile for visibility across threads during progress updates.
-     */
-    private volatile int currentTaskProgress = 0;
-
-    // ========== Hive Mind (Cloudflare Edge) Support ==========
-
-    /**
-     * Tactical decision service for fast reflex decisions using Cloudflare Edge.
-     * Provides sub-20ms response for combat and hazard detection.
-     */
-    private final TacticalDecisionService tacticalService;
-
-    /**
-     * Last game time when tactical situation was checked.
-     * Used to limit check frequency to performance costs.
-     */
-    private long lastTacticalCheck = 0;
-
-    /**
-     * Last game time when state was synced with edge service.
-     * Used to limit sync frequency for bandwidth efficiency.
-     */
-    private long lastStateSync = 0;
-
-    // ========== Process Arbitration System ==========
-
-    /**
-     * Process manager for behavior arbitration.
-     * Coordinates competing behaviors via priority-based selection.
-     * Replaces direct ActionExecutor.tick() calls with process-based arbitration.
-     */
-    private ProcessManager processManager;
-
-    // ========== Stuck Detection and Recovery ==========
-
-    /**
-     * Detects when the agent is stuck (position, progress, state, or path).
-     * Monitors movement, task progress, and state transitions.
-     */
-    private StuckDetector stuckDetector;
-
-    /**
-     * Manages recovery strategies for stuck conditions.
-     * Attempts escalation chain: repath -> teleport -> abort.
-     */
-    private RecoveryManager recoveryManager;
-
-    // ========== Session and Humanization ==========
-
-    /**
-     * Manages session state and fatigue modeling.
-     * Tracks warm-up, performance, and fatigue phases.
-     */
-    private SessionManager sessionManager;
+    // ========== Construction ==========
 
     /**
      * Constructs a new ForemanEntity.
      *
-     * <p>Initializes all subsystems including memory, action executor,
-     * dialogue manager, tactical service, process manager, stuck detection,
-     * recovery manager, and session manager. The entity starts in
-     * invulnerable mode and registers with the orchestrator on first tick.</p>
+     * <p>Initializes all subsystems including state, action coordinator,
+     * communication handler, and enables invulnerability by default.</p>
      *
      * @param entityType The entity type from registration
      * @param level The world/level this entity is spawned in
      */
     public ForemanEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
-        this.entityName = "Foreman";
-        this.memory = new ForemanMemory(this);
-        this.companionMemory = new CompanionMemory();
-        this.actionExecutor = new ActionExecutor(this);
-        this.dialogueManager = new ProactiveDialogueManager(this);
-        this.tacticalService = TacticalDecisionService.getInstance();
-        this.setCustomNameVisible(true);
 
-        this.isInvulnerable = true;
+        // Initialize state first
+        this.state = new EntityState(entityType, level, "Foreman");
+
+        // Initialize subsystems with entity reference
+        this.state.initializeSubsystems(this);
+        this.actionCoordinator = new ActionCoordinator(this, this.state);
+        this.communicationHandler = new CommunicationHandler(this, this.state);
+
+        // Set up entity properties
+        this.setCustomNameVisible(true);
+        this.state.setInvulnerable(true);
         this.setInvulnerable(true);
 
-        // Initialize orchestrator reference
-        if (!level.isClientSide) {
-            this.orchestrator = MineWrightMod.getOrchestratorService();
-        }
-
-        // Initialize process manager and register behavior processes
-        this.processManager = new ProcessManager(this);
+        // Initialize behavior processes in the process manager
         initializeProcesses();
-
-        // Initialize stuck detection and recovery
-        this.stuckDetector = new StuckDetector(this);
-        this.recoveryManager = new RecoveryManager(this);
-
-        // Initialize session management
-        this.sessionManager = new SessionManager();
     }
 
     /**
      * Initializes all behavior processes for the process manager.
      * Processes are registered in priority order (highest first).
-     *
-     * <p>Process Priority Order:</p>
-     * <ol>
-     *   <li>SurvivalProcess (100) - Emergency behaviors</li>
-     *   <li>TaskExecutionProcess (50) - Normal work execution</li>
-     *   <li>FollowProcess (25) - Player following</li>
-     *   <li>IdleProcess (10) - Fallback idle behavior</li>
-     * </ol>
      */
     private void initializeProcesses() {
+        ProcessManager processManager = state.getProcessManager();
         if (processManager == null) {
-            LOGGER.warn("[{}] ProcessManager not initialized, cannot register processes", entityName);
+            LOGGER.warn("[{}] ProcessManager not initialized, cannot register processes",
+                state.getEntityName());
             return;
         }
 
@@ -332,11 +154,14 @@ public class ForemanEntity extends PathfinderMob {
             processManager.registerProcess(new IdleProcess(this));
 
             LOGGER.info("[{}] Registered {} behavior processes",
-                entityName, processManager.getProcessCount());
+                state.getEntityName(), processManager.getProcessCount());
         } catch (Exception e) {
-            LOGGER.error("[{}] Failed to initialize behavior processes", entityName, e);
+            LOGGER.error("[{}] Failed to initialize behavior processes",
+                state.getEntityName(), e);
         }
     }
+
+    // ========== Minecraft Entity Overrides ==========
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
@@ -362,28 +187,18 @@ public class ForemanEntity extends PathfinderMob {
     /**
      * Main update loop called every game tick (20 times per second).
      *
-     * <p>This method orchestrates all periodic operations:</p>
+     * <p>This method orchestrates all periodic operations by delegating to
+     * specialized coordinators:</p>
      * <ul>
      *   <li>Register with orchestrator on first tick</li>
      *   <li>Check tactical situation via Hive Mind (if enabled)</li>
      *   <li>Sync state with edge service (if enabled)</li>
      *   <li>Process incoming inter-agent messages</li>
      *   <li>Update session state and fatigue</li>
-     *   <li>Execute behavior processes via ProcessManager</li>
-     *   <li>Detect and recover from stuck conditions</li>
+     *   <li>Execute behaviors via ActionCoordinator</li>
      *   <li>Trigger proactive dialogue</li>
      *   <li>Report task progress to foreman</li>
      * </ul>
-     *
-     * <p><b>Important:</b> This method must return quickly to avoid server lag.
-     * Long-running operations (LLM calls) are handled asynchronously.</p>
-     *
-     * <p><b>Thread Safety:</b> Called on the Minecraft server thread only.
-     * All state updates are thread-safe due to single-threaded execution.</p>
-     *
-     * <p><b>Error Handling:</b> Each subsystem is wrapped in try-catch to ensure
-     * errors never crash the game. Failed subsystems log warnings but the entity
-     * continues operating (graceful degradation).</p>
      */
     @Override
     public void tick() {
@@ -392,7 +207,7 @@ public class ForemanEntity extends PathfinderMob {
         } catch (Exception e) {
             // Never let entity tick errors crash the game
             LOGGER.error("[{}] Critical error in parent entity tick, continuing anyway",
-                entityName, e);
+                state.getEntityName(), e);
         }
 
         if (!this.level().isClientSide) {
@@ -401,248 +216,102 @@ public class ForemanEntity extends PathfinderMob {
             // Wrap each subsystem in try-catch for graceful degradation
 
             // Register with orchestrator on first tick
-            if (!registeredWithOrchestrator.get() && orchestrator != null) {
+            if (!state.getRegisteredWithOrchestrator().get() && state.getOrchestrator() != null) {
                 try {
-                    registerWithOrchestrator();
+                    communicationHandler.registerWithOrchestrator();
                 } catch (Exception e) {
-                    LOGGER.error("[{}] Failed to register with orchestrator", entityName, e);
-                    registeredWithOrchestrator.set(true); // Don't keep trying
+                    LOGGER.error("[{}] Failed to register with orchestrator",
+                        state.getEntityName(), e);
+                    state.getRegisteredWithOrchestrator().set(true); // Don't keep trying
                 }
             }
 
             // Hive Mind: Periodic tactical check (combat reflexes, hazards)
-            if (tacticalService.isEnabled() &&
-                gameTime - lastTacticalCheck >= tacticalService.getCheckInterval()) {
-                lastTacticalCheck = gameTime;
+            if (state.getTacticalService().isEnabled() &&
+                gameTime - state.getLastTacticalCheck() >= state.getTacticalService().getCheckInterval()) {
+                state.setLastTacticalCheck(gameTime);
                 try {
-                    checkTacticalSituation();
+                    communicationHandler.checkTacticalSituation();
                 } catch (Exception e) {
-                    LOGGER.warn("[{}] Tactical check failed (continuing normally)", entityName, e);
-                    // Continue without tactical decisions - graceful degradation
+                    LOGGER.warn("[{}] Tactical check failed (continuing normally)",
+                        state.getEntityName(), e);
                 }
             }
 
             // Hive Mind: Periodic state sync with edge
-            if (tacticalService.isEnabled() &&
-                gameTime - lastStateSync >= tacticalService.getSyncInterval()) {
-                lastStateSync = gameTime;
+            if (state.getTacticalService().isEnabled() &&
+                gameTime - state.getLastStateSync() >= state.getTacticalService().getSyncInterval()) {
+                state.setLastStateSync(gameTime);
                 try {
-                    tacticalService.syncState(this);
+                    state.getTacticalService().syncState(this);
                 } catch (Exception e) {
-                    LOGGER.warn("[{}] State sync failed (will retry later)", entityName, e);
-                    // Continue without sync - not critical
+                    LOGGER.warn("[{}] State sync failed (will retry later)",
+                        state.getEntityName(), e);
                 }
             }
 
             // Process incoming messages
             try {
-                processMessages();
+                communicationHandler.processMessages();
             } catch (Exception e) {
-                LOGGER.error("[{}] Error processing messages (continuing anyway)", entityName, e);
+                LOGGER.error("[{}] Error processing messages (continuing anyway)",
+                    state.getEntityName(), e);
                 // Clear potentially corrupted message queue
-                messageQueue.clear();
+                state.getMessageQueue().clear();
             }
 
             // Update session state (fatigue, breaks)
+            SessionManager sessionManager = state.getSessionManager();
             if (sessionManager != null) {
                 try {
                     sessionManager.update();
                 } catch (Exception e) {
-                    LOGGER.warn("[{}] Session manager error (continuing without session tracking)", entityName, e);
+                    LOGGER.warn("[{}] Session manager error (continuing without session tracking)",
+                        state.getEntityName(), e);
                 }
             }
 
-            // Execute behaviors via ProcessManager - NEW approach
-            if (processManager != null) {
-                try {
-                    processManager.tick();
-                    errorRecoveryTicks = 0; // Reset error counter on success
-                } catch (Exception e) {
-                    LOGGER.error("[{}] Critical error in process manager", entityName, e);
-                    errorRecoveryTicks++;
-
-                    // Only send chat message once per error burst (not every tick)
-                    if (errorRecoveryTicks == 1) {
-                        try {
-                            sendChatMessage("Hit a snag there boss. Working on it...");
-                        } catch (Exception ignored) {
-                            // If chat fails too, just log and continue
-                        }
-                    }
-
-                    // After 3 consecutive errors, reset the process manager to recover
-                    if (errorRecoveryTicks >= 3) {
-                        LOGGER.warn("[{}] Too many errors, resetting process manager", entityName);
-                        try {
-                            processManager.forceDeactivate();
-                            processManager = new ProcessManager(this);
-                            initializeProcesses();
-                            errorRecoveryTicks = 0;
-                            sendChatMessage("Alright, I'm back on track now.");
-                        } catch (Exception resetError) {
-                            LOGGER.error("[{}] Failed to reset process manager", entityName, resetError);
-                        }
-                    }
-                }
-            } else {
-                // Fallback to old action executor if process manager not available
-                try {
-                    actionExecutor.tick();
-                } catch (Exception e) {
-                    LOGGER.error("[{}] Critical error in action executor (fallback)", entityName, e);
-                }
-            }
-
-            // Stuck detection and recovery - NEW feature
-            if (stuckDetector != null && recoveryManager != null) {
-                try {
-                    detectAndRecoverFromStuck();
-                } catch (Exception e) {
-                    LOGGER.warn("[{}] Stuck detection/recovery error (continuing anyway)", entityName, e);
-                }
+            // Execute behaviors via ActionCoordinator
+            try {
+                actionCoordinator.tick();
+            } catch (Exception e) {
+                LOGGER.error("[{}] Critical error in action coordinator",
+                    state.getEntityName(), e);
             }
 
             // Check for proactive dialogue triggers
+            ProactiveDialogueManager dialogueManager = state.getDialogueManager();
             if (dialogueManager != null) {
                 try {
                     dialogueManager.tick();
                 } catch (Exception e) {
-                    LOGGER.warn("[{}] Dialogue manager error (continuing without dialogue)", entityName, e);
-                    // Dialogue is not critical - continue without it
+                    LOGGER.warn("[{}] Dialogue manager error (continuing without dialogue)",
+                        state.getEntityName(), e);
                 }
             }
 
             // Report progress if working on a task
             try {
-                reportTaskProgress();
+                communicationHandler.reportTaskProgress();
             } catch (Exception e) {
-                LOGGER.warn("[{}] Failed to report progress", entityName, e);
-                // Progress reporting is not critical
+                LOGGER.warn("[{}] Failed to report progress", state.getEntityName(), e);
             }
         }
-    }
-
-    /**
-     * Detects stuck conditions and attempts recovery.
-     *
-     * <p>This method:</p>
-     * <ol>
-     *   <li>Updates stuck detector state</li>
-     *   <li>Checks for any stuck condition</li>
-     *   <li>Attempts recovery if stuck detected</li>
-     *   <li>Resets detector on successful recovery</li>
-     * </ol>
-     */
-    private void detectAndRecoverFromStuck() {
-        // Update stuck detection
-        boolean detected = stuckDetector.tickAndDetect();
-
-        if (!detected) {
-            return; // Not stuck
-        }
-
-        // Determine stuck type
-        StuckType stuckType = stuckDetector.detectStuck();
-        if (stuckType == null) {
-            return; // No specific stuck type detected
-        }
-
-        LOGGER.warn("[{}] Stuck detected: {} at position {}",
-            entityName, stuckType, blockPosition());
-
-        // Attempt recovery
-        RecoveryResult result = recoveryManager.attemptRecovery(stuckType);
-
-        switch (result) {
-            case SUCCESS:
-                LOGGER.info("[{}] Recovery successful from {}", entityName, stuckType);
-                stuckDetector.reset();
-                sendChatMessage("Phew, got unstuck!");
-                break;
-
-            case RETRY:
-                // Will retry next tick
-                LOGGER.debug("[{}] Recovery retrying for {}", entityName, stuckType);
-                break;
-
-            case ESCALATE:
-                LOGGER.info("[{}] Recovery escalating for {}", entityName, stuckType);
-                break;
-
-            case ABORT:
-                LOGGER.warn("[{}] Recovery aborted for {}, giving up", entityName, stuckType);
-                stuckDetector.reset();
-                actionExecutor.stopCurrentAction();
-                sendChatMessage("I'm stuck and can't complete this task.");
-                break;
-        }
-    }
-
-    public void setEntityName(String name) {
-        this.entityName = name;
-        this.entityData.set(ENTITY_NAME, name);
-        this.setCustomName(Component.literal(name));
-    }
-
-    public String getEntityName() {
-        return this.entityName;
-    }
-
-    /**
-     * @deprecated Use {@link #getEntityName()} instead.
-     */
-    @Deprecated
-    public String getSteveName() {
-        return this.entityName;
-    }
-
-    public ForemanMemory getMemory() {
-        return this.memory;
-    }
-
-    public CompanionMemory getCompanionMemory() {
-        return this.companionMemory;
-    }
-
-    public ActionExecutor getActionExecutor() {
-        return this.actionExecutor;
-    }
-
-    public ProactiveDialogueManager getDialogueManager() {
-        return this.dialogueManager;
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putString("CrewName", this.entityName);
-
-        CompoundTag memoryTag = new CompoundTag();
-        this.memory.saveToNBT(memoryTag);
-        tag.put("Memory", memoryTag);
-
-        CompoundTag companionMemoryTag = new CompoundTag();
-        this.companionMemory.saveToNBT(companionMemoryTag);
-        tag.put("CompanionMemory", companionMemoryTag);
+        state.saveToNBT(tag);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        // Try new key first, fall back to old key for backwards compatibility
-        if (tag.contains("CrewName")) {
-            this.setEntityName(tag.getString("CrewName"));
-        } else if (tag.contains("SteveName")) {
-            this.setEntityName(tag.getString("SteveName"));
-        }
-
-        if (tag.contains("Memory")) {
-            this.memory.loadFromNBT(tag.getCompound("Memory"));
-        }
-
-        if (tag.contains("CompanionMemory")) {
-            this.companionMemory.loadFromNBT(tag.getCompound("CompanionMemory"));
-        }
+        state.loadFromNBT(tag);
+        // Update synced entity data
+        this.entityData.set(ENTITY_NAME, state.getEntityName());
+        this.setCustomName(Component.literal(state.getEntityName()));
     }
 
     @Override
@@ -654,493 +323,72 @@ public class ForemanEntity extends PathfinderMob {
         return spawnData;
     }
 
-    public void sendChatMessage(String message) {
-        if (this.level().isClientSide || this.level() == null) return;
-
-        Component chatComponent = Component.literal("<" + this.entityName + "> " + message);
-        this.level().players().forEach(player -> player.sendSystemMessage(chatComponent));
-    }
-
     @Override
     protected void dropCustomDeathLoot(net.minecraft.world.damagesource.DamageSource source, int looting, boolean recentlyHit) {
         super.dropCustomDeathLoot(source, looting, recentlyHit);
     }
 
-    public void setFlying(boolean flying) {
-        this.isFlying = flying;
-        this.setNoGravity(flying);
-        this.setInvulnerableBuilding(flying);
-    }
-
-    public boolean isFlying() {
-        return this.isFlying;
-    }
+    // ========== Public API - Identity ==========
 
     /**
-     * Set invulnerability for building (immune to ALL damage: fire, lava, suffocation, fall, etc.)
-     */
-    public void setInvulnerableBuilding(boolean invulnerable) {
-        this.isInvulnerable = invulnerable;
-        this.setInvulnerable(invulnerable); // Minecraft's built-in invulnerability
-    }
-
-    @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        return false;
-    }
-
-    @Override
-    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
-        return true;
-    }
-
-    @Override
-    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
-        if (this.isFlying && !this.level().isClientSide) {
-            double motionY = this.getDeltaMovement().y;
-
-            if (this.getNavigation() != null && this.getNavigation().isInProgress()) {
-                super.travel(travelVector);
-
-                // But add ability to move vertically freely
-                if (Math.abs(motionY) < 0.1) {
-                    // Small upward force to prevent falling
-                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.05, 0));
-                }
-            } else {
-                super.travel(travelVector);
-            }
-        } else {
-            super.travel(travelVector);
-        }
-    }
-
-    @Override
-    public boolean causeFallDamage(float distance, float damageMultiplier, net.minecraft.world.damagesource.DamageSource source) {
-        // No fall damage when flying
-        if (this.isFlying) {
-            return false;
-        }
-        return super.causeFallDamage(distance, damageMultiplier, source);
-    }
-
-    // ========== Orchestration Support ==========
-
-    /**
-     * Registers this crew member with the orchestrator service.
-     * First agent becomes FOREMAN, subsequent agents become WORKERS.
-     */
-    private void registerWithOrchestrator() {
-        if (orchestrator == null) {
-            LOGGER.warn("[{}] Orchestrator service not available", entityName);
-            return;
-        }
-
-        // Determine role based on existing agents
-        int activeCount = MineWrightMod.getCrewManager().getActiveCount();
-
-        if (activeCount == 1) {
-            // First agent is the foreman
-            this.role = AgentRole.FOREMAN;
-            LOGGER.info("[{}] Registering as FOREMAN (first agent)", entityName);
-        } else {
-            // Subsequent agents are workers
-            this.role = AgentRole.WORKER;
-            LOGGER.info("[{}] Registering as WORKER (agent #{})", entityName, activeCount);
-        }
-
-        orchestrator.registerAgent(this, role);
-        registeredWithOrchestrator.set(true);
-
-        // Send chat message about role
-        if (role == AgentRole.FOREMAN) {
-            sendChatMessage("I am the Foreman! Ready to coordinate.");
-        } else {
-            sendChatMessage("Ready to work! Awaiting Foreman's instructions.");
-        }
-    }
-
-    /**
-     * Processes messages from the communication bus.
-     */
-    private void processMessages() {
-        if (orchestrator == null) return;
-
-        // Poll for new messages
-        AgentMessage message;
-        while ((message = orchestrator.getCommunicationBus().poll(entityName)) != null) {
-            handleMessage(message);
-        }
-    }
-
-    /**
-     * Handles a single message from the communication bus.
-     */
-    private void handleMessage(AgentMessage message) {
-        LOGGER.debug("[{}] Received message: {} from {}",
-            entityName, message.getType(), message.getSenderName());
-
-        switch (message.getType()) {
-            case TASK_ASSIGNMENT:
-                handleTaskAssignment(message);
-                break;
-
-            case PLAN_ANNOUNCEMENT:
-                handlePlanAnnouncement(message);
-                break;
-
-            case BROADCAST:
-                handleBroadcast(message);
-                break;
-
-            case STATUS_QUERY:
-                handleStatusQuery(message);
-                break;
-
-            default:
-                LOGGER.debug("[{}] Unhandled message type: {}", entityName, message.getType());
-        }
-    }
-
-    /**
-     * Handles task assignment from the foreman.
-     */
-    private void handleTaskAssignment(AgentMessage message) {
-        if (role == AgentRole.FOREMAN) {
-            LOGGER.debug("[{}] Foreman ignoring task assignment", entityName);
-            return;
-        }
-
-        String taskDescription = message.getPayloadValue("taskDescription", "Unknown task");
-        LOGGER.info("[{}] Received task assignment: {}", entityName, taskDescription);
-
-        // Extract task parameters
-        Task task = new Task(taskDescription, message.getPayload());
-
-        // Execute the task
-        sendChatMessage("Accepting task: " + taskDescription);
-        currentTaskId = message.getMessageId();
-
-        // Add to action queue
-        actionExecutor.queueTask(task);
-
-        // Send acknowledgment
-        AgentMessage ack = AgentMessage.taskProgress(
-            entityName, entityName,
-            message.getSenderId(),
-            message.getMessageId(),
-            0,
-            "Task accepted"
-        );
-        orchestrator.getCommunicationBus().publish(ack);
-    }
-
-    /**
-     * Handles plan announcement from the foreman.
-     */
-    private void handlePlanAnnouncement(AgentMessage message) {
-        String planId = message.getPayloadValue("planId", "?");
-        int taskCount = message.getPayloadValue("taskCount", 0);
-        LOGGER.info("[{}] Plan announced: {} ({} tasks)", entityName, planId, taskCount);
-    }
-
-    /**
-     * Handles broadcast messages.
-     */
-    private void handleBroadcast(AgentMessage message) {
-        LOGGER.info("[{}] Broadcast from {}: {}",
-            entityName, message.getSenderName(), message.getContent());
-    }
-
-    /**
-     * Handles status query from foreman.
-     */
-    private void handleStatusQuery(AgentMessage message) {
-        String status = String.format("%s (%s) - %s",
-            entityName,
-            role.getDisplayName(),
-            actionExecutor.isExecuting() ? "Working" : "Idle"
-        );
-
-        AgentMessage response = new AgentMessage.Builder()
-            .type(AgentMessage.Type.STATUS_REPORT)
-            .sender(entityName, entityName)
-            .recipient(message.getSenderId())
-            .content(status)
-            .payload("idle", !actionExecutor.isExecuting())
-            .priority(AgentMessage.Priority.NORMAL)
-            .build();
-
-        orchestrator.getCommunicationBus().publish(response);
-    }
-
-    /**
-     * Reports task progress if working on a task.
-     */
-    private void reportTaskProgress() {
-        if (currentTaskId == null || !actionExecutor.isExecuting()) {
-            return;
-        }
-
-        // Report progress every 100 ticks (5 seconds)
-        tickCounter++;
-        if (tickCounter % 100 != 0) {
-            return;
-        }
-
-        // Calculate progress based on action state
-        int progress = actionExecutor.getCurrentActionProgress();
-        if (progress > currentTaskProgress) {
-            currentTaskProgress = progress;
-
-            // Send progress update to foreman
-            if (orchestrator != null && role != AgentRole.FOREMAN) {
-                AgentMessage progressMsg = AgentMessage.taskProgress(
-                    entityName, entityName,
-                    "foreman", // Send to foreman
-                    currentTaskId,
-                    progress,
-                    "In progress"
-                );
-                orchestrator.getCommunicationBus().publish(progressMsg);
-            }
-        }
-    }
-
-    // ========== Hive Mind (Cloudflare Edge) Support ==========
-
-    /**
-     * Checks tactical situation using Cloudflare edge for fast reflexes.
+     * Sets the display name of this crew member.
+     * Updates both local state and synced entity data.
      *
-     * <p>This method:</p>
-     * <ul>
-     *   <li>Collects nearby entities (hostile mobs, etc.)</li>
-     *   <li>Sends async request to Cloudflare Worker</li>
-     *   <li>Executes immediate reflex actions (flee, dodge, etc.)</li>
-     * </ul>
+     * @param name The new name for this entity
+     */
+    public void setEntityName(String name) {
+        state.setEntityName(name);
+        this.entityData.set(ENTITY_NAME, name);
+        this.setCustomName(Component.literal(name));
+    }
+
+    /**
+     * Gets the display name of this crew member.
      *
-     * <p>Designed for sub-20ms response time. Falls back gracefully when edge unavailable.</p>
+     * @return The entity's name
      */
-    private void checkTacticalSituation() {
-        if (this.level() == null || this.getBoundingBox() == null) {
-            return;
-        }
-
-        // Get nearby entities
-        List<Entity> nearbyEntities = this.level().getEntitiesOfClass(
-            Entity.class,
-            this.getBoundingBox().inflate(16.0) // 16 block radius
-        );
-
-        // Get tactical decision from edge
-        CloudflareClient.TacticalDecision decision = tacticalService.checkTactical(this, nearbyEntities);
-
-        // Execute decision if action required
-        if (decision != null && decision.requiresAction() && !decision.isFallback) {
-            executeTacticalDecision(decision);
-        }
+    public String getEntityName() {
+        return state.getEntityName();
     }
 
     /**
-     * Executes a tactical decision from the edge.
+     * @deprecated Use {@link #getEntityName()} instead.
+     */
+    @Deprecated
+    public String getSteveName() {
+        return state.getEntityName();
+    }
+
+    // ========== Public API - Memory ==========
+
+    /**
+     * Gets the foreman memory system for this entity.
      *
-     * @param decision The tactical decision to execute
+     * @return The ForemanMemory instance
      */
-    private void executeTacticalDecision(CloudflareClient.TacticalDecision decision) {
-        LOGGER.debug("[{}] Executing tactical decision: {} ({})",
-            entityName, decision.action, decision.reasoning);
-
-        switch (decision.action) {
-            case "flee" -> {
-                // Stop current action and move away from threat
-                if (actionExecutor != null && actionExecutor.isExecuting()) {
-                    actionExecutor.stopCurrentAction();
-                }
-                // Trigger dialogue about danger
-                if (dialogueManager != null) {
-                    dialogueManager.forceComment("danger", decision.reasoning);
-                }
-            }
-            case "attack" -> {
-                // Combat is handled by existing combat action
-                // This is more of an awareness/decision notification
-            }
-            case "dodge" -> {
-                // Quick movement adjustment - handled by pathfinding
-            }
-            case "shield" -> {
-                // Defensive posture (could activate shield if equipped)
-            }
-            case "stop" -> {
-                // Emergency stop (lava, cliff, etc.)
-                if (actionExecutor != null) {
-                    actionExecutor.stopCurrentAction();
-                }
-                if (dialogueManager != null) {
-                    dialogueManager.forceComment("danger", decision.reasoning);
-                }
-            }
-            default -> {
-                // Unknown action - log and continue
-                LOGGER.debug("[{}] Unknown tactical action: {}", entityName, decision.action);
-            }
-        }
+    public ForemanMemory getMemory() {
+        return state.getMemory();
     }
 
     /**
-     * Sends a message to another agent or broadcasts to all.
-     */
-    public void sendMessage(AgentMessage message) {
-        if (orchestrator != null) {
-            orchestrator.getCommunicationBus().publish(message);
-        }
-    }
-
-    /**
-     * Gets the agent's role in the orchestration system.
-     */
-    public AgentRole getRole() {
-        return role;
-    }
-
-    /**
-     * Sets the agent's role (used for promotion/demotion).
-     */
-    public void setRole(AgentRole newRole) {
-        AgentRole oldRole = this.role;
-        this.role = newRole;
-
-        // Re-register with new role
-        if (orchestrator != null && registeredWithOrchestrator.get()) {
-            orchestrator.unregisterAgent(entityName);
-            orchestrator.registerAgent(this, newRole);
-            registeredWithOrchestrator.set(true);
-        }
-
-        sendChatMessage(String.format("Role changed: %s -> %s",
-            oldRole.getDisplayName(), newRole.getDisplayName()));
-    }
-
-    /**
-     * Gets the current task ID being worked on.
-     */
-    public String getCurrentTaskId() {
-        return currentTaskId;
-    }
-
-    /**
-     * Marks current task as complete.
-     */
-    public void completeCurrentTask(String result) {
-        if (currentTaskId != null && orchestrator != null && role != AgentRole.FOREMAN) {
-            AgentMessage completeMsg = AgentMessage.taskComplete(
-                entityName, entityName,
-                "foreman",
-                currentTaskId,
-                true,
-                result
-            );
-            orchestrator.getCommunicationBus().publish(completeMsg);
-            sendChatMessage("Task completed: " + result);
-            currentTaskId = null;
-            currentTaskProgress = 0;
-
-            // Trigger proactive dialogue for task completion
-            if (dialogueManager != null) {
-                dialogueManager.onTaskCompleted(result);
-            }
-        }
-    }
-
-    /**
-     * Marks current task as failed.
-     */
-    public void failCurrentTask(String reason) {
-        if (currentTaskId != null && orchestrator != null && role != AgentRole.FOREMAN) {
-            AgentMessage failMsg = AgentMessage.taskComplete(
-                entityName, entityName,
-                "foreman",
-                currentTaskId,
-                false,
-                reason
-            );
-            orchestrator.getCommunicationBus().publish(failMsg);
-            sendChatMessage("Task failed: " + reason);
-            currentTaskId = null;
-            currentTaskProgress = 0;
-
-            // Trigger proactive dialogue for task failure
-            if (dialogueManager != null) {
-                dialogueManager.onTaskFailed(currentTaskId != null ? currentTaskId : "task", reason);
-            }
-        }
-    }
-
-    // ========== Proactive Dialogue Triggers ==========
-
-    /**
-     * Notifies the dialogue manager that a task was completed.
-     * Can be called by ActionExecutor when actions finish successfully.
+     * Gets the companion memory system for this entity.
      *
-     * @param taskDescription Description of the completed task
+     * @return The CompanionMemory instance
      */
-    public void notifyTaskCompleted(String taskDescription) {
-        if (dialogueManager != null) {
-            dialogueManager.onTaskCompleted(taskDescription);
-        }
+    public CompanionMemory getCompanionMemory() {
+        return state.getCompanionMemory();
     }
+
+    // ========== Public API - Action and Behavior Systems ==========
 
     /**
-     * Notifies the dialogue manager that a task failed.
-     * Can be called by ActionExecutor when actions fail.
+     * Gets the action executor for this entity.
      *
-     * @param taskDescription Description of the failed task
-     * @param reason Reason for failure
+     * @return The ActionExecutor instance
      */
-    public void notifyTaskFailed(String taskDescription, String reason) {
-        if (dialogueManager != null) {
-            dialogueManager.onTaskFailed(taskDescription, reason);
-        }
+    public ActionExecutor getActionExecutor() {
+        return state.getActionExecutor();
     }
-
-    /**
-     * Notifies the dialogue manager that crew member is stuck on a task.
-     * Can be called by ActionExecutor when actions can't progress.
-     *
-     * @param taskDescription Description of the task crew member is stuck on
-     */
-    public void notifyTaskStuck(String taskDescription) {
-        if (dialogueManager != null) {
-            dialogueManager.onTaskStuck(taskDescription);
-        }
-    }
-
-    /**
-     * Notifies the dialogue manager of a milestone achievement.
-     * Use this for significant events that deserve celebration.
-     *
-     * @param milestone Description of the milestone
-     */
-    public void notifyMilestone(String milestone) {
-        if (dialogueManager != null) {
-            dialogueManager.onMilestoneReached(milestone);
-        }
-    }
-
-    /**
-     * Forces an immediate comment from crew member, bypassing cooldowns.
-     * Use this for important events that should always be commented on.
-     *
-     * @param triggerType The type of event (e.g., "danger", "discovery", "achievement")
-     * @param context Description of what happened
-     */
-    public void forceComment(String triggerType, String context) {
-        if (dialogueManager != null) {
-            dialogueManager.forceComment(triggerType, context);
-        }
-    }
-
-    // ========== New System Getters ==========
 
     /**
      * Gets the process manager for behavior arbitration.
@@ -1148,7 +396,7 @@ public class ForemanEntity extends PathfinderMob {
      * @return ProcessManager instance, or null if not initialized
      */
     public ProcessManager getProcessManager() {
-        return processManager;
+        return state.getProcessManager();
     }
 
     /**
@@ -1157,8 +405,139 @@ public class ForemanEntity extends PathfinderMob {
      * @return Active process name, or "IDLE" if no process is active
      */
     public String getActiveProcessName() {
+        ProcessManager processManager = state.getProcessManager();
         return processManager != null ? processManager.getActiveProcessName() : "IDLE";
     }
+
+    // ========== Public API - Dialogue ==========
+
+    /**
+     * Gets the dialogue manager for proactive commentary.
+     *
+     * @return The ProactiveDialogueManager instance
+     */
+    public ProactiveDialogueManager getDialogueManager() {
+        return state.getDialogueManager();
+    }
+
+    // ========== Public API - Orchestration ==========
+
+    /**
+     * Gets the agent's role in the orchestration system.
+     *
+     * @return The agent's AgentRole
+     */
+    public AgentRole getRole() {
+        return state.getRole();
+    }
+
+    /**
+     * Sets the agent's role (used for promotion/demotion).
+     *
+     * @param newRole The new role for this agent
+     */
+    public void setRole(AgentRole newRole) {
+        AgentRole oldRole = state.getRole();
+        state.setRole(newRole);
+
+        // Re-register with new role
+        OrchestratorService orchestrator = state.getOrchestrator();
+        if (orchestrator != null && state.getRegisteredWithOrchestrator().get()) {
+            orchestrator.unregisterAgent(state.getEntityName());
+            orchestrator.registerAgent(this, newRole);
+            state.getRegisteredWithOrchestrator().set(true);
+        }
+
+        sendChatMessage(String.format("Role changed: %s -> %s",
+            oldRole.getDisplayName(), newRole.getDisplayName()));
+    }
+
+    /**
+     * Gets the current task ID being worked on.
+     *
+     * @return The current task ID, or null if no task
+     */
+    public String getCurrentTaskId() {
+        return state.getCurrentTaskId();
+    }
+
+    /**
+     * Sends a message to another agent or broadcasts to all.
+     *
+     * @param message The message to send
+     */
+    public void sendMessage(AgentMessage message) {
+        communicationHandler.sendMessage(message);
+    }
+
+    /**
+     * Marks current task as complete.
+     *
+     * @param result The task completion result
+     */
+    public void completeCurrentTask(String result) {
+        communicationHandler.completeCurrentTask(result);
+    }
+
+    /**
+     * Marks current task as failed.
+     *
+     * @param reason The failure reason
+     */
+    public void failCurrentTask(String reason) {
+        communicationHandler.failCurrentTask(reason);
+    }
+
+    // ========== Public API - Proactive Dialogue Triggers ==========
+
+    /**
+     * Notifies the dialogue manager that a task was completed.
+     *
+     * @param taskDescription Description of the completed task
+     */
+    public void notifyTaskCompleted(String taskDescription) {
+        communicationHandler.notifyTaskCompleted(taskDescription);
+    }
+
+    /**
+     * Notifies the dialogue manager that a task failed.
+     *
+     * @param taskDescription Description of the failed task
+     * @param reason Reason for failure
+     */
+    public void notifyTaskFailed(String taskDescription, String reason) {
+        communicationHandler.notifyTaskFailed(taskDescription, reason);
+    }
+
+    /**
+     * Notifies the dialogue manager that crew member is stuck on a task.
+     *
+     * @param taskDescription Description of the task crew member is stuck on
+     */
+    public void notifyTaskStuck(String taskDescription) {
+        communicationHandler.notifyTaskStuck(taskDescription);
+    }
+
+    /**
+     * Notifies the dialogue manager of a milestone achievement.
+     *
+     * @param milestone Description of the milestone
+     */
+    public void notifyMilestone(String milestone) {
+        communicationHandler.notifyMilestone(milestone);
+    }
+
+    /**
+     * Forces an immediate comment from crew member, bypassing cooldowns.
+     *
+     * @param triggerType The type of event (e.g., "danger", "discovery", "achievement")
+     * @param context Description of what happened
+     */
+    public void forceComment(String triggerType, String context) {
+        communicationHandler.forceComment(triggerType, context);
+    }
+
+    // ========== Public API - Recovery Systems ==========
 
     /**
      * Gets the stuck detector for monitoring agent position and progress.
@@ -1166,7 +545,7 @@ public class ForemanEntity extends PathfinderMob {
      * @return StuckDetector instance, or null if not initialized
      */
     public StuckDetector getStuckDetector() {
-        return stuckDetector;
+        return state.getStuckDetector();
     }
 
     /**
@@ -1175,8 +554,10 @@ public class ForemanEntity extends PathfinderMob {
      * @return RecoveryManager instance, or null if not initialized
      */
     public RecoveryManager getRecoveryManager() {
-        return recoveryManager;
+        return state.getRecoveryManager();
     }
+
+    // ========== Public API - Session and Humanization ==========
 
     /**
      * Gets the session manager for fatigue and break tracking.
@@ -1184,22 +565,16 @@ public class ForemanEntity extends PathfinderMob {
      * @return SessionManager instance, or null if not initialized
      */
     public SessionManager getSessionManager() {
-        return sessionManager;
+        return state.getSessionManager();
     }
 
     /**
      * Gets a humanized reaction delay based on session state.
      *
-     * <p>This method applies session-aware modifiers to reaction time:</p>
-     * <ul>
-     *   <li>Warm-up phase: +30% slower</li>
-     *   <li>Fatigue phase: +50% slower</li>
-     *   <li>Normal phase: base reaction time</li>
-     * </ul>
-     *
      * @return Reaction delay in ticks (20 ticks = 1 second)
      */
     public int getHumanizedReactionDelay() {
+        SessionManager sessionManager = state.getSessionManager();
         if (sessionManager == null || !sessionManager.isEnabled()) {
             // Base reaction time: 150-600ms converted to ticks (3-12 ticks)
             int reactionMs = HumanizationUtils.humanReactionTime();
@@ -1221,17 +596,11 @@ public class ForemanEntity extends PathfinderMob {
     /**
      * Checks if agent should make a mistake based on session state.
      *
-     * <p>Mistake probability is affected by:</p>
-     * <ul>
-     *   <li>Base rate: 3% (configurable)</li>
-     *   <li>Fatigue: up to 2x multiplier</li>
-     *   <li>Warm-up: 1.5x multiplier</li>
-     * </ul>
-     *
      * @param baseRate Base mistake probability (0.0 to 1.0)
      * @return true if agent should make a mistake
      */
     public boolean shouldMakeMistake(double baseRate) {
+        SessionManager sessionManager = state.getSessionManager();
         if (sessionManager == null || !sessionManager.isEnabled()) {
             return HumanizationUtils.shouldMakeMistake(baseRate);
         }
@@ -1242,5 +611,91 @@ public class ForemanEntity extends PathfinderMob {
 
         return HumanizationUtils.shouldMakeMistake(adjustedRate);
     }
-}
 
+    // ========== Movement Capabilities ==========
+
+    /**
+     * Sets whether this entity is flying.
+     * When flying, gravity is disabled and movement is unrestricted.
+     *
+     * @param flying true to enable flying mode
+     */
+    public void setFlying(boolean flying) {
+        state.setFlying(flying);
+        this.setNoGravity(flying);
+        this.setInvulnerableBuilding(flying);
+    }
+
+    /**
+     * Checks if this entity is currently flying.
+     *
+     * @return true if flying
+     */
+    public boolean isFlying() {
+        return state.isFlying();
+    }
+
+    /**
+     * Set invulnerability for building (immune to ALL damage: fire, lava, suffocation, fall, etc.)
+     *
+     * @param invulnerable true to make invulnerable
+     */
+    public void setInvulnerableBuilding(boolean invulnerable) {
+        state.setInvulnerable(invulnerable);
+        this.setInvulnerable(invulnerable); // Minecraft's built-in invulnerability
+    }
+
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        return false;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
+        return true;
+    }
+
+    @Override
+    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+        if (state.isFlying() && !this.level().isClientSide) {
+            double motionY = this.getDeltaMovement().y;
+
+            if (this.getNavigation() != null && this.getNavigation().isInProgress()) {
+                super.travel(travelVector);
+
+                // But add ability to move vertically freely
+                if (Math.abs(motionY) < 0.1) {
+                    // Small upward force to prevent falling
+                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.05, 0));
+                }
+            } else {
+                super.travel(travelVector);
+            }
+        } else {
+            super.travel(travelVector);
+        }
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, net.minecraft.world.damagesource.DamageSource source) {
+        // No fall damage when flying
+        if (state.isFlying()) {
+            return false;
+        }
+        return super.causeFallDamage(distance, damageMultiplier, source);
+    }
+
+    // ========== Communication ==========
+
+    /**
+     * Sends a chat message to all players.
+     *
+     * @param message The message to send
+     */
+    public void sendChatMessage(String message) {
+        if (this.level().isClientSide || this.level() == null) return;
+
+        Component chatComponent = Component.literal("<" + state.getEntityName() + "> " + message);
+        this.level().players().forEach(player -> player.sendSystemMessage(chatComponent));
+    }
+}
