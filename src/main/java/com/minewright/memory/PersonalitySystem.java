@@ -58,6 +58,12 @@ public class PersonalitySystem {
         private final Map<String, Integer> ticUsageCount = new HashMap<>();
         private final List<String> recentTics = new ArrayList<>();
 
+        /**
+         * Shared Random instance for random behavior generation.
+         * Using a single instance is more efficient than creating new Random objects.
+         */
+        private static final Random RANDOM = new Random();
+
         // Preferences (for consistent behavior)
         private String favoriteBlock = "cobblestone";
         private String workStyle = "methodical";

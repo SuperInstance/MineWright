@@ -593,6 +593,12 @@ public class CompanionMemory {
         private final Set<String> discussedTopics = java.util.concurrent.ConcurrentHashMap.newKeySet();
         private final Map<String, Integer> phraseUsage = new java.util.concurrent.ConcurrentHashMap<>();
 
+        /**
+         * Shared Random instance for selecting random elements.
+         * Using a single instance is more efficient than creating new Random objects.
+         */
+        private static final java.util.Random RANDOM = new java.util.Random();
+
         public void addInsideJoke(InsideJoke joke) {
             insideJokes.add(joke);
 
@@ -619,7 +625,7 @@ public class CompanionMemory {
 
         public InsideJoke getRandomJoke() {
             if (insideJokes.isEmpty()) return null;
-            InsideJoke joke = insideJokes.get(new java.util.Random().nextInt(insideJokes.size()));
+            InsideJoke joke = insideJokes.get(RANDOM.nextInt(insideJokes.size()));
             joke.incrementReference();
             return joke;
         }

@@ -260,6 +260,12 @@ public class FallbackResponseSystem {
     private static final int MAX_PENDING_REQUESTS = 50;
 
     /**
+     * Shared Random instance for selecting random template responses.
+     * Using a single instance is more efficient than creating new Random objects.
+     */
+    private static final Random RANDOM = new Random();
+
+    /**
      * Represents a request pending for when LLM recovers.
      */
     private static class PendingRequest {
@@ -604,7 +610,7 @@ public class FallbackResponseSystem {
         }
 
         String[] templates = GREETING_TEMPLATES.getOrDefault(timeOfDay, GREETING_TEMPLATES.get("default"));
-        return templates[new Random().nextInt(templates.length)];
+        return templates[RANDOM.nextInt(templates.length)];
     }
 
     /**
@@ -613,7 +619,7 @@ public class FallbackResponseSystem {
      * @return Acknowledgment string
      */
     private String getRandomAcknowledgment() {
-        return TASK_ACKNOWLEDGMENTS[new Random().nextInt(TASK_ACKNOWLEDGMENTS.length)];
+        return TASK_ACKNOWLEDGMENTS[RANDOM.nextInt(TASK_ACKNOWLEDGMENTS.length)];
     }
 
     /**
@@ -622,7 +628,7 @@ public class FallbackResponseSystem {
      * @return Completion string
      */
     public String getRandomCompletion() {
-        return COMPLETION_TEMPLATES[new Random().nextInt(COMPLETION_TEMPLATES.length)];
+        return COMPLETION_TEMPLATES[RANDOM.nextInt(COMPLETION_TEMPLATES.length)];
     }
 
     /**
@@ -631,7 +637,7 @@ public class FallbackResponseSystem {
      * @return Error string
      */
     public String getRandomError() {
-        return ERROR_TEMPLATES[new Random().nextInt(ERROR_TEMPLATES.length)];
+        return ERROR_TEMPLATES[RANDOM.nextInt(ERROR_TEMPLATES.length)];
     }
 
     /**
@@ -640,7 +646,7 @@ public class FallbackResponseSystem {
      * @return Idle string
      */
     public String getRandomIdle() {
-        return IDLE_TEMPLATES[new Random().nextInt(IDLE_TEMPLATES.length)];
+        return IDLE_TEMPLATES[RANDOM.nextInt(IDLE_TEMPLATES.length)];
     }
 
     /**
@@ -649,7 +655,7 @@ public class FallbackResponseSystem {
      * @return Notification string
      */
     private String getRandomFallbackNotification() {
-        return FALLBACK_NOTIFICATIONS[new Random().nextInt(FALLBACK_NOTIFICATIONS.length)];
+        return FALLBACK_NOTIFICATIONS[RANDOM.nextInt(FALLBACK_NOTIFICATIONS.length)];
     }
 
     /**

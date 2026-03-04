@@ -116,9 +116,10 @@ public class ConditionNode implements BTNode {
      * @throws IllegalArgumentException if condition is null
      */
     public ConditionNode(String name, BooleanSupplier condition) {
-        this(name, condition != null
-            ? (bb) -> condition.getAsBoolean()
-            : null);
+        this.name = name;
+        this.condition = Objects.requireNonNull(condition, "Condition cannot be null");
+        this.conditionWithBlackboard = null; // Not used when BooleanSupplier is provided
+        LOGGER.debug("Created ConditionNode '{}' with BooleanSupplier", getName());
     }
 
     /**

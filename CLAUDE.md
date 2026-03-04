@@ -8,14 +8,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Key Concept**: "One Abstraction Away" - LLMs plan and coordinate (Brain Layer), while traditional game AI executes (Script/Physical Layer). This enables 60 FPS execution without blocking on LLM calls.
 
-**Recent Updates (2026-03-03 - Wave 42):**
-- ✅ **ScriptParser God Class Refactoring**: Split 1,029-line class into 6 focused classes (91% reduction)
+**Recent Updates (2026-03-04 - Waves 42-46):**
+- ✅ **Wave 46: GUI & Entity Refactoring** - Split god classes into focused components
+  - ForemanOfficeGUI → 5 GUI classes (GUIRenderer, InputHandler, MessagePanel, QuickButtonsPanel, VoiceIntegrationPanel)
+  - ForemanEntity → 4 entity coordinator classes (ActionCoordinator, CommunicationHandler, CrewManager, EntityState)
+- ✅ **Wave 45: Core Component Tests** - Added tests for ActionExecutor, ForemanEntity, and infrastructure
+- ✅ **Wave 44: Configuration Refactoring** - Split MineWrightConfig into 12 focused config classes
+  - LLMConfig, CascadeRouterConfig, BehaviorConfig, PathfindingConfig, HumanizationConfig, VoiceConfig, etc.
+- ✅ **Wave 43: CompanionMemory Refactoring** - Split god class into 5 focused classes
+  - MemoryStore, ConversationManager, ForemanMemory, WorldKnowledge, PersonalitySystem
+- ✅ **Wave 42: ScriptParser Refactoring** - Split 1,029-line class into 6 focused classes (91% reduction)
   - ScriptLexer (410 lines), YAMLFormatParser (800 lines), BraceFormatParser (458 lines)
   - ScriptASTBuilder (301 lines), ScriptValidator (454 lines), ScriptParseException (30 lines)
 - ✅ **Critical SpotBugs Fixes**: Fixed 5 HIGH severity thread-safety issues
   - Blackboard counters: Changed volatile long to AtomicLong (3 fixes)
   - ConfigManager: Added double-checked locking for singleton
   - VoiceManager: Added double-checked locking for singleton
+- ✅ **Test Coverage**: ~50% (127 test files, 40,000+ lines)
 
 ## Build Commands
 
@@ -84,7 +93,7 @@ Update: Every 30-60 seconds             Update: Every tick (20 TPS)         Upda
 | `execution/` | State machine with interceptors and event bus | AgentStateMachine, InterceptorChain |
 | `coordination/` | Contract Net Protocol for multi-agent bidding | TaskBid, TaskAnnouncement, AgentRole |
 | `pathfinding/` | A* with hierarchical planning and path smoothing | HierarchicalPathfinder, MovementValidator |
-| `memory/` | Persistence and semantic vector search | CompanionMemory, ConversationManager, InMemoryVectorStore |
+| `memory/` | Persistence, semantic vector search, and personality | MemoryStore, ConversationManager, InMemoryVectorStore, ForemanMemory, WorldKnowledge, PersonalitySystem |
 | `skill/` | Voyager-style skill library with composition | Skill, SkillComposer, ComposedSkill, CompositionStep |
 | `profile/` | Task profile system (Honorbuddy-inspired) | TaskProfile, ProfileExecutor, ProfileRegistry |
 | `recovery/` | Stuck detection and recovery strategies | StuckDetector, RecoveryManager, StuckType |
@@ -95,7 +104,12 @@ Update: Every 30-60 seconds             Update: Every tick (20 TPS)         Upda
 | `plugin/` | Plugin architecture with SPI | ActionRegistry, ActionPlugin, PluginManager |
 | `personality/` | AI personality system | ForemanArchetypeConfig, PersonalityTraits |
 | `voice/` | TTS/STT integration | VoiceSystem, SpeechToText, TextToSpeech, VoiceManager |
-| `config/` | Configuration management | ConfigManager, MineWrightConfig, ConfigChangeListener, ConfigVersion |
+| `config/` | Configuration management | ConfigManager, MineWrightConfig, LLMConfig, CascadeRouterConfig, BehaviorConfig, PathfindingConfig, HumanizationConfig, VoiceConfig |
+| `client/` | Client-side GUI and input | ForemanOfficeGUI, ForemanOverlayScreen, KeyBindings, ClientEventHandler |
+| `client/gui/` | GUI component refactoring (Wave 46) | GUIRenderer, InputHandler, MessagePanel, QuickButtonsPanel, VoiceIntegrationPanel |
+| `entity/` | Entity coordination refactoring (Wave 46) | ForemanEntity, ActionCoordinator, CommunicationHandler, CrewManager, EntityState |
+| `observability/` | Distributed tracing and metrics | TracingService, MetricsCollector, TraceSpan, SpanContext, SpanKind, SpanStatus |
+| `security/` | Input sanitization and validation | InputSanitizer |
 
 ## Key Patterns
 
@@ -238,10 +252,12 @@ apiKey = "${OPENAI_API_KEY}"  # Resolved from environment
 
 ### Code Quality
 
-- Test coverage target: 40% (per JaCoCo configuration)
+- Test coverage: ~50% (127 test files, 40,000+ lines of test code)
+- Test coverage target: 60% (per JaCoCo configuration)
 - Checkstyle and SpotBugs are configured but warnings are currently ignored
 - Never use empty catch blocks - always log exceptions
 - Use `TestLogger` instead of direct logging in test-facing code
+- Recent refactoring (Waves 42-46) eliminated god classes and improved modularity
 
 ### Dependencies
 
@@ -298,10 +314,95 @@ Tests are located in `src/test/java/com/minewright/`.
 - Never use empty catch blocks - always log exceptions with stack trace
 - The `InputSanitizer`, `StructureTemplateLoader` fixes show the proper pattern
 
+## Recent Refactoring Achievements
+
+### Wave 46: GUI & Entity Refactoring (2026-03-04)
+
+**GUI Refactoring:**
+- Split `ForemanOfficeGUI` (1,000+ lines) into 5 focused classes
+  - `GUIRenderer` - Render logic and visual components
+  - `InputHandler` - User input processing
+  - `MessagePanel` - Message display and history
+  - `QuickButtonsPanel` - Quick action buttons
+  - `VoiceIntegrationPanel` - Voice command interface
+- Improved testability and modularity of GUI components
+
+**Entity Refactoring:**
+- Split `ForemanEntity` coordination logic into 4 focused classes
+  - `ActionCoordinator` - Action execution coordination
+  - `CommunicationHandler` - Message and event handling
+  - `CrewManager` - Multi-agent crew management
+  - `EntityState` - State tracking and persistence
+- Reduced ForemanEntity from 800+ lines to focused entity logic
+
+### Wave 44: Configuration Refactoring (2026-03-03)
+
+**Split MineWrightConfig into 12 focused classes:**
+- `LLMConfig` - LLM provider configuration
+- `CascadeRouterConfig` - Model routing configuration
+- `BehaviorConfig` - Behavior tree settings
+- `PathfindingConfig` - Pathfinding parameters
+- `HumanizationConfig` - Human-like behavior settings
+- `VoiceConfig` - Voice system configuration
+- `MultiAgentConfig` - Multi-agent coordination settings
+- `SemanticCacheConfig` - Semantic caching parameters
+- `SkillLibraryConfig` - Skill library settings
+- `UtilityAIConfig` - Utility AI scoring
+- `PerformanceConfig` - Performance tuning
+- `HiveMindConfig` - Distributed agent settings
+
+### Wave 43: CompanionMemory Refactoring (2026-03-03)
+
+**Split CompanionMemory (1,200+ lines) into 5 focused classes:**
+- `MemoryStore` - Core memory storage and retrieval
+- `ConversationManager` - Conversation history tracking
+- `ForemanMemory` - Foreman-specific memory
+- `WorldKnowledge` - World state knowledge management
+- `PersonalitySystem` - Personality and relationship tracking
+
+### Wave 42: ScriptParser Refactoring (2026-03-03)
+
+**Split ScriptParser (1,029 lines) into 6 focused classes:**
+- `ScriptLexer` (410 lines) - Lexical analysis and tokenization
+- `YAMLFormatParser` (800 lines) - YAML-like format parsing
+- `BraceFormatParser` (458 lines) - Brace-based format parsing
+- `ScriptASTBuilder` (301 lines) - AST construction utilities
+- `ScriptValidator` (454 lines) - Validation logic
+- `ScriptParseException` (30 lines) - Dedicated exception class
+
+### Thread Safety Fixes (Waves 42-44)
+
+**SpotBugs HIGH Severity Fixes:**
+- Blackboard counters: Changed `volatile long` to `AtomicLong` (3 fixes)
+- ConfigManager: Added double-checked locking for singleton
+- VoiceManager: Added double-checked locking for singleton
+- All singletons now use proper double-checked locking pattern
+
+**Key Pattern Applied:**
+```java
+private static volatile MyClass instance;
+private static final Object lock = new Object();
+
+public static MyClass getInstance() {
+    if (instance == null) {
+        synchronized (lock) {
+            if (instance == null) {
+                instance = new MyClass();
+            }
+        }
+    }
+    return instance;
+}
+```
+
 ## References
 
 - **Architecture Deep Dive:** `docs/architecture/TECHNICAL_DEEP_DIVE.md`
 - **Action API:** `docs/ACTION_API.md`
 - **Research Documents:** `docs/research/`
+- **Audit Reports:** `docs/audits/`
+  - Wave 46: `FOREMAN_ENTITY_REFACTOR_WAVE46.md`, `FOREMAN_OFFICE_GUI_REFACTOR_WAVE46.md`
+  - Wave 42: `SCRIPT_PARSER_REFACTOR.md`, `SPOTBUGS_CRITICAL_FIXES_COMPLETE.md`
 - **Configuration:** `config/minewright-common.toml`
 - **Build Output:** `build/libs/`
+- **Future Roadmap:** `docs/FUTURE_ROADMAP.md`

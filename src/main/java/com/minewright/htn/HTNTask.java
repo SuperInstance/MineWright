@@ -337,10 +337,22 @@ public class HTNTask {
      * Creates a deep copy of this task with a new unique ID.
      * Useful for safe manipulation during planning.
      *
-     * @return A cloned HTNTask with the same properties but new ID
+     * @return A deep copy HTNTask with the same properties but new ID
      */
-    public HTNTask clone() {
+    public HTNTask deepCopy() {
         return new HTNTask(name, type, new java.util.HashMap<>(parameters), generateTaskId());
+    }
+
+    /**
+     * Creates a deep copy of this task with a new unique ID.
+     * This method is deprecated in favor of {@link #deepCopy()} for clarity.
+     *
+     * @return A deep copy HTNTask with the same properties but new ID
+     * @deprecated Use {@link #deepCopy()} instead
+     */
+    @Deprecated
+    public HTNTask clone() {
+        return deepCopy();
     }
 
     /**
