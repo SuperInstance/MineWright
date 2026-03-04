@@ -5,6 +5,7 @@ import com.minewright.command.ForemanCommands;
 import com.minewright.config.ConfigManager;
 import com.minewright.config.MineWrightConfig;
 import com.minewright.entity.ForemanEntity;
+import com.minewright.config.LLMConfig;
 import com.minewright.entity.CrewManager;
 import com.minewright.orchestration.OrchestratorService;
 import com.minewright.voice.VoiceConfig;
@@ -52,7 +53,7 @@ public class MineWrightMod {
 
         ENTITIES.register(modEventBus);
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, MineWrightConfig.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, LLMConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::entityAttributes);

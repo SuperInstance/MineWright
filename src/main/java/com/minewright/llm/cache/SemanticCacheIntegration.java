@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Integrates semantic caching with the existing exact-match LLM cache.
@@ -47,10 +48,10 @@ public class SemanticCacheIntegration {
     private final boolean enabled;
 
     // Statistics for integration layer
-    private volatile long exactMatchHits = 0;
-    private volatile long semanticMatchHits = 0;
-    private volatile long misses = 0;
-    private volatile long llmCalls = 0;
+    private final LongAdder exactMatchHits = new LongAdder();
+    private final LongAdder semanticMatchHits = new LongAdder();
+    private final LongAdder misses = new LongAdder();
+    private final LongAdder llmCalls = new LongAdder();
 
     /**
      * Creates a new integration with default settings.
@@ -102,7 +103,7 @@ public class SemanticCacheIntegration {
         // Tier 1: Exact match cache
         Optional<LLMResponse> exactResponse = exactMatchCache.get(prompt, model, providerId);
         if (exactResponse.isPresent()) {
-            exactMatchHits++;
+            exactMatchHits.increment();
             LOGGER.debug("Exact match cache hit for prompt='{}'", truncate(prompt, 40));
             return exactResponse;
         }
@@ -111,7 +112,7 @@ public class SemanticCacheIntegration {
         if (enabled) {
             Optional<String> semanticResponse = semanticCache.get(prompt, model, providerId);
             if (semanticResponse.isPresent()) {
-                semanticMatchHits++;
+                semanticMatchHits.increment();
 
                 // Convert string response to LLMResponse
                 LLMResponse llmResponse = LLMResponse.builder()
@@ -131,7 +132,7 @@ public class SemanticCacheIntegration {
         }
 
         // Cache miss
-        misses++;
+misses.increment();
         LOGGER.debug("Cache miss for prompt='{}'", truncate(prompt, 40));
         return Optional.empty();
     }
@@ -161,7 +162,7 @@ public class SemanticCacheIntegration {
         }
 
         // Cache miss - execute LLM call
-        llmCalls++;
+        llmCalls.increment();
         LOGGER.debug("Cache miss - executing LLM call for prompt='{}'", truncate(prompt, 40));
 
         LLMResponse response = supplier.get();
@@ -205,10 +206,10 @@ public class SemanticCacheIntegration {
      * Resets statistics counters.
      */
     public void resetStats() {
-        exactMatchHits = 0;
-        semanticMatchHits = 0;
-        misses = 0;
-        llmCalls = 0;
+        exactMatchHits.reset();
+        semanticMatchHits.reset();
+misses.reset();
+        llmCalls.reset();
     }
 
     /**
@@ -244,19 +245,19 @@ public class SemanticCacheIntegration {
      * @return Integration stats
      */
     public IntegrationStats getStats() {
-        long totalRequests = exactMatchHits + semanticMatchHits + misses;
+        long totalRequests = exactMatchHits.sum() + semanticMatchHits.sum() + misses.sum();
         double hitRate = totalRequests > 0
-            ? (double) (exactMatchHits + semanticMatchHits) / totalRequests
+            ? (double) (exactMatchHits.sum() + semanticMatchHits.sum()) / totalRequests
             : 0.0;
-        double semanticContribution = (exactMatchHits + semanticMatchHits) > 0
-            ? (double) semanticMatchHits / (exactMatchHits + semanticMatchHits)
+        double semanticContribution = (exactMatchHits.sum() + semanticMatchHits.sum()) > 0
+            ? (double) semanticMatchHits.sum() / (exactMatchHits.sum() + semanticMatchHits.sum())
             : 0.0;
 
         return new IntegrationStats(
-            exactMatchHits,
-            semanticMatchHits,
-            misses,
-            llmCalls,
+            exactMatchHits.sum(),
+            semanticMatchHits.sum(),
+            misses.sum(),
+            llmCalls.sum(),
             hitRate,
             semanticContribution,
             semanticCache.size(),
@@ -323,7 +324,10 @@ public class SemanticCacheIntegration {
                 "IntegrationStats[exactHits=%d, semanticHits=%d, misses=%d, " +
                 "llmCalls=%d, hitRate=%.2f%%, semanticContrib=%.2f%%, " +
                 "semanticSize=%d, exactSize=%d]",
-                exactMatchHits, semanticMatchHits, misses, llmCalls,
+                exactMatchHits,
+                semanticMatchHits,
+                misses,
+                llmCalls,
                 hitRate * 100, semanticContribution * 100,
                 semanticCacheSize, exactCacheSize
             );

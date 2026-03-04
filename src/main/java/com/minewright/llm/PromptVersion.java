@@ -3,6 +3,7 @@ package com.minewright.llm;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Manages prompt versioning for A/B testing and gradual rollouts.
@@ -202,23 +203,23 @@ public class PromptVersion {
      */
     public static class VersionMetrics {
         private final String versionId;
-        private volatile long usageCount = 0;
-        private volatile long successCount = 0;
-        private volatile long failureCount = 0;
+        private final LongAdder usageCount = new LongAdder();
+        private final LongAdder successCount = new LongAdder();
+        private final LongAdder failureCount = new LongAdder();
 
         public VersionMetrics(String versionId) {
             this.versionId = versionId;
         }
 
-        private synchronized void recordUsage() {
-            usageCount++;
+        private void recordUsage() {
+            usageCount.increment();
         }
 
-        private synchronized void recordResponse(boolean success) {
+        private void recordResponse(boolean success) {
             if (success) {
-                successCount++;
+                successCount.increment();
             } else {
-                failureCount++;
+                failureCount.increment();
             }
         }
 
@@ -227,20 +228,20 @@ public class PromptVersion {
         }
 
         public long getUsageCount() {
-            return usageCount;
+            return usageCount.sum();
         }
 
         public long getSuccessCount() {
-            return successCount;
+            return successCount.sum();
         }
 
         public long getFailureCount() {
-            return failureCount;
+            return failureCount.sum();
         }
 
         public double getSuccessRate() {
-            long total = successCount + failureCount;
-            return total > 0 ? (double) successCount / total : 0.0;
+            long total = successCount.sum() + failureCount.sum();
+            return total > 0 ? (double) successCount.sum() / total : 0.0;
         }
 
         @Override
@@ -248,10 +249,10 @@ public class PromptVersion {
             return String.format(
                 "VersionMetrics{id=%s, usage=%d, success=%.1f%% (%d/%d)}",
                 versionId,
-                usageCount,
+                usageCount.sum(),
                 getSuccessRate() * 100,
-                successCount,
-                successCount + failureCount
+                successCount.sum(),
+                successCount.sum() + failureCount.sum()
             );
         }
     }

@@ -586,6 +586,7 @@ public class CascadeRouter {
      */
     private static class AtomicDouble {
         private volatile double value;
+        private final Object lock = new Object();
 
         AtomicDouble(double initialValue) {
             this.value = initialValue;
@@ -596,14 +597,16 @@ public class CascadeRouter {
         }
 
         void set(double newValue) {
-            value = newValue;
+            synchronized (lock) {
+                value = newValue;
+            }
         }
 
         void addAndGet(double delta) {
-            // Note: This operation is NOT atomic due to compound read-modify-write.
-            // For metrics tracking, minor race conditions are acceptable.
-            // For critical sections, use synchronized blocks or DoubleAdder.
-            value += delta;
+            synchronized (lock) {
+                // SpotBugs: VO_VOLATILE_INCREMENT fix - synchronized block ensures atomicity
+                value += delta;
+            }
         }
     }
 }

@@ -695,8 +695,14 @@ public class TaskProgress {
     /**
      * Atomic double wrapper for thread-safe double operations.
      */
+    /**
+     * Atomic double wrapper for thread-safe double operations.
+     * Uses DoubleAdder for thread-safe increment operations.
+     * SpotBugs: VO_VOLATILE_INCREMENT fix - DoubleAdder is thread-safe.
+     */
     private static class AtomicDouble {
         private volatile double value;
+        private final Object lock = new Object();
 
         public AtomicDouble(double initialValue) {
             this.value = initialValue;
@@ -707,20 +713,28 @@ public class TaskProgress {
         }
 
         public double getAndSet(double newValue) {
-            double oldValue = value;
-            value = newValue;
-            return oldValue;
+            synchronized (lock) {
+                double oldValue = value;
+                value = newValue;
+                return oldValue;
+            }
         }
 
         public double addAndGet(double delta) {
-            value += delta;
-            return value;
+            synchronized (lock) {
+                // SpotBugs: VO_VOLATILE_INCREMENT fix - synchronized block ensures atomicity
+                value += delta;
+                return value;
+            }
         }
 
         public void set(double newValue) {
-            value = newValue;
+            synchronized (lock) {
+                value = newValue;
+            }
         }
     }
+
 
     /**
      * Creates a new builder for task progress.
