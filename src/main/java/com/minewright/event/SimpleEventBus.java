@@ -91,7 +91,9 @@ public class SimpleEventBus implements EventBus {
         LOGGER.debug("Subscribed to {} (priority: {}, total subscribers: {})",
             eventType.getSimpleName(), priority, getSubscriberCount(eventType));
 
-        return new SubscriptionImpl(eventType, entry);
+        // MEMORY LEAK FIX: Pass subscribers map to SubscriptionImpl to avoid holding
+        // reference to outer SimpleEventBus instance via non-static inner class
+        return new SubscriptionImpl(eventType, entry, subscribers);
     }
 
     /**
@@ -215,14 +217,20 @@ public class SimpleEventBus implements EventBus {
 
     /**
      * Subscription implementation for unsubscribing.
+     * MEMORY LEAK FIX: Made this a static inner class to prevent holding implicit reference
+     * to the outer SimpleEventBus instance. This allows garbage collection of the event bus
+     * even if Subscription objects are still referenced elsewhere.
      */
-    private class SubscriptionImpl implements Subscription {
+    private static class SubscriptionImpl implements Subscription {
         private final Class<?> eventType;
         private final SubscriberEntry<?> entry;
+        private final ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<SubscriberEntry<?>>> subscribers;
 
-        SubscriptionImpl(Class<?> eventType, SubscriberEntry<?> entry) {
+        SubscriptionImpl(Class<?> eventType, SubscriberEntry<?> entry,
+                        ConcurrentHashMap<Class<?>, CopyOnWriteArrayList<SubscriberEntry<?>>> subscribers) {
             this.eventType = eventType;
             this.entry = entry;
+            this.subscribers = subscribers;
         }
 
         @Override

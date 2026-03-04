@@ -10,11 +10,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Configuration for the observability system.
  * Loads settings from properties files with sensible defaults.
  */
 public class TracingConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TracingConfig.class);
     private static final String DEFAULT_CONFIG_FILE = "observability.properties";
     private static final String DEFAULT_EXPORT_DIR = "observability/exports";
     private static final long DEFAULT_RETENTION_HOURS = 24;
@@ -44,7 +48,10 @@ public class TracingConfig {
             if (Files.exists(configPath)) {
                 config.loadFromProperties(DEFAULT_CONFIG_FILE);
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            LOGGER.warn("Failed to load default observability configuration from {}: {}. Using default values.",
+                DEFAULT_CONFIG_FILE, e.getMessage(), e);
+        }
         return config;
     }
 

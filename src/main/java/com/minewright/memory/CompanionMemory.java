@@ -79,7 +79,10 @@ public class CompanionMemory {
 
     /**
      * Emotional memories - high-impact moments.
-     * Uses CopyOnWriteArrayList for thread-safe iteration and modification.
+     * MEMORY LEAK FIX: Replaced CopyOnWriteArrayList with ArrayList + synchronized access.
+     * CopyOnWriteArrayList causes O(n) write overhead due to full array copying on each modification.
+     * Using synchronized blocks provides better performance for the sort/trim operations
+     * while maintaining thread safety.
      */
     private final List<EmotionalMemory> emotionalMemories;
 
@@ -177,7 +180,9 @@ public class CompanionMemory {
     public CompanionMemory() {
         this.episodicMemories = new ArrayDeque<>();
         this.semanticMemories = new ConcurrentHashMap<>();
-        this.emotionalMemories = new CopyOnWriteArrayList<>(); // Thread-safe
+        // MEMORY LEAK FIX: Use ArrayList instead of CopyOnWriteArrayList for better performance
+        // Thread-safety is maintained via synchronized blocks in recordEmotionalMemory()
+        this.emotionalMemories = new ArrayList<>();
         this.conversationalMemory = new ConversationalMemory();
         this.workingMemory = new ArrayDeque<>();
 
@@ -263,37 +268,63 @@ public class CompanionMemory {
 
     /**
      * Records an emotionally significant moment.
-     * Thread-safe: uses synchronized block for sort and trim operations.
+     *
+     * PERFORMANCE OPTIMIZATION (Week 1 P0): Uses binary search insertion to maintain sorted order.
+     * Changed from O(n log n) sort after every insertion to O(log n) binary search + O(n) insertion.
+     * This eliminates the expensive sort operation on every emotional memory record.
+     *
+     * Thread-safe: uses synchronized block for insertion.
+     * Memory-safe: bounded at 50 entries to prevent unbounded growth.
      */
     private void recordEmotionalMemory(String eventType, String description, int emotionalWeight) {
         EmotionalMemory memory = new EmotionalMemory(
             eventType, description, emotionalWeight, Instant.now()
         );
 
-        // CopyOnWriteArrayList handles add() safely
-        emotionalMemories.add(memory);
-
-        // Sort and trim requires synchronization
+        // Synchronized block for thread-safe insertion
         synchronized (this) {
-            // Keep emotional memories sorted by significance
-            emotionalMemories.sort((a, b) -> Integer.compare(
-                Math.abs(b.emotionalWeight), Math.abs(a.emotionalWeight)
-            ));
+            // PERFORMANCE: Use binary search to find insertion point (O(log n))
+            int absWeight = Math.abs(emotionalWeight);
+            int insertIndex = findEmotionalMemoryInsertIndex(absWeight);
 
-            // Cap at 50 emotional memories
+            // Insert at correct position to maintain sorted order (O(n) due to array shift)
+            emotionalMemories.add(insertIndex, memory);
+
+            // Cap at 50 emotional memories (remove lowest weight if needed)
             if (emotionalMemories.size() > 50) {
-                // CopyOnWriteArrayList doesn't support remove by index efficiently
-                // Create new sorted list and clear/re-add
-                List<EmotionalMemory> sorted = new ArrayList<>(emotionalMemories);
-                sorted.sort((a, b) -> Integer.compare(
-                    Math.abs(b.emotionalWeight), Math.abs(a.emotionalWeight)
-                ));
-                emotionalMemories.clear();
-                emotionalMemories.addAll(sorted.subList(0, Math.min(50, sorted.size())));
+                // Remove last element (lowest weight since list is sorted descending)
+                emotionalMemories.remove(50);
             }
         }
 
         LOGGER.info("Recorded emotional memory: {} (weight={})", eventType, emotionalWeight);
+    }
+
+    /**
+     * PERFORMANCE HELPER: Finds insertion index to maintain descending sorted order by emotional weight.
+     * Uses binary search for O(log n) performance instead of O(n) linear search.
+     *
+     * @param absWeight Absolute weight of memory to insert
+     * @return Index where memory should be inserted to maintain descending sort order
+     */
+    private int findEmotionalMemoryInsertIndex(int absWeight) {
+        int left = 0;
+        int right = emotionalMemories.size();
+
+        while (left < right) {
+            int mid = (left + right) >>> 1;
+            int midWeight = Math.abs(emotionalMemories.get(mid).emotionalWeight);
+
+            if (midWeight >= absWeight) {
+                // Mid element has higher or equal weight, insert point is in right half
+                left = mid + 1;
+            } else {
+                // Mid element has lower weight, insert point is in left half
+                right = mid;
+            }
+        }
+
+        return left;
     }
 
     /**
@@ -541,11 +572,14 @@ public class CompanionMemory {
 
     /**
      * Gets the most emotionally significant shared memory.
+     * MEMORY LEAK FIX: Synchronized access to emotionalMemories for thread safety.
      *
      * @return Most significant memory, or null if none
      */
     public EmotionalMemory getMostSignificantMemory() {
-        return emotionalMemories.isEmpty() ? null : emotionalMemories.get(0);
+        synchronized (this) {
+            return emotionalMemories.isEmpty() ? null : emotionalMemories.get(0);
+        }
     }
 
     /**
@@ -1110,14 +1144,17 @@ public class CompanionMemory {
         tag.put("SemanticMemories", semanticList);
 
         // Save emotional memories
+        // MEMORY LEAK FIX: Synchronized access to emotionalMemories for thread safety
         ListTag emotionalList = new ListTag();
-        for (EmotionalMemory memory : emotionalMemories) {
-            CompoundTag emotionTag = new CompoundTag();
-            emotionTag.putString("EventType", memory.eventType);
-            emotionTag.putString("Description", memory.description);
-            emotionTag.putInt("EmotionalWeight", memory.emotionalWeight);
-            emotionTag.putLong("Timestamp", memory.timestamp.toEpochMilli());
-            emotionalList.add(emotionTag);
+        synchronized (this) {
+            for (EmotionalMemory memory : emotionalMemories) {
+                CompoundTag emotionTag = new CompoundTag();
+                emotionTag.putString("EventType", memory.eventType);
+                emotionTag.putString("Description", memory.description);
+                emotionTag.putInt("EmotionalWeight", memory.emotionalWeight);
+                emotionTag.putLong("Timestamp", memory.timestamp.toEpochMilli());
+                emotionalList.add(emotionTag);
+            }
         }
         tag.put("EmotionalMemories", emotionalList);
 
@@ -1286,18 +1323,21 @@ public class CompanionMemory {
         }
 
         // Load emotional memories
+        // MEMORY LEAK FIX: Synchronized access to emotionalMemories for thread safety
         ListTag emotionalList = tag.getList("EmotionalMemories", 10);
         if (!emotionalList.isEmpty()) {
-            emotionalMemories.clear();
-            for (int i = 0; i < emotionalList.size(); i++) {
-                CompoundTag emotionTag = emotionalList.getCompound(i);
-                EmotionalMemory memory = new EmotionalMemory(
-                    emotionTag.getString("EventType"),
-                    emotionTag.getString("Description"),
-                    emotionTag.getInt("EmotionalWeight"),
-                    Instant.ofEpochMilli(emotionTag.getLong("Timestamp"))
-                );
-                emotionalMemories.add(memory);
+            synchronized (this) {
+                emotionalMemories.clear();
+                for (int i = 0; i < emotionalList.size(); i++) {
+                    CompoundTag emotionTag = emotionalList.getCompound(i);
+                    EmotionalMemory memory = new EmotionalMemory(
+                        emotionTag.getString("EventType"),
+                        emotionTag.getString("Description"),
+                        emotionTag.getInt("EmotionalWeight"),
+                        Instant.ofEpochMilli(emotionTag.getLong("Timestamp"))
+                    );
+                    emotionalMemories.add(memory);
+                }
             }
         }
 
@@ -1581,6 +1621,10 @@ public class CompanionMemory {
 
     /**
      * Conversational memory including jokes and references.
+     *
+     * PERFORMANCE OPTIMIZATION (Week 1 P0): Eliminated O(n log n) sort on every joke addition.
+     * Now uses linear scan to find and remove the least referenced joke (O(n)) instead of
+     * sorting the entire list (O(n log n)). This is faster for small lists (< 30 items).
      * Thread-safe: uses CopyOnWriteArrayList for safe concurrent access.
      */
     public static class ConversationalMemory {
@@ -1588,15 +1632,32 @@ public class CompanionMemory {
         private final Set<String> discussedTopics = ConcurrentHashMap.newKeySet();
         private final Map<String, Integer> phraseUsage = new ConcurrentHashMap<>();
 
+        /**
+         * PERFORMANCE OPTIMIZATION: O(n) linear scan instead of O(n log n) sort.
+         * For small lists (< 30 items), this is faster and simpler.
+         */
         public void addInsideJoke(InsideJoke joke) {
             insideJokes.add(joke);
+
             if (insideJokes.size() > MAX_INSIDE_JOKES) {
-                // Remove least referenced joke - needs synchronization for sort
+                // PERFORMANCE: Remove least referenced joke using O(n) scan instead of O(n log n) sort
                 synchronized (this) {
-                    List<InsideJoke> sorted = new ArrayList<>(insideJokes);
-                    sorted.sort(Comparator.comparingInt(j -> j.referenceCount));
-                    insideJokes.clear();
-                    insideJokes.addAll(sorted.subList(1, sorted.size())); // Remove lowest
+                    if (insideJokes.size() > MAX_INSIDE_JOKES) {
+                        // Find and remove joke with minimum reference count
+                        int minIndex = 0;
+                        int minCount = Integer.MAX_VALUE;
+
+                        for (int i = 0; i < insideJokes.size(); i++) {
+                            int count = insideJokes.get(i).referenceCount;
+                            if (count < minCount) {
+                                minCount = count;
+                                minIndex = i;
+                            }
+                        }
+
+                        // Remove the least referenced joke
+                        insideJokes.remove(minIndex);
+                    }
                 }
             }
         }

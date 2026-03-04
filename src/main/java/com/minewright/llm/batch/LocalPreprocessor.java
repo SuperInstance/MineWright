@@ -118,9 +118,11 @@ public class LocalPreprocessor {
 
     /**
      * Builds a unified system prompt for batched prompts.
+     * PERFORMANCE OPTIMIZATION (Week 1 P0): Pre-allocated StringBuilder capacity to reduce allocations.
      */
     private String buildUnifiedSystemPrompt(Map<String, List<PromptBatcher.BatchedPrompt>> grouped) {
-        StringBuilder sb = new StringBuilder();
+        // PERFORMANCE: Pre-allocate capacity for ~500 chars to avoid multiple allocations
+        StringBuilder sb = new StringBuilder(500);
 
         sb.append("# Steve AI Foreman - Batched Request\n\n");
         sb.append("You are processing multiple related requests in a single batch. ");
@@ -153,9 +155,14 @@ public class LocalPreprocessor {
 
     /**
      * Builds a structured user prompt from grouped prompts.
+     * PERFORMANCE OPTIMIZATION (Week 1 P0): Pre-allocated StringBuilder capacity for batch processing.
      */
     private String buildStructuredUserPrompt(Map<String, List<PromptBatcher.BatchedPrompt>> grouped) {
-        StringBuilder sb = new StringBuilder();
+        // PERFORMANCE: Estimate total size to reduce allocations
+        // Approx 200 chars per request + headers
+        int totalRequests = grouped.values().stream().mapToInt(List::size).sum();
+        int estimatedSize = 200 + (totalRequests * 200);
+        StringBuilder sb = new StringBuilder(estimatedSize);
 
         sb.append("# Batched Requests\n\n");
 
@@ -209,9 +216,11 @@ public class LocalPreprocessor {
 
     /**
      * Builds a context-aware system prompt for single prompts.
+     * PERFORMANCE OPTIMIZATION (Week 1 P0): Pre-allocated StringBuilder capacity.
      */
     private String buildSystemPrompt(PromptBatcher.BatchedPrompt prompt) {
-        StringBuilder sb = new StringBuilder();
+        // PERFORMANCE: Pre-allocate capacity for ~300 chars
+        StringBuilder sb = new StringBuilder(300);
 
         sb.append("# Steve AI Foreman\n\n");
 
@@ -246,13 +255,16 @@ public class LocalPreprocessor {
 
     /**
      * Merges context from a prompt into a readable format.
+     * PERFORMANCE OPTIMIZATION (Week 1 P0): Pre-allocated StringBuilder capacity.
      */
     private String mergeContext(PromptBatcher.BatchedPrompt prompt) {
         if (prompt.context.isEmpty()) {
             return "";
         }
 
-        StringBuilder sb = new StringBuilder();
+        // PERFORMANCE: Estimate 100 chars per context entry
+        int estimatedSize = 50 + (prompt.context.size() * 100);
+        StringBuilder sb = new StringBuilder(estimatedSize);
         sb.append("Context:\n");
 
         for (Map.Entry<String, Object> entry : prompt.context.entrySet()) {

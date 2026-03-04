@@ -835,14 +835,15 @@ class AsyncOpenAIClientTest {
         @DisplayName("Client handles multiple rapid requests")
         void clientHandlesMultipleRapidRequests() {
             int requestCount = 10;
-            CompletableFuture<?>[] futures = new CompletableFuture[requestCount];
+            @SuppressWarnings("unchecked")
+            CompletableFuture<LLMResponse>[] futures = (CompletableFuture<LLMResponse>[]) new CompletableFuture<?>[requestCount];
 
             for (int i = 0; i < requestCount; i++) {
                 futures[i] = client.sendAsync("prompt " + i, Map.of());
             }
 
             // All futures should be created
-            for (CompletableFuture<?> future : futures) {
+            for (CompletableFuture<LLMResponse> future : futures) {
                 assertNotNull(future);
             }
         }

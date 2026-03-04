@@ -49,11 +49,11 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskStart(agentName, command);
         EvaluationMetrics.recordPlanningStart(agentName, System.currentTimeMillis());
         EvaluationMetrics.recordPlanningComplete(agentName, 1500, 3);
-        EvaluationMetrics.recordExecutionStart(agentName);
+        EvaluationMetrics.recordExecutionStart(agentName, System.currentTimeMillis());
         EvaluationMetrics.recordTaskComplete(agentName, true, 1.0, Map.of("blocks_mined", 50));
 
         // Verify metrics were recorded
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) summary.get("totalTasks") > 0, "Should record tasks");
         assertTrue((Integer) summary.get("successfulTasks") > 0, "Should record successful tasks");
     }
@@ -61,7 +61,9 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("LLM call metrics are tracked")
     void testLLMMetrics() {
-        // Record LLM calls
+        // Record LLM calls - need active task first
+        EvaluationMetrics.recordTaskStart("test-agent", "test command");
+
         EvaluationMetrics.recordLLMCall(
             "openai",
             "gpt-4",
@@ -82,7 +84,9 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
             false
         );
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        EvaluationMetrics.recordTaskComplete("test-agent", true, 1.0, Map.of());
+
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue((Integer) summary.get("totalLLMCalls") >= 2,
             "Should track LLM calls");
@@ -108,8 +112,9 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
 
         long latency = System.currentTimeMillis() - EvaluationMetrics.getTaskStart(agentName);
         EvaluationMetrics.recordPlanningComplete(agentName, latency, 1);
+        EvaluationMetrics.recordTaskComplete(agentName, true, 1.0, Map.of());
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) summary.get("totalTasks") > 0,
             "Should record task");
     }
@@ -122,7 +127,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskStart(agentName, "build house");
         EvaluationMetrics.recordPlanningStart(agentName, System.currentTimeMillis());
         EvaluationMetrics.recordPlanningComplete(agentName, 500, 5);
-        EvaluationMetrics.recordExecutionStart(agentName);
+        EvaluationMetrics.recordExecutionStart(agentName, System.currentTimeMillis());
 
         // Simulate execution
         try {
@@ -134,7 +139,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskComplete(agentName, true, 1.0,
             Map.of("structures_built", 1));
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) summary.get("totalTasks") > 0,
             "Should record execution");
     }
@@ -147,11 +152,11 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskStart(agentName, "impossible task");
         EvaluationMetrics.recordPlanningStart(agentName, System.currentTimeMillis());
         EvaluationMetrics.recordPlanningComplete(agentName, 300, 1);
-        EvaluationMetrics.recordExecutionStart(agentName);
+        EvaluationMetrics.recordExecutionStart(agentName, System.currentTimeMillis());
         EvaluationMetrics.recordTaskComplete(agentName, false, 0.0,
             Map.of("error", "Task impossible"));
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) summary.get("failedTasks") > 0,
             "Should track failed tasks");
 
@@ -166,7 +171,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskStart("TestAgent", "test");
         EvaluationMetrics.recordPlanningStart("TestAgent", System.currentTimeMillis());
         EvaluationMetrics.recordPlanningComplete("TestAgent", 100, 1);
-        EvaluationMetrics.recordExecutionStart("TestAgent");
+        EvaluationMetrics.recordExecutionStart("TestAgent", System.currentTimeMillis());
         EvaluationMetrics.recordTaskComplete("TestAgent", true, 1.0, Map.of());
 
         // Export to temp file
@@ -205,7 +210,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
                         EvaluationMetrics.recordTaskStart(agentName, "test command");
                         EvaluationMetrics.recordPlanningStart(agentName, System.currentTimeMillis());
                         EvaluationMetrics.recordPlanningComplete(agentName, 100, 1);
-                        EvaluationMetrics.recordExecutionStart(agentName);
+                        EvaluationMetrics.recordExecutionStart(agentName, System.currentTimeMillis());
                         EvaluationMetrics.recordTaskComplete(agentName,
                             j % 5 != 0, // Mix of success/failure
                             1.0,
@@ -232,7 +237,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         latch.await(30, TimeUnit.SECONDS);
         executor.shutdown();
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue((Integer) summary.get("totalTasks") >= numThreads * operationsPerThread,
             "Should record all tasks");
@@ -248,7 +253,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordLLMCall("provider2", "model2", 1500, 300, 0.02, 1800, false);
         EvaluationMetrics.recordLLMCall("provider3", "model3", 800, 150, 0.008, 950, false);
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue((Integer) summary.get("totalPromptTokens") > 0,
             "Should track prompt tokens");
@@ -265,7 +270,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordLLMCall("provider1", "model1", 1000, 200, 0.015, 1200, false);
         EvaluationMetrics.recordLLMCall("provider2", "model2", 2000, 400, 0.030, 2400, false);
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         double totalCost = (Double) summary.get("totalCostUSD");
         assertTrue(totalCost > 0.045, "Should accumulate costs");
@@ -279,7 +284,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordCacheHit("provider2", "model2", 1500);
         EvaluationMetrics.recordCacheHit("provider1", "model1", 1200);
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue((Integer) summary.get("cacheHits") >= 3,
             "Should track cache hits");
@@ -296,7 +301,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordSkillUsage("mineBlock", 15);
         EvaluationMetrics.recordSkillUsage("buildStructure", 3);
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue((Integer) summary.get("totalSkillExecutions") >= 4,
             "Should track skill executions");
@@ -314,17 +319,17 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskStart("Agent1", "test");
         EvaluationMetrics.recordPlanningStart("Agent1", System.currentTimeMillis());
         EvaluationMetrics.recordPlanningComplete("Agent1", 100, 1);
-        EvaluationMetrics.recordExecutionStart("Agent1");
+        EvaluationMetrics.recordExecutionStart("Agent1", System.currentTimeMillis());
         EvaluationMetrics.recordTaskComplete("Agent1", true, 1.0, Map.of());
 
-        Map<String, Object> beforeReset = EvaluationMetrics.getSummary();
+        Map<String, Object> beforeReset = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) beforeReset.get("totalTasks") > 0,
             "Should have tasks before reset");
 
         // Reset
         EvaluationMetrics.reset();
 
-        Map<String, Object> afterReset = EvaluationMetrics.getSummary();
+        Map<String, Object> afterReset = EvaluationMetrics.getSummaryAsMap();
         assertEquals(0, afterReset.get("totalTasks"),
             "Should have no tasks after reset");
     }
@@ -332,7 +337,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Benchmark metadata is tracked")
     void testBenchmarkMetadata() {
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue(summary.containsKey("benchmarkRunId"),
             "Should have benchmark run ID");
@@ -351,11 +356,11 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
             EvaluationMetrics.recordTaskStart(agentName, "test");
             EvaluationMetrics.recordPlanningStart(agentName, System.currentTimeMillis());
             EvaluationMetrics.recordPlanningComplete(agentName, 100 + i * 10, 1);
-            EvaluationMetrics.recordExecutionStart(agentName);
+            EvaluationMetrics.recordExecutionStart(agentName, System.currentTimeMillis());
             EvaluationMetrics.recordTaskComplete(agentName, true, 1.0, Map.of());
         }
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         assertTrue(summary.containsKey("p50Latency"),
             "Should calculate p50 latency");
@@ -386,7 +391,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskComplete(agent2, false, 0.0, Map.of("error", "failed"));
 
         // Get summary
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) summary.get("totalTasks") >= 2,
             "Should track both agents");
     }
@@ -414,7 +419,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordTaskStart("TestAgent", "test");
         EvaluationMetrics.recordPlanningStart("TestAgent", System.currentTimeMillis());
         EvaluationMetrics.recordPlanningComplete("TestAgent", 100, 1);
-        EvaluationMetrics.recordExecutionStart("TestAgent");
+        EvaluationMetrics.recordExecutionStart("TestAgent", System.currentTimeMillis());
         EvaluationMetrics.recordTaskComplete("TestAgent", true, 1.0, Map.of("result", "success"));
         EvaluationMetrics.recordLLMCall("provider", "model", 1000, 200, 0.01, 1200, false);
         EvaluationMetrics.recordCacheHit("provider", "model", 1000);
@@ -465,7 +470,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
         EvaluationMetrics.recordError("PATHFINDING_FAILED", "Could not find path");
         EvaluationMetrics.recordError("LLM_TIMEOUT", "Another timeout");
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
 
         @SuppressWarnings("unchecked")
         Map<String, Integer> errorCounts = (Map<String, Integer>) summary.get("errorCounts");
@@ -498,7 +503,7 @@ class ObservabilityIntegrationTest extends IntegrationTestBase {
 
         assertSuccess(result);
 
-        Map<String, Object> summary = EvaluationMetrics.getSummary();
+        Map<String, Object> summary = EvaluationMetrics.getSummaryAsMap();
         assertTrue((Integer) summary.get("totalTasks") > 0,
             "Should collect metrics during scenario");
     }

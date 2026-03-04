@@ -263,7 +263,7 @@ class WorkloadBalancingTest extends IntegrationTestBase {
 
         tracker.assignTask(agent, "task1");
         tracker.assignTask(agent, "task2");
-        tracker.completeTask(agent, "task1", true, 1000);
+        tracker.completeTask(agent, "task1", true);
 
         assertTrue(events.stream().anyMatch(e -> e.contains("TASK_ASSIGNED")),
             "Should receive task assigned event");
@@ -381,8 +381,8 @@ class WorkloadBalancingTest extends IntegrationTestBase {
         // Simulate activity
         tracker.assignTask(agent1, "task1");
         tracker.assignTask(agent1, "task2");
-        tracker.completeTask(agent1, "task1", true, 1000);
-        tracker.completeTask(agent1, "task2", false, 500);
+        tracker.completeTask(agent1, "task1", true);
+        tracker.completeTask(agent1, "task2", false);
 
         tracker.assignTask(agent2, "task1");
         tracker.assignTask(agent2, "task2");
@@ -437,11 +437,11 @@ class WorkloadBalancingTest extends IntegrationTestBase {
         tracker.assignTask(agent, "task4");
         tracker.assignTask(agent, "task5");
 
-        tracker.completeTask(agent, "task1", true, 1000);
-        tracker.completeTask(agent, "task2", true, 1000);
-        tracker.completeTask(agent, "task3", false, 500);
-        tracker.completeTask(agent, "task4", true, 1000);
-        tracker.completeTask(agent, "task5", false, 500);
+        tracker.completeTask(agent, "task1", true);
+        tracker.completeTask(agent, "task2", true);
+        tracker.completeTask(agent, "task3", false);
+        tracker.completeTask(agent, "task4", true);
+        tracker.completeTask(agent, "task5", false);
 
         WorkloadTracker.AgentWorkload workload = tracker.getWorkload(agent);
         assertEquals(3, workload.getTotalCompleted(), "Should have 3 completed");
@@ -460,13 +460,13 @@ class WorkloadBalancingTest extends IntegrationTestBase {
 
         // Complete tasks with known durations
         tracker.assignTask(agent, "task1");
-        tracker.completeTask(agent, "task1", true, 1000);
+        tracker.completeTask(agent, "task1", true);
 
         tracker.assignTask(agent, "task2");
-        tracker.completeTask(agent, "task2", true, 2000);
+        tracker.completeTask(agent, "task2", true);
 
         tracker.assignTask(agent, "task3");
-        tracker.completeTask(agent, "task3", true, 3000);
+        tracker.completeTask(agent, "task3", true);
 
         WorkloadTracker.AgentWorkload workload = tracker.getWorkload(agent);
         assertEquals(2000.0, workload.getAverageCompletionTime(), 0.001,

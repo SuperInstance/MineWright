@@ -70,6 +70,118 @@ public class EvaluationMetrics {
     }
 
     /**
+     * Record the start of a task.
+     *
+     * @param agentName Name of the agent performing the task
+     * @param command The command/task description
+     */
+    public static void recordTaskStart(String agentName, String command) {
+        TaskMetrics metrics = getOrCreateTaskMetrics(agentName);
+        metrics.command = command;
+        metrics.planningStartTime = System.currentTimeMillis();
+        metrics.phase = ExecutionPhase.PLANNING;
+
+        LOGGER.debug("[{}] Task started: {}", agentName, command);
+    }
+
+    /**
+     * Get the start time for a task.
+     *
+     * @param agentName Name of the agent
+     * @return Start timestamp or -1 if not found
+     */
+    public static long getTaskStart(String agentName) {
+        TaskMetrics metrics = getTaskMetrics(agentName);
+        return metrics != null ? metrics.planningStartTime : -1;
+    }
+
+    /**
+     * Record a cache hit.
+     *
+     * @param providerId LLM provider identifier
+     * @param model Model name
+     * @param tokensSaved Number of tokens saved by cache
+     */
+    public static void recordCacheHit(String providerId, String model, int tokensSaved) {
+        // Update all active tasks
+        for (TaskMetrics metrics : activeTasks.values()) {
+            metrics.cacheHits++;
+            metrics.tokensSavedByCache += tokensSaved;
+        }
+
+        LOGGER.debug("[Cache] {} ({}): {} tokens saved", providerId, model, tokensSaved);
+    }
+
+    /**
+     * Record skill usage.
+     *
+     * @param skillName Name of the skill used
+     * @param executionTime Time taken to execute in milliseconds
+     */
+    public static void recordSkillUsage(String skillName, long executionTime) {
+        // Update skill usage tracking across all active tasks
+        for (TaskMetrics metrics : activeTasks.values()) {
+            metrics.skillExecutions++;
+            metrics.skillUsage.merge(skillName, 1, Integer::sum);
+        }
+
+        LOGGER.debug("[Skill] {} executed in {}ms", skillName, executionTime);
+    }
+
+    /**
+     * Get summary statistics as a Map for programmatic access.
+     *
+     * @return Map containing summary statistics
+     */
+    public static Map<String, Object> getSummaryAsMap() {
+        Map<String, Object> summary = new ConcurrentHashMap<>();
+        synchronized (completedTasks) {
+            long totalTasks = completedTasks.size();
+            long successfulTasks = completedTasks.stream().filter(t -> t.success).count();
+            long failedTasks = totalTasks - successfulTasks;
+            double successRate = totalTasks == 0 ? 0 : (double) successfulTasks / totalTasks;
+
+            long totalLlmCalls = completedTasks.stream().mapToLong(t -> t.llmCalls).sum();
+            long totalPromptTokens = completedTasks.stream().mapToLong(t -> t.inputTokens).sum();
+            long totalCompletionTokens = completedTasks.stream().mapToLong(t -> t.outputTokens).sum();
+            long totalTokens = totalPromptTokens + totalCompletionTokens;
+            double totalCostUsd = totalCostCents.get() / 100.0;
+
+            long totalCacheHits = completedTasks.stream().mapToLong(t -> t.cacheHits).sum();
+            long totalTokensSaved = completedTasks.stream().mapToLong(t -> t.tokensSavedByCache != null ? t.tokensSavedByCache : 0).sum();
+
+            int totalSkillExecutions = completedTasks.stream().mapToInt(t -> t.skillExecutions != null ? t.skillExecutions : 0).sum();
+
+            // Aggregate top skills
+            Map<String, Integer> topSkills = new ConcurrentHashMap<>();
+            for (CompletedTaskMetrics task : completedTasks) {
+                if (task.skillUsage != null) {
+                    task.skillUsage.forEach((skill, count) ->
+                        topSkills.merge(skill, count, Integer::sum));
+                }
+            }
+
+            summary.put("totalTasks", (int) totalTasks);
+            summary.put("successfulTasks", (int) successfulTasks);
+            summary.put("failedTasks", (int) failedTasks);
+            summary.put("successRate", successRate);
+            summary.put("totalLLMCalls", (int) totalLlmCalls);
+            summary.put("totalPromptTokens", (int) totalPromptTokens);
+            summary.put("totalCompletionTokens", (int) totalCompletionTokens);
+            summary.put("totalTokens", (int) totalTokens);
+            summary.put("totalCostUSD", totalCostUsd);
+            summary.put("cacheHits", (int) totalCacheHits);
+            summary.put("tokensSavedByCache", totalTokensSaved);
+            summary.put("totalSkillExecutions", totalSkillExecutions);
+            summary.put("topSkills", topSkills);
+            summary.put("benchmarkRunId", benchmarkRunId);
+            summary.put("benchmarkVersion", benchmarkVersion);
+            summary.put("benchmarkStartTime", benchmarkStartTime);
+        }
+        return summary;
+    }
+
+    /**
      * Record the start of planning phase for a task.
      *
      * @param agentName Name of the agent performing the task
@@ -419,6 +531,9 @@ public class EvaluationMetrics {
         final List<String> errors = new ArrayList<>();
         ExecutionPhase phase = ExecutionPhase.PLANNING;
 
+        // Task info
+        String command;
+
         // Timing
         long planningStartTime;
         long planningLatencyMs;
@@ -448,7 +563,12 @@ public class EvaluationMetrics {
         int outputTokens;
         double llmCostUsd;
         int cacheHits;
+        int tokensSavedByCache;
         int[] latencyBuckets = new int[4]; // <1s, 1-3s, 3-10s, >10s
+
+        // Skill metrics
+        int skillExecutions;
+        Map<String, Integer> skillUsage = new ConcurrentHashMap<>();
 
         TaskMetrics(String agentName) {
             this.agentName = agentName;
@@ -474,6 +594,9 @@ public class EvaluationMetrics {
         public final int actionsStarted;
         public final int actionsCompleted;
         public final int actionsSuccessful;
+        public final Integer tokensSavedByCache;
+        public final Integer skillExecutions;
+        public final Map<String, Integer> skillUsage;
 
         CompletedTaskMetrics(TaskMetrics metrics) {
             this.agentName = metrics.agentName;
@@ -491,6 +614,9 @@ public class EvaluationMetrics {
             this.actionsStarted = metrics.actionsStarted;
             this.actionsCompleted = metrics.actionsCompleted;
             this.actionsSuccessful = metrics.actionsSuccessful;
+            this.tokensSavedByCache = metrics.tokensSavedByCache > 0 ? metrics.tokensSavedByCache : null;
+            this.skillExecutions = metrics.skillExecutions > 0 ? metrics.skillExecutions : null;
+            this.skillUsage = metrics.skillUsage.isEmpty() ? null : new ConcurrentHashMap<>(metrics.skillUsage);
         }
 
         public String toJson() {

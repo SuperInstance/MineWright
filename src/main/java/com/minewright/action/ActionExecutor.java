@@ -772,6 +772,18 @@ public class ActionExecutor {
         taskQueue.clear();
         currentGoal = null;
 
+        // MEMORY LEAK FIX: Cancel any pending async planning future to prevent
+        // memory leaks. If the future is not cancelled, it may hold references
+        // to the foreman entity and prevent garbage collection.
+        if (planningFuture != null && !planningFuture.isDone()) {
+            planningFuture.cancel(true);  // true = mayInterruptIfRunning
+            LOGGER.debug("Cancelled pending planning future for Foreman '{}'",
+                foreman.getEntityName());
+        }
+        planningFuture = null;
+        pendingCommand = null;
+        isPlanning.set(false);
+
         // Reset state machine
         stateMachine.reset();
     }

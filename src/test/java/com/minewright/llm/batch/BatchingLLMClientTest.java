@@ -801,7 +801,8 @@ class BatchingLLMClientTest {
 
         // Submit many prompts concurrently
         int promptCount = 20;
-        CompletableFuture<String>[] futures = new CompletableFuture[promptCount];
+        @SuppressWarnings("unchecked")
+        CompletableFuture<String>[] futures = (CompletableFuture<String>[]) new CompletableFuture<?>[promptCount];
 
         for (int i = 0; i < promptCount; i++) {
             final int index = i;

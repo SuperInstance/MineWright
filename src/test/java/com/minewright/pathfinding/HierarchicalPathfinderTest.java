@@ -801,7 +801,9 @@ class HierarchicalPathfinderTest {
         }
 
         // Wait for all operations to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        @SuppressWarnings("unchecked")
+        CompletableFuture<Object>[] futureArray = futures.toArray(new CompletableFuture[0]);
+        CompletableFuture.allOf(futureArray).join();
         executor.shutdown();
         executor.awaitTermination(10, TimeUnit.SECONDS);
 
