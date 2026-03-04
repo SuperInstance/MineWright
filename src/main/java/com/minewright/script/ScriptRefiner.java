@@ -222,7 +222,7 @@ public class ScriptRefiner {
 
             return refinedScript;
 
-        } catch (ScriptParser.ScriptParseException e) {
+        } catch (ScriptParseException e) {
             LOGGER.error("[ScriptRefiner] Failed to parse refined script: {}", e.getMessage());
             stats.recordFailure();
             throw new ScriptRefinementException(

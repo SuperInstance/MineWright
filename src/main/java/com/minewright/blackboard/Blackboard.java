@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -136,11 +137,11 @@ public class Blackboard {
 
     /**
      * Statistics about blackboard operations.
-     * Volatile for visibility across threads.
+     * Using AtomicLong for thread-safe increment operations.
      */
-    private volatile long totalPosts;
-    private volatile long totalQueries;
-    private volatile long totalEvictions;
+    private final AtomicLong totalPosts;
+    private final AtomicLong totalQueries;
+    private final AtomicLong totalEvictions;
 
     /**
      * Private constructor for singleton pattern.
@@ -161,9 +162,9 @@ public class Blackboard {
 
         this.globalSubscribers = new CopyOnWriteArrayList<>();
         this.lock = new ReentrantReadWriteLock();
-        this.totalPosts = 0;
-        this.totalQueries = 0;
-        this.totalEvictions = 0;
+        this.totalPosts = new AtomicLong(0);
+        this.totalQueries = new AtomicLong(0);
+        this.totalEvictions = new AtomicLong(0);
 
         LOGGER.info("Blackboard initialized with {} knowledge areas",
             KnowledgeArea.values().length);
@@ -210,7 +211,7 @@ public class Blackboard {
             Map<String, BlackboardEntry<?>> areaMap = areas.get(area);
             BlackboardEntry<?> existing = areaMap.put(entry.getKey(), entry);
 
-            totalPosts++;
+            totalPosts.incrementAndGet();
 
             LOGGER.debug("Posted entry to {}: {} (type: {}, confidence: {})",
                 area.getId(), entry.getKey(), entry.getType(), entry.getConfidence());
@@ -268,7 +269,7 @@ public class Blackboard {
 
         lock.readLock().lock();
         try {
-            totalQueries++;
+            totalQueries.incrementAndGet();
             Map<String, BlackboardEntry<?>> areaMap = areas.get(area);
             BlackboardEntry<?> entry = areaMap.get(key);
 
@@ -304,7 +305,7 @@ public class Blackboard {
 
         lock.readLock().lock();
         try {
-            totalQueries++;
+            totalQueries.incrementAndGet();
             Map<String, BlackboardEntry<?>> areaMap = areas.get(area);
             BlackboardEntry<?> entry = areaMap.get(key);
 
@@ -342,7 +343,7 @@ public class Blackboard {
 
         lock.readLock().lock();
         try {
-            totalQueries++;
+            totalQueries.incrementAndGet();
             Map<String, BlackboardEntry<?>> areaMap = areas.get(area);
 
             return areaMap.values().stream()
@@ -565,7 +566,7 @@ public class Blackboard {
                 }
             }
 
-            totalEvictions += evicted;
+            totalEvictions.addAndGet(evicted);
 
             if (evicted > 0) {
                 LOGGER.debug("Evicted {} stale entries from {} (maxAge: {}ms)",
@@ -650,7 +651,7 @@ public class Blackboard {
             "  Total Evictions: %d\n" +
             "  Current Entries: %d\n" +
             "  Area Breakdown:\n%s",
-            totalPosts, totalQueries, totalEvictions, getTotalEntryCount(),
+            totalPosts.get(), totalQueries.get(), totalEvictions.get(), getTotalEntryCount(),
             getAreaBreakdown()
         );
     }
@@ -765,8 +766,8 @@ public class Blackboard {
             clearArea(area);
         }
 
-        totalPosts = 0;
-        totalQueries = 0;
-        totalEvictions = 0;
+        totalPosts.set(0);
+        totalQueries.set(0);
+        totalEvictions.set(0);
     }
 }

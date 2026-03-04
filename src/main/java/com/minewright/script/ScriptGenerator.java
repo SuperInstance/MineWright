@@ -232,7 +232,7 @@ public class ScriptGenerator {
 
             return script;
 
-        } catch (ScriptParser.ScriptParseException e) {
+        } catch (ScriptParseException e) {
             LOGGER.error("[ScriptGenerator] Failed to parse generated script: {}", e.getMessage());
             stats.recordFailure();
             throw new ScriptGenerationException(

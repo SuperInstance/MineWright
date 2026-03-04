@@ -38,7 +38,8 @@ import java.util.concurrent.CompletableFuture;
 public class VoiceManager {
     private static final Logger LOGGER = TestLogger.getLogger(VoiceManager.class);
 
-    private static VoiceManager instance;
+    private static volatile VoiceManager instance;
+    private static final Object lock = new Object();
 
     private final VoiceSystem voiceSystem;
     private final VoiceConfig config;
@@ -52,11 +53,17 @@ public class VoiceManager {
     /**
      * Returns the singleton VoiceManager instance.
      *
+     * <p>Thread-safe lazy initialization using double-checked locking.</p>
+     *
      * @return VoiceManager instance
      */
     public static VoiceManager getInstance() {
         if (instance == null) {
-            instance = new VoiceManager();
+            synchronized (lock) {
+                if (instance == null) {
+                    instance = new VoiceManager();
+                }
+            }
         }
         return instance;
     }

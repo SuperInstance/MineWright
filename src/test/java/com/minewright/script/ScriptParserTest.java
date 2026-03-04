@@ -26,7 +26,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse simple action node")
-    void testParseSimpleAction() throws ScriptParser.ScriptParseException {
+    void testParseSimpleAction() throws ScriptParseException {
         String dsl = "mine";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -38,7 +38,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse action with parameters")
-    void testParseActionWithParameters() throws ScriptParser.ScriptParseException {
+    void testParseActionWithParameters() throws ScriptParseException {
         String dsl = "mine(block=oak_log, count=10)";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -50,7 +50,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse action with string parameter")
-    void testParseActionWithStringParameter() throws ScriptParser.ScriptParseException {
+    void testParseActionWithStringParameter() throws ScriptParseException {
         String dsl = "move(target=\"player_base\")";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -61,7 +61,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse sequence node with brace syntax")
-    void testParseSequenceWithBraces() throws ScriptParser.ScriptParseException {
+    void testParseSequenceWithBraces() throws ScriptParseException {
         String dsl = "sequence { mine, place }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -73,7 +73,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse selector node")
-    void testParseSelector() throws ScriptParser.ScriptParseException {
+    void testParseSelector() throws ScriptParseException {
         String dsl = "selector { mine, craft }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -83,7 +83,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse parallel node")
-    void testParseParallel() throws ScriptParser.ScriptParseException {
+    void testParseParallel() throws ScriptParseException {
         String dsl = "parallel { mine, build }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -93,7 +93,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse nested sequence")
-    void testParseNestedSequence() throws ScriptParser.ScriptParseException {
+    void testParseNestedSequence() throws ScriptParseException {
         String dsl = "sequence { sequence { mine, place }, build }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -107,7 +107,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse loop node")
-    void testParseLoop() throws ScriptParser.ScriptParseException {
+    void testParseLoop() throws ScriptParseException {
         String dsl = "repeat 5 { mine }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -118,7 +118,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse loop with parenthesis syntax")
-    void testParseLoopWithParenthesis() throws ScriptParser.ScriptParseException {
+    void testParseLoopWithParenthesis() throws ScriptParseException {
         String dsl = "repeat(10) { place }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -128,7 +128,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse if node with then branch")
-    void testParseIfThen() throws ScriptParser.ScriptParseException {
+    void testParseIfThen() throws ScriptParseException {
         String dsl = "if $has_wood { craft }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -139,7 +139,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse if node with then and else branches")
-    void testParseIfThenElse() throws ScriptParser.ScriptParseException {
+    void testParseIfThenElse() throws ScriptParseException {
         String dsl = "if $has_wood { craft } else { mine }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -150,7 +150,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse if with parenthesis condition")
-    void testParseIfWithParenthesis() throws ScriptParser.ScriptParseException {
+    void testParseIfWithParenthesis() throws ScriptParseException {
         String dsl = "if (inventory_count > 10) { store }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -160,7 +160,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse condition node")
-    void testParseCondition() throws ScriptParser.ScriptParseException {
+    void testParseCondition() throws ScriptParseException {
         String dsl = "condition $has_tools";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -170,7 +170,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse YAML-like format script")
-    void testParseYAMLFormat() throws ScriptParser.ScriptParseException {
+    void testParseYAMLFormat() throws ScriptParseException {
         String dsl = """
             metadata:
               id: test_script
@@ -196,7 +196,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse YAML with metadata and parameters")
-    void testParseYAMLWithMetadataAndParameters() throws ScriptParser.ScriptParseException {
+    void testParseYAMLWithMetadataAndParameters() throws ScriptParseException {
         String dsl = """
             metadata:
               id: gather_wood
@@ -228,7 +228,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse empty sequence")
-    void testParseEmptySequence() throws ScriptParser.ScriptParseException {
+    void testParseEmptySequence() throws ScriptParseException {
         String dsl = "sequence { }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -239,7 +239,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse boolean parameter values")
-    void testParseBooleanParameters() throws ScriptParser.ScriptParseException {
+    void testParseBooleanParameters() throws ScriptParseException {
         String dsl = "attack(aggressive=true, retreat=false)";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -249,7 +249,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse negative number parameter")
-    void testParseNegativeNumberParameter() throws ScriptParser.ScriptParseException {
+    void testParseNegativeNumberParameter() throws ScriptParseException {
         String dsl = "move(offset=-5)";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -261,7 +261,7 @@ class ScriptParserTest {
     void testErrorOnUnterminatedString() {
         String dsl = "move(target=\"unclosed string";
 
-        assertThrows(ScriptParser.ScriptParseException.class,
+        assertThrows(ScriptParseException.class,
             () -> ScriptParser.parseNode(dsl),
             "Should throw exception for unterminated string");
     }
@@ -271,7 +271,7 @@ class ScriptParserTest {
     void testErrorOnInvalidSyntax() {
         String dsl = "sequence { mine, }";
 
-        assertThrows(ScriptParser.ScriptParseException.class,
+        assertThrows(ScriptParseException.class,
             () -> ScriptParser.parseNode(dsl),
             "Should throw exception for trailing comma");
     }
@@ -281,14 +281,14 @@ class ScriptParserTest {
     void testErrorOnUnexpectedContent() {
         String dsl = "mine extra_content";
 
-        assertThrows(ScriptParser.ScriptParseException.class,
+        assertThrows(ScriptParseException.class,
             () -> ScriptParser.parseNode(dsl),
             "Should throw exception for unexpected content");
     }
 
     @Test
     @DisplayName("Parse script with default metadata when missing")
-    void testParseScriptWithDefaultMetadata() throws ScriptParser.ScriptParseException {
+    void testParseScriptWithDefaultMetadata() throws ScriptParseException {
         String dsl = "mine";
         Script script = ScriptParser.parse(dsl);
 
@@ -302,7 +302,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse complex nested structure")
-    void testParseComplexNestedStructure() throws ScriptParser.ScriptParseException {
+    void testParseComplexNestedStructure() throws ScriptParseException {
         String dsl = """
             sequence {
               repeat 3 {
@@ -332,7 +332,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse action node without parameters")
-    void testParseActionWithoutParameters() throws ScriptParser.ScriptParseException {
+    void testParseActionWithoutParameters() throws ScriptParseException {
         String dsl = "idle()";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -344,7 +344,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse quoted and unquoted string parameters")
-    void testParseQuotedAndUnquotedStrings() throws ScriptParser.ScriptParseException {
+    void testParseQuotedAndUnquotedStrings() throws ScriptParseException {
         String dsl = "move(target=base, player=\"Steve\")";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -354,7 +354,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse escape sequences in strings")
-    void testParseEscapeSequences() throws ScriptParser.ScriptParseException {
+    void testParseEscapeSequences() throws ScriptParseException {
         String dsl = "chat(message=\"Hello\\nWorld\")";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -365,7 +365,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse zero iterations loop")
-    void testParseZeroIterationsLoop() throws ScriptParser.ScriptParseException {
+    void testParseZeroIterationsLoop() throws ScriptParseException {
         String dsl = "repeat 0 { mine }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -375,7 +375,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse deeply nested nodes")
-    void testParseDeeplyNestedNodes() throws ScriptParser.ScriptParseException {
+    void testParseDeeplyNestedNodes() throws ScriptParseException {
         String dsl = "sequence { sequence { sequence { sequence { mine } } } }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -393,7 +393,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse selector with multiple actions")
-    void testParseSelectorWithMultipleActions() throws ScriptParser.ScriptParseException {
+    void testParseSelectorWithMultipleActions() throws ScriptParseException {
         String dsl = "selector { mine(block=stone), craft(item=cobblestone), gather }";
         ScriptNode node = ScriptParser.parseNode(dsl);
 
@@ -608,7 +608,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse script with requirements section")
-    void testParseScriptWithRequirements() throws ScriptParser.ScriptParseException {
+    void testParseScriptWithRequirements() throws ScriptParseException {
         String dsl = """
             metadata:
               id: test_script
@@ -633,7 +633,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse script with error handlers")
-    void testParseScriptWithErrorHandlers() throws ScriptParser.ScriptParseException {
+    void testParseScriptWithErrorHandlers() throws ScriptParseException {
         String dsl = """
             metadata:
               id: test_script
@@ -661,7 +661,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Script toDSL conversion")
-    void testScriptToDSL() throws ScriptParser.ScriptParseException {
+    void testScriptToDSL() throws ScriptParseException {
         String dsl = """
             metadata:
               id: test_script
@@ -691,7 +691,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse indented YAML-like script")
-    void testParseIndentedYAMLScript() throws ScriptParser.ScriptParseException {
+    void testParseIndentedYAMLScript() throws ScriptParseException {
         String dsl = """
             metadata:
               id: mining_script
@@ -718,7 +718,7 @@ class ScriptParserTest {
 
     @Test
     @DisplayName("Parse script with multiple parameters")
-    void testParseMultipleParameters() throws ScriptParser.ScriptParseException {
+    void testParseMultipleParameters() throws ScriptParseException {
         String dsl = """
             metadata:
               id: complex_script

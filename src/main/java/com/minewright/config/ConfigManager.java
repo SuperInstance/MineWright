@@ -33,7 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ConfigManager {
     private static final Logger LOGGER = TestLogger.getLogger(ConfigManager.class);
 
-    private static ConfigManager instance;
+    private static volatile ConfigManager instance;
+    private static final Object lock = new Object();
 
     private final List<ConfigChangeListener> listeners;
     private int lastKnownVersion;
@@ -48,11 +49,17 @@ public class ConfigManager {
     /**
      * Gets the singleton ConfigManager instance.
      *
+     * <p>Thread-safe lazy initialization using double-checked locking.</p>
+     *
      * @return ConfigManager instance
      */
     public static ConfigManager getInstance() {
         if (instance == null) {
-            instance = new ConfigManager();
+            synchronized (lock) {
+                if (instance == null) {
+                    instance = new ConfigManager();
+                }
+            }
         }
         return instance;
     }
