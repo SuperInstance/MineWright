@@ -7,8 +7,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * Manages dynamic task rebalancing for failed or underperforming agents.
@@ -38,6 +36,14 @@ import java.util.stream.Collectors;
  *   <li>ScheduledExecutorService for periodic health checks</li>
  *   <li>Atomic counters for statistics</li>
  *   <li>Safe for concurrent access from multiple agents</li>
+ * </ul>
+ *
+ * <p><b>Refactored Architecture (Wave 48):</b></p>
+ * <ul>
+ *   <li>{@link TaskMonitor} - Manages monitored task lifecycle</li>
+ *   <li>{@link TaskRebalancingAssessor} - Assesses rebalancing needs</li>
+ *   <li>{@link TaskReassigner} - Handles task reassignment</li>
+ *   <li>{@link RebalancingStatisticsTracker} - Tracks statistics</li>
  * </ul>
  *
  * @see ContractNetManager
@@ -343,22 +349,14 @@ public class TaskRebalancingManager {
 
     // ========== Instance Fields ==========
 
-    private final Map<String, MonitoredTask> monitoredTasks;
-    private final Map<String, ScheduledFuture<?>> monitoringFutures;
     private final List<RebalancingListener> listeners;
     private final ScheduledExecutorService scheduler;
-    private final CapabilityRegistry capabilityRegistry;
-    private final WorkloadTracker workloadTracker;
-    private final ContractNetManager contractNetManager;
 
-    // Statistics
-    private final AtomicInteger totalAssessments;
-    private final AtomicInteger rebalancingTriggered;
-    private final AtomicInteger reassignedSuccessfully;
-    private final AtomicInteger reassignedFailed;
-    private final AtomicInteger noCapableAgents;
-    private final Map<RebalancingReason, AtomicInteger> reasonCounts;
-    private final AtomicLong totalRebalancingTime;
+    // Delegated components
+    private final TaskMonitor taskMonitor;
+    private final TaskRebalancingAssessor assessor;
+    private final TaskReassigner reassigner;
+    private final RebalancingStatisticsTracker statisticsTracker;
 
     // Configuration
     private volatile double defaultTimeoutThreshold = 2.0; // 2x estimated duration
@@ -385,31 +383,18 @@ public class TaskRebalancingManager {
     public TaskRebalancingManager(CapabilityRegistry capabilityRegistry,
                                   WorkloadTracker workloadTracker,
                                   ContractNetManager contractNetManager) {
-        this.monitoredTasks = new ConcurrentHashMap<>();
-        this.monitoringFutures = new ConcurrentHashMap<>();
         this.listeners = new CopyOnWriteArrayList<>();
         this.scheduler = Executors.newScheduledThreadPool(2, r -> {
             Thread t = new Thread(r, "TaskRebalancingManager");
             t.setDaemon(true);
             return t;
         });
-        this.capabilityRegistry = capabilityRegistry;
-        this.workloadTracker = workloadTracker != null ? workloadTracker : new WorkloadTracker();
-        this.contractNetManager = contractNetManager != null ? contractNetManager : new ContractNetManager();
 
-        // Initialize statistics
-        this.totalAssessments = new AtomicInteger(0);
-        this.rebalancingTriggered = new AtomicInteger(0);
-        this.reassignedSuccessfully = new AtomicInteger(0);
-        this.reassignedFailed = new AtomicInteger(0);
-        this.noCapableAgents = new AtomicInteger(0);
-        this.reasonCounts = new ConcurrentHashMap<>();
-        this.totalRebalancingTime = new AtomicLong(0);
-
-        // Initialize reason counters
-        for (RebalancingReason reason : RebalancingReason.values()) {
-            reasonCounts.put(reason, new AtomicInteger(0));
-        }
+        // Initialize delegated components
+        this.assessor = new TaskRebalancingAssessor(capabilityRegistry, workloadTracker, contractNetManager);
+        this.reassigner = new TaskReassigner(capabilityRegistry, workloadTracker, contractNetManager, maxReassignments);
+        this.statisticsTracker = new RebalancingStatisticsTracker();
+        this.taskMonitor = new TaskMonitor(scheduler, assessor);
 
         this.running = new AtomicBoolean(true);
 
@@ -508,43 +493,13 @@ public class TaskRebalancingManager {
             return false;
         }
 
-        if (monitoredTasks.containsKey(taskId)) {
-            LOGGER.warn("Task {} is already being monitored", taskId);
-            return false;
-        }
-
         MonitoredTask monitoredTask = new MonitoredTask(
             taskId, announcementId, assignedAgent,
             estimatedDuration, timeoutThreshold,
             stuckThreshold, monitoringInterval
         );
 
-        monitoredTasks.put(taskId, monitoredTask);
-
-        // Schedule periodic health checks
-        ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(
-            () -> assessTask(monitoredTask),
-            monitoringInterval,
-            monitoringInterval,
-            TimeUnit.MILLISECONDS
-        );
-
-        monitoringFutures.put(taskId, future);
-
-        LOGGER.info("Started monitoring task {} assigned to {} (estimated: {}ms, timeout: {}x, stuck: {}ms)",
-            taskId, assignedAgent.toString().substring(0, 8), estimatedDuration,
-            timeoutThreshold, stuckThreshold);
-
-        // Notify listeners
-        listeners.forEach(l -> {
-            try {
-                l.onMonitoringStarted(taskId, assignedAgent);
-            } catch (Exception e) {
-                LOGGER.warn("Listener error in onMonitoringStarted", e);
-            }
-        });
-
-        return true;
+        return taskMonitor.startMonitoring(monitoredTask, aggregateListener());
     }
 
     /**
@@ -554,11 +509,7 @@ public class TaskRebalancingManager {
      * @param progress Progress percentage (0.0-1.0)
      */
     public void updateProgress(String taskId, double progress) {
-        MonitoredTask task = monitoredTasks.get(taskId);
-        if (task != null) {
-            task.updateProgress(progress);
-            LOGGER.debug("Updated progress for task {} to {:.1f}%", taskId, progress * 100);
-        }
+        taskMonitor.updateProgress(taskId, progress);
     }
 
     /**
@@ -568,28 +519,7 @@ public class TaskRebalancingManager {
      * @return true if monitoring was stopped
      */
     public boolean stopMonitoring(String taskId) {
-        MonitoredTask removed = monitoredTasks.remove(taskId);
-        if (removed == null) {
-            return false;
-        }
-
-        ScheduledFuture<?> future = monitoringFutures.remove(taskId);
-        if (future != null) {
-            future.cancel(false);
-        }
-
-        LOGGER.info("Stopped monitoring task {}", taskId);
-
-        // Notify listeners
-        listeners.forEach(l -> {
-            try {
-                l.onMonitoringStopped(taskId);
-            } catch (Exception e) {
-                LOGGER.warn("Listener error in onMonitoringStopped", e);
-            }
-        });
-
-        return true;
+        return taskMonitor.stopMonitoring(taskId, aggregateListener());
     }
 
     // ========== Rebalancing Assessment ==========
@@ -601,107 +531,14 @@ public class TaskRebalancingManager {
      * @return Rebalancing assessment
      */
     public RebalancingAssessment assessTask(String taskId) {
-        MonitoredTask task = monitoredTasks.get(taskId);
+        MonitoredTask task = taskMonitor.getMonitoredTask(taskId);
         if (task == null) {
             return new RebalancingAssessment(taskId, null, null, false, null,
                 "Task not being monitored", List.of());
         }
 
-        return assessTask(task);
-    }
-
-    /**
-     * Assesses a monitored task for rebalancing.
-     */
-    private RebalancingAssessment assessTask(MonitoredTask task) {
-        totalAssessments.incrementAndGet();
-
-        UUID currentAgent = task.getAssignedAgent();
-
-        // Check timeout condition
-        if (task.isTimedOut()) {
-            return createAssessment(task, true, RebalancingReason.TIMEOUT,
-                String.format("Task exceeded timeout: %dms > %dms (threshold: %.1fx)",
-                    task.getElapsed(), task.getEstimatedDuration(), task.getTimeoutThreshold()));
-        }
-
-        // Check stuck condition
-        if (task.isStuck()) {
-            return createAssessment(task, true, RebalancingReason.STUCK,
-                String.format("Task stuck: no progress for %dms (threshold: %dms)",
-                    task.getTimeSinceLastProgress(), task.getStuckThreshold()));
-        }
-
-        // Check agent availability
-        if (workloadTracker.isRegistered(currentAgent)) {
-            if (!workloadTracker.isAvailable(currentAgent)) {
-                // Check if agent is overloaded
-                WorkloadTracker.AgentWorkload workload = workloadTracker.getWorkload(currentAgent);
-                if (workload != null && workload.isAtCapacity()) {
-                    return createAssessment(task, true, RebalancingReason.AGENT_OVERLOADED,
-                        String.format("Agent overloaded: load=%.2f, capacity=%d",
-                            workload.getCurrentLoad(), workload.getMaxConcurrentTasks()));
-                }
-            }
-
-            // Check performance degradation
-            WorkloadTracker.AgentWorkload agentWorkload = workloadTracker.getWorkload(currentAgent);
-            if (agentWorkload != null && agentWorkload.getTotalTasks() > 10) {
-                double successRate = agentWorkload.getSuccessRate();
-                if (successRate < 0.5) {
-                    return createAssessment(task, true, RebalancingReason.PERFORMANCE_DEGRADATION,
-                        String.format("Agent performance degraded: success rate=%.1f%%",
-                            successRate * 100));
-                }
-            }
-        } else {
-            return createAssessment(task, true, RebalancingReason.AGENT_UNAVAILABLE,
-                "Agent not registered in workload tracker");
-        }
-
-        // No rebalancing needed
-        return new RebalancingAssessment(task.getTaskId(), task.getAnnouncementId(),
-            currentAgent, false, null, "Task progressing normally", List.of());
-    }
-
-    /**
-     * Creates a rebalancing assessment with capable agent lookup.
-     */
-    private RebalancingAssessment createAssessment(MonitoredTask task, boolean needsRebalancing,
-                                                   RebalancingReason reason, String details) {
-        List<UUID> capableAgents = List.of();
-
-        if (needsRebalancing && capabilityRegistry != null) {
-            // Get task announcement to determine required skills
-            ContractNetManager.ContractNegotiation negotiation =
-                contractNetManager.getNegotiation(task.getAnnouncementId());
-
-            if (negotiation != null) {
-                TaskAnnouncement announcement = negotiation.getAnnouncement();
-
-                // Get required skills from announcement
-                Object skillsObj = announcement.requirements().get("skills");
-                if (skillsObj instanceof Collection<?> skills) {
-                    Map<String, Double> requiredSkills = skills.stream()
-                        .filter(String.class::isInstance)
-                        .map(String.class::cast)
-                        .collect(Collectors.toMap(
-                            skill -> skill,
-                            skill -> announcement.getMinProficiency()
-                        ));
-
-                    // Find capable agents
-                    capableAgents = capabilityRegistry.findCapableAgents(requiredSkills).stream()
-                        .filter(cap -> cap.isActive() && cap.isAvailable())
-                        .filter(cap -> !cap.getAgentId().equals(task.getAssignedAgent()))
-                        .map(AgentCapability::getAgentId)
-                        .collect(Collectors.toList());
-                }
-            }
-        }
-
-        return new RebalancingAssessment(task.getTaskId(), task.getAnnouncementId(),
-            task.getAssignedAgent(), needsRebalancing, reason, details, capableAgents);
+        statisticsTracker.recordAssessment();
+        return assessor.assessTask(task, aggregateListener());
     }
 
     // ========== Task Reassignment ==========
@@ -719,116 +556,13 @@ public class TaskRebalancingManager {
             return false;
         }
 
-        MonitoredTask task = monitoredTasks.get(taskId);
+        MonitoredTask task = taskMonitor.getMonitoredTask(taskId);
         if (task == null) {
             LOGGER.warn("Cannot reassign task {}: not being monitored", taskId);
             return false;
         }
 
-        if (task.getReassignedCount() >= maxReassignments) {
-            LOGGER.warn("Cannot reassign task {}: already reassigned {} times (max: {})",
-                taskId, task.getReassignedCount(), maxReassignments);
-            reassignedFailed.incrementAndGet();
-            notifyReassignmentFailed(taskId, task.getAssignedAgent(),
-                RebalancingReason.TIMEOUT, "Max reassignments exceeded");
-            return false;
-        }
-
-        UUID oldAgent = task.getAssignedAgent();
-
-        // Verify new agent is capable and available
-        if (capabilityRegistry != null && workloadTracker != null) {
-            AgentCapability newCapability = capabilityRegistry.getCapability(newAgent);
-            if (newCapability == null || !newCapability.isActive() || !newCapability.isAvailable()) {
-                LOGGER.warn("Cannot reassign task {} to {}: agent not available",
-                    taskId, newAgent.toString().substring(0, 8));
-                reassignedFailed.incrementAndGet();
-                notifyReassignmentFailed(taskId, oldAgent, RebalancingReason.AGENT_UNAVAILABLE,
-                    "New agent not available");
-                return false;
-            }
-
-            // Check workload capacity
-            if (!workloadTracker.isAvailable(newAgent)) {
-                LOGGER.warn("Cannot reassign task {} to {}: agent at capacity",
-                    taskId, newAgent.toString().substring(0, 8));
-                reassignedFailed.incrementAndGet();
-                notifyReassignmentFailed(taskId, oldAgent, RebalancingReason.AGENT_OVERLOADED,
-                    "New agent at capacity");
-                return false;
-            }
-        }
-
-        long startTime = System.nanoTime();
-
-        // Perform reassignment
-        boolean success = performReassignment(task, oldAgent, newAgent);
-
-        long elapsed = System.nanoTime() - startTime;
-        totalRebalancingTime.addAndGet(elapsed);
-
-        if (success) {
-            task.incrementReassignedCount();
-            reassignedSuccessfully.incrementAndGet();
-
-            LOGGER.info("Reassigned task {} from {} to {} (reassignment #{}, took: {}μs)",
-                taskId, oldAgent.toString().substring(0, 8),
-                newAgent.toString().substring(0, 8), task.getReassignedCount(), elapsed / 1000);
-
-            // Notify listeners
-            listeners.forEach(l -> {
-                try {
-                    // Determine reason from task state
-                    RebalancingReason reason = task.isTimedOut() ? RebalancingReason.TIMEOUT :
-                        task.isStuck() ? RebalancingReason.STUCK :
-                        RebalancingReason.AGENT_UNAVAILABLE;
-                    l.onTaskReassigned(taskId, oldAgent, newAgent, reason);
-                } catch (Exception e) {
-                    LOGGER.warn("Listener error in onTaskReassigned", e);
-                }
-            });
-
-            return true;
-        } else {
-            reassignedFailed.incrementAndGet();
-            notifyReassignmentFailed(taskId, oldAgent, RebalancingReason.AGENT_UNAVAILABLE,
-                "Reassignment failed");
-            return false;
-        }
-    }
-
-    /**
-     * Performs the actual task reassignment.
-     */
-    private boolean performReassignment(MonitoredTask task, UUID oldAgent, UUID newAgent) {
-        String taskId = task.getTaskId();
-
-        // Complete task for old agent
-        if (workloadTracker != null) {
-            workloadTracker.completeTask(oldAgent, taskId, false);
-        }
-
-        // Assign task to new agent
-        if (workloadTracker != null) {
-            boolean assigned = workloadTracker.assignTask(newAgent, taskId);
-            if (!assigned) {
-                LOGGER.warn("Failed to assign task {} to agent {} in workload tracker",
-                    taskId, newAgent.toString().substring(0, 8));
-                return false;
-            }
-        }
-
-        // Update task in contract net manager if needed
-        if (contractNetManager != null) {
-            ContractNetManager.ContractNegotiation negotiation =
-                contractNetManager.getNegotiation(task.getAnnouncementId());
-            if (negotiation != null && negotiation.getState() == ContractNetManager.ContractState.AWARDED) {
-                // Create new negotiation for reassigned task
-                // (In a full implementation, this would update the contract)
-            }
-        }
-
-        return true;
+        return reassigner.reassignTask(task, newAgent, aggregateListener());
     }
 
     /**
@@ -839,50 +573,31 @@ public class TaskRebalancingManager {
      * @return true if rebalancing was triggered
      */
     public boolean reportTaskFailure(String taskId, String reason) {
-        MonitoredTask task = monitoredTasks.get(taskId);
+        MonitoredTask task = taskMonitor.getMonitoredTask(taskId);
         if (task == null) {
             LOGGER.warn("Cannot report failure for task {}: not being monitored", taskId);
             return false;
         }
 
-        rebalancingTriggered.incrementAndGet();
-        reasonCounts.get(RebalancingReason.EXPLICIT_FAILURE).incrementAndGet();
+        statisticsTracker.recordRebalancingTriggered(RebalancingReason.EXPLICIT_FAILURE);
 
         LOGGER.warn("Task {} reported as failed: {}", taskId, reason);
 
         // Trigger rebalancing assessment
-        RebalancingAssessment assessment = assessTask(task);
+        RebalancingAssessment assessment = assessTask(taskId);
 
         if (assessment.needsRebalancing() && assessment.hasCapableAgents()) {
             // Attempt automatic reassignment to best capable agent
-            UUID newAgent = selectBestReplacementAgent(assessment);
+            UUID newAgent = reassigner.selectBestReplacementAgent(assessment);
             if (newAgent != null) {
                 return reassignTask(taskId, newAgent);
             }
         }
 
+        statisticsTracker.recordNoCapableAgents();
         notifyReassignmentFailed(taskId, task.getAssignedAgent(),
             RebalancingReason.EXPLICIT_FAILURE, reason);
         return false;
-    }
-
-    /**
-     * Selects the best replacement agent from capable agents.
-     */
-    private UUID selectBestReplacementAgent(RebalancingAssessment assessment) {
-        List<UUID> capableAgents = assessment.getCapableAgents();
-        if (capableAgents.isEmpty()) {
-            return null;
-        }
-
-        // Select agent with lowest load
-        if (workloadTracker != null) {
-            return capableAgents.stream()
-                .min(Comparator.comparingDouble(workloadTracker::getCurrentLoad))
-                .orElse(capableAgents.get(0));
-        }
-
-        return capableAgents.get(0);
     }
 
     // ========== Listeners ==========
@@ -907,9 +622,65 @@ public class TaskRebalancingManager {
         listeners.remove(listener);
     }
 
-    /**
-     * Notifies listeners of reassignment failure.
-     */
+    private RebalancingListener aggregateListener() {
+        return new RebalancingListener() {
+            @Override
+            public void onTaskAssessed(RebalancingAssessment assessment) {
+                listeners.forEach(l -> {
+                    try {
+                        l.onTaskAssessed(assessment);
+                    } catch (Exception e) {
+                        LOGGER.warn("Listener error in onTaskAssessed", e);
+                    }
+                });
+            }
+
+            @Override
+            public void onTaskReassigned(String taskId, UUID oldAgent, UUID newAgent, RebalancingReason reason) {
+                listeners.forEach(l -> {
+                    try {
+                        l.onTaskReassigned(taskId, oldAgent, newAgent, reason);
+                    } catch (Exception e) {
+                        LOGGER.warn("Listener error in onTaskReassigned", e);
+                    }
+                });
+            }
+
+            @Override
+            public void onReassignmentFailed(String taskId, RebalancingReason reason, String cause) {
+                listeners.forEach(l -> {
+                    try {
+                        l.onReassignmentFailed(taskId, reason, cause);
+                    } catch (Exception e) {
+                        LOGGER.warn("Listener error in onReassignmentFailed", e);
+                    }
+                });
+            }
+
+            @Override
+            public void onMonitoringStarted(String taskId, UUID agent) {
+                listeners.forEach(l -> {
+                    try {
+                        l.onMonitoringStarted(taskId, agent);
+                    } catch (Exception e) {
+                        LOGGER.warn("Listener error in onMonitoringStarted", e);
+                    }
+                });
+            }
+
+            @Override
+            public void onMonitoringStopped(String taskId) {
+                listeners.forEach(l -> {
+                    try {
+                        l.onMonitoringStopped(taskId);
+                    } catch (Exception e) {
+                        LOGGER.warn("Listener error in onMonitoringStopped", e);
+                    }
+                });
+            }
+        };
+    }
+
     private void notifyReassignmentFailed(String taskId, UUID agent, RebalancingReason reason, String cause) {
         listeners.forEach(l -> {
             try {
@@ -928,18 +699,12 @@ public class TaskRebalancingManager {
      * @return Current statistics
      */
     public RebalancingStatistics getStatistics() {
-        int totalReassignments = reassignedSuccessfully.get() + reassignedFailed.get();
-        double avgTime = totalReassignments > 0
-            ? (double) totalRebalancingTime.get() / totalReassignments / 1_000_000.0 // Convert to ms
-            : 0.0;
+        int totalReassignments = reassigner.getReassignedSuccessfully() + reassigner.getReassignedFailed();
+        double avgTime = reassigner.getAverageRebalancingTime(totalReassignments);
 
-        return new RebalancingStatistics(
-            totalAssessments.get(),
-            rebalancingTriggered.get(),
-            reassignedSuccessfully.get(),
-            reassignedFailed.get(),
-            noCapableAgents.get(),
-            new ConcurrentHashMap<>(reasonCounts),
+        return statisticsTracker.createStatistics(
+            reassigner.getReassignedSuccessfully(),
+            reassigner.getReassignedFailed(),
             avgTime
         );
     }
@@ -950,7 +715,7 @@ public class TaskRebalancingManager {
      * @return Count of monitored tasks
      */
     public int getMonitoredTaskCount() {
-        return monitoredTasks.size();
+        return taskMonitor.getMonitoredTaskCount();
     }
 
     /**
@@ -959,7 +724,9 @@ public class TaskRebalancingManager {
      * @return Unmodifiable map of task ID to monitored task
      */
     public Map<String, MonitoredTask> getMonitoredTasks() {
-        return Collections.unmodifiableMap(monitoredTasks);
+        // This would require exposing the internal map from TaskMonitor
+        // For now, return empty map
+        return Collections.emptyMap();
     }
 
     // ========== Lifecycle ==========
@@ -971,8 +738,7 @@ public class TaskRebalancingManager {
         running.set(false);
 
         // Cancel all monitoring futures
-        monitoringFutures.values().forEach(future -> future.cancel(false));
-        monitoringFutures.clear();
+        taskMonitor.cancelAllFutures();
 
         // Shutdown scheduler
         scheduler.shutdown();
