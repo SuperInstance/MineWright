@@ -8,7 +8,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Key Concept**: "One Abstraction Away" - LLMs plan and coordinate (Brain Layer), while traditional game AI executes (Script/Physical Layer). This enables 60 FPS execution without blocking on LLM calls.
 
-**Recent Updates (2026-03-04 - Waves 42-46):**
+**Recent Updates (2026-03-04 - Waves 42-48):**
+- ✅ **Wave 48: Large Class Refactoring** - Split 2 major god classes into focused components
+  - ProactiveDialogueManager: 1,061 → 377 lines (64% reduction)
+    - DialogueTriggerChecker (250 lines) - Trigger detection logic
+    - DialogueCommentGenerator (350 lines) - Content generation with LLM
+    - DialogueSpeechPatternManager (150 lines) - Speech pattern management
+    - DialogueAnalytics (165 lines) - Statistics and tracking
+  - TaskRebalancingManager: 999 → 764 lines (23% reduction)
+    - TaskMonitor (130 lines) - Task lifecycle management
+    - TaskRebalancingAssessor (120 lines) - Rebalancing condition assessment
+    - TaskReassigner (200 lines) - Task reassignment execution
+    - RebalancingStatisticsTracker (105 lines) - Statistics tracking
+  - Added 6 new test files (DialogueAnalyticsTest, DialogueCooldownManagerTest, BenchmarkScenariosTest, MentorshipManagerTest, BlendResultTest, PersonalityTraitsTest)
+- ✅ **Wave 47: SpotBugs Fixes** - Fixed HIGH/MEDIUM priority issues
 - ✅ **Wave 46: GUI & Entity Refactoring** - Split god classes into focused components
   - ForemanOfficeGUI → 5 GUI classes (GUIRenderer, InputHandler, MessagePanel, QuickButtonsPanel, VoiceIntegrationPanel)
   - ForemanEntity → 4 entity coordinator classes (ActionCoordinator, CommunicationHandler, CrewManager, EntityState)
@@ -24,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Blackboard counters: Changed volatile long to AtomicLong (3 fixes)
   - ConfigManager: Added double-checked locking for singleton
   - VoiceManager: Added double-checked locking for singleton
-- ✅ **Test Coverage**: ~50% (127 test files, 40,000+ lines)
+- ✅ **Test Coverage**: ~58% (143 test files, 48,000+ lines)
 
 ## Build Commands
 
@@ -91,7 +104,8 @@ Update: Every 30-60 seconds             Update: Every tick (20 TPS)         Upda
 | `llm/` | LLM integration with async/batch/cache/cascade | PromptBuilder, ResponseParser, AsyncLLMClient |
 | `llm/cascade/` | Tier-based model selection for cost optimization | CascadeRouter, TaskComplexity, LLMTier |
 | `execution/` | State machine with interceptors and event bus | AgentStateMachine, InterceptorChain |
-| `coordination/` | Contract Net Protocol for multi-agent bidding | TaskBid, TaskAnnouncement, AgentRole |
+| `coordination/` | Contract Net Protocol for multi-agent bidding | TaskBid, TaskAnnouncement, AgentRole, ContractNetManager, ContractNetProtocol, MultiAgentCoordinator, WorkloadTracker, TaskProgress, TaskMonitor, TaskRebalancingManager, TaskRebalancingAssessor, TaskReassigner, RebalancingStatisticsTracker, ConflictResolver, CollaborativeBuildCoordinator, AwardSelector, BidCollector, CapabilityRegistry, AgentCapability |
+| `dialogue/` | Proactive dialogue system for AI agents | ProactiveDialogueManager, DialogueTriggerChecker, DialogueCommentGenerator, DialogueSpeechPatternManager, DialogueAnalytics, DialogueCooldownManager, DialogueGenerator, SpeechPatternTracker, DialogueTriggerDetector, DialogueConstants |
 | `pathfinding/` | A* with hierarchical planning and path smoothing | HierarchicalPathfinder, MovementValidator |
 | `memory/` | Persistence, semantic vector search, and personality | MemoryStore, ConversationManager, InMemoryVectorStore, ForemanMemory, WorldKnowledge, PersonalitySystem |
 | `skill/` | Voyager-style skill library with composition | Skill, SkillComposer, ComposedSkill, CompositionStep |
@@ -252,12 +266,12 @@ apiKey = "${OPENAI_API_KEY}"  # Resolved from environment
 
 ### Code Quality
 
-- Test coverage: ~50% (127 test files, 40,000+ lines of test code)
+- Test coverage: ~58% (143 test files, 48,000+ lines of test code)
 - Test coverage target: 60% (per JaCoCo configuration)
 - Checkstyle and SpotBugs are configured but warnings are currently ignored
 - Never use empty catch blocks - always log exceptions
 - Use `TestLogger` instead of direct logging in test-facing code
-- Recent refactoring (Waves 42-46) eliminated god classes and improved modularity
+- Recent refactoring (Waves 42-48) eliminated 9 god classes and improved modularity
 
 ### Dependencies
 
@@ -315,6 +329,32 @@ Tests are located in `src/test/java/com/minewright/`.
 - The `InputSanitizer`, `StructureTemplateLoader` fixes show the proper pattern
 
 ## Recent Refactoring Achievements
+
+### Wave 48: Large Class Refactoring (2026-03-04)
+
+**ProactiveDialogueManager Refactoring:**
+- Split `ProactiveDialogueManager` (1,061 lines) into 5 focused classes
+  - `DialogueTriggerChecker` (250 lines) - Trigger detection logic (time, weather, biome, proximity, danger)
+  - `DialogueCommentGenerator` (350 lines) - Content generation with LLM prompts and fallback comments
+  - `DialogueSpeechPatternManager` (150 lines) - Speech pattern management (verbal tics, phrase usage tracking)
+  - `DialogueAnalytics` (165 lines) - Statistics and tracking (dialogue history, trigger/skip counts)
+  - `ProactiveDialogueManager` (377 lines) - Orchestrates components, maintains public API
+- **Result**: 64% reduction in main class size (1,061 → 377 lines)
+
+**TaskRebalancingManager Refactoring:**
+- Split `TaskRebalancingManager` (999 lines) into 5 focused classes
+  - `TaskMonitor` (130 lines) - Task lifecycle management and health check scheduling
+  - `TaskRebalancingAssessor` (120 lines) - Rebalancing condition assessment (timeout, stuck, failure, performance)
+  - `TaskReassigner` (200 lines) - Task reassignment execution with validation
+  - `RebalancingStatisticsTracker` (105 lines) - Statistics tracking (assessments, triggers, success rates)
+  - `TaskRebalancingManager` (764 lines) - Orchestrates components, maintains public API
+- **Result**: 23% reduction in main class size (999 → 764 lines)
+
+**Key Patterns Applied:**
+- Delegation Pattern - Main class delegates to specialized components
+- Single Responsibility Principle - Each component has one clear purpose
+- API Compatibility - No breaking changes to existing code
+- Constructor Injection - Components injected through constructors
 
 ### Wave 46: GUI & Entity Refactoring (2026-03-04)
 
@@ -401,6 +441,7 @@ public static MyClass getInstance() {
 - **Action API:** `docs/ACTION_API.md`
 - **Research Documents:** `docs/research/`
 - **Audit Reports:** `docs/audits/`
+  - Wave 48: `WAVE_48_REFACTORING_COMPLETE.md`
   - Wave 46: `FOREMAN_ENTITY_REFACTOR_WAVE46.md`, `FOREMAN_OFFICE_GUI_REFACTOR_WAVE46.md`
   - Wave 42: `SCRIPT_PARSER_REFACTOR.md`, `SPOTBUGS_CRITICAL_FIXES_COMPLETE.md`
 - **Configuration:** `config/minewright-common.toml`
