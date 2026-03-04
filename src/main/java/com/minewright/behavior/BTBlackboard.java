@@ -98,7 +98,8 @@ import java.util.function.Supplier;
  * @see ForemanEntity
  * @since 1.0.0
  */
-public class BTBlackboard {
+// SPOTBUGS FIX: Made final to prevent CT_CONSTRUCTOR_THROW warning (finalizer attack prevention)
+public final class BTBlackboard {
     private static final Logger LOGGER = TestLogger.getLogger(BTBlackboard.class);
 
     /**

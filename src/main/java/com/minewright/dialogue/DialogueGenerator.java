@@ -9,6 +9,7 @@ import com.minewright.llm.batch.BatchingLLMClient;
 import com.minewright.llm.batch.PromptBatcher;
 import com.minewright.memory.CompanionMemory;
 import com.minewright.memory.ConversationManager;
+import com.minewright.memory.PersonalitySystem;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -291,7 +292,7 @@ public class DialogueGenerator {
             return comment;
         }
 
-        CompanionMemory.PersonalityProfile personality = memory.getPersonality();
+        PersonalitySystem.PersonalityProfile personality = memory.getPersonality();
 
         // Add verbal tics based on personality
         String verbalTic = getVerbalTic(personality, triggerType);
@@ -319,7 +320,7 @@ public class DialogueGenerator {
     /**
      * Gets a verbal tic based on personality traits.
      */
-    private String getVerbalTic(CompanionMemory.PersonalityProfile personality, String triggerType) {
+    private String getVerbalTic(PersonalitySystem.PersonalityProfile personality, String triggerType) {
         // Select verbal tic based on personality and context
         if (personality.getHumor() > 60 && random.nextFloat() < 0.25) {
             String[] humorousTics = {
@@ -385,7 +386,7 @@ public class DialogueGenerator {
         }
 
         // Add personality context
-        CompanionMemory.PersonalityProfile personality = memory.getPersonality();
+        PersonalitySystem.PersonalityProfile personality = memory.getPersonality();
         prompt.append("\nPERSONALITY:\n");
         int extraversion = personality.getExtraversion();
         prompt.append("- Extraversion: ").append(extraversion).append("% (").append(extraversion > 60 ? "outgoing" : "reserved").append(")\n");

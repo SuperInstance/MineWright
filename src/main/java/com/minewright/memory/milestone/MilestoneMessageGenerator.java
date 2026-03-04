@@ -2,6 +2,7 @@ package com.minewright.memory.milestone;
 
 import com.minewright.memory.CompanionMemory;
 import com.minewright.memory.MilestoneTracker;
+import com.minewright.memory.PersonalitySystem;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -21,7 +22,7 @@ public class MilestoneMessageGenerator {
     public String generateMilestoneMessage(MilestoneTracker.Milestone milestone, CompanionMemory memory) {
         int rapport = memory.getRapportLevel();
         String playerName = memory.getPlayerName() != null ? memory.getPlayerName() : "friend";
-        CompanionMemory.PersonalityProfile personality = memory.getPersonality();
+        PersonalitySystem.PersonalityProfile personality = memory.getPersonality();
 
         StringBuilder prompt = new StringBuilder();
 
@@ -119,7 +120,7 @@ public class MilestoneMessageGenerator {
      * Gets milestone-specific celebration guidance.
      */
     private String getMilestoneGuidance(MilestoneTracker.Milestone milestone, int rapport,
-                                       CompanionMemory.PersonalityProfile personality) {
+                                       PersonalitySystem.PersonalityProfile personality) {
         StringBuilder guidance = new StringBuilder();
         guidance.append("CELEBRATION APPROACH:\n");
 
@@ -166,7 +167,7 @@ public class MilestoneMessageGenerator {
     /**
      * Gets rapport-specific emotional guidance.
      */
-    private String getRapportGuidance(int rapport, CompanionMemory.PersonalityProfile personality) {
+    private String getRapportGuidance(int rapport, PersonalitySystem.PersonalityProfile personality) {
         StringBuilder guidance = new StringBuilder();
         guidance.append("EMOTIONAL TONE:\n");
 

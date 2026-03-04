@@ -8,6 +8,7 @@ import com.minewright.MineWrightMod;
 import com.minewright.entity.ForemanEntity;
 import com.minewright.entity.CrewManager;
 import com.minewright.memory.CompanionMemory;
+import com.minewright.memory.PersonalitySystem;
 import com.minewright.orchestration.AgentRole;
 import com.minewright.orchestration.OrchestratorService;
 import com.minewright.voice.VoiceManager;
@@ -544,7 +545,7 @@ public class ForemanCommands {
     /**
      * Gets a personality archetype description based on traits.
      */
-    private static String getPersonalityArchetype(CompanionMemory.PersonalityProfile personality) {
+    private static String getPersonalityArchetype(PersonalitySystem.PersonalityProfile personality) {
         StringBuilder archetype = new StringBuilder();
 
         // Primary trait

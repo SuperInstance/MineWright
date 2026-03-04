@@ -1,6 +1,7 @@
 package com.minewright.personality;
 
 import com.minewright.memory.CompanionMemory;
+import com.minewright.memory.PersonalitySystem;
 import java.util.*;
 
 /**
@@ -25,7 +26,7 @@ import java.util.*;
  *
  * @since 1.4.0
  * @see PersonalityTraits
- * @see CompanionMemory.PersonalityProfile
+ * @see PersonalitySystem.PersonalityProfile
  */
 public class ForemanArchetypeConfig {
 
@@ -391,7 +392,7 @@ public class ForemanArchetypeConfig {
          * Applies this archetype's configuration to a personality profile.
          * ENCAPSULATION FIX: Now uses setter methods for validation.
          */
-        public void applyTo(CompanionMemory.PersonalityProfile profile) {
+        public void applyTo(PersonalitySystem.PersonalityProfile profile) {
             profile.setOpenness(traits.getOpenness());
             profile.setConscientiousness(traits.getConscientiousness());
             profile.setExtraversion(traits.getExtraversion());

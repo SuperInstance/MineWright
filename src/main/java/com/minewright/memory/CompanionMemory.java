@@ -1,24 +1,13 @@
 package com.minewright.memory;
 
-import com.minewright.memory.embedding.EmbeddingModel;
-import com.minewright.memory.embedding.PlaceholderEmbeddingModel;
-import com.minewright.memory.vector.InMemoryVectorStore;
-import com.minewright.memory.vector.VectorSearchResult;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.LongTag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Advanced memory system for companion AI that supports relationship building,
@@ -26,6 +15,15 @@ import java.util.stream.Collectors;
  *
  * <p>This system tracks multiple types of memories to create a rich,
  * evolving relationship between the foreman MineWright and the player.</p>
+ *
+ * <p><b>Architecture:</b></p>
+ * <p>This class acts as a facade, delegating to specialized components:</p>
+ * <ul>
+ *   <li>{@link MemoryStore} - Episodic, semantic, emotional, and working memory</li>
+ *   <li>{@link PersonalitySystem} - Personality traits and speech patterns</li>
+ *   <li>{@link RelationshipTracker} - Rapport, trust, and relationship milestones</li>
+ *   <li>{@link CompanionMemorySerializer} - NBT persistence</li>
+ * </ul>
  *
  * <p><b>Memory Types:</b></p>
  * <ul>
@@ -45,173 +43,30 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * @since 1.2.0
+ * @refactored 1.4.0 - Split into focused components following SRP
  */
 public class CompanionMemory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CompanionMemory.class);
 
-    /**
-     * Maximum episodic memories to retain.
-     */
-    private static final int MAX_EPISODIC_MEMORIES = 200;
+    // === Delegated Components ===
 
-    /**
-     * Maximum working memory entries.
-     */
-    private static final int MAX_WORKING_MEMORY = 20;
-
-    /**
-     * Maximum inside jokes to track.
-     */
-    private static final int MAX_INSIDE_JOKES = 30;
-
-    // === Core Memory Stores ===
-
-    /**
-     * Episodic memories - specific events and experiences.
-     */
-    private final Deque<EpisodicMemory> episodicMemories;
-
-    /**
-     * Semantic memories - facts about the player.
-     */
-    private final Map<String, SemanticMemory> semanticMemories;
-
-    /**
-     * Emotional memories - high-impact moments.
-     * MEMORY LEAK FIX: Replaced CopyOnWriteArrayList with ArrayList + synchronized access.
-     * CopyOnWriteArrayList causes O(n) write overhead due to full array copying on each modification.
-     * Using synchronized blocks provides better performance for the sort/trim operations
-     * while maintaining thread safety.
-     */
-    private final List<EmotionalMemory> emotionalMemories;
-
-    /**
-     * Conversational memories - topics, jokes, references.
-     */
-    private final ConversationalMemory conversationalMemory;
-
-    /**
-     * Working memory - recent context.
-     */
-    private final Deque<WorkingMemoryEntry> workingMemory;
-
-    // === Relationship Tracking ===
-
-    /**
-     * Overall rapport level (0-100).
-     */
-    private final AtomicInteger rapportLevel;
-
-    /**
-     * Trust level based on shared experiences.
-     */
-    private final AtomicInteger trustLevel;
-
-    /**
-     * Total interactions count.
-     */
-    private final AtomicInteger interactionCount;
-
-    /**
-     * First meeting timestamp.
-     * Marked volatile for visibility across threads.
-     */
-    private volatile Instant firstMeeting;
-
-    /**
-     * Player name (learned on first interaction).
-     * Marked volatile for visibility across threads.
-     */
-    private volatile String playerName;
-
-    /**
-     * Player preferences discovered.
-     */
-    private final Map<String, Object> playerPreferences;
-
-    /**
-     * Player playstyle observations.
-     */
-    private final Map<String, Integer> playstyleMetrics;
-
-    // === Personality ===
-
-    /**
-     * Foreman's personality traits.
-     */
-    private final PersonalityProfile personality;
-
-    // === Session Context ===
-
-    /**
-     * Current session start time.
-     * Marked volatile for visibility across threads.
-     */
-    private volatile Instant sessionStart;
-
-    /**
-     * Topics discussed in current session.
-     */
-    private final Set<String> sessionTopics;
-
-    // === Vector Search Support ===
-
-    /**
-     * Embedding model for generating text embeddings.
-     */
-    private final EmbeddingModel embeddingModel;
-
-    /**
-     * Vector store for semantic memory search.
-     */
-    private final InMemoryVectorStore<EpisodicMemory> memoryVectorStore;
-
-    /**
-     * Maps episodic memory to vector store ID.
-     */
-    private final Map<EpisodicMemory, Integer> memoryToVectorId;
-
-    /**
-     * Milestone tracker for relationship milestones.
-     */
-    private final MilestoneTracker milestoneTracker;
+    private final MemoryStore memoryStore;
+    private final PersonalitySystem personalitySystem;
+    private final RelationshipTracker relationshipTracker;
 
     /**
      * Creates a new CompanionMemory instance.
      */
     public CompanionMemory() {
-        this.episodicMemories = new ArrayDeque<>();
-        this.semanticMemories = new ConcurrentHashMap<>();
-        // MEMORY LEAK FIX: Use ArrayList instead of CopyOnWriteArrayList for better performance
-        // Thread-safety is maintained via synchronized blocks in recordEmotionalMemory()
-        this.emotionalMemories = new ArrayList<>();
-        this.conversationalMemory = new ConversationalMemory();
-        this.workingMemory = new ArrayDeque<>();
+        this.memoryStore = new MemoryStore();
+        this.personalitySystem = new PersonalitySystem();
+        this.relationshipTracker = new RelationshipTracker();
 
-        this.rapportLevel = new AtomicInteger(10); // Start with low rapport
-        this.trustLevel = new AtomicInteger(5);
-        this.interactionCount = new AtomicInteger(0);
-
-        this.playerPreferences = new ConcurrentHashMap<>();
-        this.playstyleMetrics = new ConcurrentHashMap<>();
-
-        this.personality = new PersonalityProfile();
-        this.sessionTopics = ConcurrentHashMap.newKeySet();
-
-        // Initialize vector search infrastructure
-        this.embeddingModel = new PlaceholderEmbeddingModel();
-        this.memoryVectorStore = new InMemoryVectorStore<>(embeddingModel.getDimension());
-        this.memoryToVectorId = new ConcurrentHashMap<>();
-
-        // Initialize milestone tracker
-        this.milestoneTracker = new MilestoneTracker();
-
-        LOGGER.info("CompanionMemory initialized with vector search (model: {})",
-                embeddingModel.getModelName());
+        LOGGER.info("CompanionMemory initialized with component architecture");
     }
 
-    // === Memory Recording ===
+    // === Memory Recording (Delegates to MemoryStore) ===
 
     /**
      * Records a shared experience with the player.
@@ -221,31 +76,14 @@ public class CompanionMemory {
      * @param emotionalWeight How memorable (-10 to +10)
      */
     public void recordExperience(String eventType, String description, int emotionalWeight) {
-        EpisodicMemory memory = new EpisodicMemory(
-            eventType, description, emotionalWeight, Instant.now()
-        );
-
-        episodicMemories.addFirst(memory);
-
-        // Add to vector store for semantic search
-        addMemoryToVectorStore(memory);
-
-        // Trim if over limit using smart eviction
-        while (episodicMemories.size() > MAX_EPISODIC_MEMORIES) {
-            evictLowestScoringMemory();
-        }
-
-        // High emotional weight events also go to emotional memory
-        if (Math.abs(emotionalWeight) >= 5) {
-            recordEmotionalMemory(eventType, description, emotionalWeight);
-        }
+        memoryStore.recordExperience(eventType, description, emotionalWeight);
 
         // Update rapport based on positive experiences
         if (emotionalWeight > 3) {
-            adjustRapport(1);
+            relationshipTracker.adjustRapport(1);
         }
 
-        interactionCount.incrementAndGet();
+        relationshipTracker.incrementInteractionCount();
         LOGGER.debug("Recorded experience: {} (weight={})", eventType, emotionalWeight);
     }
 
@@ -257,77 +95,13 @@ public class CompanionMemory {
      * @param value Fact value
      */
     public void learnPlayerFact(String category, String key, Object value) {
-        String compositeKey = category + ":" + key;
-        semanticMemories.put(compositeKey, new SemanticMemory(
-            category, key, value, Instant.now()
-        ));
+        memoryStore.learnPlayerFact(category, key, value);
 
         if ("preference".equals(category)) {
-            playerPreferences.put(key, value);
+            relationshipTracker.getPlayerPreferences().put(key, value);
         }
 
-        LOGGER.debug("Learned player fact: {} = {}", compositeKey, value);
-    }
-
-    /**
-     * Records an emotionally significant moment.
-     *
-     * PERFORMANCE OPTIMIZATION (Week 1 P0): Uses binary search insertion to maintain sorted order.
-     * Changed from O(n log n) sort after every insertion to O(log n) binary search + O(n) insertion.
-     * This eliminates the expensive sort operation on every emotional memory record.
-     *
-     * Thread-safe: uses synchronized block for insertion.
-     * Memory-safe: bounded at 50 entries to prevent unbounded growth.
-     */
-    private void recordEmotionalMemory(String eventType, String description, int emotionalWeight) {
-        EmotionalMemory memory = new EmotionalMemory(
-            eventType, description, emotionalWeight, Instant.now()
-        );
-
-        // Synchronized block for thread-safe insertion
-        synchronized (this) {
-            // PERFORMANCE: Use binary search to find insertion point (O(log n))
-            int absWeight = Math.abs(emotionalWeight);
-            int insertIndex = findEmotionalMemoryInsertIndex(absWeight);
-
-            // Insert at correct position to maintain sorted order (O(n) due to array shift)
-            emotionalMemories.add(insertIndex, memory);
-
-            // Cap at 50 emotional memories (remove lowest weight if needed)
-            if (emotionalMemories.size() > 50) {
-                // Remove last element (lowest weight since list is sorted descending)
-                emotionalMemories.remove(50);
-            }
-        }
-
-        LOGGER.info("Recorded emotional memory: {} (weight={})", eventType, emotionalWeight);
-    }
-
-    /**
-     * PERFORMANCE HELPER: Finds insertion index to maintain descending sorted order by emotional weight.
-     * Uses binary search for O(log n) performance instead of O(n) linear search.
-     *
-     * @param absWeight Absolute weight of memory to insert
-     * @return Index where memory should be inserted to maintain descending sort order
-     */
-    private int findEmotionalMemoryInsertIndex(int absWeight) {
-        int left = 0;
-        int right = emotionalMemories.size();
-
-        while (left < right) {
-            int mid = (left + right) >>> 1;
-            int midWeight = Math.abs(emotionalMemories.get(mid).emotionalWeight);
-
-            if (midWeight >= absWeight) {
-                // Mid element has higher or equal weight, insert point is in right half
-                left = mid + 1;
-            } else {
-                // Mid element has lower weight, insert point is in left half
-                right = mid;
-            }
-        }
-
-        return left;
+        LOGGER.debug("Learned player fact: {} = {}", category + ":" + key, value);
     }
 
     /**
@@ -337,14 +111,7 @@ public class CompanionMemory {
      * @param punchline The memorable phrase
      */
     public void recordInsideJoke(String context, String punchline) {
-        conversationalMemory.addInsideJoke(new InsideJoke(
-            context, punchline, Instant.now()
-        ));
-
-        // Inside jokes significantly increase rapport
-        adjustRapport(3);
-
-        LOGGER.info("New inside joke recorded: {}", punchline);
+        relationshipTracker.recordInsideJoke(context, punchline);
     }
 
     /**
@@ -354,11 +121,7 @@ public class CompanionMemory {
      * @param content Entry content
      */
     public void addToWorkingMemory(String type, String content) {
-        workingMemory.addFirst(new WorkingMemoryEntry(type, content, Instant.now()));
-
-        while (workingMemory.size() > MAX_WORKING_MEMORY) {
-            workingMemory.removeLast();
-        }
+        memoryStore.addToWorkingMemory(type, content);
     }
 
     /**
@@ -368,10 +131,10 @@ public class CompanionMemory {
      * @param delta Change amount
      */
     public void recordPlaystyleMetric(String metricName, int delta) {
-        playstyleMetrics.merge(metricName, delta, Integer::sum);
+        relationshipTracker.recordPlaystyleMetric(metricName, delta);
     }
 
-    // === Memory Retrieval ===
+    // === Memory Retrieval (Delegates to MemoryStore) ===
 
     /**
      * Retrieves recent episodic memories.
@@ -380,125 +143,28 @@ public class CompanionMemory {
      * @return List of recent memories
      */
     public List<EpisodicMemory> getRecentMemories(int count) {
-        return episodicMemories.stream()
-            .limit(count)
-            .collect(Collectors.toList());
+        return memoryStore.getRecentMemories(count);
     }
 
     /**
      * Computes a dynamic memory score based on time decay, importance, and access frequency.
-     * This combines multiple signals to determine which memories are most valuable.
      *
      * @param memory The memory to score
      * @return A score from 0.0 (least important) to 1.0 (most important)
      */
     public float computeMemoryScore(EpisodicMemory memory) {
-        Instant now = Instant.now();
-
-        // Time decay with 7-day half-life
-        long daysSinceCreation = ChronoUnit.DAYS.between(memory.timestamp, now);
-        float ageScore = (float) Math.exp(-daysSinceCreation / 7.0);
-
-        // Emotional importance (normalize -10 to +10 range to 0-1)
-        float importanceScore = Math.min(1.0f, Math.abs(memory.emotionalWeight) / 10.0f);
-
-        // Access frequency (cap at 10 accesses for max score)
-        float accessScore = Math.min(1.0f, memory.getAccessCount() / 10.0f);
-
-        // Recent access bonus (if accessed in last 24 hours)
-        long hoursSinceAccess = ChronoUnit.HOURS.between(memory.getLastAccessed(), now);
-        float recentAccessBonus = hoursSinceAccess < 24 ? 0.2f : 0.0f;
-
-        // Combined weighted score
-        return ageScore * 0.4f + importanceScore * 0.4f + accessScore * 0.2f + recentAccessBonus;
-    }
-
-    /**
-     * Evicts the lowest-scoring memory that is not protected.
-     * Implements smart eviction based on memory importance rather than FIFO.
-     */
-    private void evictLowestScoringMemory() {
-        EpisodicMemory lowestScoring = null;
-        float lowestScore = Float.MAX_VALUE;
-
-        for (EpisodicMemory memory : episodicMemories) {
-            // Skip protected memories
-            if (memory.isProtected()) {
-                continue;
-            }
-
-            float score = computeMemoryScore(memory);
-            if (score < lowestScore) {
-                lowestScore = score;
-                lowestScoring = memory;
-            }
-        }
-
-        // If we found a candidate to evict, remove it
-        if (lowestScoring != null) {
-            episodicMemories.remove(lowestScoring);
-            Integer vectorId = memoryToVectorId.remove(lowestScoring);
-            if (vectorId != null) {
-                memoryVectorStore.remove(vectorId);
-            }
-            LOGGER.debug("Evicted low-scoring memory: {} (score={})",
-                lowestScoring.eventType, lowestScore);
-        } else {
-            // All memories are protected, force remove oldest non-milestone
-            EpisodicMemory oldest = null;
-            Instant oldestTime = Instant.now();
-            for (EpisodicMemory memory : episodicMemories) {
-                if (!memory.isMilestone && memory.timestamp.isBefore(oldestTime)) {
-                    oldestTime = memory.timestamp;
-                    oldest = memory;
-                }
-            }
-            if (oldest != null) {
-                episodicMemories.remove(oldest);
-                Integer vectorId = memoryToVectorId.remove(oldest);
-                if (vectorId != null) {
-                    memoryVectorStore.remove(vectorId);
-                }
-                LOGGER.debug("Force evicted oldest non-milestone memory: {}", oldest.eventType);
-            }
-        }
+        return memoryStore.computeMemoryScore(memory);
     }
 
     /**
      * Retrieves memories similar to the given context using semantic search.
-     * Uses vector embeddings to find conceptually similar memories.
      *
      * @param query Query to find relevant memories for
      * @param k Maximum number of results to return
      * @return List of relevant memories, sorted by similarity
      */
     public List<EpisodicMemory> findRelevantMemories(String query, int k) {
-        if (memoryVectorStore.size() == 0) {
-            LOGGER.debug("No memories in vector store for semantic search");
-            return Collections.emptyList();
-        }
-
-        try {
-            // Generate embedding for query
-            float[] queryEmbedding = embeddingModel.embed(query);
-
-            // Search vector store
-            List<VectorSearchResult<EpisodicMemory>> results =
-                    memoryVectorStore.search(queryEmbedding, k);
-
-            // Extract memories from results and record access
-            List<EpisodicMemory> memories = results.stream()
-                    .map(VectorSearchResult::getData)
-                    .peek(EpisodicMemory::recordAccess)
-                    .collect(Collectors.toList());
-
-            LOGGER.debug("Semantic search for '{}' returned {} memories", query, memories.size());
-            return memories;
-
-        } catch (Exception e) {
-            LOGGER.error("Error in semantic search, falling back to keyword matching", e);
-            return getRelevantMemoriesByKeywords(query, k);
-        }
+        return memoryStore.findRelevantMemories(query, k);
     }
 
     /**
@@ -514,45 +180,6 @@ public class CompanionMemory {
     }
 
     /**
-     * Keyword-based memory retrieval (fallback method).
-     */
-    private List<EpisodicMemory> getRelevantMemoriesByKeywords(String context, int count) {
-        String lowerContext = context.toLowerCase();
-
-        return episodicMemories.stream()
-            .filter(m -> m.description.toLowerCase().contains(lowerContext) ||
-                        m.eventType.toLowerCase().contains(lowerContext))
-            .limit(count)
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Adds a memory to the vector store for semantic search.
-     *
-     * @param memory The memory to add
-     */
-    private void addMemoryToVectorStore(EpisodicMemory memory) {
-        try {
-            // Create text representation for embedding
-            String textForEmbedding = memory.eventType + ": " + memory.description;
-
-            // Generate embedding
-            float[] embedding = embeddingModel.embed(textForEmbedding);
-
-            // Add to vector store
-            int vectorId = memoryVectorStore.add(embedding, memory);
-
-            // Store mapping
-            memoryToVectorId.put(memory, vectorId);
-
-            LOGGER.debug("Added memory to vector store with ID {}", vectorId);
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to add memory to vector store", e);
-        }
-    }
-
-    /**
      * Gets a player preference.
      *
      * @param key Preference key
@@ -560,7 +187,7 @@ public class CompanionMemory {
      */
     @SuppressWarnings("unchecked")
     public <T> T getPlayerPreference(String key, T defaultValue) {
-        Object value = playerPreferences.get(key);
+        Object value = relationshipTracker.getPlayerPreferences().get(key);
         return value != null ? (T) value : defaultValue;
     }
 
@@ -570,19 +197,16 @@ public class CompanionMemory {
      * @return Random inside joke, or null if none exist
      */
     public InsideJoke getRandomInsideJoke() {
-        return conversationalMemory.getRandomJoke();
+        return relationshipTracker.getRandomInsideJoke();
     }
 
     /**
      * Gets the most emotionally significant shared memory.
-     * MEMORY LEAK FIX: Synchronized access to emotionalMemories for thread safety.
      *
      * @return Most significant memory, or null if none
      */
     public EmotionalMemory getMostSignificantMemory() {
-        synchronized (this) {
-            return emotionalMemories.isEmpty() ? null : emotionalMemories.get(0);
-        }
+        return memoryStore.getMostSignificantMemory();
     }
 
     /**
@@ -591,15 +215,7 @@ public class CompanionMemory {
      * @return Formatted working memory
      */
     public String getWorkingMemoryContext() {
-        if (workingMemory.isEmpty()) {
-            return "No recent context.";
-        }
-
-        StringBuilder sb = new StringBuilder("Recent context:\n");
-        for (WorkingMemoryEntry entry : workingMemory) {
-            sb.append("- ").append(entry.type).append(": ").append(entry.content).append("\n");
-        }
-        return sb.toString();
+        return memoryStore.getWorkingMemoryContext();
     }
 
     /**
@@ -608,209 +224,58 @@ public class CompanionMemory {
      * @return Relationship context string
      */
     public String getRelationshipContext() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("Relationship Status:\n");
-        sb.append("- Rapport Level: ").append(getRapportLevel()).append("/100\n");
-        sb.append("- Trust Level: ").append(getTrustLevel()).append("/100\n");
-        sb.append("- Interactions: ").append(interactionCount.get()).append("\n");
-
-        if (firstMeeting != null) {
-            long days = ChronoUnit.DAYS.between(firstMeeting, Instant.now());
-            sb.append("- Known for: ").append(days).append(" days\n");
-        }
-
-        if (!playerPreferences.isEmpty()) {
-            sb.append("- Known preferences: ").append(playerPreferences.keySet()).append("\n");
-        }
-
-        if (!playstyleMetrics.isEmpty()) {
-            sb.append("- Playstyle observations: ").append(playstyleMetrics).append("\n");
-        }
-
-        int jokeCount = conversationalMemory.getJokeCount();
-        if (jokeCount > 0) {
-            sb.append("- Inside jokes shared: ").append(jokeCount).append("\n");
-        }
-
-        return sb.toString();
+        return relationshipTracker.getRelationshipContext();
     }
 
     /**
      * Builds an optimized context string for LLM prompting with memory prioritization.
-     * Uses dynamic scoring to include the most relevant memories within token limits.
      *
      * @param query The current query/task to provide context for
      * @param maxTokens Maximum tokens to use for context (approximately)
      * @return Optimized context string
      */
     public String buildOptimizedContext(String query, int maxTokens) {
-        List<ScoredMemory> scored = new ArrayList<>();
-
-        // 1. Always include first meeting memory if exists (high priority)
-        episodicMemories.stream()
-            .filter(m -> "first_meeting".equals(m.eventType))
-            .findFirst()
-            .ifPresent(m -> {
-                m.recordAccess();
-                scored.add(new ScoredMemory(m, 1000.0f));
-            });
-
-        // 2. Recent working memory (high priority)
-        workingMemory.stream()
-            .limit(5)
-            .forEach(entry -> {
-                // Convert working memory to a synthetic episodic memory for scoring
-                EpisodicMemory synthetic = new EpisodicMemory(
-                    entry.type,
-                    entry.content,
-                    3, // Moderate weight
-                    entry.timestamp
-                );
-                scored.add(new ScoredMemory(synthetic, 500.0f));
-            });
-
-        // 3. High-emotional and protected memories
-        episodicMemories.stream()
-            .filter(m -> Math.abs(m.emotionalWeight) >= 7 || m.isProtected())
-            .forEach(m -> {
-                m.recordAccess();
-                float score = computeMemoryScore(m) * 2.0f; // Boost high-emotion memories
-                scored.add(new ScoredMemory(m, score));
-            });
-
-        // 4. Semantically relevant memories (from vector search)
-        List<EpisodicMemory> relevant = findRelevantMemories(query, 10);
-        relevant.forEach(m -> {
-            m.recordAccess();
-            float score = computeMemoryScore(m);
-            scored.add(new ScoredMemory(m, score));
-        });
-
-        // Sort by combined score
-        scored.sort((a, b) -> Float.compare(b.score, a.score));
-
-        // Build context, respecting token limit
-        StringBuilder context = new StringBuilder();
-        int tokens = 0;
-
-        // Add relationship context first
-        String relationshipCtx = getRelationshipContext();
-        int relationshipTokens = relationshipCtx.length() / 4;
-        context.append(relationshipCtx).append("\n\n");
-        tokens += relationshipTokens;
-
-        // Add scored memories
-        for (ScoredMemory sm : scored) {
-            String text = sm.memory.toContextString();
-            int estimatedTokens = text.length() / 4;
-
-            if (tokens + estimatedTokens > maxTokens) {
-                break;
-            }
-
-            context.append(text).append("\n");
-            tokens += estimatedTokens;
-        }
-
-        LOGGER.debug("Built optimized context: {} memories, ~{} tokens",
-            scored.size(), tokens);
-
-        return context.toString();
-    }
-
-    /**
-     * Helper class for tracking scored memories.
-     */
-    private static class ScoredMemory {
-        final EpisodicMemory memory;
-        final float score;
-
-        ScoredMemory(EpisodicMemory memory, float score) {
-            this.memory = memory;
-            this.score = score;
-        }
+        return memoryStore.buildOptimizedContext(query, maxTokens, getRelationshipContext());
     }
 
     // === Memory Consolidation Support ===
 
     /**
      * Gets memories that are eligible for consolidation.
-     * Excludes protected memories and recent memories.
      *
      * @param minAgeDays Minimum age in days for a memory to be consolidatable
      * @return List of consolidatable memories
      */
     public List<EpisodicMemory> getConsolidatableMemories(int minAgeDays) {
-        Instant cutoff = Instant.now().minus(minAgeDays, ChronoUnit.DAYS);
-
-        return episodicMemories.stream()
-            .filter(m -> !m.isProtected()) // Exclude protected memories
-            .filter(m -> m.timestamp.isBefore(cutoff)) // Only old memories
-            .collect(Collectors.toList());
+        return memoryStore.getConsolidatableMemories(minAgeDays);
     }
 
     /**
      * Removes a list of memories from storage.
-     * Used by consolidation service after summarization.
      *
      * @param memoriesToRemove Memories to remove
      * @return Number of memories removed
      */
     public int removeMemories(List<EpisodicMemory> memoriesToRemove) {
-        int removed = 0;
-
-        for (EpisodicMemory memory : memoriesToRemove) {
-            if (episodicMemories.remove(memory)) {
-                // Remove from vector store
-                Integer vectorId = memoryToVectorId.remove(memory);
-                if (vectorId != null) {
-                    memoryVectorStore.remove(vectorId);
-                }
-                removed++;
-            }
-        }
-
-        LOGGER.info("Removed {} consolidated memories", removed);
-        return removed;
+        return memoryStore.removeMemories(memoriesToRemove);
     }
 
     /**
      * Validates memory state and logs any inconsistencies.
-     * Useful for debugging and ensuring data integrity.
      *
      * @return true if memory state is valid
      */
     public boolean validateMemoryState() {
-        boolean valid = true;
-
-        // Check vector store mapping consistency
-        int vectorStoreSize = memoryVectorStore.size();
-        int mappingSize = memoryToVectorId.size();
-
-        if (vectorStoreSize != mappingSize) {
-            LOGGER.warn("Memory state inconsistency: vector store has {} entries, " +
-                "but mapping has {} entries", vectorStoreSize, mappingSize);
-            valid = false;
-        }
-
-        // Check for protected memories in working memory
-        long protectedInDeque = episodicMemories.stream()
-            .filter(EpisodicMemory::isProtected)
-            .count();
-
-        if (protectedInDeque > 0) {
-            LOGGER.debug("Found {} protected memories in episodic store", protectedInDeque);
-        }
-
-        return valid;
+        return memoryStore.validateMemoryState();
     }
+
+    // === Personality Access (Delegates to PersonalitySystem) ===
 
     /**
      * Gets the personality profile for prompting.
      */
-    public PersonalityProfile getPersonality() {
-        return personality;
+    public PersonalitySystem.PersonalityProfile getPersonality() {
+        return personalitySystem.getPersonality();
     }
 
     /**
@@ -819,25 +284,10 @@ public class CompanionMemory {
      * @return Relationship object containing rapport, trust, and mood
      */
     public Relationship getRelationship() {
-        Mood mood = parseMood(personality.mood);
-        return new Relationship(rapportLevel.get(), trustLevel.get(), mood);
+        return relationshipTracker.getRelationship(personalitySystem.getPersonality());
     }
 
-    /**
-     * Parses a mood string into a Mood enum value.
-     */
-    private Mood parseMood(String moodString) {
-        if (moodString == null) {
-            return Mood.CHEERFUL;
-        }
-        try {
-            return Mood.valueOf(moodString.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return Mood.CHEERFUL;
-        }
-    }
-
-    // === Relationship Management ===
+    // === Relationship Management (Delegates to RelationshipTracker) ===
 
     /**
      * Initializes the relationship on first meeting.
@@ -845,26 +295,14 @@ public class CompanionMemory {
      * @param playerName The player's name
      */
     public void initializeRelationship(String playerName) {
-        if (this.playerName == null) {
-            this.playerName = playerName;
-            this.firstMeeting = Instant.now();
-            this.sessionStart = Instant.now();
+        relationshipTracker.initializeRelationship(playerName, memoryStore);
+    }
 
-            learnPlayerFact("identity", "name", playerName);
-
-            // Create and mark as milestone
-            EpisodicMemory firstMeetingMemory = new EpisodicMemory(
-                "first_meeting",
-                "First time meeting " + playerName,
-                7,
-                Instant.now()
-            );
-            firstMeetingMemory.setMilestone(true);
-            episodicMemories.addFirst(firstMeetingMemory);
-            addMemoryToVectorStore(firstMeetingMemory);
-
-            LOGGER.info("Relationship initialized with {}", playerName);
-        }
+    /**
+     * Increments the interaction count.
+     */
+    public void incrementInteractionCount() {
+        relationshipTracker.incrementInteractionCount();
     }
 
     /**
@@ -873,8 +311,7 @@ public class CompanionMemory {
      * @param delta Amount to change (can be negative)
      */
     public void adjustRapport(int delta) {
-        int newValue = Math.max(0, Math.min(100, rapportLevel.get() + delta));
-        rapportLevel.set(newValue);
+        relationshipTracker.adjustRapport(delta);
     }
 
     /**
@@ -883,147 +320,54 @@ public class CompanionMemory {
      * @param delta Amount to change (can be negative)
      */
     public void adjustTrust(int delta) {
-        int newValue = Math.max(0, Math.min(100, trustLevel.get() + delta));
-        trustLevel.set(newValue);
+        relationshipTracker.adjustTrust(delta);
     }
 
     /**
      * Called when a shared task succeeds.
      */
     public void recordSharedSuccess(String taskDescription) {
-        recordExperience("success", taskDescription, 5);
-        adjustRapport(2);
-        adjustTrust(3);
-        checkAutoMilestones();
+        relationshipTracker.recordSharedSuccess(taskDescription, memoryStore);
     }
 
     /**
      * Called when a shared task fails.
      */
     public void recordSharedFailure(String taskDescription, String reason) {
-        recordExperience("failure", taskDescription + " - " + reason, -3);
-        // Don't reduce rapport for failures - we're in this together
+        relationshipTracker.recordSharedFailure(taskDescription, reason, memoryStore);
     }
 
     /**
      * Automatically detects and records relationship milestones based on current state.
-     * Called after significant events to check for milestone conditions.
      */
     public void checkAutoMilestones() {
-        int interactions = interactionCount.get();
-        int rapport = rapportLevel.get();
-
-        // Check for interaction-based milestones
-        if (interactions == 10 && !hasMilestone("auto_getting_to_know")) {
-            milestoneTracker.recordMilestone(
-                new MilestoneTracker.Milestone(
-                    "auto_getting_to_know",
-                    MilestoneTracker.MilestoneType.COUNT,
-                    "Getting to Know You",
-                    "We've had 10 interactions now! I feel like we're starting to understand each other.",
-                    5,
-                    Instant.now()
-                )
-            );
-            adjustRapport(2);
-        }
-
-        if (interactions == 50 && !hasMilestone("auto_frequent_companion")) {
-            milestoneTracker.recordMilestone(
-                new MilestoneTracker.Milestone(
-                    "auto_frequent_companion",
-                    MilestoneTracker.MilestoneType.COUNT,
-                    "Frequent Companions",
-                    "50 interactions together! You've become a regular part of my routine.",
-                    7,
-                    Instant.now()
-                )
-            );
-            adjustRapport(3);
-        }
-
-        // Check for rapport-based milestones
-        if (rapport >= 50 && !hasMilestone("auto_friends")) {
-            milestoneTracker.recordMilestone(
-                new MilestoneTracker.Milestone(
-                    "auto_friends",
-                    MilestoneTracker.MilestoneType.ACHIEVEMENT,
-                    "Friends",
-                    "I feel like we've really become friends. I trust you and enjoy our time together.",
-                    8,
-                    Instant.now()
-                )
-            );
-            adjustRapport(5);
-        }
-
-        if (rapport >= 80 && !hasMilestone("auto_best_friends")) {
-            milestoneTracker.recordMilestone(
-                new MilestoneTracker.Milestone(
-                    "auto_best_friends",
-                    MilestoneTracker.MilestoneType.ACHIEVEMENT,
-                    "Best Friends",
-                    "You're not just a companion anymore - you're my best friend! We've been through so much together.",
-                    10,
-                    Instant.now()
-                )
-            );
-            adjustRapport(5);
-        }
-
-        // Check for time-based milestones
-        if (firstMeeting != null) {
-            long days = ChronoUnit.DAYS.between(firstMeeting, Instant.now());
-            if (days >= 7 && !hasMilestone("auto_week_together")) {
-                milestoneTracker.recordMilestone(
-                    new MilestoneTracker.Milestone(
-                        "auto_week_together",
-                        MilestoneTracker.MilestoneType.ANNIVERSARY,
-                        "One Week Together",
-                        "It's been a whole week since we met! Here's to many more adventures.",
-                        6,
-                        Instant.now()
-                    )
-                );
-                adjustRapport(3);
-            }
-        }
-    }
-
-    /**
-     * Internal method to record a milestone directly.
-     * Used by auto-detection system.
-     */
-    private void recordMilestone(MilestoneTracker.Milestone milestone) {
-        milestoneTracker.recordMilestone(milestone);
-        // Also record as episodic memory for the milestone
-        recordExperience("milestone", milestone.title + ": " + milestone.description, milestone.importance);
+        relationshipTracker.checkAutoMilestones();
     }
 
     // === Getters ===
 
     public int getRapportLevel() {
-        return rapportLevel.get();
+        return relationshipTracker.getRapportLevel();
     }
 
     public int getTrustLevel() {
-        return trustLevel.get();
+        return relationshipTracker.getTrustLevel();
     }
 
     public String getPlayerName() {
-        return playerName;
+        return relationshipTracker.getPlayerName();
     }
 
     public int getInteractionCount() {
-        return interactionCount.get();
+        return relationshipTracker.getInteractionCount();
     }
 
     public Instant getFirstMeeting() {
-        return firstMeeting;
+        return relationshipTracker.getFirstMeeting();
     }
 
     public Set<String> getSessionTopics() {
-        return Collections.unmodifiableSet(sessionTopics);
+        return relationshipTracker.getSessionTopics();
     }
 
     /**
@@ -1031,15 +375,7 @@ public class CompanionMemory {
      * Package-private for internal use by ConversationManager.
      */
     ConversationalMemory getConversationalMemory() {
-        return conversationalMemory;
-    }
-
-    /**
-     * Increments the interaction count.
-     * Package-private for internal use by ConversationManager.
-     */
-    void incrementInteractionCount() {
-        interactionCount.incrementAndGet();
+        return relationshipTracker.getConversationalMemory();
     }
 
     /**
@@ -1048,7 +384,7 @@ public class CompanionMemory {
      * @return Number of inside jokes
      */
     public int getInsideJokeCount() {
-        return conversationalMemory.getJokeCount();
+        return relationshipTracker.getInsideJokeCount();
     }
 
     // === Milestone Tracking ===
@@ -1059,7 +395,7 @@ public class CompanionMemory {
      * @return The MilestoneTracker instance
      */
     public MilestoneTracker getMilestoneTracker() {
-        return milestoneTracker;
+        return relationshipTracker.getMilestoneTracker();
     }
 
     /**
@@ -1068,7 +404,7 @@ public class CompanionMemory {
      * @return List of all achieved milestones
      */
     public List<MilestoneTracker.Milestone> getMilestones() {
-        return milestoneTracker.getMilestones();
+        return relationshipTracker.getMilestones();
     }
 
     /**
@@ -1078,10 +414,10 @@ public class CompanionMemory {
      * @return true if the milestone has been achieved
      */
     public boolean hasMilestone(String milestoneId) {
-        return milestoneTracker.hasMilestone(milestoneId);
+        return relationshipTracker.hasMilestone(milestoneId);
     }
 
-    // === NBT Persistence ===
+    // === NBT Persistence (Delegates to CompanionMemorySerializer) ===
 
     /**
      * Saves companion memory data to NBT format for world save.
@@ -1089,163 +425,8 @@ public class CompanionMemory {
      * @param tag The CompoundTag to save data to
      */
     public void saveToNBT(CompoundTag tag) {
-        // Save relationship data
-        tag.putInt("RapportLevel", rapportLevel.get());
-        tag.putInt("TrustLevel", trustLevel.get());
-        tag.putInt("InteractionCount", interactionCount.get());
-
-        if (firstMeeting != null) {
-            tag.putLong("FirstMeeting", firstMeeting.toEpochMilli());
-        }
-
-        if (playerName != null) {
-            tag.putString("PlayerName", playerName);
-        }
-
-        // Save episodic memories
-        ListTag episodicList = new ListTag();
-        for (EpisodicMemory memory : episodicMemories) {
-            CompoundTag memoryTag = new CompoundTag();
-            memoryTag.putString("EventType", memory.eventType);
-            memoryTag.putString("Description", memory.description);
-            memoryTag.putInt("EmotionalWeight", memory.emotionalWeight);
-            memoryTag.putLong("Timestamp", memory.timestamp.toEpochMilli());
-            memoryTag.putInt("AccessCount", memory.getAccessCount());
-            memoryTag.putLong("LastAccessed", memory.getLastAccessed().toEpochMilli());
-            memoryTag.putBoolean("IsMilestone", memory.isMilestone);
-            episodicList.add(memoryTag);
-        }
-        tag.put("EpisodicMemories", episodicList);
-
-        // Save semantic memories
-        ListTag semanticList = new ListTag();
-        for (Map.Entry<String, SemanticMemory> entry : semanticMemories.entrySet()) {
-            CompoundTag semanticTag = new CompoundTag();
-            semanticTag.putString("Key", entry.getKey());
-            semanticTag.putString("Category", entry.getValue().category);
-            semanticTag.putString("FactKey", entry.getValue().key);
-
-            Object value = entry.getValue().value;
-            if (value instanceof String) {
-                semanticTag.putString("Value", (String) value);
-                semanticTag.putString("ValueType", "string");
-            } else if (value instanceof Integer) {
-                semanticTag.putInt("Value", (Integer) value);
-                semanticTag.putString("ValueType", "int");
-            } else if (value instanceof Boolean) {
-                semanticTag.putBoolean("Value", (Boolean) value);
-                semanticTag.putString("ValueType", "boolean");
-            } else {
-                semanticTag.putString("Value", value.toString());
-                semanticTag.putString("ValueType", "string");
-            }
-
-            semanticTag.putLong("LearnedAt", entry.getValue().learnedAt.toEpochMilli());
-            semanticTag.putInt("Confidence", entry.getValue().confidence);
-            semanticList.add(semanticTag);
-        }
-        tag.put("SemanticMemories", semanticList);
-
-        // Save emotional memories
-        // MEMORY LEAK FIX: Synchronized access to emotionalMemories for thread safety
-        ListTag emotionalList = new ListTag();
-        synchronized (this) {
-            for (EmotionalMemory memory : emotionalMemories) {
-                CompoundTag emotionTag = new CompoundTag();
-                emotionTag.putString("EventType", memory.eventType);
-                emotionTag.putString("Description", memory.description);
-                emotionTag.putInt("EmotionalWeight", memory.emotionalWeight);
-                emotionTag.putLong("Timestamp", memory.timestamp.toEpochMilli());
-                emotionalList.add(emotionTag);
-            }
-        }
-        tag.put("EmotionalMemories", emotionalList);
-
-        // Save inside jokes
-        ListTag jokesList = new ListTag();
-        for (InsideJoke joke : conversationalMemory.insideJokes) {
-            CompoundTag jokeTag = new CompoundTag();
-            jokeTag.putString("Context", joke.context);
-            jokeTag.putString("Punchline", joke.punchline);
-            jokeTag.putLong("CreatedAt", joke.createdAt.toEpochMilli());
-            jokeTag.putInt("ReferenceCount", joke.referenceCount);
-            jokesList.add(jokeTag);
-        }
-        tag.put("InsideJokes", jokesList);
-
-        // Save discussed topics
-        ListTag topicsList = new ListTag();
-        for (String topic : conversationalMemory.discussedTopics) {
-            topicsList.add(StringTag.valueOf(topic));
-        }
-        tag.put("DiscussedTopics", topicsList);
-
-        // Save phrase usage
-        CompoundTag phraseUsageTag = new CompoundTag();
-        for (Map.Entry<String, Integer> entry : conversationalMemory.phraseUsage.entrySet()) {
-            phraseUsageTag.putInt(entry.getKey(), entry.getValue());
-        }
-        tag.put("PhraseUsage", phraseUsageTag);
-
-        // Save player preferences
-        CompoundTag preferencesTag = new CompoundTag();
-        for (Map.Entry<String, Object> entry : playerPreferences.entrySet()) {
-            saveValueToNBT(preferencesTag, entry.getKey(), entry.getValue());
-        }
-        tag.put("PlayerPreferences", preferencesTag);
-
-        // Save playstyle metrics
-        CompoundTag playstyleTag = new CompoundTag();
-        for (Map.Entry<String, Integer> entry : playstyleMetrics.entrySet()) {
-            playstyleTag.putInt(entry.getKey(), entry.getValue());
-        }
-        tag.put("PlaystyleMetrics", playstyleTag);
-
-        // Save personality
-        CompoundTag personalityTag = new CompoundTag();
-        personalityTag.putInt("Openness", personality.openness);
-        personalityTag.putInt("Conscientiousness", personality.conscientiousness);
-        personalityTag.putInt("Extraversion", personality.extraversion);
-        personalityTag.putInt("Agreeableness", personality.agreeableness);
-        personalityTag.putInt("Neuroticism", personality.neuroticism);
-        personalityTag.putInt("Humor", personality.humor);
-        personalityTag.putInt("Encouragement", personality.encouragement);
-        personalityTag.putInt("Formality", personality.formality);
-        personalityTag.putString("FavoriteBlock", personality.favoriteBlock);
-        personalityTag.putString("WorkStyle", personality.workStyle);
-        personalityTag.putString("Mood", personality.mood);
-        personalityTag.putString("ArchetypeName", personality.archetypeName);
-
-        // Save catchphrases
-        ListTag catchphrasesList = new ListTag();
-        for (String catchphrase : personality.catchphrases) {
-            catchphrasesList.add(StringTag.valueOf(catchphrase));
-        }
-        personalityTag.put("Catchphrases", catchphrasesList);
-
-        // Save verbal tics
-        ListTag verbalTicsList = new ListTag();
-        for (String tic : personality.verbalTics) {
-            verbalTicsList.add(StringTag.valueOf(tic));
-        }
-        personalityTag.put("VerbalTics", verbalTicsList);
-
-        // Save tic usage counts
-        CompoundTag ticUsageTag = new CompoundTag();
-        for (Map.Entry<String, Integer> entry : personality.ticUsageCount.entrySet()) {
-            ticUsageTag.putInt(entry.getKey(), entry.getValue());
-        }
-        personalityTag.put("TicUsageCount", ticUsageTag);
-
-        tag.put("Personality", personalityTag);
-
-        // Save milestone tracker
-        CompoundTag milestoneTag = new CompoundTag();
-        milestoneTracker.saveToNBT(milestoneTag);
-        tag.put("MilestoneTracker", milestoneTag);
-
-        LOGGER.debug("CompanionMemory saved to NBT ({} episodic, {} semantic memories, {} milestones)",
-            episodicMemories.size(), semanticMemories.size(), milestoneTracker.getMilestones().size());
+        CompanionMemorySerializer.saveToNBT(tag, memoryStore, relationshipTracker,
+            personalitySystem.getPersonality());
     }
 
     /**
@@ -1254,236 +435,11 @@ public class CompanionMemory {
      * @param tag The CompoundTag to load data from
      */
     public void loadFromNBT(CompoundTag tag) {
-        // Load relationship data
-        rapportLevel.set(tag.getInt("RapportLevel"));
-        trustLevel.set(tag.getInt("TrustLevel"));
-        interactionCount.set(tag.getInt("InteractionCount"));
-
-        long firstMeetingEpoch = tag.getLong("FirstMeeting");
-        if (firstMeetingEpoch != 0) {
-            firstMeeting = Instant.ofEpochMilli(firstMeetingEpoch);
-        }
-
-        playerName = tag.contains("PlayerName") ? tag.getString("PlayerName") : null;
-
-        // Load episodic memories
-        ListTag episodicList = tag.getList("EpisodicMemories", 10);
-        if (!episodicList.isEmpty()) {
-            episodicMemories.clear();
-            for (int i = 0; i < episodicList.size(); i++) {
-                CompoundTag memoryTag = episodicList.getCompound(i);
-                EpisodicMemory memory = new EpisodicMemory(
-                    memoryTag.getString("EventType"),
-                    memoryTag.getString("Description"),
-                    memoryTag.getInt("EmotionalWeight"),
-                    Instant.ofEpochMilli(memoryTag.getLong("Timestamp"))
-                );
-
-                // Load access tracking fields
-                if (memoryTag.contains("AccessCount")) {
-                    for (int j = 0; j < memoryTag.getInt("AccessCount"); j++) {
-                        memory.recordAccess();
-                    }
-                }
-                if (memoryTag.contains("LastAccessed")) {
-                    // This is internal, we'll set it through recordAccess above
-                }
-                if (memoryTag.contains("IsMilestone")) {
-                    memory.setMilestone(memoryTag.getBoolean("IsMilestone"));
-                }
-
-                episodicMemories.add(memory);
-
-                // Rebuild vector store mapping for semantic search
-                addMemoryToVectorStore(memory);
-            }
-        }
-
-        // Load semantic memories
-        ListTag semanticList = tag.getList("SemanticMemories", 10);
-        if (!semanticList.isEmpty()) {
-            semanticMemories.clear();
-            for (int i = 0; i < semanticList.size(); i++) {
-                CompoundTag semanticTag = semanticList.getCompound(i);
-                String key = semanticTag.getString("Key");
-                String category = semanticTag.getString("Category");
-                String factKey = semanticTag.getString("FactKey");
-                String valueType = semanticTag.getString("ValueType");
-
-                Object value = switch (valueType) {
-                    case "int" -> semanticTag.getInt("Value");
-                    case "boolean" -> semanticTag.getBoolean("Value");
-                    default -> semanticTag.getString("Value");
-                };
-
-                SemanticMemory memory = new SemanticMemory(
-                    category, factKey, value,
-                    Instant.ofEpochMilli(semanticTag.getLong("LearnedAt"))
-                );
-                memory.confidence = semanticTag.getInt("Confidence");
-                semanticMemories.put(key, memory);
-            }
-        }
-
-        // Load emotional memories
-        // MEMORY LEAK FIX: Synchronized access to emotionalMemories for thread safety
-        ListTag emotionalList = tag.getList("EmotionalMemories", 10);
-        if (!emotionalList.isEmpty()) {
-            synchronized (this) {
-                emotionalMemories.clear();
-                for (int i = 0; i < emotionalList.size(); i++) {
-                    CompoundTag emotionTag = emotionalList.getCompound(i);
-                    EmotionalMemory memory = new EmotionalMemory(
-                        emotionTag.getString("EventType"),
-                        emotionTag.getString("Description"),
-                        emotionTag.getInt("EmotionalWeight"),
-                        Instant.ofEpochMilli(emotionTag.getLong("Timestamp"))
-                    );
-                    emotionalMemories.add(memory);
-                }
-            }
-        }
-
-        // Load inside jokes
-        ListTag jokesList = tag.getList("InsideJokes", 10);
-        if (!jokesList.isEmpty()) {
-            conversationalMemory.clearInsideJokes();
-            for (int i = 0; i < jokesList.size(); i++) {
-                CompoundTag jokeTag = jokesList.getCompound(i);
-                InsideJoke joke = new InsideJoke(
-                    jokeTag.getString("Context"),
-                    jokeTag.getString("Punchline"),
-                    Instant.ofEpochMilli(jokeTag.getLong("CreatedAt"))
-                );
-                joke.referenceCount = jokeTag.getInt("ReferenceCount");
-                conversationalMemory.addInsideJokeDirect(joke);
-            }
-        }
-
-        // Load discussed topics
-        ListTag topicsList = tag.getList("DiscussedTopics", 8);
-        if (!topicsList.isEmpty()) {
-            conversationalMemory.clearDiscussedTopics();
-            for (int i = 0; i < topicsList.size(); i++) {
-                conversationalMemory.addDiscussedTopicDirect(topicsList.getString(i));
-            }
-        }
-
-        // Load phrase usage
-        CompoundTag phraseUsageTag = tag.getCompound("PhraseUsage");
-        if (!phraseUsageTag.isEmpty()) {
-            conversationalMemory.clearPhraseUsage();
-            for (String key : phraseUsageTag.getAllKeys()) {
-                conversationalMemory.addPhraseUsage(key, phraseUsageTag.getInt(key));
-            }
-        }
-
-        // Load player preferences
-        CompoundTag preferencesTag = tag.getCompound("PlayerPreferences");
-        if (!preferencesTag.isEmpty()) {
-            playerPreferences.clear();
-            for (String key : preferencesTag.getAllKeys()) {
-                Object value = preferencesTag.contains(key, 99)
-                    ? preferencesTag.getInt(key)
-                    : preferencesTag.getString(key);
-                playerPreferences.put(key, value);
-            }
-        }
-
-        // Load playstyle metrics
-        CompoundTag playstyleTag = tag.getCompound("PlaystyleMetrics");
-        if (!playstyleTag.isEmpty()) {
-            playstyleMetrics.clear();
-            for (String key : playstyleTag.getAllKeys()) {
-                playstyleMetrics.put(key, playstyleTag.getInt(key));
-            }
-        }
-
-        // Load personality
-        CompoundTag personalityTag = tag.getCompound("Personality");
-        if (!personalityTag.isEmpty()) {
-            personality.openness = personalityTag.getInt("Openness");
-            personality.conscientiousness = personalityTag.getInt("Conscientiousness");
-            personality.extraversion = personalityTag.getInt("Extraversion");
-            personality.agreeableness = personalityTag.getInt("Agreeableness");
-            personality.neuroticism = personalityTag.getInt("Neuroticism");
-            personality.humor = personalityTag.getInt("Humor");
-            personality.encouragement = personalityTag.getInt("Encouragement");
-            personality.formality = personalityTag.getInt("Formality");
-
-            personality.favoriteBlock = personalityTag.getString("FavoriteBlock");
-            personality.workStyle = personalityTag.getString("WorkStyle");
-            personality.mood = personalityTag.getString("Mood");
-            personality.archetypeName = personalityTag.contains("ArchetypeName")
-                ? personalityTag.getString("ArchetypeName")
-                : "THE_FOREMAN";
-
-            // Load catchphrases
-            ListTag catchphrasesList = personalityTag.getList("Catchphrases", 8);
-            if (!catchphrasesList.isEmpty()) {
-                personality.catchphrases.clear();
-                for (int i = 0; i < catchphrasesList.size(); i++) {
-                    personality.catchphrases.add(catchphrasesList.getString(i));
-                }
-            }
-
-            // Load verbal tics
-            ListTag verbalTicsList = personalityTag.getList("VerbalTics", 8);
-            if (!verbalTicsList.isEmpty()) {
-                personality.verbalTics.clear();
-                for (int i = 0; i < verbalTicsList.size(); i++) {
-                    personality.verbalTics.add(verbalTicsList.getString(i));
-                }
-            }
-
-            // Load tic usage counts
-            CompoundTag ticUsageTag = personalityTag.getCompound("TicUsageCount");
-            if (!ticUsageTag.isEmpty()) {
-                personality.ticUsageCount.clear();
-                for (String key : ticUsageTag.getAllKeys()) {
-                    personality.ticUsageCount.put(key, ticUsageTag.getInt(key));
-                }
-            }
-        }
-
-        LOGGER.info("CompanionMemory loaded from NBT ({} episodic, {} semantic memories)",
-            episodicMemories.size(), semanticMemories.size());
+        CompanionMemorySerializer.loadFromNBT(tag, memoryStore, relationshipTracker,
+            personalitySystem.getPersonality());
     }
 
-    // === NBT Helper Methods ===
-
-    /**
-     * Saves an Object value to NBT with type tag.
-     */
-    private void saveValueToNBT(CompoundTag tag, String key, Object value) {
-        if (value instanceof String) {
-            tag.putString(key, (String) value);
-            tag.putString(key + "Type", "string");
-        } else if (value instanceof Integer) {
-            tag.putInt(key, (Integer) value);
-            tag.putString(key + "Type", "int");
-        } else if (value instanceof Boolean) {
-            tag.putBoolean(key, (Boolean) value);
-            tag.putString(key + "Type", "boolean");
-        } else {
-            tag.putString(key, value.toString());
-            tag.putString(key + "Type", "string");
-        }
-    }
-
-    /**
-     * Loads an Object value from NBT based on type tag.
-     */
-    private Object loadValueFromNBT(CompoundTag tag, String key) {
-        String valueType = tag.getString(key + "Type");
-        return switch (valueType) {
-            case "int" -> tag.getInt(key);
-            case "boolean" -> tag.getBoolean(key);
-            default -> tag.getString(key);
-        };
-    }
-
-    // === Inner Classes ===
+    // === Inner Classes (Preserved for backward compatibility) ===
 
     /**
      * An episodic memory of a specific event.
@@ -1527,6 +483,13 @@ public class CompanionMemory {
          */
         public boolean isProtected() {
             return isMilestone || Math.abs(emotionalWeight) >= 8;
+        }
+
+        /**
+         * Checks if this memory is a milestone.
+         */
+        public boolean isMilestone() {
+            return isMilestone;
         }
 
         public int getAccessCount() {
@@ -1624,29 +587,19 @@ public class CompanionMemory {
 
     /**
      * Conversational memory including jokes and references.
-     *
-     * PERFORMANCE OPTIMIZATION (Week 1 P0): Eliminated O(n log n) sort on every joke addition.
-     * Now uses linear scan to find and remove the least referenced joke (O(n)) instead of
-     * sorting the entire list (O(n log n)). This is faster for small lists (< 30 items).
-     * Thread-safe: uses CopyOnWriteArrayList for safe concurrent access.
      */
     public static class ConversationalMemory {
-        private final List<InsideJoke> insideJokes = new CopyOnWriteArrayList<>();
-        private final Set<String> discussedTopics = ConcurrentHashMap.newKeySet();
-        private final Map<String, Integer> phraseUsage = new ConcurrentHashMap<>();
+        private final List<InsideJoke> insideJokes = new java.util.concurrent.CopyOnWriteArrayList<>();
+        private final Set<String> discussedTopics = java.util.concurrent.ConcurrentHashMap.newKeySet();
+        private final Map<String, Integer> phraseUsage = new java.util.concurrent.ConcurrentHashMap<>();
 
-        /**
-         * PERFORMANCE OPTIMIZATION: O(n) linear scan instead of O(n log n) sort.
-         * For small lists (< 30 items), this is faster and simpler.
-         */
         public void addInsideJoke(InsideJoke joke) {
             insideJokes.add(joke);
 
-            if (insideJokes.size() > MAX_INSIDE_JOKES) {
-                // PERFORMANCE: Remove least referenced joke using O(n) scan instead of O(n log n) sort
+            if (insideJokes.size() > 30) {
+                // Remove least referenced joke
                 synchronized (this) {
-                    if (insideJokes.size() > MAX_INSIDE_JOKES) {
-                        // Find and remove joke with minimum reference count
+                    if (insideJokes.size() > 30) {
                         int minIndex = 0;
                         int minCount = Integer.MAX_VALUE;
 
@@ -1658,7 +611,6 @@ public class CompanionMemory {
                             }
                         }
 
-                        // Remove the least referenced joke
                         insideJokes.remove(minIndex);
                     }
                 }
@@ -1667,7 +619,7 @@ public class CompanionMemory {
 
         public InsideJoke getRandomJoke() {
             if (insideJokes.isEmpty()) return null;
-            InsideJoke joke = insideJokes.get(new Random().nextInt(insideJokes.size()));
+            InsideJoke joke = insideJokes.get(new java.util.Random().nextInt(insideJokes.size()));
             joke.incrementReference();
             return joke;
         }
@@ -1690,6 +642,19 @@ public class CompanionMemory {
 
         public int getPhraseUsageCount(String phrase) {
             return phraseUsage.getOrDefault(phrase, 0);
+        }
+
+        // Getter methods for serialization access
+        List<InsideJoke> getInsideJokes() {
+            return insideJokes;
+        }
+
+        Set<String> getDiscussedTopics() {
+            return discussedTopics;
+        }
+
+        Map<String, Integer> getPhraseUsage() {
+            return phraseUsage;
         }
 
         // Package-private methods for NBT loading
@@ -1772,310 +737,6 @@ public class CompanionMemory {
 
         public String getColor() {
             return color;
-        }
-    }
-
-    /**
-     * Personality profile for the foreman.
-     * Now includes enhanced speech patterns and verbal tics support.
-     * Thread-safe: uses synchronized collections for concurrent access.
-     *
-     * <p><b>ENCAPSULATION FIX (Week 2 P1):</b> All fields are now private with getters/setters.
-     * Validation is performed in setters to ensure data integrity.</p>
-     */
-    public static class PersonalityProfile {
-        // Big Five traits (0-100) - private with validation
-        private volatile int openness = 70;          // Curious, creative
-        private volatile int conscientiousness = 80; // Organized, responsible
-        private volatile int extraversion = 60;      // Sociable, energetic
-        private volatile int agreeableness = 75;     // Cooperative, trusting
-        private volatile int neuroticism = 30;       // Calm, stable
-
-        // Custom traits - private with validation
-        private volatile int humor = 65;             // How often uses humor
-        private volatile int encouragement = 80;     // How encouraging
-        private volatile int formality = 40;         // 0 = casual, 100 = formal
-
-        // Verbal tics and catchphrases - thread-safe lists (private with defensive copies)
-        private final List<String> catchphrases = new CopyOnWriteArrayList<>(List.of(
-            "Right then,",
-            "Let's get to work!",
-            "We've got this.",
-            "Another day, another block."
-        ));
-
-        // Enhanced speech patterns
-        private final List<String> verbalTics = new CopyOnWriteArrayList<>(List.of(
-            "Well,",
-            "You see,",
-            "Here's the thing"
-        ));
-
-        // Speech pattern usage tracking
-        private final Map<String, Integer> ticUsageCount = new ConcurrentHashMap<>();
-        private final List<String> recentTics = Collections.synchronizedList(new ArrayList<>());
-
-        // Preferences (for consistent behavior)
-        private String favoriteBlock = "cobblestone";
-        private String workStyle = "methodical";
-        private String mood = "cheerful";
-
-        // Archetype name if using a predefined archetype
-        private String archetypeName = "THE_FOREMAN";
-
-        // === Getters and Setters with Validation ===
-
-        /** Gets the openness trait (curiosity, creativity). */
-        public int getOpenness() { return openness; }
-
-        /** Sets the openness trait with validation (clamped to 0-100). */
-        public void setOpenness(int value) { this.openness = clampToRange(value, 0, 100); }
-
-        /** Gets the conscientiousness trait (organization, responsibility). */
-        public int getConscientiousness() { return conscientiousness; }
-
-        /** Sets the conscientiousness trait with validation (clamped to 0-100). */
-        public void setConscientiousness(int value) { this.conscientiousness = clampToRange(value, 0, 100); }
-
-        /** Gets the extraversion trait (sociability, energy). */
-        public int getExtraversion() { return extraversion; }
-
-        /** Sets the extraversion trait with validation (clamped to 0-100). */
-        public void setExtraversion(int value) { this.extraversion = clampToRange(value, 0, 100); }
-
-        /** Gets the agreeableness trait (cooperation, trust). */
-        public int getAgreeableness() { return agreeableness; }
-
-        /** Sets the agreeableness trait with validation (clamped to 0-100). */
-        public void setAgreeableness(int value) { this.agreeableness = clampToRange(value, 0, 100); }
-
-        /** Gets the neuroticism trait (emotional stability). */
-        public int getNeuroticism() { return neuroticism; }
-
-        /** Sets the neuroticism trait with validation (clamped to 0-100). */
-        public void setNeuroticism(int value) { this.neuroticism = clampToRange(value, 0, 100); }
-
-        /** Gets the humor level (how often humor is used). */
-        public int getHumor() { return humor; }
-
-        /** Sets the humor level with validation (clamped to 0-100). */
-        public void setHumor(int value) { this.humor = clampToRange(value, 0, 100); }
-
-        /** Gets the encouragement level. */
-        public int getEncouragement() { return encouragement; }
-
-        /** Sets the encouragement level with validation (clamped to 0-100). */
-        public void setEncouragement(int value) { this.encouragement = clampToRange(value, 0, 100); }
-
-        /** Gets the formality level (0=casual, 100=formal). */
-        public int getFormality() { return formality; }
-
-        /** Sets the formality level with validation (clamped to 0-100). */
-        public void setFormality(int value) { this.formality = clampToRange(value, 0, 100); }
-
-        /** Gets an unmodifiable view of the catchphrases list. */
-        public List<String> getCatchphrases() { return Collections.unmodifiableList(catchphrases); }
-
-        /** Adds a catchphrase to the list (validates for null/empty). */
-        public void addCatchphrase(String phrase) {
-            if (phrase != null && !phrase.isBlank()) { this.catchphrases.add(phrase); }
-        }
-
-        /** Removes a catchphrase from the list. */
-        public void removeCatchphrase(String phrase) { this.catchphrases.remove(phrase); }
-
-        /** Clears all catchphrases and sets new ones. */
-        public void setCatchphrases(List<String> phrases) {
-            if (phrases != null) {
-                this.catchphrases.clear();
-                this.catchphrases.addAll(phrases);
-            }
-        }
-
-        /** Gets an unmodifiable view of the verbal tics list. */
-        public List<String> getVerbalTics() { return Collections.unmodifiableList(verbalTics); }
-
-        /** Adds a verbal tic to the list (validates for null/empty). */
-        public void addVerbalTic(String tic) {
-            if (tic != null && !tic.isBlank()) { this.verbalTics.add(tic); }
-        }
-
-        /** Removes a verbal tic from the list. */
-        public void removeVerbalTic(String tic) { this.verbalTics.remove(tic); }
-
-        /** Clears all verbal tics and sets new ones. */
-        public void setVerbalTics(List<String> tics) {
-            if (tics != null) {
-                this.verbalTics.clear();
-                this.verbalTics.addAll(tics);
-            }
-        }
-
-        /** Gets the tic usage count map (defensive copy). */
-        public Map<String, Integer> getTicUsageCount() { return new HashMap<>(ticUsageCount); }
-
-        /** Gets the recent tics list (defensive copy). */
-        public List<String> getRecentTics() { return new ArrayList<>(recentTics); }
-
-        /** Gets the favorite block type. */
-        public String getFavoriteBlock() { return favoriteBlock; }
-
-        /** Sets the favorite block type with validation (null-safe). */
-        public void setFavoriteBlock(String block) { this.favoriteBlock = block != null ? block : "cobblestone"; }
-
-        /** Gets the work style. */
-        public String getWorkStyle() { return workStyle; }
-
-        /** Sets the work style with validation (null-safe). */
-        public void setWorkStyle(String style) { this.workStyle = style != null ? style : "methodical"; }
-
-        /** Gets the current mood. */
-        public String getMood() { return mood; }
-
-        /** Sets the mood with validation (null-safe). */
-        public void setMood(String mood) { this.mood = mood != null ? mood : "cheerful"; }
-
-        /** Gets the archetype name. */
-        public String getArchetypeName() { return archetypeName; }
-
-        /** Sets the archetype name with validation (null-safe). */
-        public void setArchetypeName(String name) { this.archetypeName = name != null ? name : "THE_FOREMAN"; }
-
-        /** Helper method to clamp values to a valid range. */
-        private int clampToRange(int value, int min, int max) {
-            return Math.max(min, Math.min(max, value));
-        }
-
-        /**
-         * Generates a personality summary for prompting.
-         */
-        public String toPromptContext() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Personality Traits:\n");
-            sb.append("- Openness: ").append(openness).append("% (curious and creative)\n");
-            sb.append("- Conscientiousness: ").append(conscientiousness).append("% (organized and reliable)\n");
-            sb.append("- Extraversion: ").append(extraversion).append("% (").append(extraversion > 50 ? "outgoing" : "reserved").append(")\n");
-            sb.append("- Agreeableness: ").append(agreeableness).append("% (cooperative)\n");
-            sb.append("- Humor Level: ").append(humor).append("%\n");
-            sb.append("- Formality: ").append(formality > 50 ? "formal" : "casual and friendly").append("\n");
-            sb.append("- Current mood: ").append(mood).append("\n");
-            sb.append("- Archetype: ").append(archetypeName).append("\n");
-
-            if (!catchphrases.isEmpty()) {
-                sb.append("- Catchphrases: ");
-                int count = Math.min(3, catchphrases.size());
-                sb.append(String.join(", ", catchphrases.subList(0, count)));
-                if (catchphrases.size() > 3) {
-                    sb.append(" (and ").append(catchphrases.size() - 3).append(" more)");
-                }
-                sb.append("\n");
-            }
-
-            if (!verbalTics.isEmpty()) {
-                sb.append("- Verbal Tics (use occasionally): ");
-                sb.append(String.join(", ", verbalTics)).append("\n");
-            }
-
-            sb.append("- Favorite block: ").append(favoriteBlock).append("\n");
-            return sb.toString();
-        }
-
-        /**
-         * Applies a foreman archetype configuration to this profile.
-         * ENCAPSULATION FIX: Now uses setter methods for validation.
-         */
-        public void applyArchetype(com.minewright.personality.ForemanArchetypeConfig.ForemanArchetype archetype) {
-            com.minewright.personality.PersonalityTraits traits = archetype.getTraits();
-            setOpenness(traits.getOpenness());
-            setConscientiousness(traits.getConscientiousness());
-            setExtraversion(traits.getExtraversion());
-            setAgreeableness(traits.getAgreeableness());
-            setNeuroticism(traits.getNeuroticism());
-            setFormality(archetype.getFormality());
-            setHumor(archetype.getHumor());
-            setEncouragement(archetype.getEncouragement());
-            setCatchphrases(new ArrayList<>(archetype.getCatchphrases()));
-            setVerbalTics(new ArrayList<>(archetype.getVerbalTics()));
-            setArchetypeName(archetype.getName());
-        }
-
-        /**
-         * Gets a random verbal tic, tracking usage for variety.
-         */
-        public String getRandomVerbalTic() {
-            if (verbalTics.isEmpty()) {
-                return "";
-            }
-
-            // Track recent tics to avoid repetition
-            String selectedTic;
-            int attempts = 0;
-            do {
-                selectedTic = verbalTics.get(new Random().nextInt(verbalTics.size()));
-                attempts++;
-            } while (recentTics.contains(selectedTic) && attempts < 5);
-
-            // Update tracking
-            ticUsageCount.merge(selectedTic, 1, Integer::sum);
-            recentTics.add(selectedTic);
-            if (recentTics.size() > 5) {
-                recentTics.remove(0);
-            }
-
-            return selectedTic;
-        }
-
-        /**
-         * Checks if a verbal tic should be used based on personality and recent usage.
-         */
-        public boolean shouldUseVerbalTic() {
-            if (verbalTics.isEmpty()) {
-                return false;
-            }
-
-            // Base chance based on neuroticism (nervous characters tic more)
-            double baseChance = 0.15 + (neuroticism / 500.0); // 15% to 35%
-
-            // Adjust based on recent tic usage (don't overuse)
-            if (!recentTics.isEmpty()) {
-                double recentPenalty = recentTics.size() * 0.05;
-                baseChance -= recentPenalty;
-            }
-
-            return new Random().nextDouble() < Math.max(0.05, baseChance);
-        }
-
-        /**
-         * Gets the speech pattern description for this personality.
-         */
-        public String getSpeechPatternDescription() {
-            List<String> patterns = new ArrayList<>();
-
-            if (extraversion > 70) {
-                patterns.add("enthusiastic and expressive");
-            } else if (extraversion < 40) {
-                patterns.add("quiet and thoughtful");
-            }
-
-            if (formality > 60) {
-                patterns.add("formal and polite");
-            } else if (formality < 40) {
-                patterns.add("casual and relaxed");
-            }
-
-            if (humor > 60) {
-                patterns.add("frequently humorous");
-            }
-
-            if (conscientiousness > 70) {
-                patterns.add("methodical and precise");
-            }
-
-            if (patterns.isEmpty()) {
-                return "balanced and friendly";
-            }
-
-            return String.join(", ", patterns);
         }
     }
 }

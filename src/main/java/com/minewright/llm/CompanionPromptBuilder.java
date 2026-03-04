@@ -1,7 +1,9 @@
 package com.minewright.llm;
 
 import com.minewright.memory.CompanionMemory;
-import com.minewright.memory.CompanionMemory.*;
+import com.minewright.memory.CompanionMemory.EpisodicMemory;
+import com.minewright.memory.CompanionMemory.InsideJoke;
+import com.minewright.memory.PersonalitySystem.PersonalityProfile;
 import com.minewright.memory.WorldKnowledge;
 import com.minewright.entity.ForemanEntity;
 

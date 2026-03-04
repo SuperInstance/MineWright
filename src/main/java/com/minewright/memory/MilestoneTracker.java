@@ -413,7 +413,7 @@ public class MilestoneTracker {
     public String generateMilestoneMessage(Milestone milestone, CompanionMemory memory) {
         int rapport = memory.getRapportLevel();
         String playerName = memory.getPlayerName() != null ? memory.getPlayerName() : "friend";
-        CompanionMemory.PersonalityProfile personality = memory.getPersonality();
+        PersonalitySystem.PersonalityProfile personality = memory.getPersonality();
 
         StringBuilder prompt = new StringBuilder();
 
@@ -511,7 +511,7 @@ public class MilestoneTracker {
      * Gets milestone-specific celebration guidance.
      */
     private String getMilestoneGuidance(Milestone milestone, int rapport,
-                                       CompanionMemory.PersonalityProfile personality) {
+                                       PersonalitySystem.PersonalityProfile personality) {
         StringBuilder guidance = new StringBuilder();
         guidance.append("CELEBRATION APPROACH:\n");
 
@@ -558,7 +558,7 @@ public class MilestoneTracker {
     /**
      * Gets rapport-specific emotional guidance.
      */
-    private String getRapportGuidance(int rapport, CompanionMemory.PersonalityProfile personality) {
+    private String getRapportGuidance(int rapport, PersonalitySystem.PersonalityProfile personality) {
         StringBuilder guidance = new StringBuilder();
         guidance.append("EMOTIONAL TONE:\n");
 

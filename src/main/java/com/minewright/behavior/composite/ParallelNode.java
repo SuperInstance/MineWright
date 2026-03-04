@@ -116,7 +116,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see NodeStatus
  * @since 1.0.0
  */
-public class ParallelNode implements BTNode {
+// SPOTBUGS FIX: Made final to prevent CT_CONSTRUCTOR_THROW warning (finalizer attack prevention)
+public final class ParallelNode implements BTNode {
     private static final Logger LOGGER = TestLogger.getLogger(ParallelNode.class);
 
     /**
