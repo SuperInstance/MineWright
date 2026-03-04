@@ -40,7 +40,7 @@ import java.util.Optional;
  * <p><b>Usage:</b></p>
  * <pre>
  * // Create the full orchestrator with all subsystems
- * SteveOrchestrator orchestrator = SystemFactory.createOrchestrator();
+ * MineWrightOrchestrator orchestrator = SystemFactory.createOrchestrator();
  *
  * // Or create individual systems for testing
  * SkillLibrary skills = SystemFactory.createSkillLibrary();
@@ -66,14 +66,14 @@ public class SystemFactory {
     private static volatile ContractNetManager sharedContractNetManager;
     private static volatile Blackboard sharedBlackboard;
     private static volatile CommunicationBus sharedCommunicationBus;
-    private static volatile SteveOrchestrator sharedOrchestrator;
+    private static volatile MineWrightOrchestrator sharedOrchestrator;
 
     // ------------------------------------------------------------------------
     // Main Factory Methods
     // ------------------------------------------------------------------------
 
     /**
-     * Creates a fully configured SteveOrchestrator with all subsystems.
+     * Creates a fully configured MineWrightOrchestrator with all subsystems.
      *
      * <p>This is the main entry point for creating the complete integration
      * layer. All subsystems are created, configured, and wired together.</p>
@@ -89,9 +89,9 @@ public class SystemFactory {
      *   <li>CommunicationBus - Inter-agent messaging</li>
      * </ul>
      *
-     * @return Fully configured SteveOrchestrator
+     * @return Fully configured MineWrightOrchestrator
      */
-    public static SteveOrchestrator createOrchestrator() {
+    public static MineWrightOrchestrator createOrchestrator() {
         if (sharedOrchestrator != null) {
             LOGGER.debug("Returning existing orchestrator instance");
             return sharedOrchestrator;
@@ -102,7 +102,7 @@ public class SystemFactory {
                 return sharedOrchestrator;
             }
 
-            LOGGER.info("Creating SteveOrchestrator with all subsystems...");
+            LOGGER.info("Creating MineWrightOrchestrator with all subsystems...");
 
             // Create all subsystems
             SkillLibrary skillLibrary = createSkillLibrary();
@@ -114,7 +114,7 @@ public class SystemFactory {
             CommunicationBus commBus = createCommunicationBus();
 
             // Wire them together
-            SteveOrchestrator orchestrator = new SteveOrchestrator(
+            MineWrightOrchestrator orchestrator = new MineWrightOrchestrator(
                 skillLibrary,
                 cascadeRouter,
                 taskPlanner,
@@ -126,7 +126,7 @@ public class SystemFactory {
 
             sharedOrchestrator = orchestrator;
 
-            LOGGER.info("SteveOrchestrator created successfully");
+            LOGGER.info("MineWrightOrchestrator created successfully");
 
             return orchestrator;
         }
@@ -138,12 +138,12 @@ public class SystemFactory {
      * <p>This creates an orchestrator with only the essential systems.
      * Useful for unit testing or when full integration is not needed.</p>
      *
-     * @return Minimal SteveOrchestrator
+     * @return Minimal MineWrightOrchestrator
      */
-    public static SteveOrchestrator createMinimalOrchestrator() {
+    public static MineWrightOrchestrator createMinimalOrchestrator() {
         LOGGER.debug("Creating minimal orchestrator");
 
-        return new SteveOrchestrator(
+        return new MineWrightOrchestrator(
             createSkillLibrary(),
             null, // No cascade router
             createTaskPlanner(),
@@ -301,7 +301,7 @@ public class SystemFactory {
      *
      * @return Optional containing the orchestrator, or empty
      */
-    public static Optional<SteveOrchestrator> getOrchestrator() {
+    public static Optional<MineWrightOrchestrator> getOrchestrator() {
         return Optional.ofNullable(sharedOrchestrator);
     }
 
@@ -404,7 +404,7 @@ public class SystemFactory {
                 sharedBlackboard = null;
             } else if (systemClass == CommunicationBus.class) {
                 sharedCommunicationBus = null;
-            } else if (systemClass == SteveOrchestrator.class) {
+            } else if (systemClass == MineWrightOrchestrator.class) {
                 sharedOrchestrator = null;
             } else {
                 LOGGER.warn("Unknown system class: {}", systemClass.getName());

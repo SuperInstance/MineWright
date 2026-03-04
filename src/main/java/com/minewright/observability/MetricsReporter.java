@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Report generation for the Steve AI observability system.
+ * Report generation for the MineWright observability system.
  * Creates human-readable text reports and machine-readable exports.
  *
  * <p>This reporter provides:

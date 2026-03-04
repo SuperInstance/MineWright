@@ -3,7 +3,7 @@
     "id": "exploration_safe",
     "name": "Safe Exploration",
     "description": "Safely explores new terrain, marks points of interest, and returns home at night",
-    "author": "Steve AI",
+    "author": "MineWright",
     "version": "1.0.0",
     "tags": ["exploration", "mapping", "safe"],
     "category": "exploration"

@@ -1,7 +1,7 @@
 {
   "name": "mining_iron",
   "description": "Mine iron ore and smelt to ingots",
-  "author": "Steve AI",
+  "author": "MineWright",
   "version": "1.0.0",
   "tags": ["mining", "iron", "smelting"],
   "settings": {

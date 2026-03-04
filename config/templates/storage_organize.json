@@ -3,7 +3,7 @@
     "id": "storage_organize",
     "name": "Inventory Organization System",
     "description": "Intelligently sorts, stores, and manages inventory with automatic categorization",
-    "author": "Steve AI",
+    "author": "MineWright",
     "version": "1.0.0",
     "tags": ["storage", "organization", "inventory"],
     "category": "utility"

@@ -259,6 +259,7 @@ public class Blackboard {
      * @param key The entry key to look up
      * @return Optional containing the value if found, empty otherwise
      */
+    // CODE_QUALITY: Cast is safe as caller controls type parameter T and ClassCastException is caught
     @SuppressWarnings("unchecked")
     public <T> Optional<T> query(KnowledgeArea area, String key) {
         if (area == null || key == null) {

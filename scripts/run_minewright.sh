@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Steve AI Mod - Launch Script
+# MineWright Mod - Launch Script
 # This script sets up Java and runs Minecraft with the mod
 
 cd "$(dirname "$0")"
 
-echo "🎮 Steve AI Mod - Launcher"
+echo "🎮 MineWright Mod - Launcher"
 echo "================================"
 echo ""
 
@@ -26,4 +26,3 @@ echo ""
 echo ""
 echo "================================"
 echo "Minecraft closed. Thanks for testing!"
-

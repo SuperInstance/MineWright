@@ -306,7 +306,7 @@ public class LoggingVoiceSystem implements VoiceSystem {
         public List<Voice> getAvailableVoices() {
             return List.of(
                 Voice.of("default", "Default Voice", "en-US", "neutral"),
-                Voice.of("steve", "Steve Voice", "en-US", "male"),
+                Voice.of("mace", "Mace Voice", "en-US", "male"),
                 Voice.of("alex", "Alex Voice", "en-US", "female")
             );
         }

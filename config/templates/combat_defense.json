@@ -3,7 +3,7 @@
     "id": "combat_defense",
     "name": "Defensive Combat",
     "description": "Defensive combat AI that attacks threats and retreats when low on health",
-    "author": "Steve AI",
+    "author": "MineWright",
     "version": "1.0.0",
     "tags": ["combat", "defense", "survival"],
     "category": "combat"

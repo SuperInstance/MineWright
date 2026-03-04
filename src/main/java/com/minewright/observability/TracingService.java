@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
- * Central tracing service for distributed tracing in the Steve AI system.
+ * Central tracing service for distributed tracing in the MineWright system.
  * Manages span lifecycle, thread-local context propagation, and trace export.
  *
  * <p>This service provides:

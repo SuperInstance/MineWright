@@ -60,7 +60,7 @@ public final class IntegrationHooks {
     // Singleton Orchestrator Reference
     // ------------------------------------------------------------------------
 
-    private static volatile SteveOrchestrator orchestrator;
+    private static volatile MineWrightOrchestrator orchestrator;
     private static volatile boolean initialized = false;
 
     // ------------------------------------------------------------------------
@@ -75,7 +75,7 @@ public final class IntegrationHooks {
      *
      * @return The initialized orchestrator
      */
-    public static SteveOrchestrator initialize() {
+    public static MineWrightOrchestrator initialize() {
         if (initialized) {
             return getOrchestrator().orElse(null);
         }
@@ -101,7 +101,7 @@ public final class IntegrationHooks {
      *
      * @return Optional containing the orchestrator, or empty
      */
-    public static Optional<SteveOrchestrator> getOrchestrator() {
+    public static Optional<MineWrightOrchestrator> getOrchestrator() {
         return Optional.ofNullable(orchestrator);
     }
 

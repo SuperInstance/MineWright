@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Central orchestrator that coordinates all Steve AI subsystems.
+ * Central orchestrator that coordinates all MineWright subsystems.
  *
  * <p><b>Flow:</b> Command → Skills → Router → Planner → Prioritizer → Executor</p>
  *
@@ -79,9 +79,9 @@ import java.util.stream.Collectors;
  *
  * @since 1.6.0
  */
-public class SteveOrchestrator {
+public class MineWrightOrchestrator {
 
-    private static final Logger LOGGER = TestLogger.getLogger(SteveOrchestrator.class);
+    private static final Logger LOGGER = TestLogger.getLogger(MineWrightOrchestrator.class);
 
     // ------------------------------------------------------------------------
     // Dependencies
@@ -111,7 +111,7 @@ public class SteveOrchestrator {
     private boolean blackboardEnabled = true;
 
     /**
-     * Creates a new SteveOrchestrator with all subsystems.
+     * Creates a new MineWrightOrchestrator with all subsystems.
      *
      * @param skillLibrary   Skill library for pattern learning
      * @param cascadeRouter  Cascade router for LLM tier selection
@@ -121,7 +121,7 @@ public class SteveOrchestrator {
      * @param blackboard     Blackboard for shared knowledge
      * @param commBus        Communication bus for inter-agent messaging
      */
-    public SteveOrchestrator(
+    public MineWrightOrchestrator(
         SkillLibrary skillLibrary,
         CascadeRouter cascadeRouter,
         TaskPlanner taskPlanner,
@@ -141,7 +141,7 @@ public class SteveOrchestrator {
         this.pendingTasks = new ConcurrentHashMap<>();
         this.processingStats = new ConcurrentHashMap<>();
 
-        LOGGER.info("SteveOrchestrator initialized with all subsystems");
+        LOGGER.info("MineWrightOrchestrator initialized with all subsystems");
     }
 
     // ------------------------------------------------------------------------

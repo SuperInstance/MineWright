@@ -48,7 +48,7 @@ public class MovementValidator {
     /** Entity bounding box width (default: 0.6 for most entities). */
     private static final double ENTITY_WIDTH = 0.6;
 
-    /** Entity height (default: 1.8 for players/steve). */
+    /** Entity height (default: 1.8 for players/foreman). */
     private static final double ENTITY_HEIGHT = 1.8;
 
     /** Eye height for looking up (default: 1.62). */

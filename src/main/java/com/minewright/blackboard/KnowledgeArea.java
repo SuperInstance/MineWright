@@ -60,9 +60,9 @@ public enum KnowledgeArea {
      * <p><b>Staleness Tolerance:</b> Low (agent status affects coordination)</p>
      * <p><b>Example Entries:</b></p>
      * <ul>
-     *   <li>"agent_steve_001" -> Position, health, current task</li>
-     *   <li>"agent_steve_002" -> Inventory contents, equipment</li>
-     *   <li>"agent_steve_001_state" -> IDLE, PLANNING, EXECUTING, etc.</li>
+     *   <li>"agent_mace_001" -> Position, health, current task</li>
+     *   <li>"agent_worker_002" -> Inventory contents, equipment</li>
+     *   <li>"agent_mace_001_state" -> IDLE, PLANNING, EXECUTING, etc.</li>
      * </ul>
      * <p><b>Subscribers:</b> All agents (coordination), orchestration system</p>
      */

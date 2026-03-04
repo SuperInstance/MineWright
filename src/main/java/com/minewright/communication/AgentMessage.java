@@ -91,6 +91,7 @@ public record AgentMessage(
      * @param <T> Expected type
      * @return Value or null if not found
      */
+    // CODE_QUALITY: Cast is safe as caller controls type parameter T
     @SuppressWarnings("unchecked")
     public <T> T getPayload(String key) {
         return (T) payload.get(key);
@@ -104,6 +105,7 @@ public record AgentMessage(
      * @param <T> Expected type
      * @return Value or default
      */
+    // CODE_QUALITY: Cast is safe as caller controls type parameter T
     @SuppressWarnings("unchecked")
     public <T> T getPayload(String key, T defaultValue) {
         Object value = payload.get(key);

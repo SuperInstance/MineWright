@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Comprehensive metrics collection for academic evaluation of Steve AI.
+ * Comprehensive metrics collection for academic evaluation of MineWright.
  *
  * <p>This class provides thread-safe tracking of all performance, cost, and quality metrics
  * required for rigorous evaluation of the dissertation claims. Metrics are automatically

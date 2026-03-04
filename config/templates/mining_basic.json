@@ -3,7 +3,7 @@
     "id": "mining_basic",
     "name": "Basic Mining Automation",
     "description": "Mines specific block type with tool durability management and automatic storage returns",
-    "author": "Steve AI",
+    "author": "MineWright",
     "version": "1.0.0",
     "tags": ["mining", "automation", "resources"],
     "category": "resource_gathering"

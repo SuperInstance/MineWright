@@ -62,7 +62,7 @@ public class SystemHealthMonitor {
     // Dependencies
     // ------------------------------------------------------------------------
 
-    private final SteveOrchestrator orchestrator;
+    private final MineWrightOrchestrator orchestrator;
     private final SkillLibrary skillLibrary;
     private final CascadeRouter cascadeRouter;
     private final TaskPlanner taskPlanner;
@@ -92,7 +92,7 @@ public class SystemHealthMonitor {
      *
      * @param orchestrator The orchestrator to monitor
      */
-    public SystemHealthMonitor(SteveOrchestrator orchestrator) {
+    public SystemHealthMonitor(MineWrightOrchestrator orchestrator) {
         this.orchestrator = orchestrator;
         this.skillLibrary = orchestrator.getSkillLibrary();
         this.cascadeRouter = orchestrator.getCascadeRouter();

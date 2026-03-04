@@ -5,7 +5,16 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -283,6 +292,7 @@ public class Conversation {
      * @param <T> Expected type
      * @return Value or null
      */
+    // CODE_QUALITY: Cast is safe as caller controls type parameter T
     @SuppressWarnings("unchecked")
     public <T> T getMetadata(String key) {
         return (T) metadata.get(key);

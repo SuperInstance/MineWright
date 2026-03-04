@@ -30,22 +30,22 @@ import java.util.concurrent.*;
 public class CodeExecutionEngine {
     private static final Logger LOGGER = TestLogger.getLogger(CodeExecutionEngine.class);
 
-    private final ForemanEntity steve;
+    private final ForemanEntity foreman;
     private final Context graalContext;
-    private final ForemanAPI steveAPI;
+    private final ForemanAPI foremanAPI;
     private final ExecutorService executor;
 
     private static final long DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
     private static final long MIN_TIMEOUT_MS = 1000; // 1 second minimum
     private static final long MAX_TIMEOUT_MS = 60000; // 60 seconds maximum
 
-    public CodeExecutionEngine(ForemanEntity steve) {
-        this.steve = steve;
-        this.steveAPI = new ForemanAPI(steve);
+    public CodeExecutionEngine(ForemanEntity foreman) {
+        this.foreman = foreman;
+        this.foremanAPI = new ForemanAPI(foreman);
 
         // Create single-threaded executor for timeout enforcement
         this.executor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "Steve-Code-Execution");
+            Thread t = new Thread(r, "MineWright-Code-Execution");
             t.setDaemon(true); // Don't prevent JVM shutdown
             return t;
         });
@@ -62,14 +62,14 @@ public class CodeExecutionEngine {
             .option("js.timer-resolution", "1")            // Low resolution timers
             .build();
 
-        // Inject Steve API as the only bridge to Minecraft
-        graalContext.getBindings("js").putMember("steve", steveAPI);
+        // Inject Foreman API as the only bridge to Minecraft
+        graalContext.getBindings("js").putMember("foreman", foremanAPI);
 
         // Add console.log for debugging (optional)
         String consolePolyfill = """
             var console = {
                 log: function(...args) {
-                    java.lang.System.out.println('[Steve Code] ' + args.join(' '));
+                    java.lang.System.out.println('[MineWright Code] ' + args.join(' '));
                 }
             };
             """;
@@ -212,10 +212,10 @@ public class CodeExecutionEngine {
     }
 
     /**
-     * Get the Steve API bridge
+     * Get the Foreman API bridge
      */
     public ForemanAPI getAPI() {
-        return steveAPI;
+        return foremanAPI;
     }
 
     /**

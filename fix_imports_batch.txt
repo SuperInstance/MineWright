@@ -1,0 +1,11 @@
+Files to fix (priority order):
+1. src/main/java/com/minewright/coordination/AwardSelector.java
+2. src/main/java/com/minewright/coordination/AgentCapability.java
+3. src/main/java/com/minewright/coordination/BidCollector.java
+4. src/main/java/com/minewright/coordination/TaskProgress.java
+5. src/main/java/com/minewright/blackboard/Blackboard.java
+6. src/main/java/com/minewright/behavior/BTBlackboard.java
+7. src/main/java/com/minewright/communication/CommunicationBus.java
+8. src/main/java/com/minewright/communication/AgentRadio.java
+9. src/main/java/com/minewright/communication/CommunicationProtocol.java
+10. src/main/java/com/minewright/decision/DecisionContext.java

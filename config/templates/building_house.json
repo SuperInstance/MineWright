@@ -3,7 +3,7 @@
     "id": "building_house",
     "name": "House Building Script",
     "description": "Builds a complete house with area clearing, foundation, walls, and roof",
-    "author": "Steve AI",
+    "author": "MineWright",
     "version": "1.0.0",
     "tags": ["building", "construction", "house"],
     "category": "construction"

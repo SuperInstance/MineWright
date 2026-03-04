@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.stream.Collectors;
 
 /**
- * Thread-safe metrics collection for the Steve AI observability system.
+ * Thread-safe metrics collection for the MineWright observability system.
  * Tracks agent performance, LLM usage, skill execution, and system health.
  *
  * <p>This collector provides:

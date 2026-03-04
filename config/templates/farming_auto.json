@@ -3,7 +3,7 @@
     "id": "farming_auto",
     "name": "Automated Farming",
     "description": "Automatically plants, grows, and harvests crops with intelligent replanting",
-    "author": "Steve AI",
+    "author": "MineWright",
     "version": "1.0.0",
     "tags": ["farming", "automation", "crops"],
     "category": "resource_generation"

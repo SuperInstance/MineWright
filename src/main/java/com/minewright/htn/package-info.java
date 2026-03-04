@@ -1,5 +1,5 @@
 /**
- * Hierarchical Task Network (HTN) planning infrastructure for Steve AI.
+ * Hierarchical Task Network (HTN) planning infrastructure for MineWright.
  *
  * <h2>Overview</h2>
  * <p>HTN planning decomposes high-level compound tasks into primitive executable actions

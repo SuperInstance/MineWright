@@ -1,7 +1,7 @@
 {
   "name": "farming_wheat",
   "description": "Plant and harvest wheat automatically",
-  "author": "Steve AI",
+  "author": "MineWright",
   "version": "1.0.0",
   "tags": ["farming", "wheat", "food", "automation"],
   "settings": {

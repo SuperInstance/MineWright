@@ -1,7 +1,7 @@
 {
   "name": "building_house",
   "description": "Build a simple wooden house",
-  "author": "Steve AI",
+  "author": "MineWright",
   "version": "1.0.0",
   "tags": ["building", "wood", "construction"],
   "settings": {

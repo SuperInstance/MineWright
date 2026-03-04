@@ -261,8 +261,8 @@ task jacocoCoverageReport {
 checkstyle {
     toolVersion = '10.21.2'
     configFile = file('config/checkstyle/checkstyle.xml')
-    ignoreFailures = true  // Allow build to pass while we improve code style
-    maxWarnings = 0
+    ignoreFailures = true  // TODO: Gradually enforce - currently 4,562 warnings. See docs/audits/CHECKSTYLE_SPOTBUGS_ANALYSIS.md
+    maxWarnings = 4000  // Gradually reduce to 0 over 8 weeks
     maxErrors = 0
 }
 
@@ -276,7 +276,7 @@ checkstyleTest {
 
 // SpotBugs configuration
 spotbugs {
-    ignoreFailures = true  // Allow build to pass while we fix bugs
+    ignoreFailures = true  // TODO: Gradually enforce - currently ~400 issues. See docs/audits/CHECKSTYLE_SPOTBUGS_ANALYSIS.md
     showProgress = true
     excludeFilter = file('config/spotbugs/spotbugs-exclude.xml')
 }
