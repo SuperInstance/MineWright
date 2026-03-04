@@ -71,7 +71,7 @@
  * Planning calls use immutable snapshots and independent tracking structures.</p>
  *
  * @see com.minewright.action.ActionExecutor
- * @see com.minewright.llm.TaskPlanner
+ * @see com.minewright.action.TaskPlanner
  *
  * @since 1.0.0
  */

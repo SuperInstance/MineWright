@@ -1,7 +1,7 @@
 package com.minewright.dialogue;
 
 import com.minewright.entity.ForemanEntity;
-import com.minewright.execution.ActionExecutor;
+import com.minewright.action.ActionExecutor;
 import com.minewright.memory.CompanionMemory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
