@@ -8,81 +8,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Key Concept**: "One Abstraction Away" - LLMs plan and coordinate (Brain Layer), while traditional game AI executes (Script/Physical Layer). This enables 60 FPS execution without blocking on LLM calls.
 
-**Recent Updates (2026-03-04 - Waves 42-48):**
-- ✅ **Wave 48: Large Class Refactoring** - Split 2 major god classes into focused components
-  - ProactiveDialogueManager: 1,061 → 377 lines (64% reduction)
-    - DialogueTriggerChecker (250 lines) - Trigger detection logic
-    - DialogueCommentGenerator (350 lines) - Content generation with LLM
-    - DialogueSpeechPatternManager (150 lines) - Speech pattern management
-    - DialogueAnalytics (165 lines) - Statistics and tracking
-  - TaskRebalancingManager: 999 → 764 lines (23% reduction)
-    - TaskMonitor (130 lines) - Task lifecycle management
-    - TaskRebalancingAssessor (120 lines) - Rebalancing condition assessment
-    - TaskReassigner (200 lines) - Task reassignment execution
-    - RebalancingStatisticsTracker (105 lines) - Statistics tracking
-  - Added 6 new test files (DialogueAnalyticsTest, DialogueCooldownManagerTest, BenchmarkScenariosTest, MentorshipManagerTest, BlendResultTest, PersonalityTraitsTest)
-- ✅ **Wave 47: SpotBugs Fixes** - Fixed HIGH/MEDIUM priority issues
-- ✅ **Wave 46: GUI & Entity Refactoring** - Split god classes into focused components
-  - ForemanOfficeGUI → 5 GUI classes (GUIRenderer, InputHandler, MessagePanel, QuickButtonsPanel, VoiceIntegrationPanel)
-  - ForemanEntity → 4 entity coordinator classes (ActionCoordinator, CommunicationHandler, CrewManager, EntityState)
-- ✅ **Wave 45: Core Component Tests** - Added tests for ActionExecutor, ForemanEntity, and infrastructure
-- ✅ **Wave 44: Configuration Refactoring** - Split MineWrightConfig into 12 focused config classes
-  - LLMConfig, CascadeRouterConfig, BehaviorConfig, PathfindingConfig, HumanizationConfig, VoiceConfig, etc.
-- ✅ **Wave 43: CompanionMemory Refactoring** - Split god class into 5 focused classes
-  - MemoryStore, ConversationManager, ForemanMemory, WorldKnowledge, PersonalitySystem
-- ✅ **Wave 42: ScriptParser Refactoring** - Split 1,029-line class into 6 focused classes (91% reduction)
-  - ScriptLexer (410 lines), YAMLFormatParser (800 lines), BraceFormatParser (458 lines)
-  - ScriptASTBuilder (301 lines), ScriptValidator (454 lines), ScriptParseException (30 lines)
-- ✅ **Critical SpotBugs Fixes**: Fixed 5 HIGH severity thread-safety issues
-  - Blackboard counters: Changed volatile long to AtomicLong (3 fixes)
-  - ConfigManager: Added double-checked locking for singleton
-  - VoiceManager: Added double-checked locking for singleton
-- ✅ **Test Coverage**: ~58% (143 test files, 48,000+ lines)
+**Current Status (2026-03-04):**
+- **Code**: 90% complete (237 files, 86,500+ lines)
+- **Tests**: ~58% coverage (143 test files, 48,000+ lines)
+- **Security**: All critical issues addressed
+- **Recent**: Wave 48 complete - Large class refactoring (ProactiveDialogueManager, TaskRebalancingManager)
 
-## Build Commands
+## Quick Start
 
 ```bash
-# Build the mod (development JAR)
+# Build the mod
 ./gradlew build
 
 # Run client for testing
 ./gradlew runClient
 
-# Run server for testing
-./gradlew runServer
-
 # Run tests
 ./gradlew test
 
-# Run a single test
-./gradlew test --tests MyTest
-
-# Build distribution JAR with dependencies (for distribution)
-./gradlew shadowJar
-
-# Obfuscate distribution JAR
+# Build distribution JAR
 ./gradlew shadowJar reobfShadowJar
-
-# Generate coverage report
-./gradlew jacocoCoverageReport
-
-# Check code quality
-./gradlew checkstyle
-./gradlew spotbugs
-
-# Clean build artifacts
-./gradlew clean
 ```
-
-**Build Output:**
-- Development JAR: `build/libs/minewright-1.0.0.jar`
-- Distribution JAR: `build/libs/minewright-1.0.0-all.jar` (includes dependencies)
 
 **Configuration:** `config/minewright-common.toml`
 
-## High-Level Architecture
+**Build Output:**
+- Development: `build/libs/minewright-1.0.0.jar`
+- Distribution: `build/libs/minewright-1.0.0-all.jar`
 
-### Three-Layer Design
+## High-Level Architecture
 
 ```
 BRAIN LAYER (Strategic)                 SCRIPT LAYER (Operational)         PHYSICAL LAYER (Actions)
@@ -93,71 +47,44 @@ LLM Agents                              Behavior Trees, FSMs, Scripts       Mine
 Update: Every 30-60 seconds             Update: Every tick (20 TPS)         Update: Every tick (20 TPS)
 ```
 
-### Package Structure
+## Key Packages
 
 | Package | Purpose | Key Classes |
 |---------|---------|-------------|
-| `action/` | Task execution system | ActionExecutor, BaseAction, Task, ActionResult |
-| `behavior/` | Behavior tree runtime & process arbitration | BehaviorProcess, ProcessManager, BTNode |
-| `htn/` | Hierarchical Task Network planner | HTNPlanner, Method, Domain, HTNWorldState |
-| `blackboard/` | Shared knowledge system for agent coordination | Blackboard, BlackboardEntry, KnowledgeArea |
-| `llm/` | LLM integration with async/batch/cache/cascade | PromptBuilder, ResponseParser, AsyncLLMClient |
-| `llm/cascade/` | Tier-based model selection for cost optimization | CascadeRouter, TaskComplexity, LLMTier |
-| `execution/` | State machine with interceptors and event bus | AgentStateMachine, InterceptorChain |
-| `coordination/` | Contract Net Protocol for multi-agent bidding | TaskBid, TaskAnnouncement, AgentRole, ContractNetManager, ContractNetProtocol, MultiAgentCoordinator, WorkloadTracker, TaskProgress, TaskMonitor, TaskRebalancingManager, TaskRebalancingAssessor, TaskReassigner, RebalancingStatisticsTracker, ConflictResolver, CollaborativeBuildCoordinator, AwardSelector, BidCollector, CapabilityRegistry, AgentCapability |
-| `dialogue/` | Proactive dialogue system for AI agents | ProactiveDialogueManager, DialogueTriggerChecker, DialogueCommentGenerator, DialogueSpeechPatternManager, DialogueAnalytics, DialogueCooldownManager, DialogueGenerator, SpeechPatternTracker, DialogueTriggerDetector, DialogueConstants |
-| `pathfinding/` | A* with hierarchical planning and path smoothing | HierarchicalPathfinder, MovementValidator |
-| `memory/` | Persistence, semantic vector search, and personality | MemoryStore, ConversationManager, InMemoryVectorStore, ForemanMemory, WorldKnowledge, PersonalitySystem |
-| `skill/` | Voyager-style skill library with composition | Skill, SkillComposer, ComposedSkill, CompositionStep |
-| `profile/` | Task profile system (Honorbuddy-inspired) | TaskProfile, ProfileExecutor, ProfileRegistry |
-| `recovery/` | Stuck detection and recovery strategies | StuckDetector, RecoveryManager, StuckType |
-| `humanization/` | Human-like behavior utilities | HumanizationUtils, MistakeSimulator, IdleBehaviorController |
-| `goal/` | Navigation goal composition (Baritone-inspired) | NavigationGoal, CompositeNavigationGoal, GetToBlockGoal |
-| `rules/` | Declarative item rules engine | ItemRule, RuleEvaluator, ItemRuleRegistry |
-| `script/` | Script DSL parsing and execution | Script, ScriptParser, ScriptGenerator, ScriptLexer, YAMLFormatParser, BraceFormatParser, ScriptASTBuilder |
-| `plugin/` | Plugin architecture with SPI | ActionRegistry, ActionPlugin, PluginManager |
-| `personality/` | AI personality system | ForemanArchetypeConfig, PersonalityTraits |
-| `voice/` | TTS/STT integration | VoiceSystem, SpeechToText, TextToSpeech, VoiceManager |
-| `config/` | Configuration management | ConfigManager, MineWrightConfig, LLMConfig, CascadeRouterConfig, BehaviorConfig, PathfindingConfig, HumanizationConfig, VoiceConfig |
-| `client/` | Client-side GUI and input | ForemanOfficeGUI, ForemanOverlayScreen, KeyBindings, ClientEventHandler |
-| `client/gui/` | GUI component refactoring (Wave 46) | GUIRenderer, InputHandler, MessagePanel, QuickButtonsPanel, VoiceIntegrationPanel |
-| `entity/` | Entity coordination refactoring (Wave 46) | ForemanEntity, ActionCoordinator, CommunicationHandler, CrewManager, EntityState |
-| `observability/` | Distributed tracing and metrics | TracingService, MetricsCollector, TraceSpan, SpanContext, SpanKind, SpanStatus |
-| `security/` | Input sanitization and validation | InputSanitizer |
+| `action/` | Task execution system | ActionExecutor, BaseAction, Task |
+| `behavior/` | Behavior tree runtime | BTNode, ProcessManager |
+| `llm/` | LLM integration | PromptBuilder, AsyncLLMClient, CascadeRouter |
+| `coordination/` | Multi-agent coordination | ContractNetManager, TaskBid |
+| `memory/` | Persistence and semantic search | MemoryStore, InMemoryVectorStore |
+| `pathfinding/` | A* and hierarchical pathfinding | AStarPathfinder, HierarchicalPathfinder |
+| `recovery/` | Stuck detection and recovery | StuckDetector, RecoveryManager |
+| `dialogue/` | Proactive dialogue system | ProactiveDialogueManager, DialogueTriggerChecker |
+| `config/` | Configuration management | ConfigManager, MineWrightConfig |
+
+**See:** `docs/PACKAGE_REFERENCE.md` for complete package reference
 
 ## Key Patterns
 
 ### Plugin Architecture
 
-Actions are registered via `ActionRegistry` using factory functions:
-
 ```java
-// In CoreActionsPlugin.java
+// Register action via plugin
 registry.register("mine", (steve, task, ctx) -> new MineAction(steve, task));
-registry.register("build", (steve, task, ctx) -> new BuildAction(steve, task));
 ```
 
-The `PluginManager` loads plugins via SPI (Service Provider Interface).
-
 ### Tick-Based Execution
-
-All actions extend `BaseAction` and implement tick-based execution:
 
 ```java
 public class MineAction extends BaseAction {
     @Override
     protected void onTick() {
         // Called once per game tick (20 TPS)
-        // Return true when complete by setting result
+        // Track internal state and return when complete
     }
 }
 ```
 
-This prevents server freezing - actions track internal state and return `isComplete()` when done.
-
 ### Async LLM Calls
-
-LLM planning returns `CompletableFuture` for non-blocking execution:
 
 ```java
 llmClient.planAsync(command)
@@ -167,29 +94,21 @@ llmClient.planAsync(command)
     });
 ```
 
-The game thread checks `isDone()` in `tick()` - no blocking.
-
 ### Interceptor Chain
 
-Actions pass through interceptors before execution:
-
 ```
-LoggingInterceptor -> MetricsInterceptor -> EventPublishingInterceptor -> Action
+LoggingInterceptor → MetricsInterceptor → EventPublishingInterceptor → Action
 ```
 
 ### State Machine
 
-`AgentStateMachine` tracks states:
-
 ```
-IDLE -> PLANNING -> EXECUTING -> COMPLETED -> IDLE
+IDLE → PLANNING → EXECUTING → COMPLETED → IDLE
                   ↓
-                FAILED -> IDLE
+                FAILED → IDLE
 ```
 
 ### Blackboard Pattern
-
-`Blackboard` enables shared knowledge across agents:
 
 ```java
 // Post observations
@@ -203,102 +122,28 @@ Optional<BlockState> block = Blackboard.getInstance().query(
 Blackboard.getInstance().subscribe(KnowledgeArea.THREATS, subscriber);
 ```
 
-### Configuration System
+**See:** `docs/PATTERNS_GUIDE.md` for complete patterns reference
 
-Configuration uses Forge Config with versioning and change notifications:
+## Implementation Notes
 
-```java
-// Register listener
-ConfigManager.getInstance().registerListener(mySystem);
-
-// Reload (called automatically by /reload)
-ConfigManager.getInstance().reloadConfig();
-```
-
-### Security
-
-All user input must be sanitized before LLM processing:
-
-```java
-// Sanitize user command to prevent prompt injection attacks
-String sanitizedCommand = InputSanitizer.forCommand(command);
-```
-
-API keys support environment variable resolution:
-
-```toml
-[openai]
-apiKey = "${OPENAI_API_KEY}"  # Resolved from environment
-```
-
-## Important Implementation Notes
-
-### Thread Safety
-
-- Use `ConcurrentHashMap` for shared collections
-- Use `AtomicInteger` and `AtomicLong` for counters (volatile ++ is NOT atomic!)
-- Use `CopyOnWriteArrayList` for subscriber lists
+**Thread Safety:**
+- Use `ConcurrentHashMap`, `AtomicInteger`, `AtomicLong` (volatile ++ is NOT atomic!)
 - LLM calls are async via `CompletableFuture`
-- Never block the game thread - use tick-based polling instead
-- Singletons: Use double-checked locking pattern with volatile instance variable:
-  ```java
-  private static volatile MyClass instance;
-  private static final Object lock = new Object();
+- Never block the game thread - use tick-based polling
 
-  public static MyClass getInstance() {
-      if (instance == null) {
-          synchronized (lock) {
-              if (instance == null) {
-                  instance = new MyClass();
-              }
-          }
-      }
-      return instance;
-  }
-  ```
-
-### Error Handling
-
-- All exceptions extend `MineWrightException` with error codes
+**Error Handling:**
+- All exceptions extend `MineWrightException`
 - Actions use `ActionResult` for success/failure reporting
-- Recovery strategies are pluggable via `RecoveryStrategy` interface
-- Use `InputSanitizer` for all user input to prevent prompt injection
+- Use `InputSanitizer` for all user input
 
-### Code Quality
-
-- Test coverage: ~58% (143 test files, 48,000+ lines of test code)
-- Test coverage target: 60% (per JaCoCo configuration)
-- Checkstyle and SpotBugs are configured but warnings are currently ignored
+**Code Quality:**
+- Test coverage: ~58% (target: 60%)
 - Never use empty catch blocks - always log exceptions
-- Use `TestLogger` instead of direct logging in test-facing code
-- Recent refactoring (Waves 42-48) eliminated 9 god classes and improved modularity
+- Recent refactoring eliminated 9 god classes
 
-### Dependencies
-
-- **GraalVM JS 24.1.2** - Relocated to avoid conflicts
-- **Resilience4j 2.3.0** - Circuit breaker, retry, rate limiting
-- **Caffeine 3.1.8** - High-performance caching
-- **Apache Commons Codec 1.17.1** - Utilities
-- **JUnit 5.11.4** - Testing
-- **Mockito 5.15.2** - Mocking
-
-## Testing
-
-Tests are located in `src/test/java/com/minewright/`.
-
-```bash
-# Run all tests
-./gradlew test
-
-# Run specific test class
-./gradlew test --tests ActionExecutorTest
-
-# Run specific test method
-./gradlew test --tests "ActionExecutorTest.testExecuteAction"
-
-# Generate coverage report
-./gradlew jacocoCoverageReport
-```
+**Security:**
+- Sanitize all user input before LLM processing
+- Use environment variables for API keys: `${OPENAI_API_KEY}`
 
 ## In-Game Commands
 
@@ -312,138 +157,41 @@ Tests are located in `src/test/java/com/minewright/`.
 
 ## Common Issues
 
-### LLM API Timeout
-- Symptom: Tasks hang, no response
-- Solution: Switch to faster provider (Groq), enable batching, increase timeout
+- **LLM API Timeout:** Switch to faster provider (Groq), enable batching
+- **Agent Stuck:** Check pathfinding, verify navigation, increase stuck detection sensitivity
+- **Out of Memory:** Reduce max agents in config, increase JVM heap
 
-### Agent Stuck
-- Symptom: Agent not moving, task not progressing
-- Solution: Check pathfinding, verify navigation, increase stuck detection sensitivity
+## Key Dependencies
 
-### Out of Memory
-- Symptom: Mod crashes with OOM
-- Solution: Reduce max agents in config, optimize structure generation, increase JVM heap
-
-### Empty Catch Blocks
-- Never use empty catch blocks - always log exceptions with stack trace
-- The `InputSanitizer`, `StructureTemplateLoader` fixes show the proper pattern
-
-## Recent Refactoring Achievements
-
-### Wave 48: Large Class Refactoring (2026-03-04)
-
-**ProactiveDialogueManager Refactoring:**
-- Split `ProactiveDialogueManager` (1,061 lines) into 5 focused classes
-  - `DialogueTriggerChecker` (250 lines) - Trigger detection logic (time, weather, biome, proximity, danger)
-  - `DialogueCommentGenerator` (350 lines) - Content generation with LLM prompts and fallback comments
-  - `DialogueSpeechPatternManager` (150 lines) - Speech pattern management (verbal tics, phrase usage tracking)
-  - `DialogueAnalytics` (165 lines) - Statistics and tracking (dialogue history, trigger/skip counts)
-  - `ProactiveDialogueManager` (377 lines) - Orchestrates components, maintains public API
-- **Result**: 64% reduction in main class size (1,061 → 377 lines)
-
-**TaskRebalancingManager Refactoring:**
-- Split `TaskRebalancingManager` (999 lines) into 5 focused classes
-  - `TaskMonitor` (130 lines) - Task lifecycle management and health check scheduling
-  - `TaskRebalancingAssessor` (120 lines) - Rebalancing condition assessment (timeout, stuck, failure, performance)
-  - `TaskReassigner` (200 lines) - Task reassignment execution with validation
-  - `RebalancingStatisticsTracker` (105 lines) - Statistics tracking (assessments, triggers, success rates)
-  - `TaskRebalancingManager` (764 lines) - Orchestrates components, maintains public API
-- **Result**: 23% reduction in main class size (999 → 764 lines)
-
-**Key Patterns Applied:**
-- Delegation Pattern - Main class delegates to specialized components
-- Single Responsibility Principle - Each component has one clear purpose
-- API Compatibility - No breaking changes to existing code
-- Constructor Injection - Components injected through constructors
-
-### Wave 46: GUI & Entity Refactoring (2026-03-04)
-
-**GUI Refactoring:**
-- Split `ForemanOfficeGUI` (1,000+ lines) into 5 focused classes
-  - `GUIRenderer` - Render logic and visual components
-  - `InputHandler` - User input processing
-  - `MessagePanel` - Message display and history
-  - `QuickButtonsPanel` - Quick action buttons
-  - `VoiceIntegrationPanel` - Voice command interface
-- Improved testability and modularity of GUI components
-
-**Entity Refactoring:**
-- Split `ForemanEntity` coordination logic into 4 focused classes
-  - `ActionCoordinator` - Action execution coordination
-  - `CommunicationHandler` - Message and event handling
-  - `CrewManager` - Multi-agent crew management
-  - `EntityState` - State tracking and persistence
-- Reduced ForemanEntity from 800+ lines to focused entity logic
-
-### Wave 44: Configuration Refactoring (2026-03-03)
-
-**Split MineWrightConfig into 12 focused classes:**
-- `LLMConfig` - LLM provider configuration
-- `CascadeRouterConfig` - Model routing configuration
-- `BehaviorConfig` - Behavior tree settings
-- `PathfindingConfig` - Pathfinding parameters
-- `HumanizationConfig` - Human-like behavior settings
-- `VoiceConfig` - Voice system configuration
-- `MultiAgentConfig` - Multi-agent coordination settings
-- `SemanticCacheConfig` - Semantic caching parameters
-- `SkillLibraryConfig` - Skill library settings
-- `UtilityAIConfig` - Utility AI scoring
-- `PerformanceConfig` - Performance tuning
-- `HiveMindConfig` - Distributed agent settings
-
-### Wave 43: CompanionMemory Refactoring (2026-03-03)
-
-**Split CompanionMemory (1,200+ lines) into 5 focused classes:**
-- `MemoryStore` - Core memory storage and retrieval
-- `ConversationManager` - Conversation history tracking
-- `ForemanMemory` - Foreman-specific memory
-- `WorldKnowledge` - World state knowledge management
-- `PersonalitySystem` - Personality and relationship tracking
-
-### Wave 42: ScriptParser Refactoring (2026-03-03)
-
-**Split ScriptParser (1,029 lines) into 6 focused classes:**
-- `ScriptLexer` (410 lines) - Lexical analysis and tokenization
-- `YAMLFormatParser` (800 lines) - YAML-like format parsing
-- `BraceFormatParser` (458 lines) - Brace-based format parsing
-- `ScriptASTBuilder` (301 lines) - AST construction utilities
-- `ScriptValidator` (454 lines) - Validation logic
-- `ScriptParseException` (30 lines) - Dedicated exception class
-
-### Thread Safety Fixes (Waves 42-44)
-
-**SpotBugs HIGH Severity Fixes:**
-- Blackboard counters: Changed `volatile long` to `AtomicLong` (3 fixes)
-- ConfigManager: Added double-checked locking for singleton
-- VoiceManager: Added double-checked locking for singleton
-- All singletons now use proper double-checked locking pattern
-
-**Key Pattern Applied:**
-```java
-private static volatile MyClass instance;
-private static final Object lock = new Object();
-
-public static MyClass getInstance() {
-    if (instance == null) {
-        synchronized (lock) {
-            if (instance == null) {
-                instance = new MyClass();
-            }
-        }
-    }
-    return instance;
-}
-```
+- **Minecraft Forge 1.20.1** - Mod framework
+- **GraalVM JS 24.1.2** - Code execution (relocated)
+- **Resilience4j 2.3.0** - Circuit breaker, retry, rate limiting
+- **Caffeine 3.1.8** - High-performance caching
+- **JUnit 5.11.4** - Testing
 
 ## References
 
-- **Architecture Deep Dive:** `docs/architecture/TECHNICAL_DEEP_DIVE.md`
-- **Action API:** `docs/ACTION_API.md`
-- **Research Documents:** `docs/research/`
-- **Audit Reports:** `docs/audits/`
-  - Wave 48: `WAVE_48_REFACTORING_COMPLETE.md`
-  - Wave 46: `FOREMAN_ENTITY_REFACTOR_WAVE46.md`, `FOREMAN_OFFICE_GUI_REFACTOR_WAVE46.md`
-  - Wave 42: `SCRIPT_PARSER_REFACTOR.md`, `SPOTBUGS_CRITICAL_FIXES_COMPLETE.md`
-- **Configuration:** `config/minewright-common.toml`
-- **Build Output:** `build/libs/`
-- **Future Roadmap:** `docs/FUTURE_ROADMAP.md`
+**Core Documentation:**
+- `docs/ARCHITECTURE_OVERVIEW.md` - Complete system architecture
+- `docs/PACKAGE_REFERENCE.md` - All packages and classes
+- `docs/PATTERNS_GUIDE.md` - Architectural and design patterns
+- `docs/BUILD_GUIDE.md` - Build commands and configuration
+- `docs/REFACTORING_HISTORY.md` - Recent refactoring work
+
+**Research & Audits:**
+- `docs/research/` - AI and game automation research
+- `docs/audits/` - Code audit findings and fixes
+- `docs/FUTURE_ROADMAP.md` - Planned improvements
+
+## Summary
+
+Steve AI combines LLM planning with real-time game execution for autonomous Minecraft agents.
+
+**Priority Actions:**
+1. Add tests for core components (ActionExecutor, AgentStateMachine)
+2. Complete dissertation Chapter 3 integration
+3. Implement script DSL for automation patterns
+
+---
+
+**Version:** 4.0 (Streamlined) | **Updated:** 2026-03-04
