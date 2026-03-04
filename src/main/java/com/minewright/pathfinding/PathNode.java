@@ -23,6 +23,11 @@ import net.minecraft.core.BlockPos;
  * <p><b>Thread Safety:</b> This class is mutable and not thread-safe.
  * Pathfinding operations should be confined to a single thread.</p>
  *
+ * <p><b>PERFORMANCE NOTE:</b> Fields are public for direct access in performance-critical
+ * pathfinding code. A* pathfinding is called every tick and processes thousands of nodes,
+ * so getter/setter overhead would significantly impact performance. This is an intentional
+ * trade-off for performance over encapsulation.</p>
+ *
  * @see AStarPathfinder
  * @see MovementType
  * @see PathfindingContext
@@ -71,6 +76,46 @@ public class PathNode implements Comparable<PathNode> {
         this.gCost = gCost;
         this.hCost = hCost;
         this.movement = movement;
+    }
+
+    // === Getters and Setters ===
+
+    /** Gets the block position this node represents. */
+    public BlockPos getPos() { return pos; }
+
+    /** Sets the block position (used for object pooling). */
+    public void setPos(BlockPos pos) { this.pos = pos; }
+
+    /** Gets the actual cost from start to this node. */
+    public double getGCost() { return gCost; }
+
+    /** Sets the actual cost from start to this node. */
+    public void setGCost(double gCost) { this.gCost = gCost; }
+
+    /** Gets the heuristic estimated cost from this node to goal. */
+    public double getHCost() { return hCost; }
+
+    /** Sets the heuristic estimated cost from this node to goal. */
+    public void setHCost(double hCost) { this.hCost = hCost; }
+
+    /** Gets the parent node in the path. */
+    public PathNode getParent() { return parent; }
+
+    /** Sets the parent node in the path. */
+    public void setParent(PathNode parent) { this.parent = parent; }
+
+    /** Gets the movement type used to reach this node. */
+    public MovementType getMovement() { return movement; }
+
+    /** Sets the movement type used to reach this node. */
+    public void setMovement(MovementType movement) { this.movement = movement; }
+
+    /** Gets the cost multiplier for this position. */
+    public double getCostMultiplier() { return costMultiplier; }
+
+    /** Sets the cost multiplier for this position (must be >= 0). */
+    public void setCostMultiplier(double costMultiplier) {
+        this.costMultiplier = Math.max(0, costMultiplier);
     }
 
     /**

@@ -287,9 +287,12 @@ public class AgentCapability {
     /**
      * Updates the agent's current position.
      *
+     * <p>Package-private for internal use within coordination package.
+     * External callers should use CapabilityRegistry.updatePosition() instead.</p>
+     *
      * @param pos New position
      */
-    public void updatePosition(BlockPos pos) {
+    void updatePosition(BlockPos pos) {
         if (pos != null) {
             this.currentPosition = pos;
         }
@@ -325,9 +328,12 @@ public class AgentCapability {
     /**
      * Updates the agent's current load.
      *
+     * <p>Package-private for internal use within coordination package.
+     * External callers should use CapabilityRegistry.updateLoad() instead.</p>
+     *
      * @param load Load factor (0.0=idle, 1.0=fully loaded)
      */
-    public void updateLoad(double load) {
+    void updateLoad(double load) {
         this.currentLoad = Math.max(0.0, Math.min(1.0, load));
     }
 

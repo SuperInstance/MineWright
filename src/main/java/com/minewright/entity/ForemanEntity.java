@@ -121,8 +121,9 @@ public class ForemanEntity extends PathfinderMob {
     /**
      * The display name of this crew member.
      * Synchronized to clients via entity data.
+     * Marked volatile for visibility across threads.
      */
-    private String entityName;
+    private volatile String entityName;
 
     /**
      * Long-term memory storing task history, conversation context,
@@ -177,14 +178,16 @@ public class ForemanEntity extends PathfinderMob {
      * SOLO - Working alone without coordination
      * FOREMAN - Coordinating other agents
      * WORKER - Taking tasks from foreman
+     * Marked volatile for visibility across threads during role changes.
      */
-    private AgentRole role = AgentRole.SOLO;
+    private volatile AgentRole role = AgentRole.SOLO;
 
     /**
      * Reference to the orchestration service for multi-agent coordination.
      * Used for task distribution, progress tracking, and inter-agent communication.
+     * Marked volatile for visibility across threads (lazy initialization).
      */
-    private OrchestratorService orchestrator;
+    private volatile OrchestratorService orchestrator;
 
     /**
      * Thread-safe queue for incoming messages from other agents.
@@ -201,8 +204,9 @@ public class ForemanEntity extends PathfinderMob {
     /**
      * ID of the currently assigned task from the foreman.
      * Used for progress reporting and completion notification.
+     * Marked volatile for visibility across threads.
      */
-    private String currentTaskId = null;
+    private volatile String currentTaskId = null;
 
     /**
      * Current progress percentage (0-100) for the active task.

@@ -418,7 +418,7 @@ public class MilestoneTracker {
         StringBuilder prompt = new StringBuilder();
 
         // Determine formality and intimacy levels
-        String formalityLevel = getFormalityLevel(personality.formality, rapport);
+        String formalityLevel = getFormalityLevel(personality.getFormality(), rapport);
         String intimacyLevel = getIntimacyLevel(rapport);
 
         prompt.append("[MILESTONE CELEBRATION - ").append(milestone.type).append("]\n");
@@ -448,8 +448,9 @@ public class MilestoneTracker {
 
         prompt.append("SPEECH PATTERNS:\n");
         prompt.append("- Speech Style: ").append(personality.getSpeechPatternDescription()).append("\n");
-        if (!personality.verbalTics.isEmpty()) {
-            prompt.append("- Verbal Tics: ").append(String.join(", ", personality.verbalTics)).append("\n");
+        List<String> verbalTics = personality.getVerbalTics();
+        if (!verbalTics.isEmpty()) {
+            prompt.append("- Verbal Tics: ").append(String.join(", ", verbalTics)).append("\n");
         }
         prompt.append("\n");
 
@@ -518,7 +519,7 @@ public class MilestoneTracker {
             case FIRST:
                 guidance.append("- Emphasize the novelty and excitement of this first-time experience\n");
                 guidance.append("- Reference how this marks the beginning of our journey together\n");
-                if (personality.extraversion > 60) {
+                if (personality.getExtraversion() > 60) {
                     guidance.append("- Show enthusiasm and wonder at this new experience\n");
                 }
                 break;
@@ -529,7 +530,7 @@ public class MilestoneTracker {
                 if (rapport > 60) {
                     guidance.append("- Express appreciation for the bond we've developed\n");
                 }
-                if (personality.neuroticism > 50) {
+                if (personality.getNeuroticism() > 50) {
                     guidance.append("- Add a touch of sentimentality about time passing\n");
                 }
                 break;
@@ -537,7 +538,7 @@ public class MilestoneTracker {
             case COUNT:
                 guidance.append("- Celebrate the consistency and dedication this represents\n");
                 guidance.append("- Acknowledge the effort we've both put in\n");
-                if (personality.conscientiousness > 70) {
+                if (personality.getConscientiousness() > 70) {
                     guidance.append("- Emphasize the value of persistence and hard work\n");
                 }
                 break;
@@ -545,7 +546,7 @@ public class MilestoneTracker {
             case ACHIEVEMENT:
                 guidance.append("- Celebrate the skill and accomplishment this represents\n");
                 guidance.append("- Acknowledge the challenge we overcame together\n");
-                if (personality.humor > 60) {
+                if (personality.getHumor() > 60) {
                     guidance.append("- Add a touch of humor about the journey to get here\n");
                 }
                 break;

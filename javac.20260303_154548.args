@@ -1,0 +1,5 @@
+-cp
+gradle/wrapper/gradle-wrapper.jar
+-sourcepath
+src/main/java
+src/main/java/com/minewright/action/ActionExecutor.java

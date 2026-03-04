@@ -224,6 +224,12 @@ public class ContractNetManager {
     private final AwardSelector awardSelector;
 
     /**
+     * Flag indicating if the manager is shutdown.
+     * Marked volatile for visibility across threads.
+     */
+    private volatile boolean isShutdown = false;
+
+    /**
      * Creates a new Contract Net manager.
      */
     public ContractNetManager() {

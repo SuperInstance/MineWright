@@ -548,19 +548,19 @@ public class ForemanCommands {
         StringBuilder archetype = new StringBuilder();
 
         // Primary trait
-        if (personality.extraversion > 70) {
+        if (personality.getExtraversion() > 70) {
             archetype.append("Outgoing ");
-        } else if (personality.extraversion < 40) {
+        } else if (personality.getExtraversion() < 40) {
             archetype.append("Reserved ");
         }
 
-        if (personality.humor > 70) {
+        if (personality.getHumor() > 70) {
             archetype.append("Wit");
-        } else if (personality.encouragement > 70) {
+        } else if (personality.getEncouragement() > 70) {
             archetype.append("Motivator");
-        } else if (personality.conscientiousness > 80) {
+        } else if (personality.getConscientiousness() > 80) {
             archetype.append("Perfectionist");
-        } else if (personality.agreeableness > 80) {
+        } else if (personality.getAgreeableness() > 80) {
             archetype.append("Peacemaker");
         } else {
             archetype.append("Companion");

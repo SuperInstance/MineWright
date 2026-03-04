@@ -159,20 +159,23 @@ public class TaskPlanner {
     /**
      * Batching client for rate limit management.
      * Combines multiple prompts into single API calls.
+     * Marked volatile for thread-safe lazy initialization.
      */
-    private BatchingLLMClient batchingClient;
+    private volatile BatchingLLMClient batchingClient;
 
     /**
      * Whether batching is enabled for rate limit management.
      * Can be disabled via configuration.
+     * Marked volatile for visibility across threads.
      */
-    private boolean batchingEnabled = true;
+    private volatile boolean batchingEnabled = true;
 
     /**
      * Cascade router for intelligent LLM selection based on task complexity.
      * When enabled, automatically routes requests to the most appropriate tier.
+     * Marked volatile for thread-safe lazy initialization.
      */
-    private CascadeRouter cascadeRouter;
+    private volatile CascadeRouter cascadeRouter;
 
     /**
      * Complexity analyzer for determining task complexity.
@@ -182,8 +185,9 @@ public class TaskPlanner {
     /**
      * Whether cascade routing is enabled.
      * Can be toggled via configuration or runtime.
+     * Marked volatile for visibility across threads.
      */
-    private boolean cascadeRoutingEnabled = false;
+    private volatile boolean cascadeRoutingEnabled = false;
 
     public TaskPlanner() {
         // Legacy clients

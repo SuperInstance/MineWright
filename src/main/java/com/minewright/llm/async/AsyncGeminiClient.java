@@ -3,16 +3,10 @@ package com.minewright.llm.async;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Asynchronous Google Gemini API client using Java HttpClient's sendAsync().
@@ -47,23 +41,10 @@ import java.util.concurrent.CompletableFuture;
  *
  * @since 1.1.0
  */
-public class AsyncGeminiClient implements AsyncLLMClient {
+public class AsyncGeminiClient extends AbstractAsyncLLMClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncGeminiClient.class);
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
     private static final String PROVIDER_ID = "gemini";
-
-    private final HttpClient httpClient;
-    private final String apiKey;
-    private final String model;
-    private final int maxTokens;
-    private final double temperature;
-
-    /**
-     * Maximum timeout for LLM requests.
-     * Gemini can be slower, so we give it more time.
-     */
-    private static final long OVERALL_TIMEOUT_MS = 120000; // 2 minutes
 
     /**
      * Constructs an AsyncGeminiClient.
@@ -75,95 +56,29 @@ public class AsyncGeminiClient implements AsyncLLMClient {
      * @throws IllegalArgumentException if apiKey is null or empty
      */
     public AsyncGeminiClient(String apiKey, String model, int maxTokens, double temperature) {
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new IllegalArgumentException("Gemini API key cannot be null or empty");
-        }
-
-        this.apiKey = apiKey;
-        this.model = model;
-        this.maxTokens = maxTokens;
-        this.temperature = temperature;
-
-        this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
-
-        LOGGER.info("AsyncGeminiClient initialized (model: {}, maxTokens: {}, temperature: {})",
-            model, maxTokens, temperature);
+        super(apiKey, model, maxTokens, temperature, PROVIDER_ID, 120000, 60);
     }
 
     @Override
-    public CompletableFuture<LLMResponse> sendAsync(String prompt, Map<String, Object> params) {
-        long startTime = System.currentTimeMillis();
-
-        String requestBody = buildRequestBody(prompt, params);
-        String urlWithKey = GEMINI_API_BASE + model + ":generateContent?key=" + apiKey;
-
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(urlWithKey))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-            .timeout(Duration.ofSeconds(60)) // Gemini can be slower
-            .build();
-
-        LOGGER.debug("[gemini] Sending async request (prompt length: {} chars)", prompt.length());
-
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .thenApply(response -> {
-                long latencyMs = System.currentTimeMillis() - startTime;
-
-                if (response.statusCode() != 200) {
-                    LLMException.ErrorType errorType = determineErrorType(response.statusCode());
-                    boolean retryable = response.statusCode() == 429 || response.statusCode() >= 500;
-
-                    LOGGER.error("[gemini] API error: status={}, body={}", response.statusCode(),
-                        truncate(response.body(), 200));
-
-                    throw new LLMException(
-                        "Gemini API error: HTTP " + response.statusCode(),
-                        errorType,
-                        PROVIDER_ID,
-                        retryable
-                    );
-                }
-
-                return parseResponse(response.body(), latencyMs);
-            })
-            .orTimeout(OVERALL_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
-            .exceptionally(throwable -> {
-                if (throwable instanceof java.util.concurrent.TimeoutException) {
-                    LOGGER.error("[gemini] Overall timeout exceeded ({}ms) - request cancelled", OVERALL_TIMEOUT_MS);
-                    throw new LLMException(
-                        "Request timeout: exceeded " + OVERALL_TIMEOUT_MS + "ms",
-                        LLMException.ErrorType.TIMEOUT,
-                        PROVIDER_ID,
-                        true
-                    );
-                }
-                // Re-throw other exceptions
-                if (throwable instanceof RuntimeException) {
-                    throw (RuntimeException) throwable;
-                }
-                throw new LLMException(
-                    "Request failed: " + throwable.getMessage(),
-                    LLMException.ErrorType.NETWORK_ERROR,
-                    PROVIDER_ID,
-                    true,
-                    throwable
-                );
-            });
+    protected String getApiEndpoint() {
+        // Gemini requires API key in query string
+        return GEMINI_API_BASE + model + ":generateContent?key=" + apiKey;
     }
 
-    /**
-     * Builds the JSON request body in Gemini's format.
-     *
-     * <p>Gemini format uses "contents" with "parts" instead of OpenAI's "messages".</p>
-     *
-     * @param prompt User prompt
-     * @param params Additional parameters
-     * @return JSON string
-     */
-    private String buildRequestBody(String prompt, Map<String, Object> params) {
+    @Override
+    protected void addAuthHeaders(HttpRequest.Builder builder) {
+        // Gemini uses API key in query string, not Authorization header
+        // No auth headers needed
+    }
+
+    @Override
+    protected int getRequestTimeout() {
+        // Gemini can be slower, so we give it more time
+        return 60;
+    }
+
+    @Override
+    protected String buildRequestBody(String prompt, Map<String, Object> params) {
         JsonObject body = new JsonObject();
 
         // Build contents array (Gemini format)
@@ -173,8 +88,8 @@ public class AsyncGeminiClient implements AsyncLLMClient {
         // (Gemini handles system instructions differently)
         String systemPrompt = (String) params.get("systemPrompt");
         String combinedPrompt = systemPrompt != null && !systemPrompt.isEmpty()
-            ? systemPrompt + "\n\n" + prompt
-            : prompt;
+                ? systemPrompt + "\n\n" + prompt
+                : prompt;
 
         JsonObject userContent = new JsonObject();
         userContent.addProperty("role", "user");
@@ -202,16 +117,8 @@ public class AsyncGeminiClient implements AsyncLLMClient {
         return body.toString();
     }
 
-    /**
-     * Parses Gemini API response.
-     *
-     * <p>Response format: candidates[0].content.parts[0].text</p>
-     *
-     * @param responseBody Raw JSON response
-     * @param latencyMs    Request latency
-     * @return Parsed LLMResponse
-     */
-    private LLMResponse parseResponse(String responseBody, long latencyMs) {
+    @Override
+    protected LLMResponse parseResponse(String responseBody, long latencyMs) {
         try {
             JsonObject json = JsonParser.parseString(responseBody).getAsJsonObject();
 
@@ -223,19 +130,19 @@ public class AsyncGeminiClient implements AsyncLLMClient {
                     if (feedback.has("blockReason")) {
                         String reason = feedback.get("blockReason").getAsString();
                         throw new LLMException(
-                            "Gemini blocked the prompt: " + reason,
-                            LLMException.ErrorType.CLIENT_ERROR,
-                            PROVIDER_ID,
-                            false
+                                "Gemini blocked the prompt: " + reason,
+                                LLMException.ErrorType.CLIENT_ERROR,
+                                PROVIDER_ID,
+                                false
                         );
                     }
                 }
 
                 throw new LLMException(
-                    "Gemini response missing 'candidates' array",
-                    LLMException.ErrorType.INVALID_RESPONSE,
-                    PROVIDER_ID,
-                    false
+                        "Gemini response missing 'candidates' array",
+                        LLMException.ErrorType.INVALID_RESPONSE,
+                        PROVIDER_ID,
+                        false
                 );
             }
 
@@ -245,17 +152,17 @@ public class AsyncGeminiClient implements AsyncLLMClient {
             if (firstCandidate.has("finishReason")) {
                 String finishReason = firstCandidate.get("finishReason").getAsString();
                 if ("MAX_TOKENS".equals(finishReason)) {
-                    LOGGER.warn("[gemini] Response truncated due to MAX_TOKENS limit");
+                    logger.warn("[gemini] Response truncated due to MAX_TOKENS limit");
                 }
             }
 
             // Extract content
             if (!firstCandidate.has("content")) {
                 throw new LLMException(
-                    "Gemini response missing 'content' in candidate",
-                    LLMException.ErrorType.INVALID_RESPONSE,
-                    PROVIDER_ID,
-                    false
+                        "Gemini response missing 'content' in candidate",
+                        LLMException.ErrorType.INVALID_RESPONSE,
+                        PROVIDER_ID,
+                        false
                 );
             }
 
@@ -264,10 +171,10 @@ public class AsyncGeminiClient implements AsyncLLMClient {
 
             if (parts == null || parts.isEmpty()) {
                 throw new LLMException(
-                    "Gemini response has no parts in content",
-                    LLMException.ErrorType.INVALID_RESPONSE,
-                    PROVIDER_ID,
-                    false
+                        "Gemini response has no parts in content",
+                        LLMException.ErrorType.INVALID_RESPONSE,
+                        PROVIDER_ID,
+                        false
                 );
             }
 
@@ -282,32 +189,34 @@ public class AsyncGeminiClient implements AsyncLLMClient {
                 }
             }
 
-            LOGGER.debug("[gemini] Response received (latency: {}ms, tokens: {})", latencyMs, tokensUsed);
+            logger.debug("[gemini] Response received (latency: {}ms, tokens: {})", latencyMs, tokensUsed);
 
             return LLMResponse.builder()
-                .content(text)
-                .model(model)
-                .providerId(PROVIDER_ID)
-                .latencyMs(latencyMs)
-                .tokensUsed(tokensUsed)
-                .fromCache(false)
-                .build();
+                    .content(text)
+                    .model(model)
+                    .providerId(PROVIDER_ID)
+                    .latencyMs(latencyMs)
+                    .tokensUsed(tokensUsed)
+                    .fromCache(false)
+                    .build();
 
         } catch (LLMException e) {
             throw e;
         } catch (Exception e) {
-            LOGGER.error("[gemini] Failed to parse response: {}", truncate(responseBody, 200), e);
+            logger.error("[gemini] Failed to parse response: {}", truncate(responseBody, 200), e);
             throw new LLMException(
-                "Failed to parse Gemini response: " + e.getMessage(),
-                LLMException.ErrorType.INVALID_RESPONSE,
-                PROVIDER_ID,
-                false,
-                e
+                    "Failed to parse Gemini response: " + e.getMessage(),
+                    LLMException.ErrorType.INVALID_RESPONSE,
+                    PROVIDER_ID,
+                    false,
+                    e
             );
         }
     }
 
-    private LLMException.ErrorType determineErrorType(int statusCode) {
+    @Override
+    protected LLMException.ErrorType determineErrorType(int statusCode) {
+        // Gemini-specific error type mapping
         return switch (statusCode) {
             case 429 -> LLMException.ErrorType.RATE_LIMIT;
             case 401, 403 -> LLMException.ErrorType.AUTH_ERROR;
@@ -320,21 +229,5 @@ public class AsyncGeminiClient implements AsyncLLMClient {
                 yield LLMException.ErrorType.CLIENT_ERROR;
             }
         };
-    }
-
-    private String truncate(String str, int maxLength) {
-        if (str == null) return "[null]";
-        if (str.length() <= maxLength) return str;
-        return str.substring(0, maxLength) + "...";
-    }
-
-    @Override
-    public String getProviderId() {
-        return PROVIDER_ID;
-    }
-
-    @Override
-    public boolean isHealthy() {
-        return true;
     }
 }

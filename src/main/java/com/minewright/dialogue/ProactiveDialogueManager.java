@@ -683,13 +683,13 @@ public class ProactiveDialogueManager {
         }
 
         // Add personality-based endings
-        if (personality.extraversion > 70 && random.nextFloat() < 0.2) {
+        if (personality.getExtraversion() > 70 && random.nextFloat() < 0.2) {
             // High extraversion: occasionally add enthusiastic endings
             String[] enthusiasticEndings = {"!", "!", "!"};
             if (!comment.endsWith("!")) {
                 comment += enthusiasticEndings[random.nextInt(enthusiasticEndings.length)];
             }
-        } else if (personality.formality > 60 && random.nextFloat() < 0.15) {
+        } else if (personality.getFormality() > 60 && random.nextFloat() < 0.15) {
             // High formality: occasionally add polite endings
             String[] politeEndings = {", if you please.", ", at your service."};
             comment += politeEndings[random.nextInt(politeEndings.length)];
@@ -703,21 +703,21 @@ public class ProactiveDialogueManager {
      */
     private String getVerbalTic(CompanionMemory.PersonalityProfile personality, String triggerType) {
         // Select verbal tic based on personality and context
-        if (personality.humor > 60 && random.nextFloat() < 0.25) {
+        if (personality.getHumor() > 60 && random.nextFloat() < 0.25) {
             String[] humorousTics = {
                 "Well,",
                 "You see,",
                 "Funny thing is,"
             };
             return humorousTics[random.nextInt(humorousTics.length)];
-        } else if (personality.conscientiousness > 70 && random.nextFloat() < 0.2) {
+        } else if (personality.getConscientiousness() > 70 && random.nextFloat() < 0.2) {
             String[] conscientiousTics = {
                 "Now then,",
                 "Right then,",
                 "Let's see,"
             };
             return conscientiousTics[random.nextInt(conscientiousTics.length)];
-        } else if (personality.extraversion > 70 && random.nextFloat() < 0.25) {
+        } else if (personality.getExtraversion() > 70 && random.nextFloat() < 0.25) {
             String[] extravertedTics = {
                 "Hey!",
                 "Oh!",
@@ -780,16 +780,18 @@ public class ProactiveDialogueManager {
         // Add personality context
         CompanionMemory.PersonalityProfile personality = memory.getPersonality();
         prompt.append("\nPERSONALITY:\n");
-        prompt.append("- Extraversion: ").append(personality.extraversion).append("% (").append(personality.extraversion > 60 ? "outgoing" : "reserved").append(")\n");
-        prompt.append("- Formality: ").append(personality.formality).append("%\n");
-        prompt.append("- Humor: ").append(personality.humor).append("%\n");
-        prompt.append("- Encouragement: ").append(personality.encouragement).append("%\n");
+        int extraversion = personality.getExtraversion();
+        prompt.append("- Extraversion: ").append(extraversion).append("% (").append(extraversion > 60 ? "outgoing" : "reserved").append(")\n");
+        prompt.append("- Formality: ").append(personality.getFormality()).append("%\n");
+        prompt.append("- Humor: ").append(personality.getHumor()).append("%\n");
+        prompt.append("- Encouragement: ").append(personality.getEncouragement()).append("%\n");
 
         // Add speech pattern context
         prompt.append("\nSPEECH PATTERNS:\n");
         prompt.append("- This is a ").append(getSpeechPatternForTrigger(triggerType)).append(" for us\n");
-        if (!personality.catchphrases.isEmpty()) {
-            prompt.append("- My catchphrases: ").append(String.join(", ", personality.catchphrases.subList(0, Math.min(3, personality.catchphrases.size())))).append("\n");
+        List<String> catchphrases = personality.getCatchphrases();
+        if (!catchphrases.isEmpty()) {
+            prompt.append("- My catchphrases: ").append(String.join(", ", catchphrases.subList(0, Math.min(3, catchphrases.size())))).append("\n");
         }
 
         // Add rapport-specific guidance

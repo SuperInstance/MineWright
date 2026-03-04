@@ -89,7 +89,12 @@ public class AwardSelector {
                    availabilityWeight + performanceWeight;
         }
 
-        public void validate() {
+        /**
+         * Validates that weights sum to 1.0.
+         *
+         * <p>Package-private for internal use within coordination package.</p>
+         */
+        void validate() {
             double total = getTotalWeight();
             if (Math.abs(total - 1.0) > 0.01) {
                 throw new IllegalStateException(

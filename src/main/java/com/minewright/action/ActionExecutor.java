@@ -80,8 +80,9 @@ public class ActionExecutor {
     /**
      * Task planner for converting natural language commands into structured tasks.
      * Lazy-initialized to avoid loading LLM dependencies on entity creation.
+     * Marked volatile for thread-safe lazy initialization.
      */
-    private TaskPlanner taskPlanner;
+    private volatile TaskPlanner taskPlanner;
 
     /**
      * Thread-safe queue of tasks pending execution.
@@ -93,26 +94,30 @@ public class ActionExecutor {
     /**
      * The currently executing action, or null if no action is active.
      * Only one action runs at a time per executor.
+     * Marked volatile for visibility across threads (game thread vs async callbacks).
      */
-    private BaseAction currentAction;
+    private volatile BaseAction currentAction;
 
     /**
      * High-level description of the current goal being worked toward.
      * Set from the LLM's plan description when processing commands.
+     * Marked volatile for visibility across threads.
      */
-    private String currentGoal;
+    private volatile String currentGoal;
 
     /**
      * Counter for tracking ticks since the last action was started.
      * Used to enforce delays between actions for pacing.
+     * Marked volatile for visibility across threads (though typically only accessed from game thread).
      */
-    private int ticksSinceLastAction;
+    private volatile int ticksSinceLastAction;
 
     /**
      * Action to execute when completely idle (no tasks, no goal).
      * Typically follows the nearest player to stay nearby.
+     * Marked volatile for visibility across threads.
      */
-    private BaseAction idleFollowAction;
+    private volatile BaseAction idleFollowAction;
 
     /**
      * Async LLM planning future for non-blocking command processing.

@@ -149,25 +149,27 @@ public class CompanionPromptBuilder {
         sb.append("STYLE:");
 
         // Formality (compact)
-        if (p.formality < 30) {
+        int formality = p.getFormality();
+        if (formality < 30) {
             sb.append(" casual,use contractions,playful");
-        } else if (p.formality < 70) {
+        } else if (formality < 70) {
             sb.append(" friendly,polite");
         } else {
             sb.append(" professional,complete sentences");
         }
 
         // Humor (compact)
-        if (p.humor > 70) {
+        int humor = p.getHumor();
+        if (humor > 70) {
             sb.append(",jokes&fun");
-        } else if (p.humor > 40) {
+        } else if (humor > 40) {
             sb.append(",occasional humor");
         } else {
             sb.append(",serious");
         }
 
         // Encouragement (compact)
-        if (p.encouragement > 70) {
+        if (p.getEncouragement() > 70) {
             sb.append(",very encouraging,positive");
         }
 
@@ -180,9 +182,10 @@ public class CompanionPromptBuilder {
         }
 
         // Catchphrases (compact)
-        if (!p.catchphrases.isEmpty()) {
+        List<String> catchphrases = p.getCatchphrases();
+        if (!catchphrases.isEmpty()) {
             sb.append(",phrases:");
-            sb.append(String.join("/", p.catchphrases.subList(0, Math.min(2, p.catchphrases.size()))));
+            sb.append(String.join("/", catchphrases.subList(0, Math.min(2, catchphrases.size()))));
         }
 
         return sb.toString();
@@ -200,11 +203,11 @@ public class CompanionPromptBuilder {
         sb.append("Guidelines for your responses:\n");
 
         // Formality
-        if (personality.formality < 30) {
+        if (personality.getFormality() < 30) {
             sb.append("- Be casual and friendly, like a close friend\n");
             sb.append("- Use contractions freely (I'm, let's, we've)\n");
             sb.append("- It's okay to be playful and use mild slang\n");
-        } else if (personality.formality < 70) {
+        } else if (personality.getFormality() < 70) {
             sb.append("- Be friendly but reasonably polite\n");
             sb.append("- Balance professionalism with warmth\n");
         } else {
@@ -213,17 +216,17 @@ public class CompanionPromptBuilder {
         }
 
         // Humor
-        if (personality.humor > 70) {
+        if (personality.getHumor() > 70) {
             sb.append("- Feel free to make jokes and puns\n");
             sb.append("- Keep things light and fun\n");
-        } else if (personality.humor > 40) {
+        } else if (personality.getHumor() > 40) {
             sb.append("- Occasional humor is good, but don't overdo it\n");
         } else {
             sb.append("- Be straightforward, humor is rare\n");
         }
 
         // Encouragement
-        if (personality.encouragement > 70) {
+        if (personality.getEncouragement() > 70) {
             sb.append("- Be very encouraging and supportive\n");
             sb.append("- Celebrate wins, big and small\n");
             sb.append("- When things go wrong, stay positive\n");
@@ -241,10 +244,10 @@ public class CompanionPromptBuilder {
         }
 
         // Catchphrase usage
-        if (!personality.catchphrases.isEmpty()) {
+        if (!personality.getCatchphrases().isEmpty()) {
             sb.append("- Occasionally use one of your catchphrases: ");
-            sb.append(String.join(", ", personality.catchphrases.subList(0,
-                Math.min(2, personality.catchphrases.size()))));
+            sb.append(String.join(", ", personality.getCatchphrases().subList(0,
+                Math.min(2, personality.getCatchphrases().size()))));
             sb.append("\n");
         }
 
@@ -415,7 +418,7 @@ public class CompanionPromptBuilder {
         sb.append(buildConversationalSystemPrompt(memory));
         sb.append("\n\nCELEBRATE: ").append(successDescription);
         sb.append("\nGenerate enthusiastic comment (1-2 sentences)");
-        if (memory.getPersonality().encouragement > 70) {
+        if (memory.getPersonality().getEncouragement() > 70) {
             sb.append(" - VERY excited!");
         }
         sb.append("\nResponse:");
@@ -435,7 +438,7 @@ public class CompanionPromptBuilder {
         sb.append(buildConversationalSystemPrompt(memory));
         sb.append("\n\nCOMFORT: ").append(failureDescription);
         sb.append("\nGenerate supportive comment (1-2 sentences)");
-        if (memory.getPersonality().encouragement > 70) {
+        if (memory.getPersonality().getEncouragement() > 70) {
             sb.append(" - setbacks happen!");
         }
         sb.append("\nResponse:");

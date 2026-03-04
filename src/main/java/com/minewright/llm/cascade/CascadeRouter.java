@@ -579,6 +579,10 @@ public class CascadeRouter {
 
     /**
      * Thread-safe double wrapper for atomic operations.
+     * Uses volatile for visibility across threads.
+     * Note: Not truly atomic for compound operations (addAndGet),
+     * but sufficient for metrics tracking where approximate values are acceptable.
+     * For true atomicity, consider using DoubleAdder or AtomicReference<Double>.
      */
     private static class AtomicDouble {
         private volatile double value;
@@ -596,6 +600,9 @@ public class CascadeRouter {
         }
 
         void addAndGet(double delta) {
+            // Note: This operation is NOT atomic due to compound read-modify-write.
+            // For metrics tracking, minor race conditions are acceptable.
+            // For critical sections, use synchronized blocks or DoubleAdder.
             value += delta;
         }
     }

@@ -389,19 +389,20 @@ public class ForemanArchetypeConfig {
 
         /**
          * Applies this archetype's configuration to a personality profile.
+         * ENCAPSULATION FIX: Now uses setter methods for validation.
          */
         public void applyTo(CompanionMemory.PersonalityProfile profile) {
-            profile.openness = traits.getOpenness();
-            profile.conscientiousness = traits.getConscientiousness();
-            profile.extraversion = traits.getExtraversion();
-            profile.agreeableness = traits.getAgreeableness();
-            profile.neuroticism = traits.getNeuroticism();
-            profile.formality = formality;
-            profile.humor = humor;
-            profile.encouragement = encouragement;
-            profile.catchphrases = new ArrayList<>(catchphrases);
-            profile.verbalTics = new ArrayList<>(verbalTics);
-            profile.archetypeName = name;
+            profile.setOpenness(traits.getOpenness());
+            profile.setConscientiousness(traits.getConscientiousness());
+            profile.setExtraversion(traits.getExtraversion());
+            profile.setAgreeableness(traits.getAgreeableness());
+            profile.setNeuroticism(traits.getNeuroticism());
+            profile.setFormality(formality);
+            profile.setHumor(humor);
+            profile.setEncouragement(encouragement);
+            profile.setCatchphrases(new ArrayList<>(catchphrases));
+            profile.setVerbalTics(new ArrayList<>(verbalTics));
+            profile.setArchetypeName(name);
         }
 
         /**

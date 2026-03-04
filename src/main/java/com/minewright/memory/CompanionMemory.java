@@ -115,13 +115,15 @@ public class CompanionMemory {
 
     /**
      * First meeting timestamp.
+     * Marked volatile for visibility across threads.
      */
-    private Instant firstMeeting;
+    private volatile Instant firstMeeting;
 
     /**
      * Player name (learned on first interaction).
+     * Marked volatile for visibility across threads.
      */
-    private String playerName;
+    private volatile String playerName;
 
     /**
      * Player preferences discovered.
@@ -144,8 +146,9 @@ public class CompanionMemory {
 
     /**
      * Current session start time.
+     * Marked volatile for visibility across threads.
      */
-    private Instant sessionStart;
+    private volatile Instant sessionStart;
 
     /**
      * Topics discussed in current session.
@@ -1776,22 +1779,25 @@ public class CompanionMemory {
      * Personality profile for the foreman.
      * Now includes enhanced speech patterns and verbal tics support.
      * Thread-safe: uses synchronized collections for concurrent access.
+     *
+     * <p><b>ENCAPSULATION FIX (Week 2 P1):</b> All fields are now private with getters/setters.
+     * Validation is performed in setters to ensure data integrity.</p>
      */
     public static class PersonalityProfile {
-        // Big Five traits (0-100)
-        public volatile int openness = 70;          // Curious, creative
-        public volatile int conscientiousness = 80; // Organized, responsible
-        public volatile int extraversion = 60;      // Sociable, energetic
-        public volatile int agreeableness = 75;     // Cooperative, trusting
-        public volatile int neuroticism = 30;       // Calm, stable
+        // Big Five traits (0-100) - private with validation
+        private volatile int openness = 70;          // Curious, creative
+        private volatile int conscientiousness = 80; // Organized, responsible
+        private volatile int extraversion = 60;      // Sociable, energetic
+        private volatile int agreeableness = 75;     // Cooperative, trusting
+        private volatile int neuroticism = 30;       // Calm, stable
 
-        // Custom traits
-        public volatile int humor = 65;             // How often uses humor
-        public volatile int encouragement = 80;     // How encouraging
-        public volatile int formality = 40;         // 0 = casual, 100 = formal
+        // Custom traits - private with validation
+        private volatile int humor = 65;             // How often uses humor
+        private volatile int encouragement = 80;     // How encouraging
+        private volatile int formality = 40;         // 0 = casual, 100 = formal
 
-        // Verbal tics and catchphrases - thread-safe lists
-        public List<String> catchphrases = new CopyOnWriteArrayList<>(List.of(
+        // Verbal tics and catchphrases - thread-safe lists (private with defensive copies)
+        private final List<String> catchphrases = new CopyOnWriteArrayList<>(List.of(
             "Right then,",
             "Let's get to work!",
             "We've got this.",
@@ -1799,23 +1805,146 @@ public class CompanionMemory {
         ));
 
         // Enhanced speech patterns
-        public List<String> verbalTics = new CopyOnWriteArrayList<>(List.of(
+        private final List<String> verbalTics = new CopyOnWriteArrayList<>(List.of(
             "Well,",
             "You see,",
             "Here's the thing"
         ));
 
         // Speech pattern usage tracking
-        public Map<String, Integer> ticUsageCount = new ConcurrentHashMap<>();
-        public List<String> recentTics = Collections.synchronizedList(new ArrayList<>());
+        private final Map<String, Integer> ticUsageCount = new ConcurrentHashMap<>();
+        private final List<String> recentTics = Collections.synchronizedList(new ArrayList<>());
 
         // Preferences (for consistent behavior)
-        public String favoriteBlock = "cobblestone";
-        public String workStyle = "methodical";
-        public String mood = "cheerful";
+        private String favoriteBlock = "cobblestone";
+        private String workStyle = "methodical";
+        private String mood = "cheerful";
 
         // Archetype name if using a predefined archetype
-        public String archetypeName = "THE_FOREMAN";
+        private String archetypeName = "THE_FOREMAN";
+
+        // === Getters and Setters with Validation ===
+
+        /** Gets the openness trait (curiosity, creativity). */
+        public int getOpenness() { return openness; }
+
+        /** Sets the openness trait with validation (clamped to 0-100). */
+        public void setOpenness(int value) { this.openness = clampToRange(value, 0, 100); }
+
+        /** Gets the conscientiousness trait (organization, responsibility). */
+        public int getConscientiousness() { return conscientiousness; }
+
+        /** Sets the conscientiousness trait with validation (clamped to 0-100). */
+        public void setConscientiousness(int value) { this.conscientiousness = clampToRange(value, 0, 100); }
+
+        /** Gets the extraversion trait (sociability, energy). */
+        public int getExtraversion() { return extraversion; }
+
+        /** Sets the extraversion trait with validation (clamped to 0-100). */
+        public void setExtraversion(int value) { this.extraversion = clampToRange(value, 0, 100); }
+
+        /** Gets the agreeableness trait (cooperation, trust). */
+        public int getAgreeableness() { return agreeableness; }
+
+        /** Sets the agreeableness trait with validation (clamped to 0-100). */
+        public void setAgreeableness(int value) { this.agreeableness = clampToRange(value, 0, 100); }
+
+        /** Gets the neuroticism trait (emotional stability). */
+        public int getNeuroticism() { return neuroticism; }
+
+        /** Sets the neuroticism trait with validation (clamped to 0-100). */
+        public void setNeuroticism(int value) { this.neuroticism = clampToRange(value, 0, 100); }
+
+        /** Gets the humor level (how often humor is used). */
+        public int getHumor() { return humor; }
+
+        /** Sets the humor level with validation (clamped to 0-100). */
+        public void setHumor(int value) { this.humor = clampToRange(value, 0, 100); }
+
+        /** Gets the encouragement level. */
+        public int getEncouragement() { return encouragement; }
+
+        /** Sets the encouragement level with validation (clamped to 0-100). */
+        public void setEncouragement(int value) { this.encouragement = clampToRange(value, 0, 100); }
+
+        /** Gets the formality level (0=casual, 100=formal). */
+        public int getFormality() { return formality; }
+
+        /** Sets the formality level with validation (clamped to 0-100). */
+        public void setFormality(int value) { this.formality = clampToRange(value, 0, 100); }
+
+        /** Gets an unmodifiable view of the catchphrases list. */
+        public List<String> getCatchphrases() { return Collections.unmodifiableList(catchphrases); }
+
+        /** Adds a catchphrase to the list (validates for null/empty). */
+        public void addCatchphrase(String phrase) {
+            if (phrase != null && !phrase.isBlank()) { this.catchphrases.add(phrase); }
+        }
+
+        /** Removes a catchphrase from the list. */
+        public void removeCatchphrase(String phrase) { this.catchphrases.remove(phrase); }
+
+        /** Clears all catchphrases and sets new ones. */
+        public void setCatchphrases(List<String> phrases) {
+            if (phrases != null) {
+                this.catchphrases.clear();
+                this.catchphrases.addAll(phrases);
+            }
+        }
+
+        /** Gets an unmodifiable view of the verbal tics list. */
+        public List<String> getVerbalTics() { return Collections.unmodifiableList(verbalTics); }
+
+        /** Adds a verbal tic to the list (validates for null/empty). */
+        public void addVerbalTic(String tic) {
+            if (tic != null && !tic.isBlank()) { this.verbalTics.add(tic); }
+        }
+
+        /** Removes a verbal tic from the list. */
+        public void removeVerbalTic(String tic) { this.verbalTics.remove(tic); }
+
+        /** Clears all verbal tics and sets new ones. */
+        public void setVerbalTics(List<String> tics) {
+            if (tics != null) {
+                this.verbalTics.clear();
+                this.verbalTics.addAll(tics);
+            }
+        }
+
+        /** Gets the tic usage count map (defensive copy). */
+        public Map<String, Integer> getTicUsageCount() { return new HashMap<>(ticUsageCount); }
+
+        /** Gets the recent tics list (defensive copy). */
+        public List<String> getRecentTics() { return new ArrayList<>(recentTics); }
+
+        /** Gets the favorite block type. */
+        public String getFavoriteBlock() { return favoriteBlock; }
+
+        /** Sets the favorite block type with validation (null-safe). */
+        public void setFavoriteBlock(String block) { this.favoriteBlock = block != null ? block : "cobblestone"; }
+
+        /** Gets the work style. */
+        public String getWorkStyle() { return workStyle; }
+
+        /** Sets the work style with validation (null-safe). */
+        public void setWorkStyle(String style) { this.workStyle = style != null ? style : "methodical"; }
+
+        /** Gets the current mood. */
+        public String getMood() { return mood; }
+
+        /** Sets the mood with validation (null-safe). */
+        public void setMood(String mood) { this.mood = mood != null ? mood : "cheerful"; }
+
+        /** Gets the archetype name. */
+        public String getArchetypeName() { return archetypeName; }
+
+        /** Sets the archetype name with validation (null-safe). */
+        public void setArchetypeName(String name) { this.archetypeName = name != null ? name : "THE_FOREMAN"; }
+
+        /** Helper method to clamp values to a valid range. */
+        private int clampToRange(int value, int min, int max) {
+            return Math.max(min, Math.min(max, value));
+        }
 
         /**
          * Generates a personality summary for prompting.
@@ -1853,20 +1982,21 @@ public class CompanionMemory {
 
         /**
          * Applies a foreman archetype configuration to this profile.
+         * ENCAPSULATION FIX: Now uses setter methods for validation.
          */
         public void applyArchetype(com.minewright.personality.ForemanArchetypeConfig.ForemanArchetype archetype) {
             com.minewright.personality.PersonalityTraits traits = archetype.getTraits();
-            this.openness = traits.getOpenness();
-            this.conscientiousness = traits.getConscientiousness();
-            this.extraversion = traits.getExtraversion();
-            this.agreeableness = traits.getAgreeableness();
-            this.neuroticism = traits.getNeuroticism();
-            this.formality = archetype.getFormality();
-            this.humor = archetype.getHumor();
-            this.encouragement = archetype.getEncouragement();
-            this.catchphrases = new ArrayList<>(archetype.getCatchphrases());
-            this.verbalTics = new ArrayList<>(archetype.getVerbalTics());
-            this.archetypeName = archetype.getName();
+            setOpenness(traits.getOpenness());
+            setConscientiousness(traits.getConscientiousness());
+            setExtraversion(traits.getExtraversion());
+            setAgreeableness(traits.getAgreeableness());
+            setNeuroticism(traits.getNeuroticism());
+            setFormality(archetype.getFormality());
+            setHumor(archetype.getHumor());
+            setEncouragement(archetype.getEncouragement());
+            setCatchphrases(new ArrayList<>(archetype.getCatchphrases()));
+            setVerbalTics(new ArrayList<>(archetype.getVerbalTics()));
+            setArchetypeName(archetype.getName());
         }
 
         /**
