@@ -20,6 +20,7 @@ import com.minewright.skill.ExecutionTracker;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -110,7 +111,7 @@ public class ActionExecutor {
      * Used to enforce delays between actions for pacing.
      * Marked volatile for visibility across threads (though typically only accessed from game thread).
      */
-    private volatile int ticksSinceLastAction;
+    private final AtomicInteger ticksSinceLastAction = new AtomicInteger(0);
 
     /**
      * Action to execute when completely idle (no tasks, no goal).
@@ -183,7 +184,7 @@ public class ActionExecutor {
         this.foreman = foreman;
         this.taskPlanner = null;  // Will be initialized when first needed
         this.taskQueue = new LinkedBlockingQueue<>();  // Thread-safe queue
-        this.ticksSinceLastAction = 0;
+        this.ticksSinceLastAction.set(0);
         this.idleFollowAction = null;
         this.planningFuture = null;
         this.pendingCommand = null;
@@ -398,7 +399,7 @@ public class ActionExecutor {
     public void tick() {
         // Start tick profiling for budget enforcement
         tickProfiler.startTick();
-        ticksSinceLastAction++;
+        ticksSinceLastAction.incrementAndGet();
 
         // OPTIMIZATION: Single entry point budget check - consolidates all budget checks
         // This reduces the number of isOverBudget() calls from 6 to 1 per tick
@@ -478,7 +479,7 @@ public class ActionExecutor {
 
                 currentAction = null;
             } else {
-                if (ticksSinceLastAction % 100 == 0) {
+                if (ticksSinceLastAction.get() % 100 == 0) {
                     LOGGER.info("Foreman '{}' - Ticking action: {}",
                         foreman.getEntityName(), currentAction.getDescription());
                 }
@@ -498,11 +499,11 @@ public class ActionExecutor {
             }
         }
 
-        if (ticksSinceLastAction >= MineWrightConfig.ACTION_TICK_DELAY.get()) {
+        if (ticksSinceLastAction.get() >= MineWrightConfig.ACTION_TICK_DELAY.get()) {
             if (!taskQueue.isEmpty()) {
                 Task nextTask = taskQueue.poll();
                 executeTask(nextTask);
-                ticksSinceLastAction = 0;
+                ticksSinceLastAction.set(0);
 
                 // OPTIMIZATION: Check budget after task execution (consolidated check)
                 if (!checkBudgetAndYield()) {

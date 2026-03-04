@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Generates automation scripts from natural language commands using LLMs.
@@ -614,51 +613,49 @@ public class ScriptGenerator {
      * Statistics for monitoring generator performance.
      */
     public static class GeneratorStats {
-        private final AtomicInteger cacheHits = new AtomicInteger(0);
-        private final AtomicInteger cacheMisses = new AtomicInteger(0);
-        private final AtomicInteger llmCalls = new AtomicInteger(0);
-        private final AtomicInteger totalTokensUsed = new AtomicInteger(0);
-        private final AtomicInteger totalLatencyMs = new AtomicInteger(0);
-        private final AtomicInteger successes = new AtomicInteger(0);
-        private final AtomicInteger failures = new AtomicInteger(0);
-        private final AtomicInteger validationFailures = new AtomicInteger(0);
+        private volatile int cacheHits = 0;
+        private volatile int cacheMisses = 0;
+        private volatile int llmCalls = 0;
+        private volatile int totalTokensUsed = 0;
+        private volatile int totalLatencyMs = 0;
+        private volatile int successes = 0;
+        private volatile int failures = 0;
+        private volatile int validationFailures = 0;
 
-        public void recordCacheHit() { cacheHits.incrementAndGet(); }
-        public void recordCacheMiss() { cacheMisses.incrementAndGet(); }
+        public void recordCacheHit() { cacheHits++; }
+        public void recordCacheMiss() { cacheMisses++; }
         public void recordLLMCall(int tokens, long latencyMs) {
-            llmCalls.incrementAndGet();
-            totalTokensUsed.addAndGet(tokens);
-            totalLatencyMs.addAndGet((int) latencyMs);
+            llmCalls++;
+            totalTokensUsed += tokens;
+            totalLatencyMs += latencyMs;
         }
-        public void recordSuccess() { successes.incrementAndGet(); }
-        public void recordFailure() { failures.incrementAndGet(); }
-        public void recordValidationFailure() { validationFailures.incrementAndGet(); }
+        public void recordSuccess() { successes++; }
+        public void recordFailure() { failures++; }
+        public void recordValidationFailure() { validationFailures++; }
 
-        public int getCacheHits() { return cacheHits.get(); }
-        public int getCacheMisses() { return cacheMisses.get(); }
+        public int getCacheHits() { return cacheHits; }
+        public int getCacheMisses() { return cacheMisses; }
         public double getCacheHitRate() {
-            int total = cacheHits.get() + cacheMisses.get();
-            return total > 0 ? (double) cacheHits.get() / total : 0.0;
+            int total = cacheHits + cacheMisses;
+            return total > 0 ? (double) cacheHits / total : 0.0;
         }
-        public int getLLMCalls() { return llmCalls.get(); }
-        public int getTotalTokensUsed() { return totalTokensUsed.get(); }
+        public int getLLMCalls() { return llmCalls; }
+        public int getTotalTokensUsed() { return totalTokensUsed; }
         public double getAvgTokensPerCall() {
-            int calls = llmCalls.get();
-            return calls > 0 ? (double) totalTokensUsed.get() / calls : 0.0;
+            return llmCalls > 0 ? (double) totalTokensUsed / llmCalls : 0.0;
         }
         public double getAvgLatencyMs() {
-            int calls = llmCalls.get();
-            return calls > 0 ? (double) totalLatencyMs.get() / calls : 0.0;
+            return llmCalls > 0 ? (double) totalLatencyMs / llmCalls : 0.0;
         }
-        public int getSuccesses() { return successes.get(); }
-        public int getFailures() { return failures.get(); }
-        public int getValidationFailures() { return validationFailures.get(); }
+        public int getSuccesses() { return successes; }
+        public int getFailures() { return failures; }
+        public int getValidationFailures() { return validationFailures; }
 
         @Override
         public String toString() {
             return String.format(
                 "GeneratorStats{cacheHitRate=%.2f, llmCalls=%d, avgTokens=%.0f, avgLatency=%.0fms, successes=%d, failures=%d}",
-                getCacheHitRate(), getLLMCalls(), getAvgTokensPerCall(), getAvgLatencyMs(), getSuccesses(), getFailures()
+                getCacheHitRate(), llmCalls, getAvgTokensPerCall(), getAvgLatencyMs(), successes, failures
             );
         }
     }
