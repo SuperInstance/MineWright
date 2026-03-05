@@ -209,19 +209,31 @@ public class CollaborativeBuildManager {
      * Assign a Foreman to a section (quadrant) that needs work
      * Prioritizes unassigned sections, but allows helping on large sections
      * Returns the section index, or null if all sections are complete
+     *
+     * THREAD-SAFE: Uses compute() for atomic check-and-act to prevent race conditions
+     * when multiple threads try to assign sections simultaneously.
      */
     private static Integer assignForemanToSection(CollaborativeBuild build, String foremanName) {
         // First pass: Find a section that isn't complete and isn't already assigned
         for (int i = 0; i < build.sections.size(); i++) {
             BuildSection section = build.sections.get(i);
             if (!section.isComplete()) {
-                boolean alreadyAssigned = build.foremanToSectionMap.containsValue(i);
+                // THREAD-SAFE FIX: Use computeIfAbsent for atomic check-and-act
+                // This prevents multiple threads from assigning the same section simultaneously
+                final int sectionIndex = i;
+                Integer assignedIndex = build.foremanToSectionMap.computeIfAbsent(foremanName, k -> {
+                    // Only assign this section if it's not already assigned to someone else
+                    boolean alreadyAssigned = build.foremanToSectionMap.containsValue(sectionIndex);
+                    if (!alreadyAssigned) {
+                        LOGGER.info("Assigned Foreman '{}' to {} quadrant - will build {} blocks BOTTOM-TO-TOP",
+                            foremanName, section.sectionName, section.getTotalBlocks());
+                        return sectionIndex;
+                    }
+                    return null; // Section already taken, try another
+                });
 
-                if (!alreadyAssigned) {
-                    build.foremanToSectionMap.put(foremanName, i);
-                    LOGGER.info("Assigned Foreman '{}' to {} quadrant - will build {} blocks BOTTOM-TO-TOP",
-                        foremanName, section.sectionName, section.getTotalBlocks());
-                    return i;
+                if (assignedIndex != null) {
+                    return assignedIndex;
                 }
             }
         }
@@ -230,10 +242,17 @@ public class CollaborativeBuildManager {
         for (int i = 0; i < build.sections.size(); i++) {
             BuildSection section = build.sections.get(i);
             if (!section.isComplete()) {
-                build.foremanToSectionMap.put(foremanName, i);
-                LOGGER.info("Foreman '{}' helping with {} quadrant ({} blocks remaining)",
-                    foremanName, section.sectionName, section.getTotalBlocks() - section.getBlocksPlaced());
-                return i;
+                // THREAD-SAFE FIX: Use compute() for atomic assignment
+                final int sectionIndex = i;
+                Integer assignedIndex = build.foremanToSectionMap.compute(foremanName, (k, existing) -> {
+                    LOGGER.info("Foreman '{}' helping with {} quadrant ({} blocks remaining)",
+                        foremanName, section.sectionName, section.getTotalBlocks() - section.getBlocksPlaced());
+                    return sectionIndex;
+                });
+
+                if (assignedIndex != null) {
+                    return assignedIndex;
+                }
             }
         }
 

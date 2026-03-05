@@ -408,4 +408,40 @@ public class InMemoryVectorStore<T> {
             null,
             false
     );
+
+    // THREAD-SAFE FIX: Register shutdown hook to clean up ForkJoinPool on JVM exit
+    // This prevents thread leaks and ensures clean shutdown
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("Shutting down InMemoryVectorStore ForkJoinPool");
+            searchPool.shutdown();
+            try {
+                if (!searchPool.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                    searchPool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                searchPool.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            LOGGER.info("InMemoryVectorStore ForkJoinPool shutdown complete");
+        }, "vector-store-shutdown"));
+    }
+
+    /**
+     * Shuts down the shared ForkJoinPool.
+     * Call this during application shutdown for clean resource cleanup.
+     */
+    public static void shutdown() {
+        LOGGER.info("Shutting down InMemoryVectorStore ForkJoinPool");
+        searchPool.shutdown();
+        try {
+            if (!searchPool.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                searchPool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            searchPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        LOGGER.info("InMemoryVectorStore ForkJoinPool shutdown complete");
+    }
 }

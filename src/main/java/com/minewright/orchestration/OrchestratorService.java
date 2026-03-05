@@ -386,13 +386,26 @@ public class OrchestratorService {
 
     /**
      * Assigns a specific task to an agent.
+     *
+     * THREAD-SAFE: Uses putIfAbsent() to prevent duplicate task assignments to the same worker.
+     * If a worker already has an assignment, this method returns without assigning.
      */
     private void assignTaskToAgent(PlanExecution plan, Task task, String agentId) {
+        // THREAD-SAFE FIX: Use putIfAbsent() to prevent duplicate task assignments
+        // This ensures that a worker can only have one task at a time, preventing race conditions
+        // when multiple threads try to assign tasks to the same worker simultaneously
         TaskAssignment assignment = new TaskAssignment(foremanId, task, plan.getPlanId());
         assignment.assignTo(agentId);
 
+        TaskAssignment existing = workerAssignments.putIfAbsent(agentId, assignment);
+        if (existing != null) {
+            // Worker already has an assignment, don't overwrite
+            LOGGER.warn("[Orchestrator] Worker {} already has an assignment, skipping task assignment",
+                agentId);
+            return;
+        }
+
         plan.addAssignment(assignment);
-        workerAssignments.put(agentId, assignment);
 
         // Send assignment message
         AgentMessage message = AgentMessage.taskAssignment(

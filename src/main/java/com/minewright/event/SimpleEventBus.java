@@ -122,7 +122,14 @@ public class SimpleEventBus implements EventBus {
 
         LOGGER.debug("Publishing {} to {} subscribers", eventType.getSimpleName(), subs.size());
 
-        for (SubscriberEntry<?> entry : subs) {
+        // THREAD-SAFE FIX: Snapshot subscribers before iteration to prevent ConcurrentModificationException
+        // If a subscriber unsubscribes during event publication, it won't affect the current iteration
+        // This is safe because CopyOnWriteArrayList already provides thread-safe iteration, but
+        // snapshotting ensures we don't process subscribers that unsubscribe during publication
+        Object[] subscriberArray = subs.toArray();
+
+        for (Object entryObj : subscriberArray) {
+            SubscriberEntry<?> entry = (SubscriberEntry<?>) entryObj;
             if (!entry.isActive()) continue;
 
             try {

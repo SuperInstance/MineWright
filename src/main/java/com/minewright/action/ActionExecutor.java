@@ -412,8 +412,9 @@ public class ActionExecutor {
         // Check if async planning is complete (non-blocking check!)
         if (isPlanning.get() && planningFuture != null && planningFuture.isDone()) {
             try {
-                // NON-BLOCKING: getNow() returns immediately, never blocks the server thread
-                ResponseParser.ParsedResponse response = planningFuture.getNow(null);
+                // THREAD-SAFE FIX: Add timeout to prevent indefinite blocking if future is somehow not truly done
+                // This prevents the server thread from hanging if the future state is inconsistent
+                ResponseParser.ParsedResponse response = planningFuture.get(1, java.util.concurrent.TimeUnit.SECONDS);
 
                 if (response != null) {
                     currentGoal = response.getPlan();
@@ -436,6 +437,11 @@ public class ActionExecutor {
                     LOGGER.warn("Foreman '{}' async planning returned null response", foreman.getEntityName());
                 }
 
+            } catch (java.util.concurrent.TimeoutException e) {
+                LOGGER.error("Foreman '{}' planning timed out despite isDone() returning true", foreman.getEntityName());
+                sendToGUI(foreman.getEntityName(), "Planning took too long! Let's try that again.");
+                // Reset state machine to allow recovery
+                stateMachine.forceTransition(AgentState.IDLE, "planning timeout");
             } catch (java.util.concurrent.CancellationException e) {
                 LOGGER.info("Foreman '{}' planning was cancelled", foreman.getEntityName());
                 sendToGUI(foreman.getEntityName(), "Planning cancelled. Back to work!");
