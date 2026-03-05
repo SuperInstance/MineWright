@@ -12,112 +12,147 @@
     ⚡ AI-POWERED MINECRAFT COMPANIONS ⚡
 ```
 
+# MineWright
+
+### *Type what you want. They figure out how.*
+
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-brightgreen.svg?style=for-the-badge&logo=minecraft)](https://www.minecraft.net/)
-[![Forge](https://img.shields.io/badge/Forge-47.x-orange.svg?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgMmwxMC41IDZ2OEwxMiAyMmwtMTAuNS02VjhMMTIgMnoiLz48L3N2Zz4=)](https://files.minecraftforge.net/)
+[![Forge](https://img.shields.io/badge/Forge-47.x-orange.svg?style=for-the-badge)](https://files.minecraftforge.net/)
 [![Java](https://img.shields.io/badge/Java-17+-blue.svg?style=for-the-badge&logo=openjdk)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
-[![Build](https://img.shields.io/badge/Build-Passing-success.svg?style=for-the-badge)](https://github.com/SuperInstance/MineWright/actions)
 
-### **Type what you want. They figure out how.**
+**"Cursor for Minecraft"** — Autonomous AI companions that understand natural language and execute complex tasks in-game.
 
-**"Cursor for Minecraft" — Autonomous AI companions that understand natural language and execute complex tasks in-game.**
-
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
-
-</div>
+[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](#contributing)
 
 ---
 
-## ✨ Features
+</div>
 
-### 🧠 Natural Language Understanding
-Just describe what you want in plain English. No command blocks, no redstone, no scripting required.
+## ✨ What is MineWright?
+
+Imagine having a team of intelligent companions in Minecraft that understand plain English. You don't need to learn commands, build redstone contraptions, or install complex mods. You just type what you want, and they figure out how to do it.
 
 ```
 You: "Build a medieval castle with a tower"
+
 Foreman: "On it. I'll construct a castle with keep, curtain wall,
-          and corner tower. Materials needed: ~2000 stone, 100 wood.
-          ETA: 8 minutes."
+         and corner tower. Materials needed: ~2000 stone, 100 wood.
+         ETA: 8 minutes. Beginning construction now."
+```
+
+MineWright brings **embodied AI** to Minecraft — agents that navigate, build, fight, farm, and explore alongside you, learning from experience and developing their own unique personalities.
+
+### Why MineWright?
+
+| Traditional Minecraft Bots | MineWright |
+|---------------------------|------------|
+| Memorize complex commands | Natural language |
+| Single-purpose automation | General-purpose intelligence |
+| No coordination | Multi-agent teamwork |
+| Static behavior | Learning & adaptation |
+| Breaking on updates | Modular & extensible |
+
+---
+
+## Features
+
+### 🧠 Natural Language Understanding
+
+Just describe what you want. MineWright handles the details.
+
+**Mining & Gathering:**
+```
+"Mine 20 iron ore"
+"Gather 10 oak logs"
+"Strip mine at Y=-48"
+```
+
+**Building:**
+```
+"Build a 5x5 cobblestone house"
+"Create a stone bridge across the river"
+"Construct a medieval tower"
+```
+
+**Farming:**
+```
+"Plant and harvest wheat"
+"Breed cows in the pen"
+"Create a sugarcane farm"
+```
+
+**Combat:**
+```
+"Kill all zombies nearby"
+"Protect me from mobs"
+"Fight the wither boss"
 ```
 
 ### 🤖 Multi-Agent Coordination
-Deploy multiple AI companions that work together seamlessly on complex projects.
 
-- **Automatic Task Division** — Agents split work without conflicts
-- **Spatial Awareness** — Built-in collision avoidance and coordination
-- **Contract Net Protocol** — Industry-standard multi-agent negotiation
-- **Shared Knowledge** — Blackboard system for team intelligence
+Deploy multiple AI companions that work together seamlessly.
+
+- **Automatic Task Division** — Agents analyze requirements and split work intelligently
+- **Spatial Awareness** — Built-in collision avoidance prevents interference
+- **Contract Net Protocol** — Industry-standard negotiation for optimal task allocation
+- **Shared Knowledge** — Blackboard system lets agents learn from each other's discoveries
+
+**Example:**
+```
+You: "Team up to build a castle"
+
+Alex: "I'll handle the foundation and main structure"
+Sam:  "I'll quarry stone and bring materials"
+Taylor: "I'll build the towers and place torches"
+
+[All three agents work simultaneously without conflicts]
+```
 
 ### 🎭 Unique Personalities
+
 Each companion has distinct character traits, dialogue styles, and specialties.
 
 | Archetype | Style | Best For |
 |-----------|-------|----------|
-| 🔧 **Foreman** | Professional, organized, "Client"称呼 | Managing complex projects |
-| ⚔️ **Warrior** | Aggressive, loyal, combat-focused | Monster hunting, defense |
-| 🏗️ **Architect** | Creative, precise, detail-oriented | Building, design projects |
-| ⛏️ **Miner** | Efficient, focused, tunnel-vision | Mining expeditions, quarries |
-| 🌾 **Farmer** | Patient, nurturing, methodical | Crop management, animal breeding |
-| 🗺️ **Explorer** | Curious, adventurous, bold | Mapping, scouting, expeditions |
+| 🔧 **Foreman** | Professional, organized | Managing complex projects |
+| ⚔️ **Warrior** | Aggressive, loyal | Combat and defense |
+| 🏗️ **Architect** | Creative, precise | Building and design |
+| ⛏️ **Miner** | Efficient, focused | Mining and excavation |
+| 🌾 **Farmer** | Patient, nurturing | Crop and animal management |
+| 🗺️ **Explorer** | Curious, adventurous | Mapping and scouting |
 
-### 🚀 Production-Grade Architecture
+### 🧠 Adaptive Intelligence
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     BRAIN LAYER (Strategic)                     │
-│                         LLM Agents                              │
-│   Planning, strategy, logistics, conversations                  │
-│   Token Usage: LOW | Update Frequency: 30-60s or events        │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ Generates & Refines
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   SCRIPT LAYER (Operational)                    │
-│                    Behavior Automations                         │
-│   Behavior trees, FSMs, macro scripts, pathfinding             │
-│   Token Usage: ZERO | Update Frequency: Per tick (20 TPS)      │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ Executes via
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   PHYSICAL LAYER (Actions)                      │
-│                     Minecraft API                               │
-│   Block interactions, movement, inventory, world sensing        │
-└─────────────────────────────────────────────────────────────────┘
-```
+MineWright companions learn and improve over time:
 
-**"One Abstraction Away" Design Philosophy**
-- **No Blocking** — Game runs at 60 FPS even during LLM calls
-- **10-20x Fewer Tokens** — LLM plans, scripts execute
-- **Elegant Architecture** — Clean separation of concerns
+- **Skill Library** — Remembers successful task patterns for reuse
+- **Semantic Cache** — Recognizes similar requests to respond faster
+- **Cascade Router** — Automatically selects optimal AI model for task complexity
+- **Persistent Memory** — Remembers past conversations, your preferences, and world locations
 
-### 🎯 Advanced Capabilities
+### 🚀 Advanced Capabilities
 
 | Capability | Description |
 |------------|-------------|
-| **🧱 Procedural Building** | Generate structures from natural language descriptions |
-| **🛣️ Intelligent Pathfinding** | A* algorithm with hierarchical pathfinding |
-| **⚔️ Combat System** | Mob fighting, boss battles, raid participation |
-| **🌾 Farming Automation** | Plant, harvest, breed animals automatically |
-| **⛏️ Smart Mining** | Ore detection, strip mining, quarry operations |
-| **📦 Inventory Management** | Item sorting, storage organization, chest management |
-| **🧠 Skill Learning** | Learn from successful tasks, reuse patterns |
-| **💬 Natural Dialogue** | Context-aware conversations, memory system |
-| **🔄 Task Persistence** | Save/load tasks across server restarts |
-| **🎪 Voice Support** | Optional text-to-speech and speech-to-text |
+| **Procedural Building** | Generate structures from natural language |
+| **Intelligent Pathfinding** | A* algorithm with hierarchical optimization |
+| **Combat System** | Mob fighting, boss battles, raid participation |
+| **Farming Automation** | Plant, harvest, breed animals automatically |
+| **Inventory Management** | Item sorting, storage organization |
+| **Task Persistence** | Save/load tasks across server restarts |
+| **Voice Support** | Optional text-to-speech and speech-to-text |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
 - **Minecraft 1.20.1** with Forge 47.x
 - **Java 17+** ([Download](https://adoptium.net/))
-- **API Key** — Free options available:
-  - [Groq](https://groq.com/) (Free, very fast, recommended)
+- **API Key** — Free options:
+  - [Groq](https://groq.com/) (Free, very fast, **recommended**)
   - [z.ai GLM](https://open.bigmodel.cn/) (Free tier)
   - OpenAI (Paid, GPT-4)
   - Gemini (Free tier)
@@ -126,16 +161,18 @@ Each companion has distinct character traits, dialogue styles, and specialties.
 
 <div align="center">
 
-**Option A: Download Release**
+**Option A: Download Release (Recommended)**
 
 </div>
 
-1. Download the latest [release](https://github.com/SuperInstance/MineWright/releases)
-2. Place JAR in your mods folder:
+1. Download the latest release from [Releases](https://github.com/SuperInstance/MineWright/releases)
+
+2. Place the JAR in your mods folder:
    - **Windows**: `%appdata%\.minecraft\mods\`
    - **Mac**: `~/Library/Application Support/minecraft/mods/`
    - **Linux**: `~/.minecraft/mods/`
-3. Launch Minecraft with Forge profile
+
+3. Launch Minecraft with the Forge profile
 
 <div align="center">
 
@@ -160,193 +197,181 @@ ls build/libs/minewright-*.jar
 Create `config/minewright-common.toml`:
 
 ```toml
-# AI Provider Selection (groq, openai, gemini, zai)
+# AI Provider Selection
 [ai]
-provider = "groq"
+provider = "groq"  # Options: groq, openai, gemini, zai
 
 # Groq Configuration (Free & Fast)
 [groq]
-apiKey = "${GROQ_API_KEY}"  # Or paste directly
+apiKey = "${GROQ_API_KEY}"  # Or paste your key directly
 model = "llama3-70b-8192"
-
-# Optional: OpenAI Configuration
-[openai]
-apiKey = "${OPENAI_API_KEY}"
-model = "gpt-4"
 
 # Behavior Settings
 [behavior]
-maxActiveCrew = 10
-actionTickDelay = 20
-enableChatResponses = true
+maxActiveCrew = 10           # Maximum AI companions
+actionTickDelay = 20         # Action speed (lower = faster)
+enableChatResponses = true   # Agents respond in chat
 
 # Performance Tuning
 [performance]
-aiTickBudgetMs = 5
-enableSemanticCache = true
+aiTickBudgetMs = 5           # Max AI time per tick
+enableSemanticCache = true    # Cache similar requests
 ```
 
-<div align="center">
-
-**Get Your Free API Key:**
-
-```bash
-# Groq (Recommended)
-# 1. Visit https://console.groq.com/
-# 2. Sign up and get your API key
-# 3. Set environment variable:
-export GROQ_API_KEY="gsk_your_key_here"
-```
-
-</div>
+**Get Your Free API Key (Groq):**
+1. Visit [console.groq.com](https://console.groq.com/)
+2. Sign up (it's free)
+3. Get your API key
+4. Set environment variable: `export GROQ_API_KEY="gsk_your_key_here"`
 
 ### First Steps
 
 1. **Launch Minecraft** with Forge
-2. **Enter a world** (create or load existing)
+
+2. **Enter a world** (create new or load existing)
+
 3. **Spawn your first companion:**
    ```
    /minewright spawn Alex
    ```
+
 4. **Open command GUI** (Press **K**)
+
 5. **Give your first command:**
    ```
    "Mine 20 stone and build a small shelter"
    ```
 
+That's it! Your AI companion is now ready to help.
+
 ---
 
-## 📖 Usage Examples
+## Usage
 
 ### Basic Commands
 
-| Command | Description |
-|---------|-------------|
-| `/minewright spawn <name>` | Spawn a new companion |
-| `/minewright list` | List all active companions |
-| `/minewright order <name> <command>` | Give a task |
-| `/minewright remove <name>` | Remove a companion |
-| **K** (key) | Open command GUI |
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/minewright spawn <name>` | Create a new companion | `/minewright spawn Steve` |
+| `/minewright list` | List all companions | `/minewright list` |
+| `/minewright order <name> <cmd>` | Give a task | `/minewright order Steve "Build a tower"` |
+| `/minewright remove <name>` | Remove a companion | `/minewright remove Steve` |
+| **K** (key) | Open command GUI | Press K in-game |
 
-### Natural Language Tasks
+### Advanced Usage
 
+**Task Profiles** (Predefined templates):
 ```
-# Mining & Gathering
-"Mine 20 iron ore"
-"Gather 10 oak logs"
-"Strip mine at Y=-48"
+/minewright order Alex profile:mining_iron
+/minewright order Steve profile:farming_wheat
+```
 
-# Building
-"Build a 5x5 cobblestone house"
-"Create a stone bridge across the river"
-"Construct a medieval tower"
-
-# Farming
-"Plant and harvest wheat"
-"Breed cows in the pen"
-"Create a sugarcane farm"
-
-# Combat
-"Kill all zombies nearby"
-"Protect me from mobs"
-"Fight the wither boss"
-
-# Multi-Agent
+**Multi-Agent Coordination:**
+```
 "Team up to build a castle"
 "Divide and clear the forest"
 "Work together to mine diamonds"
 ```
 
-### Advanced Features
-
-```bash
-# Task Profiles (Predefined Task Templates)
-/minewright order Alex profile:mining_iron
-/minewright order Steve profile:farming_wheat
-
-# Skill Learning
-# Agents automatically learn from successful tasks
-# and reuse patterns for similar future tasks
-
-# Persistent Memory
-# Companions remember:
-# - Past conversations
-# - Your preferences
-# - World locations
-# - Task outcomes
-```
+**Persistent Memory** — Companions remember:
+- Past conversations and context
+- Your preferences and requests
+- World locations and discoveries
+- Task outcomes and lessons learned
 
 ---
 
-## 🏗️ Architecture
+## Architecture
+
+### How It Works
+
+MineWright uses a revolutionary **"One Abstraction Away"** architecture that combines the creativity of LLMs with the reliability of traditional game AI.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     BRAIN LAYER (Strategic)                     │
+│                         LLM Agents                              │
+│   • Understands natural language                                │
+│   • Plans complex tasks                                         │
+│   • Makes strategic decisions                                   │
+│   • Manages multi-agent coordination                            │
+│                                                                  │
+│   Update: Every 30-60 seconds | Token Usage: LOW               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Generates plans and scripts
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   SCRIPT LAYER (Operational)                    │
+│                    Behavior Automations                         │
+│   • Executes behavior trees                                     │
+│   • Runs state machines                                         │
+│   • Coordinates pathfinding                                     │
+│   • Handles real-time control                                   │
+│                                                                  │
+│   Update: Every tick (20 TPS) | Token Usage: ZERO              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Issues commands
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   PHYSICAL LAYER (Actions)                      │
+│                     Minecraft API                               │
+│   • Places and breaks blocks                                    │
+│   • Moves entities                                              │
+│   • Manages inventory                                           │
+│   • Senses world state                                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why This Matters:**
+- **60 FPS Gameplay** — No blocking LLM calls
+- **10-20x Fewer Tokens** — LLM plans, traditional AI executes
+- **Rich Behavior** — LLM creativity + deterministic execution
+- **Scalability** — Multiple agents coordinate without conflicts
 
 ### Technology Stack
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | **Platform** | Minecraft Forge 1.20.1 | Mod framework |
-| **Language** | Java 17 | Primary implementation |
+| **Language** | Java 17 | Performance & modern features |
 | **AI Providers** | Groq, OpenAI, Gemini, GLM | LLM inference |
-| **Concurrency** | ConcurrentHashMap, AtomicInteger | Lock-free coordination |
 | **Caching** | Caffeine 3.1.8 | High-performance caching |
 | **Resilience** | Resilience4j 2.3.0 | Retry, circuit breaker, rate limiting |
-| **Scripting** | GraalVM JS 24.1.2 | Dynamic code execution |
-| **Networking** | Java 11+ HttpClient | API communication |
 
-### Key Systems
-
-| System | Purpose | Innovation |
-|--------|---------|------------|
-| **Skill Library** | Learn and reuse task patterns | Adaptive AI |
-| **Cascade Router** | Tier-based model selection | Cost optimization |
-| **Semantic Cache** | Remember similar requests | 10x API reduction |
-| **Blackboard** | Shared agent knowledge | Team intelligence |
-| **Contract Net** | Multi-agent coordination | Conflict-free work |
-| **Event Bus** | Async communication | Decoupled architecture |
-| **Action Interceptors** | Pre/post processing | Extensible actions |
-
-### Code Statistics
+### Project Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Source Files** | 237 Java files |
-| **Source Lines** | 115,937 LOC |
-| **Test Files** | 155 test files |
-| **Test Lines** | 99,357 LOC |
+| **Source Code** | 115,937 LOC |
+| **Test Code** | 99,357 LOC |
 | **Test Coverage** | 40%+ |
-| **Documentation** | 425+ files |
+| **Documentation** | 500+ files |
 | **Packages** | 40 |
 
 ---
 
-## 🧪 Development
+## Development
 
 ### Build & Test
 
 ```bash
-# Standard build
+# Build the mod
 ./gradlew build
 
 # Run tests
 ./gradlew test
 
-# Run specific test
-./gradlew test --tests ActionExecutorTest
-
 # Generate coverage report
 ./gradlew test jacocoTestReport
 
-# Run SpotBugs analysis
+# Run static analysis
 ./gradlew spotbugsMain
-
-# Run Checkstyle
 ./gradlew checkstyleMain
 
-# Launch test client
+# Launch for development
 ./gradlew runClient
-
-# Launch test server
-./gradlew runServer
 ```
 
 ### Project Structure
@@ -356,61 +381,60 @@ minewright/
 ├── src/
 │   ├── main/java/com/minewright/
 │   │   ├── action/          # Task execution system
-│   │   ├── llm/             # LLM integration & caching
-│   │   ├── entity/          # Foreman entities
+│   │   ├── llm/             # LLM integration
+│   │   ├── entity/          # AI entities
 │   │   ├── pathfinding/     # A* pathfinding
-│   │   ├── skill/           # Skill learning system
-│   │   ├── script/          # Script parsing & execution
-│   │   ├── memory/          # Persistent memory
-│   │   ├── personality/     # AI personality system
+│   │   ├── skill/           # Skill learning
 │   │   └── ...
-│   ├── test/java/com/minewright/
-│   └── main/resources/
+│   └── test/                # Comprehensive tests
 ├── docs/
-│   ├── architecture/        # Architecture docs
+│   ├── architecture/        # Technical documentation
 │   ├── agent-guides/        # Capability guides
-│   ├── characters/          # Personality docs
-│   └── audits/              # Code audits
-├── config/
-│   ├── profiles/            # Task profiles
-│   └── templates/           # Config templates
-├── build.gradle
-└── README.md
+│   └── ...                 # Extensive docs
+└── build.gradle
 ```
 
 ### Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Areas of interest:
+- New action implementations
+- Additional LLM providers
+- Test coverage improvements
+- Documentation enhancements
+- Bug fixes and optimizations
 
+**Process:**
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes
 4. Run tests: `./gradlew test`
 5. Submit a pull request
 
+**See Also:** [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [CLAUDE.md](CLAUDE.md) | Complete project guide |
-| [Architecture Overview](docs/architecture/TECHNICAL_DEEP_DIVE.md) | Deep technical dive |
-| [Agent Guides](docs/agent-guides/GUIDE_INDEX.md) | Capability documentation |
-| [Personality System](docs/characters/MASTER_CHARACTER_GUIDE.md) | Character & dialogue |
-| [Future Roadmap](docs/FUTURE_ROADMAP.md) | Development roadmap |
+| [CLAUDE.md](CLAUDE.md) | Complete project guide for developers |
+| [docs/KNOWLEDGE_INDEX.md](docs/KNOWLEDGE_INDEX.md) | Gateway to all documentation |
+| [docs/architecture/TECHNICAL_DEEP_DIVE.md](docs/architecture/TECHNICAL_DEEP_DIVE.md) | Deep technical details |
+| [docs/agent-guides/GUIDE_INDEX.md](docs/agent-guides/GUIDE_INDEX.md) | Capability documentation |
+| [docs/FUTURE_ROADMAP.md](docs/FUTURE_ROADMAP.md) | Development roadmap |
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 | Issue | Solution |
 |-------|----------|
-| **"API Key Not Configured"** | Check `config/minewright-common.toml` exists and contains valid API key |
-| **Agent Not Moving** | Verify pathfinding in logs; spawn in open terrain |
-| **Out of Memory** | Reduce `maxActiveCrew`; add `-Xmx4G` to JVM args |
+| **"API Key Not Configured"** | Verify `config/minewright-common.toml` exists and contains valid key |
+| **Agent Not Moving** | Check logs for pathfinding errors; try spawning in open terrain |
+| **Out of Memory** | Reduce `maxActiveCrew`; add `-Xmx4G` to JVM arguments |
 | **Commands Hanging** | Switch to Groq (faster); check internet connection |
 | **Build Fails** | Run `./gradlew clean`; ensure Java 17+ installed |
 
@@ -423,32 +447,32 @@ Enable debug logging in `config/minewright-common.toml`:
 level = "debug"
 ```
 
+### Getting Help
+
+- **Documentation:** Check the [docs/](docs/) folder
+- **Issues:** [GitHub Issues](https://github.com/SuperInstance/MineWright/issues)
+- **Community:** [Discord](https://discord.gg/minewright)
+
 ---
 
-## 🙏 Credits
+## Credits
 
 - **Built with** [Minecraft Forge](https://files.minecraftforge.net/)
-- **LLM Providers**: Groq, OpenAI, Gemini, z.ai
-- **Inspired by**: Baritone, Voyager, and the dream of AI companions
-- **Special Thanks**: The Minecraft modding community
+- **LLM Providers:** Groq, OpenAI, Gemini, z.ai
+- **Inspired by:** Baritone, Voyager, and the dream of AI companions in games
+- **Special Thanks:** The Minecraft modding community
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🌟 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=SuperInstance/MineWright&type=Date)](https://star-history.com/#SuperInstance/MineWright&Date)
-
----
-
 <div align="center">
 
-### **"Type what you want. They figure out how."**
+## **"Type what you want. They figure out how."**
 
 [GitHub](https://github.com/SuperInstance/MineWright)
 • [Issues](https://github.com/SuperInstance/MineWright/issues)
@@ -456,5 +480,9 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 • [Discord](https://discord.gg/minewright)
 
 **Made with ❤️ by the MineWright team**
+
+---
+
+**⭐ Star us on GitHub — it helps!**
 
 </div>
