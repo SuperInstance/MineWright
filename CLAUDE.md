@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Steve AI (MineWright)** - "Cursor for Minecraft": A multi-agent AI system for Minecraft that combines LLM-driven planning with real-time game execution. Users issue natural language commands, and AI agents coordinate to complete tasks.
+**MineWright** - "Cursor for Minecraft": A multi-agent AI system for Minecraft that combines LLM-driven planning with real-time game execution. Users issue natural language commands, and AI companions (called Foremen) coordinate to complete tasks.
 
 **Key Concept**: "One Abstraction Away" - LLMs plan and coordinate (Brain Layer), while traditional game AI executes (Script/Physical Layer). This enables 60 FPS execution without blocking on LLM calls.
 
-**Current Status (2026-03-04):**
+**Current Status (2026-03-05):**
 - **Code**: 90% complete (237 files, 86,500+ lines)
 - **Tests**: ~58% coverage (143 test files, 48,000+ lines)
 - **Security**: All critical issues addressed
-- **Recent**: Wave 48 complete - Large class refactoring (ProactiveDialogueManager, TaskRebalancingManager)
+- **Recent**: Waves 55-57 complete - Documentation, test cleanup, coverage expansion
 
 ## Quick Start
 
@@ -69,7 +69,7 @@ Update: Every 30-60 seconds             Update: Every tick (20 TPS)         Upda
 
 ```java
 // Register action via plugin
-registry.register("mine", (steve, task, ctx) -> new MineAction(steve, task));
+registry.register("mine", (foreman, task, ctx) -> new MineAction(foreman, task));
 ```
 
 ### Tick-Based Execution
@@ -149,10 +149,10 @@ Blackboard.getInstance().subscribe(KnowledgeArea.THREATS, subscriber);
 
 | Command | Description |
 |---------|-------------|
-| `/foreman spawn <name>` | Spawn a new Steve agent |
-| `/foreman list` | List all active agents |
-| `/foreman remove <name>` | Remove a Steve |
-| `/foreman order <name> <command>` | Issue work order |
+| `/minewright spawn <name>` | Spawn a new Foreman companion |
+| `/minewright list` | List all active Foremen |
+| `/minewright remove <name>` | Remove a Foreman |
+| `/minewright order <name> <command>` | Issue work order |
 | Press **K** | Open command GUI |
 
 ## Common Issues
@@ -185,7 +185,7 @@ Blackboard.getInstance().subscribe(KnowledgeArea.THREATS, subscriber);
 
 ## Summary
 
-Steve AI combines LLM planning with real-time game execution for autonomous Minecraft agents.
+MineWright combines LLM planning with real-time game execution for autonomous Minecraft companions called Foremen.
 
 **Priority Actions:**
 1. Add tests for core components (ActionExecutor, AgentStateMachine)
@@ -194,4 +194,4 @@ Steve AI combines LLM planning with real-time game execution for autonomous Mine
 
 ---
 
-**Version:** 4.0 (Streamlined) | **Updated:** 2026-03-04
+**Version:** 4.1 (Rebranded) | **Updated:** 2026-03-05

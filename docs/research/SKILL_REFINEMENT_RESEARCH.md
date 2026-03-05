@@ -1,6 +1,6 @@
 # Skill Refinement System Research: Voyager Pattern Implementation
 
-**Project:** Steve AI - "Cursor for Minecraft"
+**Project:** MineWright - "Cursor for Minecraft"
 **Date:** March 3, 2026
 **Version:** 1.0
 **Status:** Implementation Complete (Wave 35)
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document comprehensively analyzes the **Skill Refinement System** implemented in Steve AI, which follows the **Voyager pattern** of iterative skill improvement through environment feedback and critic validation. The system enables autonomous agents to learn from mistakes, refine behaviors, and build a robust skill library without manual intervention.
+This document comprehensively analyzes the **Skill Refinement System** implemented in MineWright, which follows the **Voyager pattern** of iterative skill improvement through environment feedback and critic validation. The system enables autonomous agents to learn from mistakes, refine behaviors, and build a robust skill library without manual intervention.
 
 **Key Achievements:**
 - Complete implementation of Voyager-style iterative refinement (3-4 iterations)
@@ -29,7 +29,7 @@ This document comprehensively analyzes the **Skill Refinement System** implement
 ## Table of Contents
 
 1. [Voyager Pattern Overview](#1-voyager-pattern-overview)
-2. [Steve AI Implementation](#2-steve-ai-implementation)
+2. [MineWright Implementation](#2-minewright-implementation)
 3. [CriticAgent Validation](#3-criticagent-validation)
 4. [Iterative Refinement Loop](#4-iterative-refinement-loop)
 5. [Skill Composition System](#5-skill-composition-system)
@@ -105,7 +105,7 @@ Voyager achieved remarkable improvements over baselines:
 
 ---
 
-## 2. Steve AI Implementation
+## 2. MineWright Implementation
 
 ### 2.1 Architecture Overview
 
@@ -113,7 +113,7 @@ Steve AI implements the Voyager pattern with these components:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                 STEVE AI SKILL SYSTEM                          │
+│                 MINEWRIGHT SKILL SYSTEM                          │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -496,7 +496,7 @@ Single-threaded:  1 refinement every 2 seconds
 
 ### 7.1 Feature Comparison
 
-| Feature | Voyager | Steve AI | Baritone | Mineflayer |
+| Feature | Voyager | MineWright | Baritone | Mineflayer |
 |---------|---------|----------|----------|------------|
 | Skill storage | JS code | Java objects | N/A | JS plugins |
 | Semantic search | Embeddings | Word overlap + embeddings | N/A | NPM registry |
@@ -508,7 +508,7 @@ Single-threaded:  1 refinement every 2 seconds
 
 ### 7.2 Novel Contributions
 
-Steve AI introduces several innovations beyond Voyager:
+MineWright introduces several innovations beyond Voyager:
 
 1. **Thread-safe concurrent design** - Voyager is single-agent focused
 2. **Java-based implementation** - More type-safe than JavaScript
@@ -795,7 +795,7 @@ public class DistributedSkillLibrary {
 
 ## 11. Conclusion
 
-The Steve AI skill refinement system successfully implements the Voyager pattern of iterative skill improvement through environment feedback and critic validation. Key achievements:
+The MineWright skill refinement system successfully implements the Voyager pattern of iterative skill improvement through environment feedback and critic validation. Key achievements:
 
 **Implementation Completeness:**
 - ✅ Full Voyager-style refinement loop (3-4 iterations)

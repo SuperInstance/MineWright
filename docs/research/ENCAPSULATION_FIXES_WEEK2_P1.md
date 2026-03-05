@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document summarizes the encapsulation improvements made to the Steve AI codebase as part of Week 2 Priority 1 fixes. The focus was on addressing public mutable fields in data classes that expose internal state without validation.
+This document summarizes the encapsulation improvements made to the MineWright codebase as part of Week 2 Priority 1 fixes. The focus was on addressing public mutable fields in data classes that expose internal state without validation.
 
 ## Classes Fixed
 

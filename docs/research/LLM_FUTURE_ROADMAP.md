@@ -1,15 +1,15 @@
-# LLM Future Roadmap 2025-2026: Strategic Evolution for Steve AI
+# LLM Future Roadmap 2025-2026: Strategic Evolution for MineWright
 
 **Document Version:** 1.0
 **Date:** 2026-03-03
 **Author:** Research Synthesis from Latest Industry Trends
-**Target:** Steve AI LLM Integration Evolution
+**Target:** MineWright LLM Integration Evolution
 
 ---
 
 ## Executive Summary
 
-The LLM landscape is undergoing rapid transformation in 2025-2026, with dramatic cost reductions (200x+), massive context window expansions (up to 20M tokens), and the rise of edge deployment. This roadmap synthesizes key trends and provides specific recommendations for evolving Steve AI's LLM integration to maintain competitive advantage.
+The LLM landscape is undergoing rapid transformation in 2025-2026, with dramatic cost reductions (200x+), massive context window expansions (up to 20M tokens), and the rise of edge deployment. This roadmap synthesizes key trends and provides specific recommendations for evolving MineWright's LLM integration to maintain competitive advantage.
 
 **Key Findings:**
 - **Cost Optimization:** Token costs have dropped 200x in 2 years; new providers offer 10-20x savings
@@ -19,7 +19,7 @@ The LLM landscape is undergoing rapid transformation in 2025-2026, with dramatic
 - **Agent Capabilities:** Programmatic tool calling, self-reflection, and multi-agent coordination maturing
 - **Open Source Parity:** Llama 4, Mistral, and GLM models match proprietary performance at 10x lower cost
 
-**Strategic Position:** Steve AI's current cascade routing architecture (GLMCascadeRouter, CascadeRouter) is well-positioned to evolve. The "One Abstraction Away" philosophy aligns with industry trends toward hybrid cloud-edge architectures.
+**Strategic Position:** MineWright's current cascade routing architecture (GLMCascadeRouter, CascadeRouter) is well-positioned to evolve. The "One Abstraction Away" philosophy aligns with industry trends toward hybrid cloud-edge architectures.
 
 ---
 
@@ -56,7 +56,7 @@ The LLM landscape is undergoing rapid transformation in 2025-2026, with dramatic
 | **GLM-4.6v** | z.ai | Vision model | 128K tokens | **Currently Used** |
 | **Llama 4** | Meta | Native multimodal | Up to 10M | Released April 2025 |
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 - **Screenshot Analysis:** Current GLM-4.6v integration is strategic foothold
 - **Game State Vision:** Future models can understand entire Minecraft screenshots
 - **Multimodal Planning:** Combine visual game state with text commands
@@ -89,7 +89,7 @@ The LLM landscape is undergoing rapid transformation in 2025-2026, with dramatic
 - **Positional encoding advances** (RoPE, YaRN, ALiBi)
 - **KV-cache compression** and PagedAttention
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - Steve AI uses 128K-4096 token contexts (model-dependent)
@@ -142,7 +142,7 @@ The AI landscape is shifting from centralized cloud-based large models toward **
 | **Combat** | Specialized 7B model | 92% of GPT-4 | $0.55/1M tokens |
 | **Planning** | GLM-5 | 98% of GPT-4 | $2.55/1M tokens |
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State (GLMCascadeRouter):**
 - ✅ Already implements cascade routing (flashx → flash → GLM-5)
@@ -184,7 +184,7 @@ The AI landscape is shifting from centralized cloud-based large models toward **
 **Market Outlook:**
 > "The future of AI is moving toward a **decentralized intelligence ecosystem** — not one giant brain in the cloud, but a network of specialized models working together."
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ LocalLLMClient supports Ollama integration
@@ -235,7 +235,7 @@ The AI landscape is shifting from centralized cloud-based large models toward **
 - **GLM-5:** 30x cheaper
 - **glm-4.7-flashx:** 750x cheaper
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current Strategy (GLMCascadeRouter):**
 - ✅ Uses cheapest model (flashx) for preprocessing
@@ -293,7 +293,7 @@ The AI landscape is shifting from centralized cloud-based large models toward **
    - Implicit costs (exchange rates, payment fees) can be 30%+
    - Use 1:1汇率 platforms to reduce overhead
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ Uses z.ai/GLM (cost-competitive)
@@ -342,7 +342,7 @@ The AI landscape is shifting from centralized cloud-based large models toward **
 - Transparent training mechanisms
 - No vendor lock-in
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ LocalLLMClient supports Ollama (runs open source models)
@@ -418,7 +418,7 @@ New capability for finding the right tool when dealing with hundreds or thousand
 - Uses regex-based matching
 - Reduces need to load all tool definitions into context
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ❌ Function calling not implemented (uses text-based task planning)
@@ -497,7 +497,7 @@ By early 2025, MCP adopted by major platforms:
 | **Protocol** | Proprietary | MCP standardized |
 | **Orchestration** | JSON-based | Code-based (PTC) |
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ❌ No standardized tool protocol
@@ -563,7 +563,7 @@ By early 2025, MCP adopted by major platforms:
   - Assessing progress during execution
   - Final goal achievement verification
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ Multi-agent framework exists (Foreman/Worker pattern)
@@ -643,7 +643,7 @@ for attempt in range(max_attempts):
     agent.update_context(reflection)
 ```
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ❌ No self-reflection mechanism
@@ -731,7 +731,7 @@ for attempt in range(max_attempts):
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ SemanticLLMCache with vector embeddings
@@ -797,7 +797,7 @@ for attempt in range(max_attempts):
 | **Weaviate** | 10K-100K | <20ms | Million-scale |
 | **pgvector** | 1K-10K | <50ms | Small-scale |
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ InMemoryVectorStore (simple implementation)
@@ -847,7 +847,7 @@ for attempt in range(max_attempts):
 | **text-embedding-3-large** | 62.1 | 46.2 | 72.3 | 60.2 |
 | **qwen-embedding-1.5** | 61.5 | 45.8 | 71.8 | 59.5 |
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ OpenAIEmbeddingModel integration
@@ -916,7 +916,7 @@ for attempt in range(max_attempts):
 3. **Semantic Drift:** Invalidate when context changes significantly
 4. **Manual Invalidation:** Explicit cache clearing
 
-**Implications for Steve AI:**
+**Implications for MineWright:**
 
 **Current State:**
 - ✅ LLMCache implementation (exact match + semantic)

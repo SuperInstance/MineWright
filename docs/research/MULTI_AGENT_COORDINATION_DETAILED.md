@@ -1,6 +1,6 @@
 # Multi-Agent Coordination: Contract Net Protocol Implementation
 
-**Project:** Steve AI - "Cursor for Minecraft"
+**Project:** MineWright - "Cursor for Minecraft"
 **Date:** March 3, 2026
 **Version:** 1.0
 **Status:** Implementation Complete (Wave 34)
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document comprehensively analyzes the **Multi-Agent Coordination System** implemented in Steve AI, which uses the **Contract Net Protocol** for distributed task allocation. The system enables multiple autonomous agents to collaborate effectively on complex tasks without central control, achieving efficient workload distribution and conflict resolution.
+This document comprehensively analyzes the **Multi-Agent Coordination System** implemented in MineWright, which uses the **Contract Net Protocol** for distributed task allocation. The system enables multiple autonomous agents to collaborate effectively on complex tasks without central control, achieving efficient workload distribution and conflict resolution.
 
 **Key Achievements:**
 - Complete Contract Net Protocol implementation (announcement, bidding, award)
@@ -30,7 +30,7 @@ This document comprehensively analyzes the **Multi-Agent Coordination System** i
 ## Table of Contents
 
 1. [Contract Net Protocol Overview](#1-contract-net-protocol-overview)
-2. [Steve AI Implementation](#2-steve-ai-implementation)
+2. [MineWright Implementation](#2-minewright-implementation)
 3. [Workload Tracking System](#3-workload-tracking-system)
 4. [Award Selection Algorithm](#4-award-selection-algorithm)
 5. [Conflict Resolution Strategies](#5-conflict-resolution-strategies)
@@ -113,7 +113,7 @@ Where:
 
 ---
 
-## 2. Steve AI Implementation
+## 2. MineWright Implementation
 
 ### 2.1 Architecture Overview
 
@@ -140,7 +140,7 @@ Where:
 │  └──────────────┘    └──────────────┘    └──────────────┘     │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  AGENTS (Steve-1, Steve-2, ..., Steve-N)                │   │
+│  │  AGENTS (Foreman-1, Foreman-2, ..., Foreman-N)                │   │
 │  │  ├─ Receive announcements                               │   │
 │  │  ├─ Evaluate capability                                 │   │
 │  │  ├─ Submit bids                                         │   │
@@ -560,7 +560,7 @@ Total overhead (100 agents, 1000 negotiations): ~3MB
 
 ### 7.1 Feature Comparison
 
-| Feature | Steve AI | Voyager | Baritone | Commercial MAS |
+| Feature | MineWright | Voyager | Baritone | Commercial MAS |
 |---------|----------|---------|----------|----------------|
 | CNP Implementation | ✅ Complete | ❌ None | ❌ None | ✅ Partial |
 | Load Balancing | ✅ Automatic | ❌ N/A | ❌ N/A | ⚠️ Manual |
@@ -571,7 +571,7 @@ Total overhead (100 agents, 1000 negotiations): ~3MB
 
 ### 7.2 Novel Contributions
 
-Steve AI introduces several innovations:
+MineWright introduces several innovations:
 
 1. **Integrated Workload Tracking** - Most MAS frameworks require external load balancers
 2. **Multi-Strategy Conflict Resolution** - Unique combination of 5 strategies
@@ -867,7 +867,7 @@ public class AdaptiveConflictResolver extends ConflictResolver {
 
 ## 11. Conclusion
 
-The Steve AI multi-agent coordination system implements a complete, production-ready Contract Net Protocol with advanced features for workload balancing and conflict resolution.
+The MineWright multi-agent coordination system implements a complete, production-ready Contract Net Protocol with advanced features for workload balancing and conflict resolution.
 
 **Implementation Completeness:**
 - ✅ Full CNP implementation (announcement, bidding, award)

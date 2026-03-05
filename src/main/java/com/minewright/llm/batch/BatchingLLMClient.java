@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
  *
  * // Submit prompts
  * CompletableFuture<String> response = batchClient.submitUserPrompt(
- *     "Hello Steve!",
+ *     "Hello Foreman!",
  *     Map.of("playerName", "Alex")
  * );
  *

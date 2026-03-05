@@ -124,7 +124,7 @@ public class LocalPreprocessor {
         // PERFORMANCE: Pre-allocate capacity for ~500 chars to avoid multiple allocations
         StringBuilder sb = new StringBuilder(500);
 
-        sb.append("# Steve AI Foreman - Batched Request\n\n");
+        sb.append("# MineWright Foreman - Batched Request\n\n");
         sb.append("You are processing multiple related requests in a single batch. ");
         sb.append("Please respond to each request clearly and separately.\n\n");
 
@@ -222,27 +222,27 @@ public class LocalPreprocessor {
         // PERFORMANCE: Pre-allocate capacity for ~300 chars
         StringBuilder sb = new StringBuilder(300);
 
-        sb.append("# Steve AI Foreman\n\n");
+        sb.append("# MineWright Foreman\n\n");
 
         // Add type-specific instructions
         switch (prompt.type) {
             case DIRECT_USER:
-                sb.append("You are Steve, a friendly AI companion and foreman in Minecraft. ");
+                sb.append("You are the Foreman, a friendly AI companion in Minecraft. ");
                 sb.append("Respond naturally and conversationally.\n");
                 break;
 
             case URGENT:
-                sb.append("You are Steve, an AI foreman handling an urgent request. ");
+                sb.append("You are the Foreman, an AI companion handling an urgent request. ");
                 sb.append("Provide clear, immediate guidance.\n");
                 break;
 
             case BACKGROUND:
-                sb.append("You are Steve, processing a background task. ");
+                sb.append("You are the Foreman, processing a background task. ");
                 sb.append("Be efficient and focused.\n");
                 break;
 
             default:
-                sb.append("You are Steve, an AI foreman assisting with Minecraft tasks.\n");
+                sb.append("You are the Foreman, an AI companion assisting with Minecraft tasks.\n");
         }
 
         // Add context if available

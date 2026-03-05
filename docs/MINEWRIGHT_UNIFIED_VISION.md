@@ -1,6 +1,6 @@
-# Steve AI - Unified Vision Document
+# MineWright - Unified Vision Document
 
-**Document Status:** THE source of truth for Steve AI project direction
+**Document Status:** THE source of truth for MineWright project direction
 **Version:** 1.0
 **Created:** 2026-03-03
 **Next Review:** 2026-06-03 (quarterly)
@@ -10,7 +10,7 @@
 
 ## Document Purpose
 
-This document consolidates findings from 6 comprehensive audits into a **single unified vision** for the Steve AI project. It serves as the definitive source of truth for:
+This document consolidates findings from 6 comprehensive audits into a **single unified vision** for the MineWright project. It serves as the definitive source of truth for:
 
 1. **Current State Assessment** - Where we are now
 2. **Target Vision** - Where we want to be
@@ -39,7 +39,7 @@ This document consolidates findings from 6 comprehensive audits into a **single 
 
 ### Project Health: B+ (82/100)
 
-The Steve AI project is a **sophisticated, well-architected system** with strong foundations but clear areas for improvement. After consolidating 6 comprehensive audits (Architecture, Code Quality, Security, Performance, Thread Safety, Test Coverage, Documentation, and Action Execution Bugs), we have a clear picture of the current state and path forward.
+The MineWright project is a **sophisticated, well-architected system** with strong foundations but clear areas for improvement. After consolidating 6 comprehensive audits (Architecture, Code Quality, Security, Performance, Thread Safety, Test Coverage, Documentation, and Action Execution Bugs), we have a clear picture of the current state and path forward.
 
 ### Key Strengths
 
@@ -284,7 +284,7 @@ Brain Layer (LLM) → Script Layer (BT/HTN/FSM) → Physical Layer (Actions)
 
 ### Vision Statement
 
-**Steve AI will be the premier AI-powered Minecraft mod, combining cutting-edge LLM technology with traditional game AI to create intelligent, characterful autonomous agents that learn, adapt, and collaborate.**
+**MineWright will be the premier AI-powered Minecraft mod, combining cutting-edge LLM technology with traditional game AI to create intelligent, characterful autonomous agents that learn, adapt, and collaborate.**
 
 ### Desired State by Category
 
@@ -1310,11 +1310,11 @@ ExecuteTask(), task(), data()
 ```java
 // GOOD
 private static final int MAX_QUEUE_SIZE = 1000;
-private static final String DEFAULT_NAME = "Steve";
+private static final String DEFAULT_NAME = "Foreman";
 
 // BAD
 private static final int maxSize = 1000;
-private static final String name = "Steve";
+private static final String name = "Foreman";
 ```
 
 #### Encapsulation Standards
@@ -1985,7 +1985,7 @@ Time Invested: ___ hours (target: 308 hours)
 
 ## Conclusion
 
-This unified vision document consolidates findings from 6 comprehensive audits into **one clear direction** for the Steve AI project. It eliminates duplicate priorities, resolves contradictions, and provides a single source of truth for project improvement.
+This unified vision document consolidates findings from 6 comprehensive audits into **one clear direction** for the MineWright project. It eliminates duplicate priorities, resolves contradictions, and provides a single source of truth for project improvement.
 
 ### Key Takeaways
 
@@ -2005,7 +2005,7 @@ This unified vision document consolidates findings from 6 comprehensive audits i
 
 ### Success Vision
 
-**By completing this unified vision, Steve AI will achieve:**
+**By completing this unified vision, MineWright will achieve:**
 - A-grade architecture (95/100) with clean hexagonal design
 - A-grade code quality (90/100) with no god objects
 - A-grade security (95/100) with zero critical vulnerabilities
@@ -2016,7 +2016,7 @@ This unified vision document consolidates findings from 6 comprehensive audits i
 
 **Overall Target Grade: A- (90/100)**
 
-This represents a transformation from "good" to "excellent," positioning Steve AI as a best-in-class AI-powered Minecraft mod.
+This represents a transformation from "good" to "excellent," positioning MineWright as a best-in-class AI-powered Minecraft mod.
 
 ---
 
@@ -2193,6 +2193,6 @@ This document consolidates findings from:
 
 **END OF UNIFIED VISION DOCUMENT**
 
-This document is **THE source of truth** for Steve AI project direction. All other prioritization documents should be considered superseded by this unified vision. Update this document as progress is made and new information emerges.
+This document is **THE source of truth** for MineWright project direction. All other prioritization documents should be considered superseded by this unified vision. Update this document as progress is made and new information emerges.
 
 **Remember:** One vision, one direction, one path to excellence.

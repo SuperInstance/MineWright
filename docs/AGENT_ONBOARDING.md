@@ -1,4 +1,4 @@
-# Agent Onboarding Guide - Steve AI Project
+# Agent Onboarding Guide - MineWright Project
 
 **Version:** 1.0
 **Created:** 2026-03-04
@@ -8,7 +8,7 @@
 
 ## Welcome, Agent!
 
-You are joining the Steve AI project - a sophisticated Minecraft mod that creates autonomous AI companions. This guide will help you understand the system and contribute effectively.
+You are joining the MineWright project - a sophisticated Minecraft mod that creates autonomous AI companions. This guide will help you understand the system and contribute effectively.
 
 ### Quick Start Checklist
 
@@ -24,9 +24,9 @@ Before you start working, complete these steps:
 
 ## 1. System Overview
 
-### What is Steve AI?
+### What is MineWright?
 
-Steve AI is "Cursor for Minecraft" - AI agents that play Minecraft with you. Users type natural language commands, and AI-controlled Steve entities execute them through LLM-powered planning.
+MineWright is "Cursor for Minecraft" - AI agents that play Minecraft with you. Users type natural language commands, and AI-controlled Foreman entities execute them through LLM-powered planning.
 
 ### Core Philosophy: "One Abstraction Away"
 
@@ -304,8 +304,8 @@ class FeatureTest {
 1. Create class extending `BaseAction`:
 ```java
 public class NewAction extends BaseAction {
-    public NewAction(SteveEntity steve, Task task) {
-        super(steve, task);
+    public NewAction(ForemanEntity foreman, Task task) {
+        super(foreman, task);
     }
 
     @Override
@@ -323,7 +323,7 @@ public class NewAction extends BaseAction {
 
 2. Register in `CoreActionsPlugin.java`:
 ```java
-registry.register("new_action", (steve, task, ctx) -> new NewAction(steve, task));
+registry.register("new_action", (foreman, task, ctx) -> new NewAction(foreman, task));
 ```
 
 3. Add tests in `NewActionTest.java`
@@ -557,6 +557,6 @@ ls src/test/java/com/minewright/*/ | wc -l
 
 ---
 
-**Welcome to the team! Your contributions will help make Steve AI the best Minecraft AI companion system ever built.**
+**Welcome to the team! Your contributions will help make MineWright the best Minecraft AI companion system ever built.**
 
 *Document Version: 1.0 | Last Updated: 2026-03-04*

@@ -1,6 +1,6 @@
-# Production Observability Strategy for Steve AI
+# Production Observability Strategy for MineWright
 
-**Project:** Steve AI - "Cursor for Minecraft"
+**Project:** MineWright - "Cursor for Minecraft"
 **Date:** March 3, 2026
 **Version:** 1.0
 **Status:** Design Document
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document defines the comprehensive observability strategy for Steve AI in production environments. As a complex multi-agent system with LLM integration, real-time game execution, and autonomous learning, Steve AI requires sophisticated monitoring to ensure reliability, performance, and cost-effectiveness.
+This document defines the comprehensive observability strategy for MineWright in production environments. As a complex multi-agent system with LLM integration, real-time game execution, and autonomous learning, MineWright requires sophisticated monitoring to ensure reliability, performance, and cost-effectiveness.
 
 **Key Components:**
 - Distributed tracing across agent interactions
@@ -91,7 +91,7 @@ This document defines the comprehensive observability strategy for Steve AI in p
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Steve AI   │────▶│  Collector   │────▶│   Storage    │
+│  MineWright  │────▶│  Collector   │────▶│   Storage    │
 │   Agents     │     │  (OTel)      │     │  (Prometheus) │
 └──────────────┘     └──────────────┘     └──────────────┘
        │                    │                     │
@@ -158,7 +158,7 @@ Standard attributes for all spans:
 
 ```java
 // Common attributes
-put("service.name", "steve-ai")
+put("service.name", "minewright")
 put("service.version", "1.0.0")
 put("agent.id", agentId.toString())
 put("agent.name", agentName)
@@ -184,7 +184,7 @@ put("skill.success", success)
 
 ```java
 public class TracingUtils {
-    private static final Tracer tracer = OpenTelemetry.getGlobalTracer("steve-ai");
+    private static final Tracer tracer = OpenTelemetry.getGlobalTracer("minewright");
 
     public static Span startSpan(String name, Map<String, String> attributes) {
         SpanBuilder builder = tracer.spanBuilder(name)
@@ -384,7 +384,7 @@ EvaluationMetrics.exportToJson("/path/to/metrics.json");
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    STEVE AI OVERVIEW                            │
+│                    MINEWRIGHT OVERVIEW                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
@@ -494,15 +494,15 @@ EvaluationMetrics.exportToJson("/path/to/metrics.json");
 │  AWARD SELECTION                                                │
 │  ├─ Avg Selection Time: 1.2ms                                 │
 │  ├─ Avg Score: 0.76                                           │
-│  └─ Top Winner: Steve-1 (12 awards)                           │
+│  └─ Top Winner: Foreman-1 (12 awards)                           │
 │                                                                 │
 │  WORKLOAD DISTRIBUTION                                          │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Steve-1: ████████████████░░░░░░░░░ 65% (12 tasks)      │   │
-│  │  Steve-2: ████████░░░░░░░░░░░░░░░░ 35% (6 tasks)        │   │
-│  │  Steve-3: ██████████████░░░░░░░░░░░ 55% (10 tasks)       │   │
-│  │  Steve-4: ████░░░░░░░░░░░░░░░░░░░░ 20% (3 tasks)        │   │
-│  │  Steve-5: ████████░░░░░░░░░░░░░░░░ 35% (6 tasks)        │   │
+│  │  Foreman-1: ████████████████░░░░░░░░░ 65% (12 tasks)      │   │
+│  │  Foreman-2: ████████░░░░░░░░░░░░░░░░ 35% (6 tasks)        │   │
+│  │  Foreman-3: ██████████████░░░░░░░░░░░ 55% (10 tasks)       │   │
+│  │  Foreman-4: ████░░░░░░░░░░░░░░░░░░░░ 20% (3 tasks)        │   │
+│  │  Foreman-5: ████████░░░░░░░░░░░░░░░░ 35% (6 tasks)        │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -520,7 +520,7 @@ LangSmith provides end-to-end tracing for LLM applications:
 // Configuration
 LangSmithConfig config = LangSmithConfig.builder()
     .apiKey(System.getenv("LANGSMITH_API_KEY"))
-    .projectName("steve-ai-production")
+    .projectName("minewright-production")
     .samplingRate(1.0)  // Trace all requests
     .build();
 
@@ -771,7 +771,7 @@ MetricsEndpoint endpoint = new MetricsEndpoint(registry);
 
 // Scrape config (prometheus.yml)
 scrape_configs:
-  - job_name: 'steve-ai'
+  - job_name: 'minewright'
     scrape_interval: 15s
     static_configs:
       - targets: ['localhost:9090']
@@ -782,7 +782,7 @@ scrape_configs:
 ```json
 {
   "dashboard": {
-    "title": "Steve AI Overview",
+    "title": "MineWright Overview",
     "panels": [
       {
         "title": "Task Success Rate",
@@ -810,7 +810,7 @@ scrape_configs:
 ```yaml
 # alertmanager.yml
 groups:
-  - name: steve-ai-alerts
+  - name: minewright-alerts
     rules:
       - alert: HighTaskFailureRate
         expr: rate(agent_tasks_failed_total[5m]) > 0.1
@@ -932,7 +932,7 @@ public class AlertManager {
 
 ## 11. Conclusion
 
-Production observability is critical for Steve AI's reliability and cost-effectiveness. This strategy provides:
+Production observability is critical for MineWright's reliability and cost-effectiveness. This strategy provides:
 
 **Comprehensive Coverage:**
 - Distributed tracing across all agent interactions

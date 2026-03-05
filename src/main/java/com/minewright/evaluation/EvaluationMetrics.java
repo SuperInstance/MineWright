@@ -28,16 +28,16 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p><b>Usage:</b></p>
  * <pre>
  * // Start tracking a task
- * EvaluationMetrics.recordTaskStart("Steve-1", "Mine 10 stone");
+ * EvaluationMetrics.recordTaskStart("Foreman-1", "Mine 10 stone");
  *
  * // Record planning completion
- * EvaluationMetrics.recordPlanningComplete("Steve-1", 2340, 5);
+ * EvaluationMetrics.recordPlanningComplete("Foreman-1", 2340, 5);
  *
  * // Record LLM call
  * EvaluationMetrics.recordLLMCall("openai", "gpt-4", 1250, 180, 0.045, 2300, false);
  *
  * // Mark task complete
- * EvaluationMetrics.recordTaskComplete("Steve-1", true, 1.0, Map.of("blocks_mined", 10));
+ * EvaluationMetrics.recordTaskComplete("Foreman-1", true, 1.0, Map.of("blocks_mined", 10));
  *
  * // Export results
  * EvaluationMetrics.exportToJson("/path/to/results.json");

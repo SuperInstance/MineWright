@@ -1,6 +1,6 @@
-# Steve AI Execution Summary: Waves 1-35
+# MineWright Execution Summary: Waves 1-35
 
-**Project:** Steve AI - "Cursor for Minecraft"
+**Project:** MineWright - "Cursor for Minecraft"
 **Date:** March 3, 2026
 **Version:** 1.0
 **Status:** Complete
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive summary of the Steve AI project from inception through Wave 35, documenting all major achievements, novel contributions, and publication potential. Steve AI represents a significant advancement in autonomous AI agents for Minecraft, combining LLM-powered planning with real-time game execution.
+This document provides a comprehensive summary of the MineWright project from inception through Wave 35, documenting all major achievements, novel contributions, and publication potential. MineWright represents a significant advancement in autonomous AI agents for Minecraft, combining LLM-powered planning with real-time game execution.
 
 **Key Statistics:**
 - **Development Time:** 8 months (2025-07 to 2026-03)

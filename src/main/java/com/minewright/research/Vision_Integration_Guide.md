@@ -1694,4 +1694,4 @@ max_images_per_request = 4
 
 **Document Version:** 1.0
 **Last Updated:** 2026-02-27
-**For:** Steve AI - Minecraft Autonomous Agent System
+**For:** MineWright - Minecraft Autonomous Agent System

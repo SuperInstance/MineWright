@@ -1,4 +1,4 @@
-# Work Patterns - Steve AI Project
+# Work Patterns - MineWright Project
 
 **Version:** 1.0
 **Created:** 2026-03-04
@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document catalogs the patterns, practices, and conventions established through years of development on Steve AI. Following these patterns ensures consistency, maintainability, and quality.
+This document catalogs the patterns, practices, and conventions established through years of development on MineWright. Following these patterns ensures consistency, maintainability, and quality.
 
 ---
 
@@ -248,7 +248,7 @@ public class ActionExecutor {
 // 1. Define factory interface
 @FunctionalInterface
 public interface ActionFactory {
-    BaseAction create(SteveEntity steve, Task task, ActionContext ctx);
+    BaseAction create(ForemanEntity foreman, Task task, ActionContext ctx);
 }
 
 // 2. Create registry
@@ -259,12 +259,12 @@ public class ActionRegistry {
         factories.put(actionType, factory);
     }
 
-    public BaseAction create(String actionType, SteveEntity steve, Task task) {
+    public BaseAction create(String actionType, ForemanEntity foreman, Task task) {
         ActionFactory factory = factories.get(actionType);
         if (factory == null) {
             throw new IllegalArgumentException("Unknown action: " + actionType);
         }
-        return factory.create(steve, task, ActionContext.DEFAULT);
+        return factory.create(foreman, task, ActionContext.DEFAULT);
     }
 }
 
@@ -272,8 +272,8 @@ public class ActionRegistry {
 public class CoreActionsPlugin implements Plugin {
     @Override
     public void register(ActionRegistry registry) {
-        registry.register("mine", (steve, task, ctx) -> new MineAction(steve, task));
-        registry.register("build", (steve, task, ctx) -> new BuildAction(steve, task));
+        registry.register("mine", (foreman, task, ctx) -> new MineAction(foreman, task));
+        registry.register("build", (foreman, task, ctx) -> new BuildAction(foreman, task));
     }
 }
 ```
@@ -390,12 +390,12 @@ public void tick() {
 
 ```java
 public interface RecoveryStrategy {
-    RecoveryResult attempt(SteveEntity entity, StuckType type);
+    RecoveryResult attempt(ForemanEntity entity, StuckType type);
 }
 
 public class RepathStrategy implements RecoveryStrategy {
     @Override
-    public RecoveryResult attempt(SteveEntity entity, StuckType type) {
+    public RecoveryResult attempt(ForemanEntity entity, StuckType type) {
         entity.recalculatePath();
         return RecoveryResult.RETRY;
     }
@@ -403,7 +403,7 @@ public class RepathStrategy implements RecoveryStrategy {
 
 public class TeleportStrategy implements RecoveryStrategy {
     @Override
-    public RecoveryResult attempt(SteveEntity entity, StuckType type) {
+    public RecoveryResult attempt(ForemanEntity entity, StuckType type) {
         entity.teleportToSafety();
         return RecoveryResult.RESOLVED;
     }

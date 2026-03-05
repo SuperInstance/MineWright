@@ -1,7 +1,7 @@
 # SmolVLM Vision Model Research for Minecraft AI Integration
 
 **Date:** 2026-02-27
-**Purpose:** Research document for integrating SmolVLM into Steve AI (Minecraft autonomous agent system)
+**Purpose:** Research document for integrating SmolVLM into MineWright (Minecraft autonomous agent system)
 
 ---
 
@@ -858,4 +858,4 @@ For integrating SmolVLM into Steve AI:
 
 **Document Version:** 1.0
 **Last Updated:** 2026-02-27
-**Author:** Research for Steve AI Integration
+**Author:** Research for MineWright Integration

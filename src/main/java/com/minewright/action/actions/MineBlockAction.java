@@ -279,7 +279,7 @@ public class MineBlockAction extends BaseAction {
 
     /**
      * Mine forward in ONE DIRECTION - creates a straight tunnel!
-     * Steve progresses forward block by block
+     * The Foreman progresses forward block by block
      */
     private void mineNearbyBlock() {
         BlockPos centerPos = currentTunnelPos;

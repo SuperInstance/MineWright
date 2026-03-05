@@ -226,7 +226,7 @@ public class HTNExample {
      * Main entry point for running all examples.
      */
     public static void main(String[] args) {
-        LOGGER.info("HTN Planning Examples for Steve AI Minecraft Mod");
+        LOGGER.info("HTN Planning Examples for MineWright Mod");
         LOGGER.info("================================================\n");
 
         basicGatheringExample();

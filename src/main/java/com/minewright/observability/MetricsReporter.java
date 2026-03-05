@@ -74,7 +74,7 @@ public class MetricsReporter {
         String timestamp = LocalDateTime.now().format(DATE_FORMATTER);
 
         report.append("╔═══════════════════════════════════════════════════════════════════╗\n");
-        report.append("║           Steve AI Observability Report                          ║\n");
+        report.append("║           MineWright Observability Report                        ║\n");
         report.append("║           ").append(timestamp).append("                       ║\n");
         report.append("╚═══════════════════════════════════════════════════════════════════╝\n\n");
 
@@ -114,7 +114,7 @@ public class MetricsReporter {
         Map<String, Object> systemHealth = collector.getSystemHealthSummary();
         Map<String, Object> llmSummary = collector.getLLMSummary();
 
-        report.append("§6=== Steve AI Status ===§r\n");
+        report.append("§6=== MineWright Status ===§r\n");
         report.append(String.format("§7Uptime:§r %.1f min\n",
             (double) systemHealth.get("uptime_seconds") / 60.0));
         report.append(String.format("§7Memory:§r %.1f%% (%d/%d MB)\n",

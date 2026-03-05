@@ -1,6 +1,6 @@
 # Vision Integration Test Suite
 
-This directory contains comprehensive test coverage for the vision integration components of the Steve AI Minecraft mod. These tests are based on the research documented in `src/main/java/com/minewright/research/`.
+This directory contains comprehensive test coverage for the vision integration components of the MineWright Minecraft mod. These tests are based on the research documented in `src/main/java/com/minewright/research/`.
 
 ## Test Files
 

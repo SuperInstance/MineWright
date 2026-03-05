@@ -1,37 +1,37 @@
-# Steve Minecraft Mod Community Research
+# MineWright Minecraft Mod Community Research
 
 **Research Date:** February 2026
-**Subject:** YuvDwi/Steve Minecraft Mod and Ecosystem
+**Subject:** YuvDwi/MineWright Minecraft Mod and Ecosystem
 **Purpose:** Understand the original project, forks, community requests, and development activity
 
 ---
 
 ## Executive Summary
 
-The **YuvDwi/Steve** mod is a groundbreaking Minecraft mod that introduces LLM-powered autonomous AI agents into the game. Described as "Cursor for Minecraft," it allows players to command AI agents using natural language. The project gained significant attention with hundreds of GitHub stars shortly after release, representing an exciting fusion of AI technology and gaming.
+The **YuvDwi/MineWright** mod is a groundbreaking Minecraft mod that introduces LLM-powered autonomous AI agents into the game. Described as "Cursor for Minecraft," it allows players to command AI agents using natural language. The project gained significant attention with hundreds of GitHub stars shortly after release, representing an exciting fusion of AI technology and gaming.
 
-**Key Finding:** YuvDwi/Steve appears to be the **original and most prominent** implementation of AI agents as a Minecraft Forge mod, distinguishing itself from other AI Minecraft projects which are primarily research frameworks or external tools.
+**Key Finding:** YuvDwi/MineWright appears to be the **original and most prominent** implementation of AI agents as a Minecraft Forge mod, distinguishing itself from other AI Minecraft projects which are primarily research frameworks or external tools.
 
 ---
 
-## 1. What is YuvDwi/Steve? (The Original)
+## 1. What is YuvDwi/MineWright? (The Original)
 
 ### Repository Details
-- **GitHub:** [github.com/YuvDwi/Steve](https://github.com/YuvDwi/Steve)
+- **GitHub:** [github.com/YuvDwi/MineWright](https://github.com/YuvDwi/Steve)
 - **Developer:** YuvDwi (Yuvraj Dwivedi and Pravin Lohani)
 - **Status:** Active / Open Source
 - **Platform:** Minecraft Forge 1.20.1
 - **Language:** Java 17
 
 ### Core Concept
-Steve is an **autonomous AI agent mod** that brings LLM-powered assistants directly into Minecraft gameplay. Unlike scripted bots, these agents interpret natural language instructions and reason about their environment to execute tasks dynamically.
+MineWright is an **autonomous AI agent mod** that brings LLM-powered assistants directly into Minecraft gameplay. Unlike scripted bots, these agents interpret natural language instructions and reason about their environment to execute tasks dynamically.
 
 ### Key Features
 
 | Feature | Description |
 |---------|-------------|
 | **Natural Language Commands** | Press **K** to open control panel, type commands like "mine 20 iron ore" or "build a house near me" |
-| **Multi-Agent Coordination** | Multiple Steve agents can work together, automatically dividing tasks and avoiding conflicts |
+| **Multi-Agent Coordination** | Multiple Foreman agents can work together, automatically dividing tasks and avoiding conflicts |
 | **LLM Integration** | Supports OpenAI, Groq, and Gemini APIs |
 | **Autonomous Execution** | Agents aren't following predefined scripts - they plan paths and execute based on context |
 | **Environment Understanding** | AI agents understand the game world, navigate, and interact with blocks/entities |
@@ -50,9 +50,9 @@ Steve is an **autonomous AI agent mod** that brings LLM-powered assistants direc
 - Configuration via `config/steve-common.toml`
 
 ### In-Game Commands
-- `/steve spawn <name>` - Spawn a new Steve agent
-- `/steve list` - List all active Steves
-- `/steve remove <name>` - Remove a Steve
+- `/foreman spawn <name>` - Spawn a new Foreman agent
+- `/foreman list` - List all active Foremen
+- `/foreman remove <name>` - Remove a Foreman
 - Press **K** - Open command GUI
 
 ### Community Reception
@@ -81,7 +81,7 @@ Direct GitHub fork information was not available through search results. To find
   - Image-to-building conversion
 - **Platform:** Minecraft Java Edition 1.21.1 with Node.js
 - **Best For:** Specialized construction projects
-- **Comparison:** More flexible LLM support, but requires external setup vs. Steve's direct mod integration
+- **Comparison:** More flexible LLM support, but requires external setup vs. MineWright's direct mod integration
 
 #### Voyager (NVIDIA Research)
 - **Type:** Research framework for lifelong learning agents
@@ -102,7 +102,7 @@ Direct GitHub fork information was not available through search results. To find
 - **Comparison:** More basic automation without LLM-powered natural language understanding
 
 ### Summary of Forks Landscape
-Based on research, **YuvDwi/Steve does not appear to have significant public forks**. This suggests either:
+Based on research, **YuvDwi/MineWright does not appear to have significant public forks**. This suggests either:
 1. The project is relatively new (late 2025/early 2026)
 2. Development is centralized with the original authors
 3. Community contributions are happening through pull requests rather than forks
@@ -174,7 +174,7 @@ Based on research across AI Minecraft mod communities, these are the most reques
 - Multi-language voice support
 
 ### Community Feedback Patterns
-Based on Reddit and forum discussions (though specific Steve mod threads were limited in search results), players generally want:
+Based on Reddit and forum discussions (though specific MineWright mod threads were limited in search results), players generally want:
 1. **More autonomous behavior** - less manual intervention
 2. **Better multiplayer coordination** - agents working together seamlessly
 3. **Reduced API costs** - support for local LLMs (Ollama, etc.)
@@ -185,7 +185,7 @@ Based on Reddit and forum discussions (though specific Steve mod threads were li
 
 ## 4. Development Activity
 
-### YuvDwi/Steve Project Status
+### YuvDwi/MineWright Project Status
 
 #### Indicators of Activity
 - **Recent Mentions:** February 2026 articles and discussions
@@ -202,7 +202,7 @@ Based on the repository structure and documentation, development appears to foll
 - **Resilience Patterns:** Retry, circuit breaker, rate limiting via Resilience4j
 
 #### Recent Commits (Based on Local Repository)
-Looking at the local Steve repository:
+Looking at the local MineWright repository:
 - Recent work on plugin system integration
 - State machine and event bus implementation
 - Async LLM infrastructure with resilience patterns
@@ -212,7 +212,7 @@ Looking at the local Steve repository:
 
 | Project | Activity Level | Focus Area |
 |---------|---------------|------------|
-| **Steve (YuvDwi)** | Active | Player-facing mod with practical gameplay features |
+| **MineWright (YuvDwi)** | Active | Player-facing mod with practical gameplay features |
 | **Mindcraft** | Active | Construction automation with broad LLM support |
 | **Voyager** | Research-focused | Lifelong learning and skill acquisition |
 | **AI Player** | Moderate | Basic autonomous behaviors on Fabric |
@@ -220,7 +220,7 @@ Looking at the local Steve repository:
 ### Community Platforms
 Based on search results:
 - **GitHub:** Primary development hub
-- **Discord:** No specific Steve mod Discord found (YSM Discord exists but for different mod)
+- **Discord:** No specific MineWright mod Discord found (YSM Discord exists but for different mod)
 - **Reddit:** Limited direct discussion found
 - **Chinese Communities:** Active coverage on 163.com, MCBBS, MC百科
 
@@ -228,9 +228,9 @@ Based on search results:
 
 ## 5. Competitive Landscape
 
-### Key Differentiators of YuvDwi/Steve
+### Key Differentiators of YuvDwi/MineWright
 
-#### What Makes Steve Unique
+#### What Makes MineWright Unique
 
 1. **Direct Mod Integration**
    - Runs as a Forge mod inside Minecraft
@@ -256,8 +256,8 @@ Based on search results:
 
 #### Comparison Matrix
 
-| Aspect | Steve | Mindcraft | Voyager | AI Player |
-|--------|-------|-----------|---------|-----------|
+| Aspect | MineWright | Mindcraft | Voyager | AI Player |
+|--------|------------|-----------|---------|-----------|
 | **Integration** | Forge Mod | External Tool | Research Framework | Fabric Mod |
 | **LLM Support** | OpenAI/Groq/Gemini | 15+ models | GPT-4 | None/Basic |
 | **Natural Language** | Yes | Yes | Limited | No |
@@ -278,17 +278,17 @@ Based on search results:
 1. **Local LLM Integration**
    - Growing demand for Ollama and local model support
    - Privacy and cost concerns driving this trend
-   - Steve could benefit from local model options
+   - MineWright could benefit from local model options
 
 2. **Multi-Agent Systems**
    - Interest in collaborative AI behaviors
-   - Steve's coordination system is ahead of the curve
+   - MineWright's coordination system is ahead of the curve
    - Research into agent communication protocols
 
 3. **Visual Understanding**
    - Image-to-build conversion becoming popular
    - Screenshot analysis for context awareness
-   - Opportunity for Steve enhancement
+   - Opportunity for MineWright enhancement
 
 4. **Voice Interaction**
    - Speech-to-text command input
@@ -314,7 +314,7 @@ Based on search results:
 
 3. **Performance**
    - Tick-rate impact during heavy computation
-   - Async implementation (Steve has this!)
+   - Async implementation (MineWright has this!)
    - Chunk loading optimization
 
 4. **Configurability**
@@ -350,7 +350,7 @@ Based on search results:
 
 ## 8. Recommendations
 
-### For the Steve Project
+### For the MineWright Project
 
 1. **Embrace Local LLMs**
    - Add Ollama support for cost-free operation
@@ -379,7 +379,7 @@ Based on search results:
 
 ### For Researchers and Developers
 
-1. **Study Steve's Architecture**
+1. **Study MineWright's Architecture**
    - Excellent example of production AI mod
    - Clean separation of concerns
    - Extensible plugin system
@@ -399,14 +399,14 @@ Based on search results:
 ## 9. Sources and References
 
 ### Primary Sources
-- [YuvDwi/Steve - Autonomous AI Agent for Minecraft - GitHub](https://github.com/YuvDwi/Steve)
-- [全新Minecraft模组：让你轻松驾驭Steve，告别泥屋生活！](https://m.163.com/dy/article/KLCFQOI605568E2X.html) - 163.com Chinese Article
+- [YuvDwi/MineWright - Autonomous AI Agent for Minecraft - GitHub](https://github.com/YuvDwi/Steve)
+- [全新Minecraft模组：让你轻松驾驭MineWright，告别泥屋生活！](https://m.163.com/dy/article/KLCFQOI605568E2X.html) - 163.com Chinese Article
 - [LinkedIn: Cursor for Minecraft: AI agents play the game with you](https://www.linkedin.com/posts/luiz-piccini_someone-just-built-cursor-for-minecraft-activity-7394389977796857856-QdfC)
 
 ### Related Projects
 - Mindcraft - Multi-LLM Minecraft automation tool
 - [Voyager - NVIDIA Research](https://github.com/MineDojo/Voyager) - Lifelong learning agents
-- [Yes Steve Model (YSM)](https://github.com/TartaricAcid/ysm) - Player model customization (different project)
+- [Yes Foreman Model (YSM)](https://github.com/TartaricAcid/ysm) - Player model customization (different project)
 - [YSM Discord](https://discord.gg/ZKeRUt95Ez) - Community for YSM mod
 
 ### Research Papers
@@ -423,11 +423,11 @@ Based on search results:
 
 ## 10. Conclusion
 
-The **YuvDwi/Steve** mod represents a significant advancement in AI-powered gaming. As the **original and most prominent** implementation of LLM agents as a Minecraft Forge mod, it has established itself as the "Cursor for Minecraft" - allowing players to command AI agents using natural language.
+The **YuvDwi/MineWright** mod represents a significant advancement in AI-powered gaming. As the **original and most prominent** implementation of LLM agents as a Minecraft Forge mod, it has established itself as the "Cursor for Minecraft" - allowing players to command AI agents using natural language.
 
 ### Key Takeaways
 
-1. **Steve is the Original** - YuvDwi/Steve appears to be the first and most comprehensive implementation of AI agents as a playable Minecraft mod
+1. **MineWright is the Original** - YuvDwi/MineWright appears to be the first and most comprehensive implementation of AI agents as a playable Minecraft mod
 
 2. **Strong Foundation** - Excellent architecture with plugin system, async patterns, and resilience mechanisms
 
@@ -435,17 +435,17 @@ The **YuvDwi/Steve** mod represents a significant advancement in AI-powered gami
 
 4. **Clear Community Demand** - Players want more autonomy, better coordination, lower costs, and advanced features
 
-5. **Competitive Position** - Steve differentiates through direct mod integration and natural language interface, while alternatives focus on research or external tools
+5. **Competitive Position** - MineWright differentiates through direct mod integration and natural language interface, while alternatives focus on research or external tools
 
 ### Future Outlook
 
-The Steve mod is well-positioned to lead the AI Minecraft mod ecosystem, particularly if it:
+The MineWright mod is well-positioned to lead the AI Minecraft mod ecosystem, particularly if it:
 - Embraces local LLMs for cost-free operation
 - Expands to newer Minecraft versions
 - Builds a strong community around plugins and configurations
 - Continues improving reliability and performance
 
-The fusion of AI and gaming is just beginning, and Steve represents one of the most player-friendly approaches to this exciting frontier.
+The fusion of AI and gaming is just beginning, and MineWright represents one of the most player-friendly approaches to this exciting frontier.
 
 ---
 

@@ -8,7 +8,7 @@
 
 ## Overview
 
-Fixed code quality issues identified in the CODE_QUALITY_AUDIT.md for the Steve AI project. Focus was on wildcard imports and @SuppressWarnings documentation in critical coordination and communication files.
+Fixed code quality issues identified in the CODE_QUALITY_AUDIT.md for the MineWright project. Focus was on wildcard imports and @SuppressWarnings documentation in critical coordination and communication files.
 
 ---
 

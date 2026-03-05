@@ -497,7 +497,7 @@ class ProfileRegistryTest {
         TaskProfile builtInProfile = TaskProfile.builder()
                 .name("mining_iron")
                 .description("Mine iron ore and smelt to ingots")
-                .author("Steve AI")
+                .author("MineWright")
                 .version("1.0.0")
                 .addTag("mining")
                 .addTag("iron")
@@ -523,7 +523,7 @@ class ProfileRegistryTest {
         TaskProfile retrieved = registry.getProfile("mining_iron");
 
         assertNotNull(retrieved);
-        assertEquals("Steve AI", retrieved.getAuthor());
+        assertEquals("MineWright", retrieved.getAuthor());
         assertEquals("1.0.0", retrieved.getVersion());
         assertTrue(retrieved.getTags().contains("mining"));
         assertTrue(retrieved.getTags().contains("iron"));

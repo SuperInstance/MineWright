@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The Contract Net Protocol (CNP) implementation in Steve AI is **85% complete**. The core bidding workflow, capability matching, and workload tracking are fully implemented. The primary missing component is **dynamic rebalancing** for handling agent failures and performance degradation during task execution.
+The Contract Net Protocol (CNP) implementation in MineWright is **85% complete**. The core bidding workflow, capability matching, and workload tracking are fully implemented. The primary missing component is **dynamic rebalancing** for handling agent failures and performance degradation during task execution.
 
 ---
 

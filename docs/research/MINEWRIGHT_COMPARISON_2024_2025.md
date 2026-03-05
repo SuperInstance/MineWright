@@ -1,13 +1,13 @@
-# Steve AI vs State-of-the-Art: Feature Comparison (2024-2025)
+# MineWright vs State-of-the-Art: Feature Comparison (2024-2025)
 
 **Date:** March 2, 2026
-**Purpose:** Compare Steve AI implementation against 2024-2025 Minecraft AI research
+**Purpose:** Compare MineWright implementation against 2024-2025 Minecraft AI research
 
 ---
 
 ## Executive Summary
 
-**Overall Assessment:** Steve AI is **highly competitive** with state-of-the-art Minecraft AI systems. Our implementation includes many advanced features that research papers describe as cutting-edge.
+**Overall Assessment:** MineWright is **highly competitive** with state-of-the-art Minecraft AI systems. Our implementation includes many advanced features that research papers describe as cutting-edge.
 
 **Key Findings:**
 - **Strengths:** Skill system, recovery, humanization, memory architecture
@@ -20,8 +20,8 @@
 
 ## Feature Comparison Matrix
 
-| Feature Category | Research Standard | Steve AI | Gap | Priority |
-|------------------|-------------------|----------|-----|----------|
+| Feature Category | Research Standard | MineWright | Gap | Priority |
+|------------------|-------------------|------------|-----|----------|
 | **SKILL SYSTEMS** | | | | |
 | Skill Library | Voyager (code-based) | Implemented (Java objects) | None | - |
 | Semantic Search | Vector database | InMemoryVectorStore | None | - |
@@ -62,7 +62,7 @@
 | Hierarchical A* | Layered optimization | HierarchicalPathfinder | None | - |
 | Path Smoothing | Bezier interpolation | Implemented | None | - |
 | Movement Validation | Collision checking | MovementValidator | None | - |
-| Performance | Millisecond-level | Not measured | **LOW** | 5 |
+| Performance | Millisecond-level | Not measured | **LOW** | 5
 
 ---
 
@@ -70,10 +70,10 @@
 
 ### 1. Skill Systems
 
-#### Voyager vs Steve AI
+#### Voyager vs MineWright
 
-| Aspect | Voyager | Steve AI | Comparison |
-|--------|---------|----------|------------|
+| Aspect | Voyager | MineWright | Comparison |
+|--------|---------|------------|------------|
 | **Storage Format** | JavaScript files | Java objects | Different, both valid |
 | **Semantic Search** | Vector database | InMemoryVectorStore | **Parity** |
 | **Code Generation** | GPT-4 → JavaScript | LLM → Java/JS | Similar approach |
@@ -84,7 +84,7 @@
 
 **Voyager Performance:** 15x faster than baselines, 3.3x more items
 
-**Steve AI Status:** Our skill system has equivalent core functionality. Main gaps are composition and validation.
+**MineWright Status:** Our skill system has equivalent core functionality. Main gaps are composition and validation.
 
 #### Recommendation Priority: **HIGH**
 
@@ -96,25 +96,25 @@
 
 ### 2. Planning Systems
 
-#### Plan4MC vs Steve AI
+#### Plan4MC vs MineWright
 
-| Aspect | Plan4MC | Steve AI | Comparison |
-|--------|---------|----------|------------|
+| Aspect | Plan4MC | MineWright | Comparison |
+|--------|---------|------------|------------|
 | **Hierarchical** | DAG + RL | HTN methods | Different but equivalent |
 | **Skill Types** | Finding/Operating/Crafting | Action-based | Similar |
 | **LLM Integration** | Generates DAG | Decomposes via planner | Different |
 | **RL Training** | Yes | No | Plan4MC ahead |
 | **Success Rate** | 40 tasks completed | Not measured | Unknown |
 
-#### DEPS vs Steve AI
+#### DEPS vs MineWright
 
-| Aspect | DEPS | Steve AI | Comparison |
-|--------|------|----------|------------|
+| Aspect | DEPS | MineWright | Comparison |
+|--------|------|------------|------------|
 | **Interactive** | Describe-Explain-Plan-Select | Standard planning | **Gap** |
 | **Feedback Loop** | Learns from failures | No feedback | **Gap** |
 | **Diamond Success** | 0.59% | Not measured | Unknown |
 
-**Steve AI Status:** Our HTN planner is sophisticated. Main gap is interactive feedback.
+**MineWright Status:** Our HTN planner is sophisticated. Main gap is interactive feedback.
 
 #### Recommendation Priority: **MEDIUM-HIGH**
 
@@ -128,13 +128,13 @@
 
 #### Three-Layer Memory Model
 
-| Layer | Research Standard | Steve AI | Status |
-|-------|-------------------|----------|--------|
+| Layer | Research Standard | MineWright | Status |
+|-------|-------------------|------------|--------|
 | **Working Memory** | LLM context + buffer | ConversationManager | Implemented |
 | **Episodic Memory** | Immutable logs | CompanionMemory | Implemented |
 | **Semantic Memory** | Vector database | InMemoryVectorStore | Implemented |
 
-**Steve AI Status:** Our memory architecture matches research standards exactly.
+**MineWright Status:** Our memory architecture matches research standards exactly.
 
 **Gap Analysis:**
 - **Memory Reflection:** Compress episodes into skills (Voyager pattern)
@@ -153,16 +153,16 @@
 
 #### Stuck Detection
 
-| Detection Type | Research Threshold | Steve AI | Status |
-|----------------|-------------------|----------|--------|
+| Detection Type | Research Threshold | MineWright | Status |
+|----------------|-------------------|------------|--------|
 | **Position Stuck** | 60 ticks (3s) | POSITION_STUCK_TICKS = 60 | Exact match |
 | **Progress Stuck** | 100 ticks (5s) | PROGRESS_STUCK_TICKS = 100 | Exact match |
 | **State Stuck** | 200 ticks (10s) | STATE_STUCK_TICKS = 200 | Exact match |
 | **Path Stuck** | Immediate | pathStuck flag | Exact match |
 
-**Steve AI Status:** Our `StuckDetector` is **state-of-the-art**.
+**MineWright Status:** Our `StuckDetector` is **state-of-the-art**.
 
-**Additional Features in Steve AI:**
+**Additional Features in MineWright:**
 - Detection history tracking
 - State snapshots for debugging
 - Multiple recovery strategies
@@ -182,10 +182,10 @@
 
 ### 5. Humanization Systems
 
-#### Research Standards vs Steve AI
+#### Research Standards vs MineWright
 
-| Technique | Research Standard | Steve AI | Status |
-|-----------|-------------------|----------|--------|
+| Technique | Research Standard | MineWright | Status |
+|-----------|-------------------|------------|--------|
 | **Reaction Time** | Gaussian 300ms ± 50ms | humanReactionTime() | Exact match |
 | **Gaussian Jitter** | Normal distribution | gaussianJitter() | Exact match |
 | **Bezier Curves** | Smooth movement | bezierPoint(), cubicBezierPoint() | Exact match |
@@ -193,9 +193,9 @@
 | **Fatigue Modeling** | Time-based decay | SessionManager | Implemented |
 | **Personality-Based** | Trait adjustment | ForemanArchetypeConfig | Implemented |
 
-**Steve AI Status:** Our humanization system is **state-of-the-art**.
+**MineWright Status:** Our humanization system is **state-of-the-art**.
 
-**Additional Features in Steve AI:**
+**Additional Features in MineWright:**
 - Contextual reaction times (fatigue, complexity, familiarity)
 - Session management for fatigue simulation
 - Idle behavior controller
@@ -217,15 +217,15 @@
 
 #### Coordination Protocols
 
-| Aspect | Research Standard | Steve AI | Gap |
-|--------|-------------------|----------|-----|
+| Aspect | Research Standard | MineWright | Gap |
+|--------|-------------------|------------|-----|
 | **Coordination Framework** | A2A / MindAgent | OrchestratorService | Parity |
 | **Task Partitioning** | Automatic | Partial | **Gap** |
 | **Collaboration Metrics** | CoS score | None | **Gap** |
 | **Benchmarks** | TeamCraft | None | **Gap** |
 | **Conflict Resolution** | Built-in | Manual | **Gap** |
 
-**Steve AI Status:** Framework exists, missing evaluation and optimization.
+**MineWright Status:** Framework exists, missing evaluation and optimization.
 
 **Key Gaps:**
 1. **Collaboration Score (CoS):** Measure how effectively agents work together
@@ -242,17 +242,17 @@
 
 ### 7. Pathfinding Systems
 
-#### Baritone vs Steve AI
+#### Baritone vs MineWright
 
-| Feature | Baritone | Steve AI | Status |
-|---------|----------|----------|--------|
+| Feature | Baritone | MineWright | Status |
+|---------|----------|------------|--------|
 | **Algorithm** | Hierarchical A* | HierarchicalPathfinder | Parity |
 | **Performance** | 30x faster | Not measured | Unknown |
 | **Path Smoothing** | Implemented | Implemented | Parity |
 | **Version Support** | 1.12.2-1.21.8 | 1.20.1 | Specific |
 | **Movement Validation** | Implemented | MovementValidator | Parity |
 
-**Steve AI Status:** Our pathfinding is equivalent in features.
+**MineWright Status:** Our pathfinding is equivalent in features.
 
 **Gap Analysis:**
 - **Performance Benchmarking:** Need to measure actual performance
@@ -272,7 +272,7 @@
 
 | Project | Skill System | Memory | Planning | Multi-Agent | Overall |
 |---------|-------------|--------|----------|-------------|---------|
-| **Steve AI** | Excellent | Excellent | Good | Good | **Top 10%** |
+| **MineWright** | Excellent | Excellent | Good | Good | **Top 10%** |
 | **Mineflayer-based** | Basic | Basic | None | Basic | Average |
 | **Steve (YuvDwi)** | Basic | Basic | LLM-only | Good | Above Average |
 | **MindAgent** | None | Basic | LLM-only | Excellent | Niche |
@@ -280,15 +280,15 @@
 
 ### Comparison with Research Systems
 
-| System | Type | Status | Steve AI Comparison |
-|--------|------|--------|---------------------|
+| System | Type | Status | MineWright Comparison |
+|--------|------|--------|----------------------|
 | **DreamerV3** | RL-only | Research | Different approach (LLM vs RL) |
 | **Voyager** | LLM + Skills | Production | **Parity** on skills, different language |
 | **Plan4MC** | RL + LLM | Research | **Parity** on planning, missing RL |
 | **DEPS** | LLM + Feedback | Research | **Gap** on interactive feedback |
 | **Baritone** | Pathfinding | Production | **Parity** on features |
 
-### Unique Strengths of Steve AI
+### Unique Strengths of MineWright
 
 1. **Complete Architecture:** We have all layers (Brain, Script, Physical)
 2. **Java Implementation:** Most research is Python/JavaScript
@@ -366,7 +366,7 @@
 
 ### Summary Assessment
 
-**Steve AI is highly competitive with 2024-2025 state-of-the-art:**
+**MineWright is highly competitive with 2024-2025 state-of-the-art:**
 
 **Areas of Excellence:**
 - Skill system architecture (matches Voyager)
@@ -391,7 +391,7 @@
 
 ### Publication Potential
 
-With the recommended enhancements, Steve AI could be suitable for:
+With the recommended enhancements, MineWright could be suitable for:
 - **Conference Submission:** ICLR, NeurIPS (AI for Games track)
 - **Workshop Paper:** AI for Minecraft / Game AI
 - **Journal:** IEEE Transactions on Games
