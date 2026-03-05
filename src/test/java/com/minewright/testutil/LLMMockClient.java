@@ -3,7 +3,6 @@ package com.minewright.testutil;
 import com.minewright.llm.async.AsyncLLMClient;
 import com.minewright.llm.async.LLMException;
 import com.minewright.llm.async.LLMResponse;
-import com.minewright.llm.async.LLMExecutorService;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +73,11 @@ public class LLMMockClient implements AsyncLLMClient {
     }
 
     @Override
+    public boolean isHealthy() {
+        return true; // Mock client is always healthy
+    }
+
+    @Override
     public CompletableFuture<LLMResponse> sendAsync(String prompt, Map<String, Object> params) {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -99,7 +103,7 @@ public class LLMMockClient implements AsyncLLMClient {
                 .latencyMs(responseDelayMs)
                 .fromCache(false)
                 .build();
-        }, LLMExecutorService.getInstance());
+        });
     }
 
     /**
