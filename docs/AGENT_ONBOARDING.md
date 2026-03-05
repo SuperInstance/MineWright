@@ -1,36 +1,303 @@
-# Agent Onboarding Guide - MineWright Project
+# Agent Onboarding - Unified Knowledge Entry Point
 
-**Version:** 1.0
-**Created:** 2026-03-04
-**Purpose:** Guide for AI agents (and humans) to understand and work on this codebase
-
----
-
-## Welcome, Agent!
-
-You are joining the MineWright project - a sophisticated Minecraft mod that creates autonomous AI companions. This guide will help you understand the system and contribute effectively.
-
-### Quick Start Checklist
-
-Before you start working, complete these steps:
-
-- [ ] Read this entire document (15 minutes)
-- [ ] Review `CLAUDE.md` for project vision and conventions (10 minutes)
-- [ ] Check `FUTURE_ROADMAP.md` for current priorities (5 minutes)
-- [ ] Run `./gradlew build` to verify your environment (2 minutes)
-- [ ] Pick a task from the roadmap or create your own
+**Version:** 2.0 - Orchestrated Development Edition
+**Last Updated:** 2026-03-05
+**Purpose:** Central onboarding for all AI agents joining the MineWright project
+**Status:** Active - Orchestrated Development Mode
 
 ---
 
-## 1. System Overview
+## Welcome to MineWright
+
+You are joining **MineWright**, an AI-powered Minecraft companions project at an exciting time. We are executing a **30-round orchestrated development plan** to reduce the codebase to irreducible complexity while improving quality, coverage, and maintainability.
+
+This document is your **starting point** for understanding how to contribute effectively.
+
+---
+
+## Quick Start (15 minutes)
+
+```
+1. Read this document (5 min)
+   ├─ Understand the project
+   ├─ Know your role
+   └─ Learn the workflow
+
+2. Read your specialized onboarding (10 min)
+   ├─ See docs/agents/ directory
+   ├─ Find your agent type
+   └─ Learn your responsibilities
+
+3. Join the current round
+   └─ Coordinate with the Orchestrator
+```
+
+---
+
+## Project Overview
 
 ### What is MineWright?
 
-MineWright is "Cursor for Minecraft" - AI agents that play Minecraft with you. Users type natural language commands, and AI-controlled Foreman entities execute them through LLM-powered planning.
+MineWright is "Cursor for Minecraft" - autonomous AI agents that play Minecraft through natural language commands. Users type commands, and AI-controlled Foreman entities execute them via LLM-powered planning.
 
-### Core Philosophy: "One Abstraction Away"
+**Core Philosophy:** "One Abstraction Away" - LLMs plan and coordinate; traditional game AI (behavior trees, FSMs, scripts) executes in real-time.
 
-The system uses three layers:
+### Current Mode: Orchestrated Development
+
+We are in **Streamlining & Refactoring Mode** - executing a systematic 30-round plan to achieve irreducible complexity:
+
+- **Goal:** Reduce code from 115,937 LOC to <100,000 LOC
+- **Coverage:** Increase from 40% to 60%+ test coverage
+- **Complexity:** Reduce average complexity from 8 to <6
+- **Duplication:** Eliminate from 12% to <5% duplication
+
+### How Orchestrated Development Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    THE ORCHESTRATOR                             │
+│                 (Claude - Team Lead)                            │
+│                                                                  │
+│  1. Plans rounds with specific goals                            │
+│  2. Coordinates specialized agents                              │
+│  3. Synthesizes findings                                        │
+│  4. Maintains quality standards                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Deploys teams for each round
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   SPECIALIZED AGENTS                            │
+│                                                                  │
+│  • Code Analyst - Deep code analysis                            │
+│  • Refactoring Specialist - Code structure improvement          │
+│  • Testing Engineer - Test coverage and quality                 │
+│  • Performance Optimizer - Speed and efficiency                 │
+│  • Bug Investigator - Issue diagnosis and resolution            │
+│  • Documentation Specialist - Knowledge creation                │
+│  • Quality Assurance Analyst - Standards enforcement            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Agent Types
+
+### 1. Code Analyst
+
+**Purpose:** Deep analysis of code structure, patterns, and issues
+
+**When Deployed:**
+- Understanding a new subsystem
+- Finding code duplication
+- Identifying architectural patterns
+- Analyzing complexity hotspots
+
+**Output:** Analysis reports with findings, metrics, and recommendations
+
+**Onboarding:** [CODE_ANALYST_ONBOARDING.md](agents/CODE_ANALYST_ONBOARDING.md)
+
+### 2. Refactoring Specialist
+
+**Purpose:** Improve code structure while preserving behavior
+
+**When Deployed:**
+- Consolidating duplicate code
+- Simplifying complex methods
+- Breaking up large classes
+- Applying design patterns
+
+**Output:** Refactored code with preserved behavior
+
+**Onboarding:** [REFACTORING_SPECIALIST_ONBOARDING.md](agents/REFACTORING_SPECIALIST_ONBOARDING.md)
+
+### 3. Testing Engineer
+
+**Purpose:** Ensure code quality through comprehensive testing
+
+**When Deployed:**
+- Writing unit tests
+- Improving coverage
+- Creating integration tests
+- Adding regression tests
+
+**Output:** Comprehensive test suite with high coverage
+
+**Onboarding:** [TESTING_ENGINEER_ONBOARDING.md](agents/TESTING_ENGINEER_ONBOARDING.md)
+
+### 4. Performance Optimizer
+
+**Purpose:** Optimize code performance while maintaining correctness
+
+**When Deployed:**
+- Identifying bottlenecks
+- Optimizing hot paths
+- Reducing memory usage
+- Improving algorithms
+
+**Output:** Faster, more efficient code
+
+**Onboarding:** [PERFORMANCE_OPTIMIZER_ONBOARDING.md](agents/PERFORMANCE_OPTIMIZER_ONBOARDING.md)
+
+### 5. Bug Investigator
+
+**Purpose:** Investigate, diagnose, and help resolve bugs
+
+**When Deployed:**
+- Reproducing issues
+- Finding root causes
+- Proposing solutions
+- Verifying fixes
+
+**Output:** Bug reports with root cause analysis and solutions
+
+**Onboarding:** [BUG_INVESTIGATOR_ONBOARDING.md](agents/BUG_INVESTIGATOR_ONBOARDING.md)
+
+### 6. Documentation Specialist
+
+**Purpose:** Create and maintain comprehensive documentation
+
+**When Deployed:**
+- Writing API documentation
+- Creating user guides
+- Updating technical docs
+- Organizing knowledge
+
+**Output:** Clear, comprehensive documentation
+
+**Onboarding:** [DOCUMENTATION_SPECIALIST_ONBOARDING.md](agents/DOCUMENTATION_SPECIALIST_ONBOARDING.md)
+
+### 7. Quality Assurance Analyst
+
+**Purpose:** Ensure code quality through analysis and validation
+
+**When Deployed:**
+- Running static analysis
+- Reviewing code quality
+- Tracking metrics
+- Enforcing standards
+
+**Output:** Quality reports and metrics
+
+**Onboarding:** [QUALITY_ANALYST_ONBOARDING.md](agents/QUALITY_ANALYST_ONBOARDING.md)
+
+---
+
+## Workflow
+
+### Round Structure
+
+Each development round follows this structure:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        ROUND N                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. ANALYSIS PHASE                                              │
+│     ├─ Identify what needs doing                                │
+│     ├─ Deploy Code Analysts                                     │
+│     └─ Gather findings                                          │
+│                                                                 │
+│  2. PLANNING PHASE                                              │
+│     ├─ Prioritize findings                                      │
+│     ├─ Design approach                                          │
+│     └─ Plan agent deployment                                    │
+│                                                                 │
+│  3. EXECUTION PHASE                                             │
+│     ├─ Deploy specialized agents                                │
+│     ├─ Monitor progress                                         │
+│     └─ Coordinate work                                          │
+│                                                                 │
+│  4. SYNTHESIS PHASE                                             │
+│     ├─ Compile results                                          │
+│     ├─ Document changes                                         │
+│     └─ Extract lessons                                          │
+│                                                                 │
+│  5. QUALITY GATES                                               │
+│     ├─ All tests pass                                           │
+│     ├─ Build succeeds                                           │
+│     ├─ No new warnings                                          │
+│     └─ Coverage maintained                                      │
+│                                                                 │
+│  6. NEXT ROUND PLANNING                                         │
+│     ├─ Review metrics                                           │
+│     ├─ Update roadmap                                           │
+│     └─ Plan next round                                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Agent Collaboration Patterns
+
+**Sequential Handoff:**
+```
+Code Analyst → Refactoring Specialist → Testing Engineer → QA Analyst
+```
+
+**Parallel Analysis:**
+```
+Code Analyst 1 ─┐
+Code Analyst 2 ─┼→ Synthesis → Planning
+Code Analyst 3 ─┘
+```
+
+**Review Loop:**
+```
+Refactoring Specialist → Testing Engineer → (if fails) → Refactoring Specialist
+```
+
+---
+
+## Knowledge Ecosystem
+
+### Foundational Documents
+
+**Start Here:**
+- [README.md](../README.md) - Project overview for everyone
+- [CLAUDE.md](../CLAUDE.md) - Orchestrator's command center
+- [KNOWLEDGE_INDEX.md](KNOWLEDGE_INDEX.md) - Gateway to all documentation
+
+**Meta-Skills:**
+- [META_COGNITION.md](META_COGNITION.md) - How to think effectively
+- [INVESTIGATION_PROTOCOLS.md](INVESTIGATION_PROTOCOLS.md) - How to explore codebases
+- [KNOWLEDGE_SYNTHESIS.md](KNOWLEDGE_SYNTHESIS.md) - How everything connects
+
+**Design Understanding:**
+- [ARCHITECTURAL_WISDOM.md](ARCHITECTURAL_WISDOM.md) - Why design decisions were made
+- [PATTERN_LANGUAGE.md](PATTERN_LANGUAGE.md) - Patterns used in the codebase
+
+**Strategic Planning:**
+- [FUTURE_ROADMAP.md](FUTURE_ROADMAP.md) - 30-round development plan
+
+**Day-to-Day Work:**
+- [WORK_PATTERNS.md](WORK_PATTERNS.md) - Established patterns and practices
+- [IMPROVEMENT_OPPORTUNITIES.md](IMPROVEMENT_OPPORTUNITIES.md) - Known improvement areas
+
+### Specialized Knowledge
+
+**Architecture:**
+- [architecture/TECHNICAL_DEEP_DIVE.md](architecture/TECHNICAL_DEEP_DIVE.md) - Deep technical details
+- [architecture/](architecture/) - More architecture documents
+
+**Capabilities:**
+- [agent-guides/GUIDE_INDEX.md](agent-guides/GUIDE_INDEX.md) - Index of capability guides
+- [agent-guides/](agent-guides/) - Detailed guides for each capability
+
+**Agents:**
+- [agents/](agents/) - Specialized agent onboarding documents (you are here)
+
+### Analysis and Audits
+
+**Audits:**
+- [audits/](audits/) - Code audit findings and analysis
+- [audits/BASELINE_METRICS.md](audits/BASELINE_METRICS.md) - Baseline measurements
+
+---
+
+## System Overview
+
+### Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -60,39 +327,14 @@ The system uses three layers:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Architecture Maturity
+### Key Files
 
-| Component | Status | Lines | Test Coverage |
-|-----------|--------|-------|---------------|
-| Action Execution | ✅ Complete | 915 | 50%+ |
-| LLM Integration | ✅ Complete | 775 | 26% |
-| Memory System | ✅ Complete | 400 | 20% |
-| Multi-Agent | ✅ Complete | 789 | 15% |
-| Script DSL | 🔄 Partial | 695 | 30% |
+**Entry Points:**
+- `src/main/java/com/minewright/MineWrightMod.java` - Mod initialization
+- `src/main/java/com/minewright/entity/ForemanEntity.java` - Main AI entity (~700 LOC)
+- `src/main/java/com/minewright/action/ActionExecutor.java` - Execution engine (~915 LOC)
 
----
-
-## 2. Critical Files to Understand
-
-### Entry Points (Read These First)
-
-1. **`src/main/java/com/minewright/MineWrightMod.java`**
-   - Mod initialization and entry point
-   - Service bootstrap
-   - Entity registration
-
-2. **`src/main/java/com/minewright/entity/ForemanEntity.java`** (~700 lines)
-   - Main AI entity
-   - Tick-based updates (20 TPS)
-   - Delegates to: EntityState, ActionCoordinator, CommunicationHandler
-
-3. **`src/main/java/com/minewright/action/ActionExecutor.java`** (~915 lines)
-   - Non-blocking execution engine
-   - Plugin architecture
-   - State machine: IDLE → PLANNING → EXECUTING → COMPLETED
-
-### Key Subsystems
-
+**Key Subsystems:**
 ```
 src/main/java/com/minewright/
 ├── action/          # Task execution (24 files)
@@ -107,59 +349,52 @@ src/main/java/com/minewright/
 
 ---
 
-## 3. Before You Write Code: Audit First!
+## Your First Steps
 
-### The Audit Protocol
+### Step 1: Identify Your Role
 
-**CRITICAL:** Before making any changes, you MUST audit the relevant code.
+Are you:
+- The **Orchestrator**? Read [CLAUDE.md](../CLAUDE.md)
+- A **Code Analyst**? Read [CODE_ANALYST_ONBOARDING.md](agents/CODE_ANALYST_ONBOARDING.md)
+- A **Refactoring Specialist**? Read [REFACTORING_SPECIALIST_ONBOARDING.md](agents/REFACTORING_SPECIALIST_ONBOARDING.md)
+- A **Testing Engineer**? Read [TESTING_ENGINEER_ONBOARDING.md](agents/TESTING_ENGINEER_ONBOARDING.md)
+- A **Performance Optimizer**? Read [PERFORMANCE_OPTIMIZER_ONBOARDING.md](agents/PERFORMANCE_OPTIMIZER_ONBOARDING.md)
+- A **Bug Investigator**? Read [BUG_INVESTIGATOR_ONBOARDING.md](agents/BUG_INVESTIGATOR_ONBOARDING.md)
+- A **Documentation Specialist**? Read [DOCUMENTATION_SPECIALIST_ONBOARDING.md](agents/DOCUMENTATION_SPECIALIST_ONBOARDING.md)
+- A **Quality Assurance Analyst**? Read [QUALITY_ANALYST_ONBOARDING.md](agents/QUALITY_ANALYST_ONBOARDING.md)
 
-#### Step 1: Locate Related Code
+### Step 2: Read Your Specialized Onboarding
 
-```bash
-# Find files related to a topic
-grep -r "keyword" src/main/java --include="*.java" -l
+Each specialized onboarding document includes:
+- Your mission and responsibilities
+- Your framework and process
+- Your tools and techniques
+- Your best practices
+- Collaboration guidelines
 
-# Find large files that might need refactoring
-find src/main/java -name "*.java" -exec wc -l {} \; | sort -rn | head -20
+### Step 3: Study the Meta-Skills
 
-# Check test coverage for a package
-ls src/test/java/com/minewright/PACKAGE_NAME/ 2>/dev/null | wc -l
-```
+Regardless of your role, study these:
+1. [META_COGNITION.md](META_COGNITION.md) - How to think effectively
+2. [INVESTIGATION_PROTOCOLS.md](INVESTIGATION_PROTOCOLS.md) - How to explore codebases
+3. [PATTERN_LANGUAGE.md](PATTERN_LANGUAGE.md) - Patterns in the codebase
 
-#### Step 2: Read and Understand
+### Step 4: Understand the Project
 
-For each file you'll modify:
-1. Read the entire file
-2. Identify its responsibilities
-3. Find its dependencies
-4. Check for existing tests
-5. Look for TODO/FIXME comments
+- Read [README.md](../README.md) for project overview
+- Read [ARCHITECTURAL_WISDOM.md](ARCHITECTURAL_WISDOM.md) for design rationale
+- Read [FUTURE_ROADMAP.md](FUTURE_ROADMAP.md) for strategic plan
 
-#### Step 3: Document Your Findings
+### Step 5: Join the Current Round
 
-Create or update the audit document:
-```markdown
-# Audit: [Feature Name]
-**Date:** YYYY-MM-DD
-**Files Reviewed:** [list]
-**Current State:** [description]
-**Issues Found:** [list]
-**Recommendations:** [list]
-```
-
-### Questions to Ask During Audit
-
-1. **Complexity:** Is this file too large (>500 lines)?
-2. **Responsibility:** Does it do one thing well?
-3. **Dependencies:** Are they appropriate or excessive?
-4. **Testing:** Are there tests? Do they cover edge cases?
-5. **Thread Safety:** Are concurrent operations handled correctly?
-6. **Error Handling:** Are exceptions handled properly?
-7. **Documentation:** Is the code self-documenting?
+Coordinate with the Orchestrator to:
+- Understand current round goals
+- Receive your assignment
+- Begin contributing
 
 ---
 
-## 4. Code Style and Conventions
+## Code Style and Conventions
 
 ### Formatting
 
@@ -199,335 +434,34 @@ public class ExampleClass {
 
 ---
 
-## 5. How to Contribute
+## Quality Standards
 
-### Adding a New Feature
+### Code Quality
 
-1. **Audit First** - Understand existing code
-2. **Design** - Document your approach
-3. **Implement** - Write clean, tested code
-4. **Test** - Unit tests + integration tests
-5. **Document** - Update CLAUDE.md if needed
-6. **Commit** - Clear, descriptive commit message
+- All tests must pass
+- No new SpotBugs critical issues
+- Checkstyle violations minimized
+- Coverage maintained or improved
 
-### Refactoring Guidelines
+### Professional Quality
 
-When refactoring large classes (>500 lines):
+- Clear commit messages
+- Well-documented changes
+- Follow established patterns
+- Coordinate with team
 
-1. **Identify Responsibilities** - List what the class does
-2. **Extract Components** - One responsibility per new class
-3. **Use Delegation** - Original class delegates to components
-4. **Maintain API** - Keep public interface unchanged
-5. **Add Tests** - Ensure refactoring doesn't break behavior
+### Documentation Quality
 
-### Example: Refactoring a God Class
-
-```java
-// BEFORE: God class with 800+ lines
-public class BigClass {
-    public void doA() { ... }
-    public void doB() { ... }
-    public void doC() { ... }
-    // ... 50 more methods
-}
-
-// AFTER: Focused coordinator + specialists
-public class BigClass {
-    private final ComponentA componentA;
-    private final ComponentB componentB;
-    private final ComponentC componentC;
-
-    public void doA() { componentA.execute(); }
-    public void doB() { componentB.execute(); }
-    public void doC() { componentC.execute(); }
-}
-```
+- Update docs with changes
+- Explain your reasoning
+- Record lessons learned
+- Share your findings
 
 ---
 
-## 6. Testing Requirements
+## Quick Reference
 
-### Test Coverage Goals
-
-| Package Type | Minimum Coverage |
-|--------------|------------------|
-| Core (action, execution) | 60% |
-| LLM Integration | 40% |
-| Memory Systems | 40% |
-| New Features | 50% |
-
-### Test Structure
-
-```java
-@DisplayName("Feature Name Tests")
-class FeatureTest {
-
-    @BeforeEach
-    void setUp() {
-        // Initialize test state
-    }
-
-    @Nested
-    @DisplayName("Specific Behavior")
-    class BehaviorTests {
-
-        @Test
-        @DisplayName("Should do X when Y")
-        void shouldDoXWhenY() {
-            // Arrange
-            // Act
-            // Assert
-        }
-    }
-}
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-./gradlew test
-
-# Run specific test class
-./gradlew test --tests ClassNameTest
-
-# Run with coverage
-./gradlew test jacocoTestReport
-```
-
----
-
-## 7. Common Tasks
-
-### Task: Add a New Action Type
-
-1. Create class extending `BaseAction`:
-```java
-public class NewAction extends BaseAction {
-    public NewAction(ForemanEntity foreman, Task task) {
-        super(foreman, task);
-    }
-
-    @Override
-    protected void onTick() {
-        // Called 20 times per second
-        // Return when complete
-    }
-
-    @Override
-    public boolean isComplete() {
-        return completed;
-    }
-}
-```
-
-2. Register in `CoreActionsPlugin.java`:
-```java
-registry.register("new_action", (foreman, task, ctx) -> new NewAction(foreman, task));
-```
-
-3. Add tests in `NewActionTest.java`
-
-### Task: Add a New LLM Provider
-
-1. Implement `AsyncLLMClient` interface
-2. Add to `TaskPlanner.java` provider selection
-3. Add configuration in `MineWrightConfig`
-4. Test with mock responses
-
-### Task: Fix a Thread Safety Issue
-
-1. Identify the shared state
-2. Choose appropriate synchronization:
-   - `ConcurrentHashMap` for maps
-   - `AtomicX` for counters
-   - `volatile` for single variables
-   - `synchronized` for complex operations
-3. Add concurrent access tests
-4. Document the thread safety guarantee
-
----
-
-## 8. Improvement Opportunities
-
-### High Priority (Look for These)
-
-1. **Large Files** (>500 lines) - Need refactoring
-2. **Missing Tests** - Packages without test coverage
-3. **TODO/FIXME Comments** - Documented improvements
-4. **Thread Safety** - Look for non-atomic check-then-act
-
-### Current Refactoring Candidates
-
-| File | Lines | Issue | Priority |
-|------|-------|-------|----------|
-| ConfigDocumentation.java | 907 | Large | P2 |
-| MilestoneTracker.java | 899 | Large | P2 |
-| AStarPathfinder.java | 840 | Complex | P3 |
-| ContractNetManager.java | 800 | Large | P2 |
-| TaskProgress.java | 790 | Data class | P3 |
-
-### Packages Needing Tests
-
-- `config/` - No tests
-- `di/` - No tests
-- `personality/` - No tests
-- `structure/` - No tests
-- `voice/` - No tests
-
----
-
-## 9. Documentation Resources
-
-### Essential Reading
-
-| Document | Purpose | Location |
-|----------|---------|----------|
-| CLAUDE.md | Project instructions | Root |
-| FUTURE_ROADMAP.md | Current priorities | docs/ |
-| INDEX.md | Documentation index | docs/ |
-
-### Architecture Documentation
-
-| Document | Purpose |
-|----------|---------|
-| docs/architecture/TECHNICAL_DEEP_DIVE.md | System design |
-| docs/architecture/CASCADE_ROUTER.md | LLM routing |
-| docs/architecture/MULTI_AGENT_COORDINATION.md | Multi-agent |
-
-### Research Documentation
-
-| Document | Status | Purpose |
-|----------|--------|---------|
-| MINECRAFT_AI_SOTA_2024_2025.md | Current | Latest research |
-| VOYAGER_SKILL_SYSTEM.md | Applied | Skill patterns |
-| BARITONE_MINEFLAYER_ANALYSIS.md | Applied | Pathfinding |
-
-### Audit Documentation
-
-All audit reports are in `docs/audits/`. Key audits:
-
-- `SCRIPT_PARSER_REFACTOR.md` - God class elimination example
-- `SPOTBUGS_CRITICAL_FIXES_COMPLETE.md` - Security fixes
-- `THREAD_SAFETY_FIXES_WAVE53.md` - Thread safety patterns
-
----
-
-## 10. Emergency Procedures
-
-### Build Fails
-
-1. Check error messages for missing imports
-2. Run `./gradlew clean build`
-3. Verify Java 17 is being used
-4. Check for API changes in dependencies
-
-### Tests Fail
-
-1. Run single test to isolate: `./gradlew test --tests ClassNameTest`
-2. Check test output for assertion failures
-3. Verify mock setup is correct
-4. Check for threading issues (race conditions)
-
-### LLM Calls Fail
-
-1. Check API key configuration
-2. Verify network connectivity
-3. Check rate limiting (use batching client)
-4. Test with mock LLM client
-
----
-
-## 11. Commit and Push Guidelines
-
-### Commit Message Format
-
-```
-[Category]: Brief description
-
-- Detailed change 1
-- Detailed change 2
-
-Fixes #issue (if applicable)
-```
-
-Categories:
-- `[Fix]` - Bug fixes
-- `[Feature]` - New features
-- `[Refactor]` - Code restructuring
-- `[Test]` - Test additions/changes
-- `[Docs]` - Documentation updates
-- `[Perf]` - Performance improvements
-
-### Before Pushing
-
-1. Run `./gradlew build` - Must pass
-2. Run `./gradlew test` - Must pass
-3. Update FUTURE_ROADMAP.md if significant
-4. Check for sensitive data (API keys, etc.)
-
----
-
-## 12. Getting Help
-
-### Where to Look
-
-1. **Code Comments** - Many files have detailed explanations
-2. **Test Files** - Tests show intended behavior
-3. **Audit Documents** - `docs/audits/` has detailed analysis
-4. **Research Documents** - `docs/research/` explains patterns
-
-### Key Files for Specific Topics
-
-| Topic | File to Read |
-|-------|--------------|
-| Actions | `ActionExecutor.java` |
-| LLM Integration | `TaskPlanner.java` |
-| Memory | `CompanionMemory.java` |
-| Multi-Agent | `OrchestratorService.java` |
-| Behavior Trees | `behavior/ProcessManager.java` |
-| Pathfinding | `pathfinding/AStarPathfinder.java` |
-
----
-
-## 13. Success Metrics
-
-### How to Know You're Doing Well
-
-- ✅ Build passes (`./gradlew build`)
-- ✅ Tests pass (`./gradlew test`)
-- ✅ No new SpotBugs warnings
-- ✅ Code coverage maintained or improved
-- ✅ Documentation updated if needed
-- ✅ Commit history is clean and descriptive
-
-### Quality Indicators
-
-| Metric | Target | Current |
-|--------|--------|---------|
-| Build Success | 100% | 100% |
-| Test Pass Rate | 100% | 100% |
-| Code Coverage | 50%+ | ~45% |
-| Large Files (>500 lines) | <10 | ~20 |
-| TODO/FIXME Count | <10 | ~4 |
-
----
-
-## 14. Final Checklist Before Starting Work
-
-Complete this checklist for every task:
-
-- [ ] I have read the relevant code
-- [ ] I have checked for existing tests
-- [ ] I have reviewed related documentation
-- [ ] I understand the thread safety requirements
-- [ ] I have a plan for testing my changes
-- [ ] I know which files I will modify
-- [ ] I have checked FUTURE_ROADMAP.md for alignment
-
----
-
-## Appendix: Quick Reference Commands
+### Build Commands
 
 ```bash
 # Build the project
@@ -537,13 +471,122 @@ Complete this checklist for every task:
 ./gradlew test
 
 # Run specific test
-./gradlew test --tests ClassNameTest
+./gradlew test --tests MyTest
 
-# Clean build artifacts
-./gradlew clean
+# Generate coverage report
+./gradlew test jacocoTestReport
 
-# Run Minecraft client
-./gradlew runClient
+# Run SpotBugs
+./gradlew spotbugsMain
+
+# Run Checkstyle
+./gradlew checkstyleMain
+```
+
+### Key Locations
+
+**Source Code:**
+- Production: `src/main/java/com/minewright/`
+- Tests: `src/test/java/com/minewright/`
+
+**Documentation:**
+- This file: `docs/AGENT_ONBOARDING.md`
+- Specialized onboarding: `docs/agents/`
+- Architecture: `docs/architecture/`
+- Guides: `docs/agent-guides/`
+
+### Common Tasks
+
+**Add a New Action:**
+1. Create class extending `BaseAction`
+2. Register in `CoreActionsPlugin.java`
+3. Add tests
+
+**Add a New LLM Provider:**
+1. Implement `AsyncLLMClient` interface
+2. Add to `TaskPlanner.java` provider selection
+3. Add configuration in `MineWrightConfig`
+4. Test with mock responses
+
+**Fix Thread Safety:**
+1. Identify shared state
+2. Choose appropriate synchronization
+3. Add concurrent access tests
+4. Document the guarantee
+
+---
+
+## Success Criteria
+
+### For Each Round
+
+- [ ] Goals achieved
+- [ ] Quality gates passed
+- [ ] Findings documented
+- [ ] Lessons learned
+- [ ] Next round planned
+
+### For Each Agent
+
+- [ ] Understood responsibilities
+- [ ] Followed framework
+- [ ] Produced quality output
+- [ ] Collaborated effectively
+- [ ] Documented work
+
+---
+
+## The Promise
+
+> Each generation of agents stands on the shoulders of those who came before, reaching ever higher.
+
+This knowledge ecosystem exists to make you more effective. The specialized onboarding documents, meta-skills guides, and strategic planning documents are all designed to help you contribute meaningfully to the project.
+
+**Learn from those who came before. Contribute to those who will follow.**
+
+---
+
+## Appendix
+
+### A. Agent Quick Reference
+
+| Agent | Focus | Output | Onboarding |
+|-------|-------|--------|------------|
+| Code Analyst | Analysis | Reports with findings | [CODE_ANALYST](agents/CODE_ANALYST_ONBOARDING.md) |
+| Refactoring Specialist | Structure | Improved code | [REFACTORING](agents/REFACTORING_SPECIALIST_ONBOARDING.md) |
+| Testing Engineer | Quality | Comprehensive tests | [TESTING](agents/TESTING_ENGINEER_ONBOARDING.md) |
+| Performance Optimizer | Speed | Optimized code | [PERFORMANCE](agents/PERFORMANCE_OPTIMIZER_ONBOARDING.md) |
+| Bug Investigator | Issues | Bug reports with solutions | [BUGS](agents/BUG_INVESTIGATOR_ONBOARDING.md) |
+| Documentation Specialist | Knowledge | Clear documentation | [DOCS](agents/DOCUMENTATION_SPECIALIST_ONBOARDING.md) |
+| QA Analyst | Standards | Quality reports | [QA](agents/QUALITY_ANALYST_ONBOARDING.md) |
+
+### B. Learning Pathway
+
+**New Agent (1 day):**
+1. AGENT_ONBOARDING.md (this file) - 30 min
+2. Specialized onboarding - 2 hours
+3. META_COGNITION.md (sections 1-3) - 1 hour
+4. PATTERN_LANGUAGE.md (scan) - 30 min
+5. Join current round - remainder
+
+**Experienced Agent (1 week):**
+1. Complete all foundational documents
+2. Deep dive into 1-2 subsystems
+3. Master your specialization
+4. Contribute to knowledge ecosystem
+
+### C. Getting Help
+
+1. **Check documentation** - The answer may already be documented
+2. **Ask the Orchestrator** - Coordinate with me for guidance
+3. **Consult specialists** - Other agents may have expertise
+4. **Document the answer** - Help future agents
+
+### D. Quick Commands
+
+```bash
+# Find related code
+grep -r "keyword" src/main/java --include="*.java" -l
 
 # Check for large files
 find src/main/java -name "*.java" -exec wc -l {} \; | sort -rn | head -20
@@ -551,12 +594,17 @@ find src/main/java -name "*.java" -exec wc -l {} \; | sort -rn | head -20
 # Find TODO comments
 grep -rn "TODO\|FIXME" src/main/java --include="*.java"
 
-# Check test coverage by package
-ls src/test/java/com/minewright/*/ | wc -l
+# Check test coverage
+./gradlew test jacocoTestReport
 ```
 
 ---
 
-**Welcome to the team! Your contributions will help make MineWright the best Minecraft AI companion system ever built.**
+**Document Version:** 2.0
+**Last Updated:** 2026-03-05
+**Maintained By:** Claude Orchestrator
+**Status:** Active - Orchestrated Development Mode
 
-*Document Version: 1.0 | Last Updated: 2026-03-04*
+---
+
+**You are here. The work awaits. Begin your journey.**
