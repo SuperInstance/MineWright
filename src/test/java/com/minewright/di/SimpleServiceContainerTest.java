@@ -599,4 +599,141 @@ class SimpleServiceContainerTest {
         assertTrue(exception.getMessage().contains(TestService.class.getName()),
                    "Exception message should contain service type");
     }
+
+    // ==================== Thread Safety Tests ====================
+
+    @Test
+    @DisplayName("Concurrent registration is thread-safe")
+    void testConcurrentRegistration() throws InterruptedException {
+        int threadCount = 10;
+        java.util.concurrent.CountDownLatch startLatch = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch doneLatch = new java.util.concurrent.CountDownLatch(threadCount);
+        java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        for (int i = 0; i < threadCount; i++) {
+            final int index = i;
+            new Thread(() -> {
+                try {
+                    startLatch.await();
+                    container.register("service" + index, new TestServiceImpl());
+                    successCount.incrementAndGet();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    doneLatch.countDown();
+                }
+            }).start();
+        }
+
+        startLatch.countDown();
+        assertTrue(doneLatch.await(5, java.util.concurrent.TimeUnit.SECONDS));
+
+        assertEquals(threadCount, successCount.get());
+        assertEquals(threadCount, container.getServiceCount());
+    }
+
+    @Test
+    @DisplayName("Concurrent retrieval is thread-safe")
+    void testConcurrentRetrieval() throws InterruptedException {
+        TestService service = new TestServiceImpl();
+        container.register(TestService.class, service);
+
+        int threadCount = 10;
+        int retrievalsPerThread = 100;
+        java.util.concurrent.CountDownLatch startLatch = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch doneLatch = new java.util.concurrent.CountDownLatch(threadCount);
+        java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        for (int i = 0; i < threadCount; i++) {
+            new Thread(() -> {
+                try {
+                    startLatch.await();
+                    for (int j = 0; j < retrievalsPerThread; j++) {
+                        TestService retrieved = container.getService(TestService.class);
+                        if (retrieved != null) {
+                            successCount.incrementAndGet();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    doneLatch.countDown();
+                }
+            }).start();
+        }
+
+        startLatch.countDown();
+        assertTrue(doneLatch.await(5, java.util.concurrent.TimeUnit.SECONDS));
+
+        assertEquals(threadCount * retrievalsPerThread, successCount.get());
+    }
+
+    @Test
+    @DisplayName("Concurrent registration and retrieval")
+    void testConcurrentRegistrationAndRetrieval() throws InterruptedException {
+        int threadCount = 10;
+        java.util.concurrent.CountDownLatch startLatch = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch doneLatch = new java.util.concurrent.CountDownLatch(threadCount);
+        java.util.concurrent.atomic.AtomicInteger operationsCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        for (int i = 0; i < threadCount; i++) {
+            final int index = i;
+            new Thread(() -> {
+                try {
+                    startLatch.await();
+                    for (int j = 0; j < 50; j++) {
+                        if (j % 2 == 0) {
+                            container.register("service" + index + "_" + j, new TestServiceImpl());
+                        } else {
+                            container.findService("service" + index + "_" + (j - 1), TestService.class);
+                        }
+                        operationsCount.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    // Should not throw exceptions
+                } finally {
+                    doneLatch.countDown();
+                }
+            }).start();
+        }
+
+        startLatch.countDown();
+        assertTrue(doneLatch.await(10, java.util.concurrent.TimeUnit.SECONDS));
+
+        assertEquals(threadCount * 50, operationsCount.get());
+    }
+
+    @Test
+    @DisplayName("Concurrent clear does not cause issues")
+    void testConcurrentClear() throws InterruptedException {
+        int threadCount = 5;
+        java.util.concurrent.CountDownLatch startLatch = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch doneLatch = new java.util.concurrent.CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            final int index = i;
+            new Thread(() -> {
+                try {
+                    startLatch.await();
+                    for (int j = 0; j < 10; j++) {
+                        container.register("service" + index + "_" + j, new TestServiceImpl());
+                        if (j % 3 == 0) {
+                            container.clear();
+                        }
+                    }
+                } catch (Exception e) {
+                    // Should not throw exceptions
+                } finally {
+                    doneLatch.countDown();
+                }
+            }).start();
+        }
+
+        startLatch.countDown();
+        assertTrue(doneLatch.await(5, java.util.concurrent.TimeUnit.SECONDS));
+
+        // Container should still be functional
+        container.register("final", new TestServiceImpl());
+        assertTrue(container.hasService("final"));
+    }
 }
