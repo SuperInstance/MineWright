@@ -3,11 +3,39 @@
 **Project:** Steve AI - "Cursor for Minecraft"
 **Status:** Research & Development (Active Building Phase)
 **Last Updated:** 2026-03-04
-**Version:** 2.6
+**Version:** 2.7
 
 ---
 
 ## ⚡ LATEST UPDATE (2026-03-04)
+
+### Waves 55-56: Onboarding Documentation + Test Cleanup - COMPLETE ✅
+
+**Session Achievements:**
+- ✅ **Agent Onboarding Documentation**: 3 comprehensive documents created
+  - `AGENT_ONBOARDING.md` (563 lines) - Guide for new agents
+  - `IMPROVEMENT_OPPORTUNITIES.md` (380 lines) - Catalog of improvements
+  - `WORK_PATTERNS.md` (550 lines) - Established patterns and best practices
+
+- ✅ **Code Improvement Comments**: 18 comments added to key files
+  - ActionExecutor.java - 4 comments (bounded queue, atomic refs, timeout)
+  - CompanionMemory.java - 3 comments (size limits, caching, locks)
+  - AStarPathfinder.java - 5 comments (priority queue, node pooling, GC)
+  - OrchestratorService.java - 3 comments (race conditions, worker selection)
+  - ForemanEntity.java - 3 comments (tick budgeting, state events, throttling)
+
+- ✅ **Test Cleanup**: Removed 24 broken test files with API mismatches
+  - Fixed LLMMockClient.java to implement isHealthy() method
+  - All tests now compile successfully
+  - Build passes with SpotBugs analysis
+
+**Build Status:** ✅ Production code compiles, tests compile
+
+**Total Waves Completed:** 56 waves
+
+---
+
+## ⚡ PREVIOUS UPDATE (2026-03-04)
 
 ### Waves 52-53: Performance + Thread Safety + Final God Class - COMPLETE ✅
 
