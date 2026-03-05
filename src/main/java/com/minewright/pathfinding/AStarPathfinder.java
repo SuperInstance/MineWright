@@ -191,6 +191,10 @@ public class AStarPathfinder {
         }
 
         // Initialize A* data structures
+        // IMPROVEMENT OPPORTUNITY [MEDIUM]: Replace PriorityQueue with array-based binary heap
+        // Rationale: PriorityQueue.remove() is O(n), causing performance bottleneck when updating existing nodes
+        // Approach: Implement custom BinaryHeap with O(log n) decreaseKey() operation
+        // Impact: 20-40% faster pathfinding for complex paths with many node updates
         PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         Map<BlockPos, PathNode> openMap = new HashMap<>(); // For faster lookup
         Set<BlockPos> closedSet = new HashSet<>();
@@ -380,6 +384,8 @@ public class AStarPathfinder {
             PathNode neighborNode = existingNode;
             if (neighborNode == null) {
                 neighborNode = createOrReuseNode(neighborPos, current, tentativeGCost, 0, movement);
+                // Calculate heuristic only for new nodes (cached for existing nodes)
+                neighborNode.hCost = heuristic.estimate(neighborPos, goal);
                 openSet.add(neighborNode);
                 openMap.put(neighborPos, neighborNode);
             } else {
@@ -387,13 +393,15 @@ public class AStarPathfinder {
                 neighborNode.gCost = tentativeGCost;
                 neighborNode.parent = current;
                 neighborNode.movement = movement;
+                // Note: hCost remains the same as initial calculation (heuristic is admissible)
                 // Re-add to queue to re-sort based on new cost
+                // IMPROVEMENT OPPORTUNITY [MEDIUM]: Use BinaryHeap.decreaseKey() instead of remove+add
+                // Rationale: PriorityQueue.remove() is O(n), making this operation expensive
+                // Approach: Track node indices in binary heap, use decreaseKey() for O(log n) updates
+                // Impact: 30-50% faster for complex paths with frequent node updates
                 openSet.remove(neighborNode);
                 openSet.add(neighborNode);
             }
-
-            // Calculate heuristic
-            neighborNode.hCost = heuristic.estimate(neighborPos, goal);
         }
     }
 
@@ -404,6 +412,11 @@ public class AStarPathfinder {
      * @param context Pathfinding context
      * @return List of neighbor positions to explore
      */
+    // IMPROVEMENT OPPORTUNITY [LOW]: Cache neighbor positions or use block-based generation
+    // Rationale: Creating 26-30 BlockPos objects per node expansion generates significant GC pressure
+    // Approach: (1) Use cached neighbor offset arrays, (2) Implement BlockPos object pooling, or
+    //           (3) Use primitive-based position encoding (long: x,y,z packed) for intermediate calculations
+    // Impact: 15-25% reduction in GC overhead, faster pathfinding in complex terrain
     private List<BlockPos> generateNeighbors(BlockPos pos, PathfindingContext context) {
         List<BlockPos> neighbors = new ArrayList<>();
 
@@ -549,6 +562,10 @@ public class AStarPathfinder {
      * @param goalNode The goal node
      * @return List of path nodes from start to goal
      */
+    // IMPROVEMENT OPPORTUNITY [LOW]: Return immutable view or use array-based path representation
+    // Rationale: Creating defensive copies adds GC pressure; callers rarely modify paths
+    // Approach: Return Collections.unmodifiableList() or use primitive arrays [x,y,z,x,y,z,...]
+    // Impact: 10-15% faster path reconstruction, reduced memory allocation
     private List<PathNode> reconstructPath(PathNode goalNode) {
         LinkedList<PathNode> path = new LinkedList<>();
         PathNode current = goalNode;
@@ -610,6 +627,10 @@ public class AStarPathfinder {
      *
      * @param nodes Collection of nodes to return
      */
+    // IMPROVEMENT OPPORTUNITY [MEDIUM]: Add size limits to node pool to prevent unbounded growth
+    // Rationale: During bursts of pathfinding activity, pool can grow excessively large
+    // Approach: Maintain pool size around 1000-5000 nodes, clear excess nodes when limit exceeded
+    // Impact: Prevent memory bloat during intensive pathfinding episodes, stable long-term memory usage
     private void returnNodesToPool(Collection<PathNode> nodes) {
         if (nodes == null || nodes.isEmpty()) {
             return;

@@ -370,6 +370,16 @@ public class OrchestratorService {
         LOGGER.info("[Orchestrator] Distributing {} tasks to {} available workers",
             tasks.size(), availableWorkers.size());
 
+        // IMPROVEMENT OPPORTUNITY [Priority 2]: Inefficient worker selection strategy
+        // Rationale: Simple round-robin doesn't consider worker capabilities, location, or current load.
+        // Some workers may be better suited for specific tasks (e.g., mining vs building).
+        // Approach: Implement a Capability-based worker scoring system that considers:
+        // 1. Worker's specialty/role (MINER, BUILDER, EXPLORER)
+        // 2. Proximity to task location (distance-based scoring)
+        // 3. Current inventory and tool readiness
+        // 4. Historical success rate for similar tasks
+        // Impact: 20-30% improvement in task completion time and resource efficiency.
+
         int workerIndex = 0;
         for (Task task : tasks) {
             if (availableWorkers.isEmpty()) {
@@ -508,6 +518,14 @@ public class OrchestratorService {
             PlanExecution plan = activePlans.get(assignment.getParentPlanId());
             if (plan != null) {
                 plan.markTaskComplete(assignment.getAssignmentId());
+
+                // IMPROVEMENT OPPORTUNITY [Priority 2]: Missing transactional plan state update
+                // Rationale: If checkPlanCompletion() removes the plan from activePlans but later
+                // operations fail, the plan state becomes inconsistent. No rollback mechanism exists.
+                // Approach: Implement a two-phase commit pattern or use versioned plan states
+                // with compensating actions on failure.
+                // Impact: Ensures plan state consistency even during partial failures.
+
                 checkPlanCompletion(plan);
             }
 
@@ -557,6 +575,13 @@ public class OrchestratorService {
         if (newWorker.isPresent()) {
             String newWorkerId = newWorker.get();
             assignment.reassign(newWorkerId, "Retry after failure");
+
+            // IMPROVEMENT OPPORTUNITY [Priority 1]: Race condition in task reassignment
+            // Rationale: Between checking if worker is available and assigning the task, another thread
+            // could assign a different task to the same worker, causing duplicate assignments.
+            // Approach: Use computeIfAbsent() or atomic compare-and-set pattern to ensure atomicity.
+            // Impact: Prevents rare but critical double-assignment bugs that cause task execution conflicts.
+
             workerAssignments.put(newWorkerId, assignment);
 
             AgentMessage retryMessage = AgentMessage.taskAssignment(

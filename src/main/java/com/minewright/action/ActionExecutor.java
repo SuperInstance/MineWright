@@ -90,6 +90,13 @@ public class ActionExecutor {
      * Tasks are added via LLM planning or orchestration assignment.
      * Uses LinkedBlockingQueue for thread-safe concurrent access.
      */
+    // IMPROVEMENT OPPORTUNITY [High]: Add bounded queue with capacity limit to prevent memory exhaustion
+    // Rationale: Unbounded LinkedBlockingQueue can grow indefinitely if tasks are queued faster than
+     *    they're executed, potentially causing OutOfMemoryErrors. This is especially risky with LLM
+     *    planning generating many tasks rapidly.
+    // Approach: Use LinkedBlockingQueue(int capacity) with configurable max capacity (e.g., 1000).
+     *    Implement backpressure strategy: when full, either reject new tasks or block until space available.
+    // Impact: Prevents memory exhaustion, makes system more resilient to runaway task generation.
     private final BlockingQueue<Task> taskQueue;
 
     /**
@@ -97,6 +104,12 @@ public class ActionExecutor {
      * Only one action runs at a time per executor.
      * Marked volatile for visibility across threads (game thread vs async callbacks).
      */
+    // IMPROVEMENT OPPORTUNITY [Medium]: Consider using AtomicReference<BaseAction> instead of volatile
+    // Rationale: volatile provides visibility but doesn't guarantee atomicity for compound operations
+    //    like read-modify-write. While current operations are mostly simple assigns, using AtomicReference
+    //    provides stronger guarantees and enables atomic compareAndSet operations if needed in future.
+    // Approach: Replace volatile BaseAction with AtomicReference<BaseAction> and use get()/set() methods.
+    // Impact: Improved thread safety guarantees and enables future atomic operations without refactoring.
     private volatile BaseAction currentAction;
 
     /**
@@ -222,6 +235,19 @@ public class ActionExecutor {
      * Gets the TaskPlanner instance (lazy-initialized).
      * Public for access by dialogue and other systems.
      */
+    // IMPROVEMENT OPPORTUNITY [Medium]: Use double-checked locking for thread-safe lazy initialization
+    // Rationale: Current volatile-only approach doesn't prevent race conditions during initialization.
+     *    Multiple threads could simultaneously detect null and create multiple TaskPlanner instances,
+     *    though only one would be visible. This wastes resources and could cause inconsistent state.
+    // Approach: Implement double-checked locking pattern:
+     //    if (taskPlanner == null) {
+     //        synchronized (this) {
+     //            if (taskPlanner == null) {
+     //                taskPlanner = new TaskPlanner();
+     //            }
+     //        }
+     //    }
+    // Impact: Eliminates race condition, ensures only one TaskPlanner instance is created, improves efficiency.
     public TaskPlanner getTaskPlanner() {
         if (taskPlanner == null) {
             LOGGER.info("Initializing TaskPlanner for Foreman '{}'", foreman.getEntityName());
@@ -485,6 +511,15 @@ public class ActionExecutor {
 
                 currentAction = null;
             } else {
+                // IMPROVEMENT OPPORTUNITY [High]: Add action timeout detection to prevent infinite loops
+                // Rationale: Actions can get stuck indefinitely (e.g., pathfinding to unreachable target,
+                 //    waiting for blocks that never change). Current implementation has no timeout mechanism,
+                 //    causing agents to hang forever on impossible tasks.
+                // Approach: Add startTime timestamp to BaseAction, track max execution time per action type.
+                 //    In tick(), check if (currentTick - action.startTime) > actionTimeoutTicks, then cancel
+                 //    action and mark as failed with TIMEOUT error code. Configurable per-action type.
+                // Impact: Prevents agents from hanging on impossible tasks, improves system responsiveness,
+                 //    enables better error recovery and user feedback.
                 if (ticksSinceLastAction.get() % 100 == 0) {
                     LOGGER.info("Foreman '{}' - Ticking action: {}",
                         foreman.getEntityName(), currentAction.getDescription());

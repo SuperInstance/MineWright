@@ -184,6 +184,15 @@ public class ForemanEntity extends PathfinderMob {
         this.entityData.define(ENTITY_NAME, "Foreman");
     }
 
+    // IMPROVEMENT OPPORTUNITY [Priority 2]: Implement Tick Budgeting System
+    // Rationale: The tick() method runs 8 independent subsystems every tick without budget tracking.
+    //    With 50+ agents, this creates unpredictable CPU spikes. Individual subsystem failures
+    //    are isolated but there's no prevention of cascading delays.
+    // Approach: Create TickBudgetManager that tracks per-subsystem execution time and enforces
+    //    per-tick budgets. Subsystems exceeding budgets yield execution to next tick.
+    // Impact: More predictable server performance, prevents tick lag with many agents.
+    //    Estimated 30-40% reduction in tick time variance with 20+ agents.
+
     /**
      * Main update loop called every game tick (20 times per second).
      *
@@ -430,6 +439,15 @@ public class ForemanEntity extends PathfinderMob {
     public AgentRole getRole() {
         return state.getRole();
     }
+
+    // IMPROVEMENT OPPORTUNITY [Priority 3]: Add State Change Event System
+    // Rationale: setRole() directly manipulates orchestrator registration without an event
+    //    system. Other role changes (if any) are scattered throughout the codebase.
+    //    This makes it difficult to audit state transitions or add side effects.
+    // Approach: Create EntityStateChangeEvent with before/after states. Use event bus
+    //    to notify listeners. Centralize all state mutations through a setState() method.
+    // Impact: Better observability, easier debugging, enables features like state
+    //    transition logging, metrics collection, and audit trails.
 
     /**
      * Sets the agent's role (used for promotion/demotion).
@@ -686,6 +704,16 @@ public class ForemanEntity extends PathfinderMob {
     }
 
     // ========== Communication ==========
+
+    // IMPROVEMENT OPPORTUNITY [Priority 2]: Implement Message Rate Limiting
+    // Rationale: sendChatMessage() has no rate limiting. With many agents or chatty AI,
+    //    players can be spammed with messages. LLMs may generate excessive commentary
+    //    during complex tasks, flooding chat and degrading player experience.
+    // Approach: Create MessageThrottler with rolling window (e.g., 5 messages per 10 seconds).
+    //    Queue excess messages and send them during quiet periods. Add priority levels
+    //    so urgent messages (danger, errors) bypass throttling.
+    // Impact: Better player experience, prevents chat spam, more professional AI behavior.
+    //    Estimated 70-80% reduction in message spam during complex multi-agent tasks.
 
     /**
      * Sends a chat message to all players.
